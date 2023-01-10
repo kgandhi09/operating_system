@@ -1,0 +1,20 @@
+GPPPARAMS = -m32
+ASPARAMS = --32
+LDPARAMS = -melf_i386
+
+#object files
+objects = loader.o kernel.o
+
+#Create an object file from cpp file
+%.o: %.cpp
+	g++ ${GPPPARAMS} -o $@ -c $<
+
+#Create an object file from assembler file
+%.o: %.s:
+	as ${ASPARAMS} -o $@ $<
+
+mykernel.bin: linker.ld $(objects)
+	ld ${LDPARAMS} -T $< -o $@ ${objects}
+
+install: mykernel.bin
+	sudo cp $< /boot/mykernel.bin
