@@ -9,9 +9,8 @@ objects = loader.o kernel.o
 %.o: %.cpp
 	g++ ${GPPPARAMS} -o $@ -c $<
 
-#Create an object file from assembler file
-%.o: %.s:
-	as ${ASPARAMS} -o $@ $<
+# loader.o: loader.s
+	# as ${ASPARAMS} -o $@ $<
 
 mykernel.bin: linker.ld $(objects)
 	ld ${LDPARAMS} -T $< -o $@ ${objects}
