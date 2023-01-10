@@ -34,5 +34,3 @@ _stop:
 # Like this in the RAM --> |Firmware|..|Grub|..|..|   |   |<-- Kernel|
 .space 2*1024*1024 # 2 MB
 kernel_stack:
-
-
