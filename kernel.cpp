@@ -1,13 +1,26 @@
-void printf(char *str) {
-    unsigned short *videoMemoryVGA = (unsigned short *)0xb8000;
+#include "types.h"
 
-    for (int i = 0; str[i] != '\0'; ++i) {
+void printf(int8_t *str) {
+    uint16_t *videoMemoryVGA = (uint16_t *)0xb8000;
+
+    for (int32_t i = 0; str[i] != '\0'; ++i) {
         videoMemoryVGA[i] = (videoMemoryVGA[i] & 0xFF00) | str[i];
     }
 }
 
-extern "C" void kernelMain(void *multiboot_structure, unsigned int magicnumber) {
-    printf("Hello from the Kernel!");
+typedef void (*constructor)();
+
+extern "C" constructor start_ctors;
+extern "C" constructor end_ctors;
+extern "C" void callConstructors(){
+    for(constructor* i = &start_ctors; i != &end_ctors; ++i){
+        (*i)();
+    }
+}
+
+
+extern "C" void kernelMain(void *multiboot_structure, uint32_t magicnumber) {
+    printf("You are the beast!");
     while (1)
         ;
 }
