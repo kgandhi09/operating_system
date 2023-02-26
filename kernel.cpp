@@ -20,7 +20,7 @@ extern "C" void callConstructors(){
 
 
 extern "C" void kernelMain(void *multiboot_structure, uint32_t magicnumber) {
-    printf("You are the beast!");
+    printf("Hello from the kernel!");
     while (1)
         ;
 }
