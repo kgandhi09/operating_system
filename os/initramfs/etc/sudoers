@@ -1,0 +1,5 @@
+# User alias specification
+User_Alias ROOT = root
+
+# Allow root user to execute any command
+ROOT    ALL=(ALL) ALL
