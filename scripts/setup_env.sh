@@ -17,3 +17,16 @@ esac
 
 # dir for cross compiler toolchain
 sudo mkdir -pv $LFS/tools
+
+# Add a temperory unpriviliged LFS user
+sudo groupadd jk
+sudo useradd -s /bin/bash -g jk -m -k /dev/null jk
+
+sudo passwd jk
+
+# Grant jk user full access to all the directories under $LFS by making jk the owner
+sudo chown -v jk $LFS/{usr{,/*},lib,var,etc,bin,sbin,tools}
+case $(uname -m) in
+    x86_64)
+        sudo chown -v jk $LFS/lib64 ;;
+esac
