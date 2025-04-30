@@ -30,3 +30,8 @@ case $(uname -m) in
     x86_64)
         sudo chown -v jk $LFS/lib64 ;;
 esac
+
+sudo -u jk bash << 'EOF'
+export LFS=$LFS
+echo "Inside jk: LFS is \$LFS"
+EOF
