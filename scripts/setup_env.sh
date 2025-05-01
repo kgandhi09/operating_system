@@ -34,4 +34,28 @@ esac
 sudo -u jk bash << 'EOF'
 export LFS=$LFS
 echo "Inside jk: LFS is \$LFS"
+
+# set up bash profile
+cat > ~/.bash_profile << "EOPROFILE"
+exec env -i HOME=$HOME TERM=$TERM PS1='\u:\w\$ ' /bin/bash
+EOPROFILE
+
+cat > ~/.bashrc << "EOBASHRC"
+set +h
+umask 022
+LFS=/mnt/lfs
+LC_ALL=POSIX
+LFS_TGT=$(uname -m)-lfs-linux-gnu
+PATH=/usr/bin
+if [ ! -L /bin ]; then PATH=/bin:$PATH; fi
+PATH=$LFS/tools/bin:$PATH
+CONFIG_SITE=$LFS/usr/share/config.site
+export LFS LC_ALL LFS_TGT PATH CONFIG_SITE
+EOBASHRC
+
+export MAKEFLAGS=-j$(nproc)
+echo "Inside jk: MAKEFLAGS is $MAKEFLAGS"
+
+source ~/.bash_profile
+
 EOF
