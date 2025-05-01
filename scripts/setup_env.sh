@@ -16,6 +16,7 @@ case $(uname -m) in
 esac
 
 # dir for cross compiler toolchain
+sudo mkdir -pv $LFS/cross_compile
 sudo mkdir -pv $LFS/tools
 
 # Add a temperory unpriviliged LFS user
@@ -25,7 +26,7 @@ sudo useradd -s /bin/bash -g jk -m -k /dev/null jk
 sudo passwd jk
 
 # Grant jk user full access to all the directories under $LFS by making jk the owner
-sudo chown -v jk $LFS/{usr{,/*},lib,var,etc,bin,sbin,tools}
+sudo chown -v jk $LFS/{usr{,/*},lib,var,etc,bin,sbin,tools,cross_compile}
 case $(uname -m) in
     x86_64)
         sudo chown -v jk $LFS/lib64 ;;
