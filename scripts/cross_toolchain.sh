@@ -67,7 +67,7 @@ cd build
                 --disable-libstdcxx \
                 --enable-languages=c,c++
 
-make
-make install
+# make
+# make install
 
 EOF
