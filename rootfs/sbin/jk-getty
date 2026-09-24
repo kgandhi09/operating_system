@@ -1,0 +1,22 @@
+#!/bin/sh
+# jk-getty <tty>: run getty on a terminal if it exists, otherwise idle.
+# inittab lists every console jk_os might have; absent ones just sleep here
+# instead of making init respawn a failing getty in a tight loop.
+
+tty="$1"
+present=1
+[ -c "/dev/$tty" ] || present=0
+# The 8250 driver registers ttyS0-3 even with no UART behind them; an
+# absent port reports uart type 0 (PORT_UNKNOWN).
+case "$tty" in
+    ttyS*) [ "$(cat "/sys/class/tty/$tty/type" 2>/dev/null)" = 0 ] && present=0 ;;
+esac
+
+if [ "$present" = 0 ]; then
+    exec sleep 2147483647
+fi
+
+case "$tty" in
+    tty[0-9]*) exec /sbin/getty 38400 "$tty" linux ;;
+    *)         exec /sbin/getty -L 115200 "$tty" vt100 ;;
+esac

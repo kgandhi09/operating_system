@@ -1,0 +1,15 @@
+# BusyBox init configuration for jk_os.
+# Format: <tty>::<action>:<command>
+
+::sysinit:/etc/init.d/rcS
+
+# Login prompts on the first virtual terminal and on whichever serial
+# console exists (PC UART, ARM PL011, or a hypervisor console).
+::respawn:/sbin/jk-getty tty1
+::respawn:/sbin/jk-getty ttyS0
+::respawn:/sbin/jk-getty ttyAMA0
+::respawn:/sbin/jk-getty hvc0
+
+::ctrlaltdel:/sbin/reboot
+::shutdown:/etc/init.d/rcK
+::restart:/sbin/init

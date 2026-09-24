@@ -1,0 +1,6 @@
+# Extra initramfs entries (kernel gen_init_cpio format), merged with the
+# rootfs tree. Device nodes must exist before devtmpfs is mounted, because the
+# kernel opens /dev/console before starting /init.
+dir /dev 0755 0 0
+nod /dev/console 0600 0 0 c 5 1
+nod /dev/null    0666 0 0 c 1 3

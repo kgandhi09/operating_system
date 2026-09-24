@@ -1,0 +1,12 @@
+#!/bin/sh
+# Kernel and system logging into an in-memory ring buffer (read with logread).
+
+case "$1" in
+    start)
+        syslogd -C256
+        klogd
+        ;;
+    stop)
+        killall klogd syslogd 2>/dev/null
+        ;;
+esac

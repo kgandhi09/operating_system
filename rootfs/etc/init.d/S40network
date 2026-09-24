@@ -1,0 +1,19 @@
+#!/bin/sh
+# Bring up every wired interface and ask for a DHCP lease in the background.
+
+case "$1" in
+    start)
+        for dev in /sys/class/net/*; do
+            iface="${dev##*/}"
+            [ "$iface" = lo ] && continue
+            [ -d "$dev/wireless" ] && continue
+            ip link set "$iface" up
+            udhcpc -b -S -i "$iface" -p "/run/udhcpc.$iface.pid" >/dev/null 2>&1
+        done
+        ;;
+    stop)
+        for pid in /run/udhcpc.*.pid; do
+            [ -f "$pid" ] && kill "$(cat "$pid")" 2>/dev/null
+        done
+        ;;
+esac

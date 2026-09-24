@@ -1,0 +1,2 @@
+# The root filesystem is the initramfs (tmpfs); nothing else is mounted
+# from here. Early mounts live in /etc/init.d/rcS.
