@@ -1,8 +1,21 @@
 #!/bin/sh
-# Persistent storage of an installed jk_os (see jk-install).
-# The ext4 partition labeled JK_DATA is mounted at /data, then everything in
-# /data/etc/fstab (/boot, /home, swap, ...). /home falls back to /data/home.
-# Without a JK_DATA partition (the live ISO) the system stays RAM-only.
+# Boot mode and persistent storage (see jk-install).
+#
+# The mode, written to /run/jk-mode, decides what the consoles show:
+#   live       the installer medium (label JK_OS: the ISO, on a USB stick or
+#              CD) is attached: the consoles open the installer menu
+#              (/sbin/jk-live) instead of a login prompt, and no disk is
+#              mounted, so every disk is free to be partitioned.
+#   installed  no installer medium, but an installed system (the ext4
+#              partition labeled JK_DATA): it is mounted at /data, then
+#              everything in /data/etc/fstab (/boot, /home, swap, ...);
+#              /home falls back to /data/home.
+#   ram        neither: RAM only, as before any install.
+#
+#   S05storage start   detect the mode (and mount, when installed)
+#   S05storage mount   mount the installed system's storage (jk-live uses
+#                      this to start the installed system from a live boot)
+#   S05storage stop    unmount it
 
 FSTAB=/data/etc/fstab
 
@@ -15,12 +28,42 @@ check() {
     return 1
 }
 
+# find_labels: set $live and $data to the devices labeled JK_OS / JK_DATA.
+find_labels() {
+    labels=$(blkid 2>/dev/null)
+    live=$(echo "$labels" | sed -n 's/^\([^:]*\):.* LABEL="JK_OS".*/\1/p' | head -n1)
+    data=$(echo "$labels" | sed -n 's/^\([^:]*\):.* LABEL="JK_DATA".*/\1/p' | head -n1)
+}
+
 start() {
-    data=$(findfs LABEL=JK_DATA 2>/dev/null)
-    if [ -z "$data" ]; then
-        echo "storage: no JK_DATA partition, running from RAM only (install with: jk-install)"
+    # USB storage shows up a few seconds after boot. Wait up to 10 s for the
+    # installer medium, but only 3 s once an installed system has been found.
+    i=0
+    while :; do
+        find_labels
+        [ -n "$live" ] && break
+        [ -n "$data" ] && [ $i -ge 12 ] && break
+        [ $i -ge 40 ] && break
+        sleep 0.25; i=$((i + 1))
+    done
+    if [ -n "$live" ]; then
+        echo live > /run/jk-mode
+        echo "storage: booted from the installer medium ($live)"
         return 0
     fi
+    if [ -z "$data" ]; then
+        echo ram > /run/jk-mode
+        echo "storage: no installed system found, running from RAM only"
+        return 0
+    fi
+    echo installed > /run/jk-mode
+    mount_storage
+}
+
+mount_storage() {
+    [ -n "${data:-}" ] || find_labels
+    [ -n "$data" ] || { echo "storage: no JK_DATA partition" >&2; return 1; }
+    mountpoint -q /data && return 0
     check "$data" || return 1
     mkdir -p /data
     mount -t ext4 -o noatime "$data" /data || return 1
@@ -57,5 +100,6 @@ stop() {
 
 case "$1" in
     start) start ;;
+    mount) mount_storage ;;
     stop)  stop ;;
 esac

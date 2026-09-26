@@ -24,9 +24,9 @@ make                      # build out/jk_os-<ver>-<host arch>.iso
 make run                  # boot it in QEMU on this terminal (Ctrl-A X quits)
 ```
 
-Log in as `root` (no password). The live system runs entirely from RAM, so
-changes are lost on reboot, unless you install it to a disk (`jk-install`, see
-[Installing to a disk](#installing-to-a-disk)).
+The ISO boots into the installer menu, before any login. From there you can
+install to a disk, or try the live system (a root shell that runs entirely from
+RAM, so changes are lost on reboot). See [Installing to a disk](#installing-to-a-disk).
 
 
 ### Other architecture
@@ -132,8 +132,20 @@ in `build/`.
 
 ## Installing to a disk
 
-Boot the ISO, log in as root and run `jk-install`. As in Ubuntu's installer, you
-pick a disk and then either:
+Write the ISO to a USB stick (`make flash`) and boot from it. Before any login
+prompt, every console (screen and serial) shows the installer menu:
+
+```
+  1) Install jk_os
+  2) Try jk_os without installing (root shell, nothing is kept)
+  3) Start the jk_os already installed on /dev/sda    (only if one is found)
+  r) Reboot
+  p) Power off
+```
+
+**Install** runs `jk-install`, and only one console can run it at a time. After a
+successful install it asks you to remove the USB stick and reboots into the
+installed system. As in Ubuntu's installer, you pick a disk and then either:
 
 1. **Erase disk and install**: creates a new GPT table with the default layout below
    and asks only whether you want swap.
@@ -153,19 +165,28 @@ kernel and your data:
 | `/home`, `/var/log`, `/srv`, `/opt`, `/mnt/<name>` | ext4 | | no | whatever you split out |
 | swap | swap | `JK_SWAP` | no | |
 
-At boot, `/etc/init.d/S05storage` looks for the `JK_DATA` partition. It checks the
-partition with `fsck.ext4 -p` and mounts it on `/data`. Then it mounts what the
-installer listed (by UUID) in `/data/etc/fstab`, and bind-mounts `/data/home` on
-`/home` unless `/home` has its own partition. With no `JK_DATA` partition, as on
-the live ISO with no installed disk attached, the system stays RAM-only.
+At boot, `/etc/init.d/S05storage` picks the mode, and records it in `/run/jk-mode`:
+
+- **live:** the installer medium (label `JK_OS`) is attached. The consoles run
+  the installer menu (`/sbin/jk-live`, started by `jk-getty` in place of `login`),
+  and no disk is mounted, so every disk is free to repartition. Menu entry 3 mounts
+  an installed system's storage and switches the consoles to login prompts.
+- **installed:** no installer medium, but a `JK_DATA` partition. It is checked
+  with `fsck.ext4 -p` and mounted on `/data`. Then everything the installer listed
+  (by UUID) in `/data/etc/fstab` is mounted, and `/data/home` is bind-mounted on
+  `/home` unless `/home` has its own partition. The consoles show login prompts.
+- **ram:** neither. The consoles show login prompts and the system is RAM-only.
+
+USB sticks appear a few seconds after the kernel starts, so the script waits up
+to 10 s for the installer medium (3 s once an installed system is found).
 
 - **Booting.** An installed disk boots through **UEFI** on both architectures. The
   kernel's EFI stub is the firmware's default boot file, so no boot loader or NVRAM
   entry is involved. Legacy BIOS is only supported for the live ISO. On x86_64,
   consoles come from the built-in command line (`CONFIG_CMDLINE`).
-- **Reinstalling.** The installer can also reinstall or repartition a disk whose
-  `/data` is mounted, including the disk the system booted from, because the OS runs
-  from RAM. It unmounts that disk's storage first. It installs the kernel of the
+- **Reinstalling.** Boot the USB stick again. As root on an installed system,
+  `jk-install` also works, even on the disk the system booted from, because the OS
+  runs from RAM. It unmounts that disk's storage first. It installs the kernel of the
   installer medium (label `JK_OS`), or the running system's `/boot` kernel if no
   medium is attached. `JK_KERNEL=<file>` overrides both.
 - **Scripted installs.** `jk-install --auto /dev/sdX [--swap 2G] --yes` erases

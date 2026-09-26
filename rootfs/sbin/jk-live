@@ -1,0 +1,72 @@
+#!/bin/sh
+# jk-live: the installer menu that every console shows, instead of a login
+# prompt, when jk_os boots from its installer medium (/run/jk-mode = live).
+# getty runs it as root on the console (jk-getty: getty -n -l jk-live); when
+# it exits, init starts it again.
+
+. /etc/os-release
+C_B=$(printf '\033[1m'); C_N=$(printf '\033[0m')
+
+# Kernel messages (new partitions, ...) would scribble over the menus.
+dmesg -n 1 2>/dev/null
+
+installed=$(findfs LABEL=JK_DATA 2>/dev/null)
+[ -n "$installed" ] && installed_disk=$(lsblk -dnpo PKNAME "$installed" 2>/dev/null)
+
+clear
+printf '\n  %sWelcome to %s%s\n\n' "$C_B" "$PRETTY_NAME" "$C_N"
+echo "  You booted from the installer medium. The system runs from RAM:"
+echo "  nothing is written to any disk unless you install."
+echo
+echo "  1) Install $NAME"
+echo "  2) Try $NAME without installing (root shell, nothing is kept)"
+[ -n "$installed" ] && \
+echo "  3) Start the $NAME already installed on ${installed_disk:-$installed}"
+echo "  r) Reboot"
+echo "  p) Power off"
+echo
+printf '  Choice [1]: '
+read -r ans || exit 0
+
+case "${ans:-1}" in
+    1)
+        if [ -d /run/jk-install.lock ]; then
+            echo
+            echo "  The installer is already running on another console."
+            printf '  Press Enter to go back. '; read -r _
+            exit 0
+        fi
+        clear
+        if /sbin/jk-install; then
+            if [ -f /run/jk-install/installed ]; then
+                echo
+                printf '  Remove the installer medium, then press Enter to reboot. '
+                read -r _
+                reboot
+                sleep 30
+            fi
+        else
+            echo
+            printf '  The installation did not finish. Press Enter to go back. '
+            read -r _
+        fi
+        ;;
+    2)
+        clear
+        echo "Live session: type 'exit' to go back to the installer menu."
+        echo
+        exec login -f root
+        ;;
+    3)
+        [ -n "$installed" ] || exit 0
+        /etc/init.d/S05storage mount || { printf '  Press Enter to go back. '; read -r _; exit 0; }
+       echo installed > /run/jk-mode
+        # The other consoles restart with a login prompt, and so does this one.
+        for pid in $(pidof jk-live); do
+            [ "$pid" = $$ ] || kill "$pid" 2>/dev/null
+        done
+        ;;
+    r) reboot; sleep 30 ;;
+    p) poweroff; sleep 30 ;;
+esac
+exit 0

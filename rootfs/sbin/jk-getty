@@ -16,7 +16,12 @@ if [ "$present" = 0 ]; then
     exec sleep 2147483647
 fi
 
+# Booted from the installer medium (see S05storage): every console opens
+# the installer menu instead of a login prompt. getty still sets the line up;
+# -n -l makes it run jk-live where it would run login.
+[ "$(cat /run/jk-mode 2>/dev/null)" = live ] && set -- -n -i -l /sbin/jk-live
+
 case "$tty" in
-    tty[0-9]*) exec /sbin/getty 38400 "$tty" linux ;;
-    *)         exec /sbin/getty -L 115200 "$tty" vt100 ;;
+    tty[0-9]*) exec /sbin/getty "$@" 38400 "$tty" linux ;;
+    *)         exec /sbin/getty "$@" -L 115200 "$tty" vt100 ;;
 esac

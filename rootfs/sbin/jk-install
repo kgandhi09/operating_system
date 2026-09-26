@@ -544,9 +544,10 @@ apply() {
 
     sync
     cleanup
+    : > "$WORK/installed"   # tells jk-live to offer the reboot
     head_line "Done"
     say "  $PRETTY_NAME is installed on $DISK."
-    say "  Remove the installer medium and reboot; the firmware boots $DISK through UEFI."
+    say "  Once the installer medium is removed, the firmware boots $DISK through UEFI."
     return 0
 }
 
@@ -558,6 +559,10 @@ usage() { sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
 for t in sfdisk wipefs partx mkfs.ext4 e2label mkfs.vfat mkswap blkid findfs lsblk; do
     command -v "$t" >/dev/null || { echo "jk-install: missing $t" >&2; exit 1; }
 done
+# One installer at a time: the live system offers it on every console.
+LOCK=/run/jk-install.lock
+mkdir "$LOCK" 2>/dev/null || { echo "jk-install: already running (remove $LOCK if not)" >&2; exit 1; }
+trap 'rmdir "$LOCK" 2>/dev/null' EXIT
 rm -rf "$WORK"; mkdir -p "$WORK"
 
 AUTO="" SWAP=0 YES=0
