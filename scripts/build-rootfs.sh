@@ -35,6 +35,7 @@ printf '\n%s %s (%s) \\n \\l\n\n' "$OS_NAME" "$OS_VERSION" "$ARCH" > etc/issue
 
 chmod -R go-w .
 chmod 0700 root
+chmod 0600 etc/shadow
 chmod 1777 tmp
 
 log "rootfs: $(du -sh . | cut -f1) in $ROOTFS_DIR"
