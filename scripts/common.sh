@@ -63,6 +63,8 @@ KERNEL_OUT="$OUT_DIR/linux"
 BUSYBOX_SRC="$ROOT_DIR/$BUSYBOX_TREE"
 BUSYBOX_OUT="$OUT_DIR/busybox"
 ROOTFS_DIR="$OUT_DIR/rootfs"
+# Prebuilt binaries from GitHub releases (scripts/fetch-binaries.sh).
+BINARIES_DIR="$ROOT_DIR/userland/binaries/$ARCH"
 ISO_DIR="$OUT_DIR/iso"
 
 # tree_version <dir>: "7.2", "1.37.0", ... from a Kbuild-style top-level

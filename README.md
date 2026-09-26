@@ -3,7 +3,8 @@
 A minimal 64-bit Linux system built from source:
 
 - the **official Linux kernel** from Linus Torvalds' mainline releases, kept in this repo as plain source,
-- **BusyBox** as the entire userland (shell, init, coreutils, networking),
+- **BusyBox** as the base userland (shell, init, coreutils, networking),
+- a short list of **prebuilt static binaries pulled from GitHub releases** (`jq`, `rg`, `fd`, ...),
 - no display manager, X or Wayland: text console on screen plus serial console.
 
 It targets **x86_64** and **aarch64**. You get a bootable, hybrid ISO that
@@ -11,6 +12,8 @@ works from a CD/DVD, a VM, or written raw to a USB stick.
 
 Every source tree lives in the repo, so **a build needs no network and no
 git**: a copied folder or an unpacked archive of this repo builds offline.
+The one exception is a GitHub binary newly added to `configs/binaries/`, which
+is downloaded once into `userland/binaries/` (see [Binaries from GitHub](#binaries-from-github)).
 
 ## Quick start
 
@@ -68,7 +71,9 @@ kernel/mainline/          Linux source, Torvalds' mainline release (plain files)
 userland/busybox/         BusyBox source (plain files)
 configs/kernel/           kernel config fragments merged over the arch defconfig
 configs/busybox/          BusyBox config fragments merged over defconfig
+configs/binaries/         GitHub binaries: common.list (every arch) + <arch>.list
 configs/initramfs.list    device nodes added to the initramfs
+userland/binaries/<arch>/ fetched binaries (bin/) and what they came from (sources.lock)
 rootfs/                   files copied verbatim into the root filesystem
 boot/grub.cfg             x86_64 GRUB menu
 scripts/                  one script per build step
@@ -76,7 +81,7 @@ build/                    (generated) per-arch build trees
 out/                      (generated) ISO images
 ```
 
-Build steps can run individually: `make busybox | rootfs | kernel | iso`.
+Build steps can run individually: `make busybox | binaries | rootfs | kernel | iso`.
 The kernel and BusyBox build out of tree under `build/<arch>/`. The source
 trees stay pristine, and both architectures can build side by side from the
 same source.
@@ -117,6 +122,47 @@ vendor tree for a specific board. Unpack it as `kernel/<name>`, or use
 The trees never collect build output, because everything builds out of tree
 in `build/`.
 
+## Binaries from GitHub
+
+Tools that BusyBox doesn't provide come as prebuilt release assets from GitHub.
+They are listed in `configs/binaries/`:
+
+- `common.list`: installed on **every** arch. `@ARCH@` in an asset name becomes
+  `x86_64` / `aarch64`, and `@DEBARCH@` becomes `amd64` / `arm64`, so a single line
+  covers both architectures.
+- `x86_64.list`, `aarch64.list`: installed only on that arch. A line here with the
+  same name as one in `common.list` replaces it on that arch, for a project
+  whose asset names don't follow a pattern.
+
+```
+# name  owner/repo          tag      asset (glob)                                  [member]
+jq      jqlang/jq           jq-1.8.2 jq-linux-@DEBARCH@
+rg      BurntSushi/ripgrep  15.2.0   ripgrep-*-@ARCH@-unknown-linux-musl.tar.gz
+```
+
+`make` runs `make binaries` before assembling the rootfs. For each entry, it
+downloads the one matching asset of that release, checks it against GitHub's
+published SHA-256 digest, unpacks it (tar.*, zip, gz/xz/bz2/zst, or a bare
+binary), and installs the binary as `userland/binaries/<arch>/bin/<name>`.
+The binary ends up at `/usr/local/bin/<name>` in the OS, which comes first in
+`PATH`, so it takes precedence over a BusyBox applet with the same name. What was
+fetched (tag, asset, sha256) goes into `userland/binaries/<arch>/sources.lock`.
+
+- **Offline builds keep working.** An entry that still matches its lock line
+  is not fetched again, so commit `userland/binaries/` and the repo builds with no
+  network. Only a new or changed entry downloads anything. `OFFLINE=1` turns that
+  download into an error.
+- **Updating.** `tag` can be `latest`. It is resolved once and then stays pinned
+  in the lock until `make binaries UPDATE=1`, which re-resolves and re-downloads
+  everything. Remove a line and the next build deletes the binary.
+- **Static only.** The OS has no libc, so the fetch rejects dynamically linked or
+  wrong-arch ELF files. Pick the `*-linux-musl` or Go build of a project.
+- `member` is only needed when an archive holds more than one file with that name,
+  or the binary is named differently: it's a glob for its path inside the archive.
+- GitHub allows 60 unauthenticated API calls per hour. Set `GITHUB_TOKEN` if you
+  hit that limit.
+- `make binaries ARCH=aarch64` fetches for the other arch without building anything.
+
 ## Customizing
 
 - **Add files to the OS**: drop them under `rootfs/` (e.g. `rootfs/etc/init.d/S50myapp`, executable, taking `start`/`stop`), then `make`.
@@ -129,6 +175,7 @@ in `build/`.
 distros, install the equivalents:
 
 - build: `gcc make bc flex bison libelf-dev libssl-dev cpio file`
+- fetching GitHub binaries: `curl jq file` (plus `unzip` / `zstd` for those asset types)
 - updating sources (optional): `curl tar xz bzip2`
 - cross: `gcc-aarch64-linux-gnu libc6-dev-arm64-cross` (a glibc cross toolchain; BusyBox links statically against it)
 - ISO: `xorriso mtools dosfstools`, and on x86_64 hosts `grub-pc-bin grub-efi-amd64-bin`

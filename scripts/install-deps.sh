@@ -10,7 +10,7 @@ host="$(uname -m)"
 
 if command -v apt-get >/dev/null; then
     pkgs=(build-essential bc bison flex libelf-dev libssl-dev
-          cpio bzip2 curl file rsync
+          cpio bzip2 xz-utils zstd curl jq unzip file rsync
           grub-common xorriso mtools dosfstools
           qemu-system-x86 qemu-system-arm qemu-efi-aarch64 ovmf)
     case "$host" in
@@ -20,7 +20,7 @@ if command -v apt-get >/dev/null; then
     "${sudo[@]}" apt-get update
     "${sudo[@]}" apt-get install -y "${pkgs[@]}"
 elif command -v pacman >/dev/null; then
-    pkgs=(base-devel bc cpio bzip2 curl file rsync libelf openssl
+    pkgs=(base-devel bc cpio bzip2 xz zstd curl jq unzip file rsync libelf openssl
           grub libisoburn mtools dosfstools
           qemu-system-x86 qemu-system-aarch64 edk2-ovmf edk2-aarch64)
     [[ "$host" == x86_64 ]] && pkgs+=(aarch64-linux-gnu-gcc aarch64-linux-gnu-glibc)

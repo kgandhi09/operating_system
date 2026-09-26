@@ -6,8 +6,10 @@
 #   make flash DEVICE=/dev/sdX   write the ISO to a USB stick / SD card
 #   make deps                    install host build dependencies (sudo)
 #
-# Steps can be run on their own: busybox, rootfs, kernel, iso.
-# Everything builds from the source trees in this repo: no network, no git.
+# Steps can be run on their own: busybox, binaries, rootfs, kernel, iso.
+#   make binaries [UPDATE=1]     pull configs/binaries/*.list from GitHub
+# Everything builds from what is in this repo: no network, no git (except
+# `make binaries` for a binary that is listed but not fetched yet).
 
 ARCH ?= $(shell uname -m)
 export ARCH
@@ -15,14 +17,17 @@ export ARCH
 SHELL := /bin/bash
 S := scripts
 
-.PHONY: all iso kernel rootfs busybox run flash deps menuconfig clean distclean help
+.PHONY: all iso kernel rootfs busybox binaries run flash deps menuconfig clean distclean help
 
 all: iso
 
 busybox:
 	$(S)/build-busybox.sh
 
-rootfs: busybox
+binaries:
+	$(S)/fetch-binaries.sh
+
+rootfs: busybox binaries
 	$(S)/build-rootfs.sh
 
 kernel: rootfs
@@ -54,4 +59,4 @@ distclean:
 	rm -rf build out
 
 help:
-	@sed -n '1,11p' Makefile | sed 's/^# \{0,1\}//'
+	@sed -n '1,12p' Makefile | sed 's/^# \{0,1\}//'

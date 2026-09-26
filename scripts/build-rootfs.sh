@@ -5,6 +5,7 @@
 source "$(dirname "$0")/common.sh"
 
 [[ -x "$BUSYBOX_OUT/busybox" ]] || die "busybox not built yet (run: make busybox)"
+[[ -f "$BINARIES_DIR/sources.lock" ]] || die "binaries not fetched yet (run: make binaries)"
 
 log "assembling rootfs ($ARCH)"
 rm -rf "$ROOTFS_DIR"
@@ -18,6 +19,11 @@ cd "$ROOTFS_DIR"
 mkdir -p dev proc sys run tmp mnt root home var/log etc
 ln -s ../run var/run
 ln -s bin/busybox init   # the kernel runs /init from an initramfs
+# /usr/local/bin comes first in PATH, so these win over BusyBox applets.
+mkdir -p usr/local/bin
+if compgen -G "$BINARIES_DIR/bin/*" >/dev/null; then
+    cp -a "$BINARIES_DIR/bin/." usr/local/bin/
+fi
 cp -a "$ROOT_DIR/rootfs/." "$ROOTFS_DIR/"
 
 echo "$OS_HOSTNAME" > etc/hostname
