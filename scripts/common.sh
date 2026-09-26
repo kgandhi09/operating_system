@@ -62,14 +62,23 @@ KERNEL_SRC="$ROOT_DIR/$KERNEL_TREE"
 KERNEL_OUT="$OUT_DIR/linux"
 BUSYBOX_SRC="$ROOT_DIR/$BUSYBOX_TREE"
 BUSYBOX_OUT="$OUT_DIR/busybox"
+UTIL_LINUX_SRC="$ROOT_DIR/$UTIL_LINUX_TREE"
+E2FSPROGS_SRC="$ROOT_DIR/$E2FSPROGS_TREE"
+# Disk tools (util-linux, e2fsprogs) are installed here, then into the rootfs.
+TOOLS_OUT="$OUT_DIR/tools"
 ROOTFS_DIR="$OUT_DIR/rootfs"
 # Prebuilt binaries from GitHub releases (scripts/fetch-binaries.sh).
 BINARIES_DIR="$ROOT_DIR/userland/binaries/$ARCH"
 ISO_DIR="$OUT_DIR/iso"
 
-# tree_version <dir>: "7.2", "1.37.0", ... from a Kbuild-style top-level
-# Makefile (both Linux and BusyBox use VERSION/PATCHLEVEL/SUBLEVEL).
+# tree_version <dir>: "7.2", "1.37.0", ... Autotools release tarballs record
+# it in .tarball-version (util-linux) or version.h (e2fsprogs); Linux and
+# BusyBox in a Kbuild-style Makefile (VERSION/PATCHLEVEL/SUBLEVEL).
 tree_version() {
+    if [[ -f "$1/.tarball-version" ]]; then cat "$1/.tarball-version"; return; fi
+    if [[ -f "$1/version.h" ]]; then
+        sed -n 's/^#define E2FSPROGS_VERSION "\(.*\)"/\1/p' "$1/version.h"; return
+    fi
     [[ -f "$1/Makefile" ]] || { echo unknown; return; }
     awk -F' *= *' '
         $1 == "VERSION"      { v = $2 }

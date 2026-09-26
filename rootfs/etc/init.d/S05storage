@@ -1,0 +1,61 @@
+#!/bin/sh
+# Persistent storage of an installed jk_os (see jk-install).
+# The ext4 partition labeled JK_DATA is mounted at /data, then everything in
+# /data/etc/fstab (/boot, /home, swap, ...). /home falls back to /data/home.
+# Without a JK_DATA partition (the live ISO) the system stays RAM-only.
+
+FSTAB=/data/etc/fstab
+
+# check <device>: repair an ext4 filesystem before mounting it. e2fsck exit
+# codes: 0 clean, 1 fixed, 2 fixed (reboot advised), 4+ needs a human.
+check() {
+    fsck.ext4 -p "$1" >/dev/null 2>&1
+    [ $? -lt 4 ] && return 0
+    echo "storage: $1 has errors fsck -p cannot fix; run: fsck.ext4 $1" >&2
+    return 1
+}
+
+start() {
+    data=$(findfs LABEL=JK_DATA 2>/dev/null)
+    if [ -z "$data" ]; then
+        echo "storage: no JK_DATA partition, running from RAM only (install with: jk-install)"
+        return 0
+    fi
+    check "$data" || return 1
+    mkdir -p /data
+    mount -t ext4 -o noatime "$data" /data || return 1
+    echo "storage: $data on /data"
+
+    if [ -f "$FSTAB" ]; then
+        while read -r spec mnt type opts _; do
+            case "$spec" in ""|\#*) continue ;; esac
+            dev=$(findfs "$spec" 2>/dev/null) || { echo "storage: $spec ($mnt) not found" >&2; continue; }
+            if [ "$type" = swap ]; then
+                swapon "$dev" && echo "storage: swap on $dev"
+                continue
+            fi
+            [ "$type" = ext4 ] && { check "$dev" || continue; }
+            mkdir -p "$mnt"
+            mount -t "$type" -o "$opts" "$dev" "$mnt" && echo "storage: $dev on $mnt"
+        done < "$FSTAB"
+    fi
+
+    if ! mountpoint -q /home; then
+        mkdir -p /data/home
+        mount --bind /data/home /home
+    fi
+}
+
+stop() {
+    sync
+    swapoff -a 2>/dev/null
+    # Reverse name order unmounts /home (a bind of /data/home) before /data.
+    for m in $(awk '$2 == "/data" || $2 ~ "^/(boot|home|var/log|srv|opt|mnt)(/|$)" { print $2 }' /proc/mounts | sort -r); do
+        umount "$m" 2>/dev/null || mount -o remount,ro "$m" 2>/dev/null
+    done
+}
+
+case "$1" in
+    start) start ;;
+    stop)  stop ;;
+esac

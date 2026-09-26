@@ -1,0 +1,611 @@
+#!/bin/sh
+# jk-install: install jk_os onto a disk, with an Ubuntu-style choice between
+# erasing the disk and partitioning it by hand.
+#
+#   jk-install                                   interactive
+#   jk-install --auto /dev/sdX [--swap 2G] [--yes]  erase the disk, default layout
+#
+# The OS itself stays one kernel file (it carries the root filesystem), so an
+# installed disk holds:
+#   /boot  EFI system partition, FAT32 (JK_BOOT): the kernel, as the firmware's
+#          default boot loader \EFI\BOOT\BOOT<arch>.EFI
+#   /data  ext4 (JK_DATA): everything that must survive a reboot. Found by its
+#          label at boot (/etc/init.d/S05storage); /data/etc/fstab lists the
+#          other partitions (/home, swap, ...) by UUID.
+# Installed systems boot through UEFI.
+#
+# Nothing is written until the final summary is confirmed.
+
+set -u
+
+ESP_GUID=C12A7328-F81F-11D2-BA4B-00A0C93EC93B
+LINUX_GUID=0FC63DAF-8483-4772-8E79-3D69D8477DE4
+SWAP_GUID=0657FD6D-A4AB-43C4-84E5-0933C84B4F4F
+MIB=1048576
+MOUNTS_ALLOWED="/boot /data /home /var/log /srv /opt /mnt/<name>"
+
+WORK=/run/jk-install
+PLAN="$WORK/plan"      # num|start|size|type|state|action|mount|fs|label
+TARGET="$WORK/target"
+
+. /etc/os-release
+case "$(uname -m)" in
+    x86_64)  EFI_NAME=BOOTX64.EFI; ISO_KERNEL=boot/vmlinuz ;;
+    aarch64) EFI_NAME=BOOTAA64.EFI; ISO_KERNEL=boot/Image ;;
+    *) echo "jk-install: unsupported machine $(uname -m)" >&2; exit 1 ;;
+esac
+
+C_B=$(printf '\033[1m'); C_N=$(printf '\033[0m'); C_R=$(printf '\033[1;31m')
+say()  { printf '%s\n' "$*"; }
+warn() { printf '%swarning:%s %s\n' "$C_R" "$C_N" "$*" >&2; }
+die()  { printf '%serror:%s %s\n' "$C_R" "$C_N" "$*" >&2; cleanup; exit 1; }
+head_line() { printf '\n%s== %s ==%s\n\n' "$C_B" "$*" "$C_N"; }
+
+cleanup() {
+    for m in "$TARGET/boot" "$TARGET/data" "$WORK/media"; do
+        mountpoint -q "$m" 2>/dev/null && umount "$m"
+    done
+    return 0
+}
+trap 'cleanup; exit 130' INT TERM
+
+# ask <prompt> [default]: read one line into $ans.
+ask() {
+    if [ -n "${2:-}" ]; then printf '%s [%s]: ' "$1" "$2"; else printf '%s: ' "$1"; fi
+    read -r ans || die "input closed"
+    [ -n "$ans" ] || ans="${2:-}"
+}
+
+# ---------------------------------------------------------------- sizes
+
+# hsize <sectors>: human-readable size.
+hsize() {
+    awk -v s="$1" -v ss="$SECTOR" 'BEGIN {
+        b = s * ss; split("B KiB MiB GiB TiB", u, " "); i = 1
+        while (b >= 1024 && i < 5) { b /= 1024; i++ }
+        printf (i == 1 ? "%d %s" : "%.1f %s"), b, u[i] }'
+}
+
+# parse_size <text> <max sectors>: print the size in sectors, aligned down
+# to 1 MiB. Accepts 512M, 20G, 1.5T, ... (binary units); empty or "all" = max.
+parse_size() {
+    case "$1" in ""|all|rest|max) echo $(( $2 / ALIGN * ALIGN )); return 0 ;; esac
+    awk -v t="$1" -v ss="$SECTOR" -v al="$ALIGN" -v max="$2" 'BEGIN {
+        if (!match(toupper(t), /^[0-9]+(\.[0-9]+)?[KMGT]?(I?B)?$/)) exit 1
+        v = t + 0; u = toupper(t); gsub(/[0-9.]|I?B$/, "", u)
+        m = (u == "K") ? 1024 : (u == "M") ? 1024^2 : (u == "G") ? 1024^3 : (u == "T") ? 1024^4 : 1024^2
+        s = int(v * m / ss / al) * al
+        if (s <= 0 || s > max) exit 1
+        printf "%d\n", s }'
+}
+
+# ---------------------------------------------------------------- disks
+
+part_dev() {   # part_dev <disk> <num>: /dev/sda + 1 -> /dev/sda1, nvme0n1 -> nvme0n1p1
+    case "$1" in *[0-9]) echo "${1}p$2" ;; *) echo "$1$2" ;; esac
+}
+
+parent_disk() {   # parent_disk /dev/sda2 -> /dev/sda
+    name="${1##*/}"
+    if [ -f "/sys/class/block/$name/partition" ]; then
+        name=$(basename "$(readlink -f "/sys/class/block/$name/..")")
+    fi
+    echo "/dev/$name"
+}
+
+# The disk the installer booted from (the ISO), if it is still attached.
+live_disk() {
+    d=$(findfs LABEL=JK_OS 2>/dev/null) || return 1
+    parent_disk "$d"
+}
+
+disk_busy() {   # disk_busy <disk>: something on it is mounted or swapped on.
+    for p in "$1" "$1"?*; do
+        [ -b "$p" ] || continue
+        grep -q "^$p " /proc/mounts && return 0
+        grep -q "^$p " /proc/swaps && return 0
+    done
+    return 1
+}
+
+list_disks() {   # name|size-bytes|model
+    lsblk -dnpbo NAME,TYPE,RO,SIZE,MODEL 2>/dev/null | while read -r name type ro size model; do
+        [ "$type" = disk ] && [ "$ro" = 0 ] || continue
+        case "$name" in /dev/loop*|/dev/ram*|/dev/zram*|/dev/sr*) continue ;; esac
+        [ "$size" -gt 0 ] || continue
+        echo "$name|$size|$model"
+    done
+}
+
+choose_disk() {
+    head_line "Installation disk"
+    list_disks > "$WORK/disks"
+    [ -s "$WORK/disks" ] || die "no disks found to install on"
+    live=$(live_disk || true)
+    i=0
+    while IFS='|' read -r name size model; do
+        i=$((i + 1))
+        note=""
+        [ "$name" = "$live" ] && note="  (the jk_os installer medium)"
+        disk_busy "$name" && note="$note  (in use)"
+        printf '  %d) %-14s %10s  %s%s\n' "$i" "$name" \
+            "$(SECTOR=1 hsize "$size")" "${model:-}" "$note"
+    done < "$WORK/disks"
+    echo
+    while :; do
+        ask "Install on which disk (1-$i)"
+        DISK=$(sed -n "${ans}p" "$WORK/disks" 2>/dev/null | cut -d'|' -f1)
+        [ -n "$DISK" ] && break
+    done
+    DISK_MODEL=$(grep "^$DISK|" "$WORK/disks" | cut -d'|' -f3)
+    release_disk
+}
+
+# release_disk: a disk that jk_os itself mounted at boot (S05storage: /data,
+# /boot, /home, swap, ...) can be released; anything else must be unmounted
+# by hand. The kernel is saved first, as it may live on that disk's /boot.
+release_disk() {
+    disk_busy "$DISK" || return 0
+    for p in "$DISK" "$DISK"?*; do
+        [ -b "$p" ] || continue
+        awk -v p="$p" '$1 == p { print $2 }' /proc/mounts
+    done > "$WORK/busy"
+    if grep -vqE '^/(data|boot|home|var/log|srv|opt|mnt/[^/]+)$' "$WORK/busy"; then
+        die "$DISK is in use ($(grep -vE '^/(data|boot|home|var/log|srv|opt|mnt/[^/]+)$' "$WORK/busy" | tr '\n' ' ')); unmount it first"
+    fi
+    fetch_kernel
+    say "  $DISK holds this system's storage ($(tr '\n' ' ' < "$WORK/busy")); it has to be"
+    say "  unmounted before it can be changed. Files there stay until you format them."
+    if [ "$YES" = 0 ]; then
+        ask "  Unmount it now? (yes/no)" yes
+        [ "$ans" = yes ] || { cleanup; exit 0; }
+    fi
+    /etc/init.d/S05storage stop
+    disk_busy "$DISK" && die "$DISK is still in use"
+    return 0
+}
+
+# ---------------------------------------------------------------- plan
+
+# load_disk: read $DISK's partition table into $PLAN.
+load_disk() {
+    SECTOR=$(blockdev --getss "$DISK")
+    ALIGN=$((MIB / SECTOR))
+    TOTAL=$(( $(blockdev --getsize64 "$DISK") / SECTOR ))
+    NEWTABLE=0
+    : > "$PLAN"
+    if sfdisk -d "$DISK" > "$WORK/dump" 2>/dev/null && grep -q '^label: gpt' "$WORK/dump"; then
+        TABLE=gpt
+        FIRST=$(sed -n 's/^first-lba: //p' "$WORK/dump")
+        LAST=$(sed -n 's/^last-lba: //p' "$WORK/dump")
+        grep '^/dev/' "$WORK/dump" | while read -r dev _ rest; do
+            num=${dev##*[!0-9]}
+            start=$(echo "$rest" | sed -n 's/.*start= *\([0-9]*\).*/\1/p')
+            size=$(echo "$rest" | sed -n 's/.*size= *\([0-9]*\).*/\1/p')
+            type=$(echo "$rest" | sed -n 's/.*type=\([0-9A-Fa-f-]*\).*/\1/p')
+            info=$(blkid "$dev" 2>/dev/null)
+            fs=$(echo "$info" | sed -n 's/.*TYPE="\([^"]*\)".*/\1/p')
+            label=$(echo "$info" | sed -n 's/.*LABEL="\([^"]*\)".*/\1/p')
+            echo "$num|$start|$size|$type|old|none|-|${fs:--}|${label:--}"
+        done >> "$PLAN"
+    else
+        TABLE=$(sed -n 's/^label: //p' "$WORK/dump" 2>/dev/null)
+        TABLE=${TABLE:-none}
+        FIRST=$ALIGN
+        LAST=$((TOTAL - 34))   # the backup GPT header and entries
+    fi
+    return 0
+}
+
+new_table() {   # plan an empty GPT: every existing partition goes away.
+    NEWTABLE=1
+    TABLE=gpt
+    FIRST=$ALIGN
+    LAST=$((TOTAL - 34))
+    : > "$PLAN"
+}
+
+type_name() {
+    case "$1" in
+        "$ESP_GUID") echo "EFI System" ;;
+        "$LINUX_GUID") echo "Linux" ;;
+        "$SWAP_GUID") echo "Linux swap" ;;
+        21686148-6449-6E6F-744E-656564454649) echo "BIOS boot" ;;
+        EBD0A0A2-B9E5-4433-87C0-68B6B72699C7) echo "Microsoft data" ;;
+        E3C9E316-0B5C-4DB8-817D-F92DF00215AE) echo "MS reserved" ;;
+        DE94BBA4-06D1-4D40-A16A-BFD50179D6AC) echo "Windows recovery" ;;
+        E6D6D379-F507-44C2-A23C-238F2A3DF928) echo "Linux LVM" ;;
+        *) echo "other" ;;
+    esac
+}
+
+# free_regions: "start|size" of each gap of at least 1 MiB, in disk order.
+free_regions() {
+    awk -F'|' '$5 != "del" { print $2, $3 }' "$PLAN" | sort -n |
+    awk -v first="$FIRST" -v last="$LAST" -v al="$ALIGN" '
+        function gap(s, e) {                 # e is the last usable sector
+            s = int((s + al - 1) / al) * al
+            sz = int((e + 1 - s) / al) * al
+            if (sz >= al) printf "%d|%d\n", s, sz
+        }
+        BEGIN { cur = first }
+        { if ($1 > cur) gap(cur, $1 - 1); if ($1 + $2 > cur) cur = $1 + $2 }
+        END { gap(cur, last) }'
+}
+
+plan_get() { grep "^$1|" "$PLAN" | grep -v '|del|' | head -n1; }
+
+next_num() {   # lowest partition number not in use (a deleted one is free)
+    i=1
+    while [ -n "$(plan_get "$i")" ]; do i=$((i + 1)); done
+    echo "$i"
+}
+plan_set() {   # plan_set <num> <line>: replace the live entry for <num>
+    grep -v "^$1|" "$PLAN" > "$PLAN.tmp"
+    grep "^$1|[^|]*|[^|]*|[^|]*|del|" "$PLAN" >> "$PLAN.tmp"
+    [ -z "${2:-}" ] || echo "$2" >> "$PLAN.tmp"
+    sort -t'|' -k2,2n "$PLAN.tmp" > "$PLAN"
+}
+
+show_plan() {
+    head_line "$DISK  $(hsize "$TOTAL")  ${DISK_MODEL:-}  (partition table: $TABLE$([ "$NEWTABLE" = 1 ] && echo ', new'))"
+    printf '  %-4s %-16s %10s  %-15s %-8s %-9s %s\n' "#" "Device" "Size" "Type" "Filesystem" "Mount" "Action"
+    {
+        awk -F'|' '$5 != "del" { print "p|" $0 }' "$PLAN"
+        free_regions | sed 's/^/f||/'
+    } | sort -t'|' -k3,3n > "$WORK/rows"
+    fi_=0
+    : > "$WORK/free"
+    while IFS='|' read -r kind a b c d e f g h i; do
+        if [ "$kind" = f ]; then
+            fi_=$((fi_ + 1)); echo "$b|$c" >> "$WORK/free"
+            printf '  %-4s %-16s %10s\n' "F$fi_" "free space" "$(hsize "$c")"
+            continue
+        fi
+        # a=num b=start c=size d=type e=state f=action g=mount h=fs i=label
+        case "$f" in
+            none) act=$([ "$e" = new ] && echo "create" || echo "") ; fsdisp="$h" ;;
+            keep) act="use as is"; fsdisp="$h" ;;
+            *)    act="format$([ "$e" = new ] && echo ' (new)')"; fsdisp="$f" ;;
+        esac
+        [ "$fsdisp" = - ] && fsdisp=""
+        mnt="$g"; [ "$mnt" = - ] && mnt=""
+        printf '  %-4s %-16s %10s  %-15s %-8s %-9s %s\n' "$a" "$(part_dev "$DISK" "$a")" \
+            "$(hsize "$c")" "$(type_name "$d")" "$fsdisp" "$mnt" "$act"
+    done < "$WORK/rows"
+    awk -F'|' '$5 == "del" && $1 != "" { printf "  (partition %s will be deleted)\n", $1 }' "$PLAN"
+    echo
+}
+
+# choose_use: ask how to use a partition; sets $use_action and $use_mount.
+# <fs> is its current filesystem ("-" for none or a new partition).
+choose_use() {
+    fs="$1"
+    say "  Use as:"
+    say "    1) EFI system partition, mounted at /boot (format FAT32)"
+    say "    2) ext4, format"
+    say "    3) swap"
+    [ "$fs" != - ] && say "    4) keep the existing $fs filesystem (no format)"
+    say "    0) do not use"
+    ask "  Choice" 2
+    case "$ans" in
+        1) use_action=vfat; use_mount=/boot; return 0 ;;
+        2) use_action=ext4 ;;
+        3) use_action=swap; use_mount=swap; return 0 ;;
+        4) [ "$fs" != - ] || return 1; use_action=keep ;;
+        0) use_action=none; use_mount=-; return 0 ;;
+        *) return 1 ;;
+    esac
+    if [ "$use_action" = keep ] && [ "$fs" = vfat ]; then
+        ask "  Mount point (/boot, or - for none)" /boot
+    else
+        ask "  Mount point ($MOUNTS_ALLOWED, or - for none)" /data
+    fi
+    use_mount="$ans"
+    case "$use_mount" in
+        -|/boot|/data|/home|/var/log|/srv|/opt) return 0 ;;
+        /mnt/*/*) ;;
+        /mnt/?*) return 0 ;;
+    esac
+    warn "the OS itself runs from RAM; only $MOUNTS_ALLOWED can live on disk"
+    return 1
+}
+
+type_for() {   # partition type GUID for an action (empty: leave it)
+    case "$1" in vfat) echo "$ESP_GUID" ;; ext4) echo "$LINUX_GUID" ;; swap) echo "$SWAP_GUID" ;; esac
+}
+
+act_new() {
+    [ -s "$WORK/free" ] || { warn "no free space; delete a partition first"; return; }
+    count=$(wc -l < "$WORK/free")
+    if [ "$count" = 1 ]; then r=1; else ask "Which free space (F1-F$count)" F1; r=${ans#F}; fi
+    region=$(sed -n "${r}p" "$WORK/free"); [ -n "$region" ] || return
+    start=${region%|*}; max=${region#*|}
+    ask "Size (e.g. 512M, 20G; empty = all $(hsize "$max"))"
+    size=$(parse_size "$ans" "$max") || { warn "invalid size (max $(hsize "$max"))"; return; }
+    choose_use - || { warn "invalid choice"; return; }
+    num=$(next_num)
+    type=$(type_for "$use_action"); type=${type:-$LINUX_GUID}
+    plan_set "$num" "$num|$start|$size|$type|new|$use_action|$use_mount|-|-"
+}
+
+act_edit() {
+    ask "Edit which partition (number)"
+    line=$(plan_get "$ans"); [ -n "$line" ] || { warn "no partition $ans"; return; }
+    IFS='|' read -r num start size type state action mount fs label <<EOF
+$line
+EOF
+    choose_use "$fs" || { warn "invalid choice"; return; }
+    if [ "$use_action" != keep ] && [ "$use_action" != none ]; then
+        t=$(type_for "$use_action"); type=${t:-$type}
+    fi
+    [ "$use_mount" = /boot ] && type=$ESP_GUID
+    plan_set "$num" "$num|$start|$size|$type|$state|$use_action|$use_mount|$fs|$label"
+}
+
+act_delete() {
+    ask "Delete which partition (number)"
+    line=$(plan_get "$ans"); [ -n "$line" ] || { warn "no partition $ans"; return; }
+    num=${line%%|*}
+    case "$line" in
+        *"|new|"*) plan_set "$num" ;;
+        *) plan_set "$num" "$(echo "$line" | awk -F'|' -v OFS='|' '{ $5 = "del"; print }')" ;;
+    esac
+}
+
+# validate: the plan must give exactly one /boot (FAT32 ESP) and one /data (ext4).
+validate() {
+    ok=0
+    live=$(awk -F'|' '$5 != "del"' "$PLAN")
+    for m in /boot /data; do
+        c=$(echo "$live" | awk -F'|' -v m="$m" '$7 == m' | grep -c .)
+        [ "$c" = 1 ] || { warn "exactly one partition must be mounted at $m (found $c)"; ok=1; }
+    done
+    dup=$(echo "$live" | awk -F'|' '$7 != "-" && $7 != "swap" { print $7 }' | sort | uniq -d)
+    [ -z "$dup" ] || { warn "mount point used twice: $dup"; ok=1; }
+    echo "$live" | { while IFS='|' read -r num start size type state action mount fs label; do
+        [ -n "$num" ] || continue
+        eff="$action"; [ "$action" = keep ] && eff="$fs"
+        case "$mount" in
+            /boot) [ "$eff" = vfat ] || { warn "/boot (partition $num) must be FAT32"; exit 1; }
+                   [ "$size" -ge $((256 * ALIGN)) ] || { warn "/boot must be at least 256 MiB (the kernel holds the whole OS)"; exit 1; } ;;
+            /data) [ "$eff" = ext4 ] || { warn "/data (partition $num) must be ext4"; exit 1; } ;;
+        esac
+        if [ "$mount" != /data ] && [ "$label" = JK_DATA ] && [ "$action" != ext4 ] && [ "$action" != vfat ] && [ "$action" != swap ]; then
+            warn "partition $num is labeled JK_DATA but is not /data; format it or delete it"; exit 1
+        fi
+    done; true; } || ok=1
+    return $ok
+}
+
+partition_editor() {
+    while :; do
+        show_plan
+        say "  n) new partition   e) edit partition   d) delete partition"
+        say "  t) new empty partition table   u) undo all changes"
+        say "  c) continue        q) quit"
+        ask "Action" c
+        case "$ans" in
+            n) [ "$TABLE" = gpt ] || { warn "the disk has no GPT partition table: use t first"; continue; }
+               act_new ;;
+            e) act_edit ;;
+            d) act_delete ;;
+            t) ask "Remove every partition on $DISK? (yes/no)" no
+               [ "$ans" = yes ] && new_table ;;
+            u) load_disk ;;
+            c) [ "$TABLE" = gpt ] || { warn "jk_os needs a GPT partition table: use t"; continue; }
+               validate && return 0 ;;
+            q) cleanup; exit 0 ;;
+        esac
+    done
+}
+
+auto_layout() {   # auto_layout <swap sectors>: ESP + [swap] + JK_DATA on an empty GPT.
+    new_table
+    esp=$((512 * ALIGN))
+    swap=$1
+    avail=$(( (LAST - FIRST + 1) / ALIGN * ALIGN ))
+    [ "$avail" -ge $((esp + swap + 512 * ALIGN)) ] || die "$DISK is too small"
+    s=$FIRST
+    echo "1|$s|$esp|$ESP_GUID|new|vfat|/boot|-|-" > "$PLAN"
+    s=$((s + esp)); num=2
+    if [ "$swap" -gt 0 ]; then
+        echo "2|$s|$swap|$SWAP_GUID|new|swap|swap|-|-" >> "$PLAN"
+        s=$((s + swap)); num=3
+    fi
+    echo "$num|$s|$(( (LAST + 1 - s) / ALIGN * ALIGN ))|$LINUX_GUID|new|ext4|/data|-|-" >> "$PLAN"
+}
+
+# ---------------------------------------------------------------- apply
+
+summary() {
+    head_line "Summary"
+    [ "$NEWTABLE" = 1 ] && say "  - erase $DISK and create a new GPT partition table"
+    awk -F'|' '$5 == "del" { print $1 }' "$PLAN" | while read -r num; do
+        say "  - delete partition $(part_dev "$DISK" "$num")"
+    done
+    awk -F'|' '$5 != "del"' "$PLAN" | while IFS='|' read -r num start size type state action mount fs label; do
+        dev=$(part_dev "$DISK" "$num")
+        [ "$state" = new ] && say "  - create $dev ($(hsize "$size"), $(type_name "$type"))"
+        case "$action" in
+            vfat|ext4|swap) say "  - format $dev as $action" ;;
+        esac
+        [ "$mount" != - ] && say "  - use $dev as $mount"
+    done
+    say "  - install $PRETTY_NAME to /boot/EFI/BOOT/$EFI_NAME"
+    echo
+    others=$(findfs LABEL=JK_DATA 2>/dev/null || true)
+    if [ -n "$others" ] && [ "$(parent_disk "$others")" != "$DISK" ]; then
+        warn "$others on another disk is also labeled JK_DATA; the first one found at boot is used"
+    fi
+    [ -d /sys/firmware/efi ] || warn "this machine booted without UEFI; the installed system boots only through UEFI"
+}
+
+wait_dev() {
+    i=0
+    while [ ! -b "$1" ] && [ $i -lt 50 ]; do sleep 0.1; i=$((i + 1)); done
+    [ -b "$1" ] || die "$1 did not appear"
+}
+
+fetch_kernel() {   # copy the running OS's kernel to $WORK/kernel before touching disks
+    [ -s "$WORK/kernel" ] && return 0
+    # The installer medium first, then an installed system's own /boot.
+    if [ -n "${JK_KERNEL:-}" ]; then cp "$JK_KERNEL" "$WORK/kernel" && return 0; fi
+    if dev=$(findfs LABEL=JK_OS 2>/dev/null); then
+        mkdir -p "$WORK/media"
+        mount -t iso9660 -o ro "$dev" "$WORK/media" || die "cannot mount $dev"
+        cp "$WORK/media/$ISO_KERNEL" "$WORK/kernel" || die "no $ISO_KERNEL on $dev"
+        umount "$WORK/media"
+        return 0
+    fi
+    [ -f "/boot/EFI/BOOT/$EFI_NAME" ] && cp "/boot/EFI/BOOT/$EFI_NAME" "$WORK/kernel" && return 0
+    die "no kernel to install: installer medium (label JK_OS) not found; set JK_KERNEL=<kernel file>"
+}
+
+run() { "$@" || die "failed: $*"; }
+
+apply() {
+    head_line "Installing"
+    fetch_kernel
+    if [ "$NEWTABLE" = 1 ]; then
+        say "  new partition table on $DISK"
+        run wipefs -qa "$DISK"
+        echo 'label: gpt' | sfdisk -q --wipe always "$DISK" || die "cannot write a partition table"
+    else
+        for num in $(awk -F'|' '$5 == "del" { print $1 }' "$PLAN"); do
+            grep -q "^$num|[^|]*|[^|]*|[^|]*|new|" "$PLAN" && continue   # replaced below
+            say "  deleting $(part_dev "$DISK" "$num")"
+            run sfdisk -q --delete "$DISK" "$num"
+        done
+    fi
+    awk -F'|' '$5 != "del"' "$PLAN" > "$WORK/live"
+    while IFS='|' read -r num start size type state action mount fs label; do
+        dev=$(part_dev "$DISK" "$num")
+        if [ "$state" = new ]; then
+            if [ "$NEWTABLE" = 0 ] && grep -q "^$num|[^|]*|[^|]*|[^|]*|del|" "$PLAN"; then
+                run sfdisk -q --delete "$DISK" "$num"
+            fi
+            say "  creating $dev"
+            echo "$dev : start=$start, size=$size, type=$type" |
+                sfdisk -q --append --wipe-partitions always "$DISK" >/dev/null || die "cannot create $dev"
+        else
+            cur=$(sfdisk --part-type "$DISK" "$num")
+            [ "$cur" = "$type" ] || run sfdisk -q --part-type "$DISK" "$num" "$type"
+        fi
+    done < "$WORK/live"
+    partx -u "$DISK" 2>/dev/null
+
+    while IFS='|' read -r num start size type state action mount fs label; do
+        dev=$(part_dev "$DISK" "$num")
+        wait_dev "$dev"
+        case "$mount" in
+            /boot) lbl=JK_BOOT ;;
+            /data) lbl=JK_DATA ;;
+            swap)  lbl=JK_SWAP ;;
+            *)     lbl=$(echo "JK${mount}" | tr '/a-z' '_A-Z' | cut -c1-16) ;;
+        esac
+        case "$action" in
+            vfat) say "  formatting $dev (FAT32)"; run mkfs.vfat -n "$lbl" "$dev" >/dev/null ;;
+            ext4) say "  formatting $dev (ext4)";  run mkfs.ext4 -q -F -L "$lbl" "$dev" ;;
+            swap) say "  formatting $dev (swap)";  run mkswap -L "$lbl" "$dev" >/dev/null ;;
+            keep) [ "$mount" = /data ] && run e2label "$dev" JK_DATA ;;
+        esac
+    done < "$WORK/live"
+
+    esp=$(part_dev "$DISK" "$(awk -F'|' '$7 == "/boot" { print $1 }' "$WORK/live")")
+    data=$(part_dev "$DISK" "$(awk -F'|' '$7 == "/data" { print $1 }' "$WORK/live")")
+    mkdir -p "$TARGET/boot" "$TARGET/data"
+    run mount -t vfat "$esp" "$TARGET/boot"
+    run mount -t ext4 "$data" "$TARGET/data"
+
+    say "  installing the kernel"
+    run mkdir -p "$TARGET/boot/EFI/BOOT"
+    run cp "$WORK/kernel" "$TARGET/boot/EFI/BOOT/$EFI_NAME"
+
+    say "  writing /data/etc/fstab"
+    run mkdir -p "$TARGET/data/etc" "$TARGET/data/home"
+    {
+        echo "# Written by jk-install. /data itself is found by its label (JK_DATA)."
+        echo "# <device>  <mount point>  <type>  <options>  <dump>  <fsck pass>"
+        while IFS='|' read -r num start size type state action mount fs label; do
+            [ "$mount" = - ] || [ "$mount" = /data ] && continue
+            dev=$(part_dev "$DISK" "$num")
+            uuid=$(blkid "$dev" | sed -n 's/.* UUID="\([^"]*\)".*/\1/p')
+            [ -n "$uuid" ] || die "no UUID on $dev"
+            case "$mount" in
+                /boot) echo "UUID=$uuid  /boot  vfat  noatime,umask=0077  0  0" ;;
+                swap)  echo "UUID=$uuid  none  swap  sw  0  0" ;;
+                *)     echo "UUID=$uuid  $mount  ext4  noatime  0  2" ;;
+            esac
+        done < "$WORK/live"
+    } > "$TARGET/data/etc/fstab"
+    printf 'OS=%s\nVERSION=%s\nARCH=%s\nDISK=%s\nDATE=%s\n' "$NAME" "$VERSION_ID" \
+        "$(uname -m)" "$DISK" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$TARGET/data/etc/jk_os-install"
+
+    sync
+    cleanup
+    head_line "Done"
+    say "  $PRETTY_NAME is installed on $DISK."
+    say "  Remove the installer medium and reboot; the firmware boots $DISK through UEFI."
+    return 0
+}
+
+# ---------------------------------------------------------------- main
+
+usage() { sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
+
+[ "$(id -u)" = 0 ] || { echo "jk-install: run as root" >&2; exit 1; }
+for t in sfdisk wipefs partx mkfs.ext4 e2label mkfs.vfat mkswap blkid findfs lsblk; do
+    command -v "$t" >/dev/null || { echo "jk-install: missing $t" >&2; exit 1; }
+done
+rm -rf "$WORK"; mkdir -p "$WORK"
+
+AUTO="" SWAP=0 YES=0
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --auto) AUTO="${2:-}"; shift ;;
+        --swap) SWAP="${2:-}"; shift ;;
+        --yes)  YES=1 ;;
+        -h|--help) usage ;;
+        *) usage 1 ;;
+    esac
+    shift
+done
+
+if [ -n "$AUTO" ]; then
+    DISK="$AUTO"
+    [ -b "$DISK" ] || die "$DISK is not a block device"
+    DISK_MODEL=""
+    release_disk
+    load_disk
+    swap=0
+    [ "$SWAP" = 0 ] || swap=$(parse_size "$SWAP" "$LAST") || die "bad --swap size: $SWAP"
+    auto_layout "$swap"
+else
+    head_line "Install $PRETTY_NAME"
+    say "  The system runs from RAM; the disk keeps the kernel (/boot) and your"
+    say "  data (/data, /home, ...), so installing needs little space."
+    choose_disk
+    load_disk
+    head_line "Installation type"
+    say "  1) Erase disk and install $NAME"
+    say "     Everything on $DISK is deleted."
+    say "  2) Something else"
+    say "     Create, delete and choose partitions yourself."
+    ask "Choice" 1
+    case "$ans" in
+        1) ask "Swap partition size (0 for none, e.g. 2G)" 0
+           swap=0
+           [ "$ans" = 0 ] || swap=$(parse_size "$ans" "$LAST") || die "bad size: $ans"
+           auto_layout "$swap" ;;
+        2) partition_editor ;;
+        *) die "no such choice" ;;
+    esac
+fi
+
+summary
+if [ "$YES" = 0 ]; then
+    ask "Write these changes to $DISK? Type 'yes' to continue" no
+    [ "$ans" = yes ] || { say "Nothing was changed."; cleanup; exit 0; }
+fi
+apply

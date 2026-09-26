@@ -4,6 +4,7 @@ A minimal 64-bit Linux system built from source:
 
 - the **official Linux kernel** from Linus Torvalds' mainline releases, kept in this repo as plain source,
 - **BusyBox** as the base userland (shell, init, coreutils, networking),
+- **util-linux** and **e2fsprogs** disk tools (GPT partitioning, ext4) for the installer,
 - a short list of **prebuilt static binaries pulled from GitHub releases** (`jq`, `rg`, `fd`, ...),
 - no display manager, X or Wayland: text console on screen plus serial console.
 
@@ -23,8 +24,10 @@ make                      # build out/jk_os-<ver>-<host arch>.iso
 make run                  # boot it in QEMU on this terminal (Ctrl-A X quits)
 ```
 
-Log in as `root` (no password). The system runs entirely from RAM, so changes
-are lost on reboot.
+Log in as `root` (no password). The live system runs entirely from RAM, so
+changes are lost on reboot, unless you install it to a disk (`jk-install`, see
+[Installing to a disk](#installing-to-a-disk)).
+
 
 ### Other architecture
 
@@ -55,6 +58,7 @@ through `sudo`. **Everything on the target device is erased.**
 | Bootloader | GRUB (`grub-mkrescue`) | none: the kernel's EFI stub is `EFI/BOOT/BOOTAA64.EFI` |
 | Kernel | `bzImage` | `Image` |
 | Console | `tty0` + `ttyS0` (GRUB menu picks which is primary) | from firmware (DT `stdout-path` / ACPI SPCR) + `tty1` |
+| Boots from | CD/DVD, USB stick, disk | USB stick or disk only: the kernel is larger than the 32 MiB an El Torito (CD) boot image can be |
 
 The kernel is built with **no loadable modules**, and the root filesystem is
 its **built-in initramfs**. The whole OS is therefore one kernel file.
@@ -69,6 +73,8 @@ Makefile                  entry point (see `make help`)
 versions.env              OS name/version, which source tree each arch uses
 kernel/mainline/          Linux source, Torvalds' mainline release (plain files)
 userland/busybox/         BusyBox source (plain files)
+userland/util-linux/      util-linux source: sfdisk, fdisk, lsblk, wipefs, partx
+userland/e2fsprogs/       e2fsprogs source: mkfs.ext4, e2fsck, resize2fs, tune2fs
 configs/kernel/           kernel config fragments merged over the arch defconfig
 configs/busybox/          BusyBox config fragments merged over defconfig
 configs/binaries/         GitHub binaries: common.list (every arch) + <arch>.list
@@ -81,7 +87,7 @@ build/                    (generated) per-arch build trees
 out/                      (generated) ISO images
 ```
 
-Build steps can run individually: `make busybox | binaries | rootfs | kernel | iso`.
+Build steps can run individually: `make busybox | tools | binaries | rootfs | kernel | iso`.
 The kernel and BusyBox build out of tree under `build/<arch>/`. The source
 trees stay pristine, and both architectures can build side by side from the
 same source.
@@ -107,6 +113,8 @@ busybox.net, checks the published SHA-256 sum, and swaps the tree in place:
 ```sh
 scripts/update-source.sh kernel 7.3                 # kernel/mainline -> 7.3
 scripts/update-source.sh busybox 1.38.0
+scripts/update-source.sh util-linux 2.42.5
+scripts/update-source.sh e2fsprogs 1.47.5
 scripts/update-source.sh kernel ./linux-7.3.tar.xz  # offline, from a tarball you have
 make clean && make
 ```
@@ -121,6 +129,47 @@ vendor tree for a specific board. Unpack it as `kernel/<name>`, or use
 `Documentation/.renames.txt`), and a plain `git add` would silently skip them.
 The trees never collect build output, because everything builds out of tree
 in `build/`.
+
+## Installing to a disk
+
+Boot the ISO, log in as root and run `jk-install`. As in Ubuntu's installer, you
+pick a disk and then either:
+
+1. **Erase disk and install**: creates a new GPT table with the default layout below
+   and asks only whether you want swap.
+2. **Something else**: a partition editor. It lists the partitions and free space,
+   and you can create (`n`), change what a partition is used for (`e`), delete (`d`),
+   start a fresh GPT table (`t`), or undo everything (`u`). An existing partition can be
+   formatted or kept with its filesystem and files. Nothing is written until you
+   confirm the summary by typing `yes`.
+
+The OS itself stays one kernel file that runs from RAM, so a disk only holds the
+kernel and your data:
+
+| Mount | Filesystem | Label | Required | Holds |
+|---|---|---|---|---|
+| `/boot` | FAT32, EFI system partition | `JK_BOOT` | yes (≥ 256 MiB; default 512 MiB) | the kernel, as `EFI/BOOT/BOOTX64.EFI` / `BOOTAA64.EFI` |
+| `/data` | ext4 | `JK_DATA` | yes (default: rest of the disk) | everything that must survive a reboot; `/home` is `/data/home` unless given its own partition |
+| `/home`, `/var/log`, `/srv`, `/opt`, `/mnt/<name>` | ext4 | | no | whatever you split out |
+| swap | swap | `JK_SWAP` | no | |
+
+At boot, `/etc/init.d/S05storage` looks for the `JK_DATA` partition. It checks the
+partition with `fsck.ext4 -p` and mounts it on `/data`. Then it mounts what the
+installer listed (by UUID) in `/data/etc/fstab`, and bind-mounts `/data/home` on
+`/home` unless `/home` has its own partition. With no `JK_DATA` partition, as on
+the live ISO with no installed disk attached, the system stays RAM-only.
+
+- **Booting.** An installed disk boots through **UEFI** on both architectures. The
+  kernel's EFI stub is the firmware's default boot file, so no boot loader or NVRAM
+  entry is involved. Legacy BIOS is only supported for the live ISO. On x86_64,
+  consoles come from the built-in command line (`CONFIG_CMDLINE`).
+- **Reinstalling.** The installer can also reinstall or repartition a disk whose
+  `/data` is mounted, including the disk the system booted from, because the OS runs
+  from RAM. It unmounts that disk's storage first. It installs the kernel of the
+  installer medium (label `JK_OS`), or the running system's `/boot` kernel if no
+  medium is attached. `JK_KERNEL=<file>` overrides both.
+- **Scripted installs.** `jk-install --auto /dev/sdX [--swap 2G] --yes` erases
+  the disk and uses the default layout without asking.
 
 ## Binaries from GitHub
 

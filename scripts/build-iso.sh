@@ -48,8 +48,10 @@ aarch64)
     mcopy -i "$esp" "$kernel" ::/EFI/BOOT/BOOTAA64.EFI
 
     log "building aarch64 ISO (EFI stub, no bootloader)"
-    # The ESP is appended as GPT partition 2 and doubles as the El Torito EFI
-    # boot image, so the same file boots as optical media and as a USB disk.
+    # The ESP is appended as GPT partition 2, which is how UEFI boots the ISO
+    # written to a USB stick or disk. It is also the El Torito EFI image, but
+    # an El Torito image can be at most 32 MiB and the kernel is larger, so
+    # firmware generally can't boot this ISO from a CD/DVD.
     xorriso -as mkisofs \
         -iso-level 3 -full-iso9660-filenames -joliet -rational-rock \
         -volid JK_OS \

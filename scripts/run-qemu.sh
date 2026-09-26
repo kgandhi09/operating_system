@@ -17,6 +17,9 @@ first_file() {
 }
 
 accel=(-cpu max)
+# Emulated arm64 (TCG): with -cpu max the kernel doesn't get past the
+# firmware in a reasonable time; a plain Cortex-A72 boots in seconds.
+[[ "$ARCH" == aarch64 ]] && accel=(-cpu cortex-a72)
 if [[ "$ARCH" == "$HOST_ARCH" && -w /dev/kvm ]]; then
     accel=(-enable-kvm -cpu host)
 fi
@@ -53,9 +56,11 @@ aarch64)
     else
         die "aarch64 UEFI firmware not found (install qemu-efi-aarch64)"
     fi
+    # The ISO goes in as a (USB-stick-like) disk, not a CD: its EFI system
+    # partition holds the whole kernel, too big for an El Torito boot image
+    # (32 MiB at most), so UEFI only finds it through the GPT.
     exec qemu-system-aarch64 -machine virt,gic-version=max "${accel[@]}" "${fw[@]}" -m "$MEM" -smp 2 \
-        -device virtio-scsi-pci -device scsi-cd,drive=cd \
-        -drive "if=none,id=cd,media=cdrom,readonly=on,file=$ISO" \
+        -drive "if=virtio,format=raw,readonly=on,file=$ISO" \
         -nic user,model=virtio-net-pci \
         -nographic
     ;;
