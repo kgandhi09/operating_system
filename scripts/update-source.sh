@@ -22,7 +22,7 @@ need tar sha256sum
 #   sums:   $base (directory URL), $name (tarball), $sums (checksum file URL)
 #   github: $repo, $tag, $name (release asset)
 #   git:    $url, $tag
-SOURCES="kernel busybox util-linux e2fsprogs shadow libxcrypt zlib libffi pcre2 glib
+SOURCES="kernel busybox util-linux e2fsprogs shadow libxcrypt sudo zlib libffi pcre2 glib
 expat dbus eudev libndp libnl openssl wpa_supplicant ncurses readline networkmanager"
 source_spec() {
     local v="$2"
@@ -51,6 +51,7 @@ source_spec() {
             base="https://gitlab.freedesktop.org/api/v4/projects/411/packages/generic/NetworkManager/$v"
             sums="$base/$name.sha256sum" ;;
         shadow)    tree=$SHADOW_TREE    kind=github repo=shadow-maint/shadow tag="$v"      name="shadow-$v.tar.xz" ;;
+        sudo)      tree=$SUDO_TREE      kind=github repo=sudo-project/sudo   tag="v$v"     name="sudo-$v.tar.gz" ;;
         libxcrypt) tree=$LIBXCRYPT_TREE kind=github repo=besser82/libxcrypt  tag="v$v"     name="libxcrypt-$v.tar.xz" ;;
         zlib)      tree=$ZLIB_TREE      kind=github repo=madler/zlib         tag="v$v"     name="zlib-$v.tar.xz" ;;
         libffi)    tree=$LIBFFI_TREE    kind=github repo=libffi/libffi       tag="v$v"     name="libffi-$v.tar.gz" ;;

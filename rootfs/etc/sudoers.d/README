@@ -1,0 +1,5 @@
+#
+# Files in this directory are read by sudo after /etc/sudoers, in name
+# order; names containing "." or ending in "~" are skipped. Create and edit
+# them with: visudo -f /etc/sudoers.d/<name>
+#

@@ -8,13 +8,13 @@
 #       passwords come from $JK_USER_PASSWORD and $JK_ROOT_PASSWORD; with no
 #       --user, the accounts are set up at first boot (jk-setup)
 #
-# The OS itself stays one kernel file (it carries the root filesystem), so an
-# installed disk holds:
+# An installed disk holds:
 #   /boot  EFI system partition, FAT32 (JK_BOOT): the kernel, as the firmware's
-#          default boot loader \EFI\BOOT\BOOT<arch>.EFI
-#   /data  ext4 (JK_DATA): everything that must survive a reboot. Found by its
-#          label at boot (/etc/init.d/S05storage); /data/etc/fstab lists the
-#          other partitions (/home, swap, ...) by UUID.
+#          default boot loader \EFI\BOOT\BOOT<arch>.EFI. Its built-in
+#          initramfs finds /data by its label and starts the OS from it.
+#   /data  ext4 (JK_DATA): the OS image (system/jk_os.squashfs, read-only),
+#          everything changed on top of it (system/root), and your files.
+#          /data/etc/fstab lists the other partitions (/home, swap, ...).
 # Installed systems boot through UEFI.
 #
 # Nothing is written until the final summary is confirmed.
@@ -130,7 +130,7 @@ choose_disk() {
     while IFS='|' read -r name size model; do
         i=$((i + 1))
         note=""
-        [ "$name" = "$live" ] && note="  (the jk_os installer medium)"
+        [ "$name" = "$live" ] && note="  (the installer medium: not available)"
         disk_busy "$name" && note="$note  (in use)"
         printf '  %d) %-14s %10s  %s%s\n' "$i" "$name" \
             "$(SECTOR=1 hsize "$size")" "${model:-}" "$note"
@@ -142,30 +142,15 @@ choose_disk() {
         [ -n "$DISK" ] && break
     done
     DISK_MODEL=$(grep "^$DISK|" "$WORK/disks" | cut -d'|' -f3)
-    release_disk
+    check_disk
 }
 
-# release_disk: a disk that jk_os itself mounted at boot (S05storage: /data,
-# /boot, /home, swap, ...) can be released; anything else must be unmounted
-# by hand. The kernel is saved first, as it may live on that disk's /boot.
-release_disk() {
-    disk_busy "$DISK" || return 0
-    for p in "$DISK" "$DISK"?*; do
-        [ -b "$p" ] || continue
-        awk -v p="$p" '$1 == p { print $2 }' /proc/mounts
-    done > "$WORK/busy"
-    if grep -vqE '^/(data|boot|home|var/log|srv|opt|mnt/[^/]+)$' "$WORK/busy"; then
-        die "$DISK is in use ($(grep -vE '^/(data|boot|home|var/log|srv|opt|mnt/[^/]+)$' "$WORK/busy" | tr '\n' ' ')); unmount it first"
-    fi
-    fetch_kernel
-    say "  $DISK holds this system's storage ($(tr '\n' ' ' < "$WORK/busy")); it has to be"
-    say "  unmounted before it can be changed. Files there stay until you format them."
-    if [ "$YES" = 0 ]; then
-        ask "  Unmount it now? (yes/no)" yes
-        [ "$ans" = yes ] || { cleanup; exit 0; }
-    fi
-    /etc/init.d/S05storage stop
-    disk_busy "$DISK" && die "$DISK is still in use"
+# check_disk: the chosen disk must be free. On the live system the OS runs
+# from the installer medium; on an installed one, from its /data.
+check_disk() {
+    live=$(live_disk || true)
+    [ "$DISK" != "$live" ] || die "$DISK is the installer medium this system runs from"
+    disk_busy "$DISK" && die "$DISK is in use (mounted or swap); this system may be running from it"
     return 0
 }
 
@@ -436,7 +421,8 @@ summary() {
         esac
         [ "$mount" != - ] && say "  - use $dev as $mount"
     done
-    say "  - install $PRETTY_NAME to /boot/EFI/BOOT/$EFI_NAME"
+    say "  - install $PRETTY_NAME: the kernel to /boot/EFI/BOOT/$EFI_NAME, the"
+    say "    system image ($(du -h "$IMAGE_FILE" | cut -f1)) to /data/system/jk_os.squashfs"
     case "$ACCOUNTS" in
         new)   accounts_summary ;;
         keep)  say "  - keep the users and settings already on /data" ;;
@@ -456,26 +442,27 @@ wait_dev() {
     [ -b "$1" ] || die "$1 did not appear"
 }
 
-fetch_kernel() {   # copy the running OS's kernel to $WORK/kernel before touching disks
-    [ -s "$WORK/kernel" ] && return 0
-    # The installer medium first, then an installed system's own /boot.
-    if [ -n "${JK_KERNEL:-}" ]; then cp "$JK_KERNEL" "$WORK/kernel" && return 0; fi
-    if dev=$(findfs LABEL=JK_OS 2>/dev/null); then
-        mkdir -p "$WORK/media"
-        mount -t iso9660 -o ro "$dev" "$WORK/media" || die "cannot mount $dev"
-        cp "$WORK/media/$ISO_KERNEL" "$WORK/kernel" || die "no $ISO_KERNEL on $dev"
-        umount "$WORK/media"
-        return 0
+# find_sources: the kernel and OS image to install. From the installer
+# medium on the live system (mounted by the initramfs), or the running
+# installed system's own; $JK_KERNEL and $JK_IMAGE override them.
+find_sources() {
+    if [ -f /run/jk/medium/jk_os.squashfs ]; then
+        KERNEL_FILE=/run/jk/medium/$ISO_KERNEL
+        IMAGE_FILE=/run/jk/medium/jk_os.squashfs
+    else
+        KERNEL_FILE=/boot/EFI/BOOT/$EFI_NAME
+        IMAGE_FILE=/data/system/jk_os.squashfs
     fi
-    [ -f "/boot/EFI/BOOT/$EFI_NAME" ] && cp "/boot/EFI/BOOT/$EFI_NAME" "$WORK/kernel" && return 0
-    die "no kernel to install: installer medium (label JK_OS) not found; set JK_KERNEL=<kernel file>"
+    KERNEL_FILE=${JK_KERNEL:-$KERNEL_FILE}
+    IMAGE_FILE=${JK_IMAGE:-$IMAGE_FILE}
+    [ -f "$KERNEL_FILE" ] || die "no kernel to install at $KERNEL_FILE (set JK_KERNEL)"
+    [ -f "$IMAGE_FILE" ] || die "no OS image to install at $IMAGE_FILE (set JK_IMAGE)"
 }
 
 run() { "$@" || die "failed: $*"; }
 
 apply() {
     head_line "Installing"
-    fetch_kernel
     if [ "$NEWTABLE" = 1 ]; then
         say "  new partition table on $DISK"
         run wipefs -qa "$DISK"
@@ -529,7 +516,11 @@ apply() {
 
     say "  installing the kernel"
     run mkdir -p "$TARGET/boot/EFI/BOOT"
-    run cp "$WORK/kernel" "$TARGET/boot/EFI/BOOT/$EFI_NAME"
+    run cp "$KERNEL_FILE" "$TARGET/boot/EFI/BOOT/$EFI_NAME"
+    say "  installing the system image ($(du -h "$IMAGE_FILE" | cut -f1))"
+    run mkdir -p "$TARGET/data/system"
+    run cp "$IMAGE_FILE" "$TARGET/data/system/jk_os.squashfs.new"
+    run mv "$TARGET/data/system/jk_os.squashfs.new" "$TARGET/data/system/jk_os.squashfs"
 
     say "  writing /data/etc/fstab"
     run mkdir -p "$TARGET/data/etc" "$TARGET/data/home"
@@ -555,7 +546,7 @@ apply() {
         new)
             say "  creating the user $ACC_USER"
             # shadow's tools edit a staging copy of /etc (--prefix); the files
-            # they change go to /data/system/etc, which is overlaid on /etc at boot.
+            # they change go into the writable layer the OS image boots with.
             stage="$WORK/stage"
             rm -rf "$stage"; mkdir -p "$stage/etc/default"
             for f in passwd shadow group gshadow login.defs hostname hosts default/useradd; do
@@ -563,9 +554,10 @@ apply() {
             done
             run mkdir -p "$TARGET/data/home"
             accounts_apply "$stage" "$TARGET/data/home"
-            run mkdir -p "$TARGET/data/system/etc"
+            upper="$TARGET/data/system/root/upper/etc"
+            run mkdir -p "$upper"
             for f in passwd shadow group gshadow hostname hosts; do
-                run cp -p "$stage/etc/$f" "$TARGET/data/system/etc/$f"
+                run cp -p "$stage/etc/$f" "$upper/$f"
             done
             : > "$TARGET/data/etc/jk_os-setup-done"
             ;;
@@ -616,7 +608,7 @@ if [ -n "$AUTO" ]; then
     DISK="$AUTO"
     [ -b "$DISK" ] || die "$DISK is not a block device"
     DISK_MODEL=""
-    release_disk
+    check_disk
     load_disk
     swap=0
     [ "$SWAP" = 0 ] || swap=$(parse_size "$SWAP" "$LAST") || die "bad --swap size: $SWAP"
@@ -642,6 +634,8 @@ else
         *) die "no such choice" ;;
     esac
 fi
+
+find_sources
 
 # Who are you? Asked after the disk layout, as in Ubuntu's installer.
 if [ -n "$AUTO" ]; then

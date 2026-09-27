@@ -1,4 +1,4 @@
 # Binaries only for x86_64 images, same format as common.list.
 # An entry named like one in common.list overrides it on x86_64.
 
-# btop  aristocratos/btop  v1.4.7  btop-x86_64-unknown-linux-musl.tar.gz
+btop  aristocratos/btop  v1.4.7  btop-x86_64-unknown-linux-musl.tar.gz

@@ -1,7 +1,6 @@
 #!/bin/sh
 # jk-live: the installer menu that every console shows, instead of a login
-# prompt, when jk_os boots from its installer medium (/run/jk-mode = live),
-# or finds no installed system at all (ram).
+# prompt, when jk_os boots from its installer medium (/run/jk-mode = live).
 # getty runs it as root on the console (jk-getty: getty -n -l jk-live); when
 # it exits, init starts it again.
 
@@ -11,22 +10,13 @@ C_B=$(printf '\033[1m'); C_N=$(printf '\033[0m')
 # Kernel messages (new partitions, ...) would scribble over the menus.
 dmesg -n 1 2>/dev/null
 
-installed=$(findfs LABEL=JK_DATA 2>/dev/null)
-[ -n "$installed" ] && installed_disk=$(lsblk -dnpo PKNAME "$installed" 2>/dev/null)
-
 clear
 printf '\n  %sWelcome to %s%s\n\n' "$C_B" "$PRETTY_NAME" "$C_N"
-if [ "$(cat /run/jk-mode 2>/dev/null)" = ram ]; then
-    echo "  No installed system was found. The system runs from RAM:"
-else
-    echo "  You booted from the installer medium. The system runs from RAM:"
-fi
-echo "  nothing is written to any disk unless you install."
+echo "  You booted from the installer medium. Nothing is written to any disk"
+echo "  unless you install; changes in this live session are kept in RAM only."
 echo
 echo "  1) Install $NAME"
 echo "  2) Try $NAME without installing (root shell, nothing is kept)"
-[ -n "$installed" ] && \
-echo "  3) Start the $NAME already installed on ${installed_disk:-$installed}"
 echo "  r) Reboot"
 echo "  p) Power off"
 echo
@@ -61,15 +51,6 @@ case "${ans:-1}" in
         echo "Live session: type 'exit' to go back to the installer menu."
         echo
         exec login -f root
-        ;;
-    3)
-        [ -n "$installed" ] || exit 0
-        # Mounting sets /run/jk-mode (installed, or setup if it has no user
-        # yet); the consoles restart with what that mode shows.
-        /etc/init.d/S05storage mount || { printf '  Press Enter to go back. '; read -r _; exit 0; }
-        for pid in $(pidof jk-live); do
-            [ "$pid" = $$ ] || kill "$pid" 2>/dev/null
-        done
         ;;
     r) reboot; sleep 30 ;;
     p) poweroff; sleep 30 ;;

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Assemble the root filesystem tree in build/<arch>/rootfs.
-# The kernel build packs this tree into its built-in initramfs, together with
-# configs/initramfs.list (device nodes, which need no root privileges there).
+# Assemble the root filesystem tree in build/<arch>/rootfs, and pack it into
+# the OS image build/<arch>/jk_os.squashfs. At boot the kernel's small
+# initramfs (build-initramfs.sh) mounts that image read-only, with a writable
+# layer on top (RAM on the live medium, /data on an installed system).
 source "$(dirname "$0")/common.sh"
 
 [[ -x "$BUSYBOX_OUT/busybox" ]] || die "busybox not built yet (run: make busybox)"
@@ -21,7 +22,6 @@ rm -f "$ROOTFS_DIR/linuxrc"
 cd "$ROOTFS_DIR"
 mkdir -p dev proc sys run tmp mnt root home var/log etc boot data
 ln -s ../run var/run
-ln -s bin/busybox init   # the kernel runs /init from an initramfs
 # util-linux / e2fsprogs / shadow replace BusyBox's more limited applets
 # (fdisk, mke2fs, ...). Drop the applet links first: cp would follow them and
 # overwrite the busybox binary itself.
@@ -127,6 +127,17 @@ printf '\n%s %s (%s) \\n \\l\n\n' "$OS_NAME" "$OS_VERSION" "$ARCH" > etc/issue
 chmod -R go-w .
 chmod 0700 root
 chmod 0600 etc/shadow etc/gshadow
+chmod 0440 etc/sudoers
+chmod 0750 etc/sudoers.d
+chmod 0440 etc/sudoers.d/*
 chmod 1777 tmp
 
 log "rootfs: $(du -sh . | cut -f1) in $ROOTFS_DIR"
+
+# Every file belongs to root in the image (-all-root), as the builder's
+# files would otherwise keep the builder's uid.
+need mksquashfs
+rm -f "$SQUASHFS_IMG"
+mksquashfs "$ROOTFS_DIR" "$SQUASHFS_IMG" -all-root -noappend -comp zstd -Xcompression-level 15 \
+    -b 256K -quiet -no-progress >/dev/null
+log "image: $SQUASHFS_IMG ($(du -h "$SQUASHFS_IMG" | cut -f1))"

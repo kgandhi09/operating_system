@@ -4,11 +4,12 @@
 #   e2fsprogs:  mke2fs e2fsck resize2fs tune2fs   (journaled ext4)
 #   shadow:     useradd usermod passwd su login ... (user management), linked
 #               against libxcrypt (yescrypt / sha512 password hashes)
+#   sudo:       sudo visudo (group wheel runs commands as root)
 # All build out of tree under build/<arch>/ and land in build/<arch>/tools.
 source "$(dirname "$0")/common.sh"
 need make "${CROSS_COMPILE}gcc"
 
-for src in "$UTIL_LINUX_SRC" "$E2FSPROGS_SRC" "$SHADOW_SRC" "$LIBXCRYPT_SRC"; do
+for src in "$UTIL_LINUX_SRC" "$E2FSPROGS_SRC" "$SHADOW_SRC" "$LIBXCRYPT_SRC" "$SUDO_SRC"; do
     [[ -x "$src/configure" ]] || die "no source at ${src#"$ROOT_DIR"/} (see versions.env)"
 done
 
@@ -17,6 +18,7 @@ UL_OUT="$OUT_DIR/util-linux"
 E2_OUT="$OUT_DIR/e2fsprogs"
 XC_OUT="$OUT_DIR/libxcrypt"
 SH_OUT="$OUT_DIR/shadow"
+SU_OUT="$OUT_DIR/sudo"
 SYSROOT="$OUT_DIR/sysroot"   # static libraries built here for later packages
 # fdisks=check: fdisk and sfdisk, but no cfdisk (it needs ncurses).
 UL_PROGS=(sfdisk fdisk lsblk wipefs partx)
@@ -98,6 +100,19 @@ log "building shadow ($ARCH)"
 qmake "$SH_OUT/lib"
 qmake "$SH_OUT/src" LDFLAGS="-all-static -L$SYSROOT/usr/lib" "${SH_PROGS[@]}"
 
+# sudo: no PAM, so it checks the user's own password in /etc/shadow with
+# libxcrypt. The sudoers policy is built into the binary, and the helpers
+# that would be loaded as shared objects (noexec, intercept) are left out.
+configure_once "$SUDO_SRC" "$SU_OUT" \
+    --sysconfdir=/etc --libexecdir=/usr/lib --without-pam --enable-static-sudoers \
+    --disable-shared-libutil --without-noexec --disable-intercept --disable-log-server \
+    --disable-log-client --enable-zlib=no --disable-python --without-sendmail \
+    --with-editor=/bin/vi --with-env-editor --with-logging=syslog --with-rundir=/run/sudo \
+    --with-vardir=/var/lib/sudo --with-iologdir=/var/log/sudo-io \
+    CPPFLAGS="-I$SYSROOT/usr/include" LDFLAGS="-static -L$SYSROOT/usr/lib"
+log "building sudo ($ARCH)"
+qmake "$SU_OUT" LDFLAGS="-all-static -L$SYSROOT/usr/lib"
+
 rm -rf "$TOOLS_OUT"
 mkdir -p "$TOOLS_OUT/sbin" "$TOOLS_OUT/bin"
 for p in "${UL_PROGS[@]}"; do install -m 0755 "$UL_OUT/$p" "$TOOLS_OUT/sbin/"; done
@@ -105,11 +120,14 @@ install -m 0755 "$E2_OUT/misc/mke2fs" "$E2_OUT/misc/tune2fs" \
     "$E2_OUT/e2fsck/e2fsck" "$E2_OUT/resize/resize2fs" "$TOOLS_OUT/sbin/"
 for p in "${SH_ADMIN[@]}"; do install -m 0755 "$SH_OUT/src/$p" "$TOOLS_OUT/sbin/"; done
 for p in "${SH_USER[@]}"; do install -m 0755 "$SH_OUT/src/$p" "$TOOLS_OUT/bin/"; done
+install -m 0755 "$SU_OUT/src/sudo" "$TOOLS_OUT/bin/"
+install -m 0755 "$SU_OUT/plugins/sudoers/visudo" "$TOOLS_OUT/sbin/"
 "${CROSS_COMPILE}strip" "$TOOLS_OUT/sbin/"* "$TOOLS_OUT/bin/"*
 # setuid root: a user changes their own password, name or shell, switches to
-# one of their own groups (newgrp), or becomes root with su (only group
-# wheel, see /etc/login.defs). login is run by root (getty) and needs none.
-chmod 4755 "$TOOLS_OUT/bin/"{passwd,chfn,chsh,su,newgrp}
+# one of their own groups (newgrp), or becomes root with su or sudo (only
+# group wheel: /etc/login.defs, /etc/sudoers). login is run by root (getty)
+# and needs none.
+chmod 4755 "$TOOLS_OUT/bin/"{passwd,chfn,chsh,su,newgrp,sudo}
 # Names the e2fsprogs tools answer to (they check argv[0]).
 ln -s mke2fs  "$TOOLS_OUT/sbin/mkfs.ext4"
 ln -s e2fsck  "$TOOLS_OUT/sbin/fsck.ext4"

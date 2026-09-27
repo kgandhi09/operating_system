@@ -11,10 +11,13 @@ need xorriso
 
 kernel="$KERNEL_OUT/$KIMAGE"
 [[ -f "$kernel" ]] || die "kernel not built yet (run: make kernel)"
+[[ -f "$SQUASHFS_IMG" ]] || die "OS image not built yet (run: make rootfs)"
 
 rm -rf "$ISO_DIR"
 mkdir -p "$ISO_DIR/boot" "$IMAGE_DIR"
 rm -f "$ISO"
+# The OS image the kernel's initramfs looks for on the medium (label JK_OS).
+cp "$SQUASHFS_IMG" "$ISO_DIR/jk_os.squashfs"
 
 case "$ARCH" in
 x86_64)

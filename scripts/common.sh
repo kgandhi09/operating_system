@@ -66,6 +66,7 @@ UTIL_LINUX_SRC="$ROOT_DIR/$UTIL_LINUX_TREE"
 E2FSPROGS_SRC="$ROOT_DIR/$E2FSPROGS_TREE"
 SHADOW_SRC="$ROOT_DIR/$SHADOW_TREE"
 LIBXCRYPT_SRC="$ROOT_DIR/$LIBXCRYPT_TREE"
+SUDO_SRC="$ROOT_DIR/$SUDO_TREE"
 # Network stack (scripts/build-network.sh): NetworkManager and what it needs.
 NET_TREES=(ZLIB LIBFFI PCRE2 GLIB EXPAT DBUS EUDEV LIBNDP LIBNL OPENSSL WPA_SUPPLICANT NCURSES READLINE NETWORKMANAGER)
 for t in "${NET_TREES[@]}"; do
@@ -75,6 +76,9 @@ unset t v
 # Disk tools (util-linux, e2fsprogs) are installed here, then into the rootfs.
 TOOLS_OUT="$OUT_DIR/tools"
 ROOTFS_DIR="$OUT_DIR/rootfs"
+# The OS image made from it, and the small initramfs built into the kernel.
+SQUASHFS_IMG="$OUT_DIR/jk_os.squashfs"
+INITRAMFS_DIR="$OUT_DIR/initramfs"
 # Prebuilt binaries from GitHub releases (scripts/fetch-binaries.sh).
 BINARIES_DIR="$ROOT_DIR/userland/binaries/$ARCH"
 ISO_DIR="$OUT_DIR/iso"

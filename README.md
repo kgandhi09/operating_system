@@ -5,7 +5,7 @@ A minimal 64-bit Linux system built from source:
 - the **official Linux kernel** from Linus Torvalds' mainline releases, kept in this repo as plain source,
 - **BusyBox** as the base userland (shell, init, coreutils, networking),
 - **util-linux** and **e2fsprogs** disk tools (GPT partitioning, ext4) for the installer,
-- **shadow-utils** (with **libxcrypt**) for users and passwords: `useradd`, `passwd`, `su`, `login`, ...
+- **shadow-utils** (with **libxcrypt**) for users and passwords: `useradd`, `passwd`, `su`, `login`, ..., and **sudo**,
 - a short list of **prebuilt static binaries pulled from GitHub releases** (`jq`, `rg`, `fd`, ...),
 - no display manager, X or Wayland: text console on screen plus serial console.
 
@@ -26,8 +26,8 @@ make run                  # boot it in QEMU on this terminal (Ctrl-A X quits)
 ```
 
 The ISO boots into the installer menu, before any login. From there you can
-install to a disk, or try the live system (a root shell that runs entirely from
-RAM, so changes are lost on reboot). See [Installing to a disk](#installing-to-a-disk).
+install to a disk, or try the live system (a root shell; changes are kept in RAM
+and lost on reboot). See [Installing to a disk](#installing-to-a-disk).
 
 
 ### Other architecture
@@ -61,11 +61,23 @@ through `sudo`. **Everything on the target device is erased.**
 | Console | `tty0` + `ttyS0` (GRUB menu picks which is primary) | from firmware (DT `stdout-path` / ACPI SPCR) + `tty1` |
 | Boots from | CD/DVD, USB stick, disk | USB stick or disk only: the kernel is larger than the 32 MiB an El Torito (CD) boot image can be |
 
-The kernel is built with **no loadable modules**, and the root filesystem is
-its **built-in initramfs**. The whole OS is therefore one kernel file.
-BusyBox `init` runs `/etc/init.d/rcS`, which mounts `/proc`, `/sys`, `/dev`,
-and so on, then runs `/etc/init.d/S??*` (syslog, DHCP on wired NICs). `getty`
-then starts on each console that actually exists.
+The OS is a compressed, read-only image, **`jk_os.squashfs`**, as on
+Ubuntu's live media. The kernel (built with **no loadable modules**) carries
+only a small **initramfs** (`initramfs/init`, `make initramfs`): BusyBox,
+`e2fsck`, and the firmware that network drivers load while the kernel starts.
+Its `/init`:
+
+1. finds the installer medium (label `JK_OS`) or an installed system's data
+   partition (label `JK_DATA`), waiting a few seconds for USB storage;
+2. mounts the image from it and puts a writable layer on top with overlayfs:
+   in **RAM** on the live medium, on **disk** (`/data/system/root`) when
+   installed;
+3. switches into that root (`switch_root`), which frees the initramfs.
+
+Programs are read from the image as they are needed, so RAM use doesn't grow
+with the size of the OS. Then BusyBox `init` runs `/etc/init.d/rcS`, which
+runs `/etc/init.d/S??*` (storage, syslog, udev, D-Bus, NetworkManager).
+`getty` starts on each console that actually exists.
 
 ## Layout
 
@@ -81,6 +93,7 @@ userland/libxcrypt/       libxcrypt source: password hashing (yescrypt) for shad
 configs/kernel/           kernel config fragments merged over the arch defconfig
 configs/busybox/          BusyBox config fragments merged over defconfig
 configs/binaries/         GitHub binaries: common.list (every arch) + <arch>.list
+initramfs/init            early boot: find and mount jk_os.squashfs, switch into it
 configs/initramfs.list    device nodes added to the initramfs
 userland/binaries/<arch>/ fetched binaries (bin/) and what they came from (sources.lock)
 rootfs/                   files copied verbatim into the root filesystem
@@ -160,40 +173,46 @@ installed system. As in Ubuntu's installer, you pick a disk and then either:
    formatted or kept with its filesystem and files. Nothing is written until you
    confirm the summary by typing `yes`.
 
-The OS itself stays one kernel file that runs from RAM, so a disk only holds the
-kernel and your data:
+An installed disk holds the kernel, the OS image, and everything changed on top
+of it:
 
 | Mount | Filesystem | Label | Required | Holds |
 |---|---|---|---|---|
 | `/boot` | FAT32, EFI system partition | `JK_BOOT` | yes (≥ 256 MiB; default 512 MiB) | the kernel, as `EFI/BOOT/BOOTX64.EFI` / `BOOTAA64.EFI` |
-| `/data` | ext4 | `JK_DATA` | yes (default: rest of the disk) | everything that must survive a reboot; `/home` is `/data/home` unless given its own partition |
+| `/data` | ext4 | `JK_DATA` | yes (default: rest of the disk) | the OS image (`system/jk_os.squashfs`), every change made to the system (`system/root`: `/usr`, `/etc`, `/var`, ...), and `/home` (`/data/home`, unless it has its own partition) |
 | `/home`, `/var/log`, `/srv`, `/opt`, `/mnt/<name>` | ext4 | | no | whatever you split out |
 | swap | swap | `JK_SWAP` | no | |
 
-At boot, `/etc/init.d/S05storage` picks the mode, and records it in `/run/jk-mode`:
+The kernel's initramfs picks the mode and records it in `/run/jk-mode`:
 
-- **live:** the installer medium (label `JK_OS`) is attached. The consoles run
-  the installer menu (`/sbin/jk-live`, started by `jk-getty` in place of `login`),
-  and no disk is mounted, so every disk is free to repartition. Menu entry 3 mounts
-  an installed system's storage and switches the consoles to login prompts.
-- **installed:** no installer medium, but a `JK_DATA` partition. It is checked
-  with `fsck.ext4 -p` and mounted on `/data`. Then everything the installer listed
-  (by UUID) in `/data/etc/fstab` is mounted, and `/data/home` is bind-mounted on
-  `/home` unless `/home` has its own partition. The consoles show login prompts.
-- **ram:** neither. The consoles show login prompts and the system is RAM-only.
+- **live:** the installer medium (label `JK_OS`) is attached. The root is its
+  `jk_os.squashfs` with changes in RAM. The consoles run the installer menu
+  (`/sbin/jk-live`, started by `jk-getty` in place of `login`). No other disk is
+  mounted, so every disk except the medium is free to repartition.
+- **installed:** no installer medium, but a `JK_DATA` partition. It is checked with
+  `fsck.ext4 -p` and mounted on `/data`. The root is `/data/system/jk_os.squashfs`
+  with `/data/system/root` on top, so whatever you change or add anywhere
+  (`/usr/local`, `/etc`, `/opt`, ...) survives reboots. `/etc/init.d/S05storage`
+  then mounts what the installer listed in `/data/etc/fstab` (by UUID), and
+  bind-mounts `/data/home` on `/home` unless `/home` has its own partition.
+- **setup:** installed, but no user exists yet. The consoles run the first-boot setup.
 
-USB sticks appear a few seconds after the kernel starts, so the script waits up
-to 10 s for the installer medium (3 s once an installed system is found).
+USB sticks appear a few seconds after the kernel starts, so the initramfs waits
+up to 10 s for the installer medium (3 s once an installed system is found).
+If it finds neither, it opens a rescue shell on the console.
 
 - **Booting.** An installed disk boots through **UEFI** on both architectures. The
   kernel's EFI stub is the firmware's default boot file, so no boot loader or NVRAM
   entry is involved. Legacy BIOS is only supported for the live ISO. On x86_64,
   consoles come from the built-in command line (`CONFIG_CMDLINE`).
+- **Updating.** A new jk_os version is a new kernel file and a new image. Put them
+  at `/boot/EFI/BOOT/BOOT*.EFI` and `/data/system/jk_os.squashfs` (or reinstall
+  and keep `/data`). Your changes in `/data/system/root` stay on top of the new image.
 - **Reinstalling.** Boot the USB stick again. As root on an installed system,
-  `jk-install` also works, even on the disk the system booted from, because the OS
-  runs from RAM. It unmounts that disk's storage first. It installs the kernel of the
-  installer medium (label `JK_OS`), or the running system's `/boot` kernel if no
-  medium is attached. `JK_KERNEL=<file>` overrides both.
+  `jk-install` can install to another disk, but not to the one it runs from, or to
+  the installer medium. It installs the kernel and image of the installer medium, or
+  the running system's own (`/boot/EFI/BOOT/…`, `/data/system/jk_os.squashfs`).
+  `JK_KERNEL=<file>` and `JK_IMAGE=<file>` override them.
 - **Scripted installs.** `jk-install --auto /dev/sdX [--swap 2G] --yes` erases
   the disk and uses the default layout without asking. Add
   `--user NAME [--fullname "Full Name"] [--no-admin] [--hostname NAME]`, with the
@@ -217,21 +236,22 @@ account applets are disabled.
 |---|---|
 | root | everything: `useradd`, `usermod`, `userdel`, `groupadd`, `groupmod`, `groupdel`, `chpasswd`, `chage`, `newusers`, and setting any user's password |
 | a user | change only their own password (`passwd`), name and details (`chfn`), and shell (`chsh`, from `/etc/shells`); switch to one of their own groups (`newgrp`) |
-| a member of `wheel` | become root with `su` (with the root password). The installer puts the first user in `wheel` if you say so; root adds others with `usermod -aG wheel <user>` |
+| a member of `wheel` (administrator) | run commands as root with `sudo` (their own password), or become root with `su` (the root password). The installer puts the first user in `wheel` if you say so; root adds others with `usermod -aG wheel <user>` |
 
 ```sh
-su -                                  # as a wheel member, then:
-useradd -m -c "Robot Operator" op     # a new user, with /home/op
-passwd op                             # set their password
-usermod -aG wheel op                  # let them su
-userdel -r op                         # remove them and their home
+sudo useradd -m -c "Robot Operator" op   # as a wheel member (or as root, without sudo)
+sudo passwd op                           # set their password
+sudo usermod -aG wheel op                # make them an administrator
+sudo userdel -r op                       # remove them and their home
+sudo visudo                              # edit /etc/sudoers (checked before saving)
 ```
 
-On an installed system `/etc` is an **overlay**: the image's `/etc` with
-`/data/system/etc` on top. Anything changed there (users, passwords, groups,
-hostname, network settings) is kept across reboots, and `/home` is on `/data`.
-Files never changed keep coming from the image, so a new jk_os version updates
-them. A file you changed keeps your version.
+On an installed system the whole root is the OS image with
+`/data/system/root` on top. Anything changed (users, passwords, groups, hostname,
+network settings, files added to `/usr/local`) is kept across reboots, and `/home`
+is on `/data`. Files never changed keep coming from the image, so a new jk_os
+version updates them. A file you changed keeps your version. System accounts a
+new image adds are merged into your `/etc/passwd` at boot.
 
 ## Binaries from GitHub
 
@@ -289,7 +309,7 @@ distros, install the equivalents:
 - fetching GitHub binaries: `curl jq file` (plus `unzip` / `zstd` for those asset types)
 - updating sources (optional): `curl tar xz bzip2`
 - cross: `gcc-aarch64-linux-gnu libc6-dev-arm64-cross` (a glibc cross toolchain; BusyBox links statically against it)
-- ISO: `xorriso mtools dosfstools`, and on x86_64 hosts `grub-pc-bin grub-efi-amd64-bin`
+- ISO: `xorriso mtools dosfstools squashfs-tools`, and on x86_64 hosts `grub-pc-bin grub-efi-amd64-bin`
 - run: `qemu-system-x86 qemu-system-arm ovmf qemu-efi-aarch64`
 
 Building the x86_64 ISO needs GRUB's i386-pc / x86_64-efi platform files.

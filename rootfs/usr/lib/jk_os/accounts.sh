@@ -42,15 +42,17 @@ accounts_ask() {
     done
     say ""
     say "  Only root can create and manage users. $ACC_USER can change only their"
-    say "  own password, name and shell, unless allowed to become root with su."
-    ask "  Allow $ACC_USER to become root with su? (yes/no)" yes
+    say "  own password, name and shell, unless made an administrator: then"
+    say "  $ACC_USER runs commands as root with sudo (their own password), and"
+    say "  may become root with su (the root password)."
+    ask "  Make $ACC_USER an administrator? (yes/no)" yes
     ACC_ADMIN=no; [ "$ans" = yes ] && ACC_ADMIN=yes
     ask_secret "  Password for root"; ACC_ROOTPASS="$secret"
     unset secret again
 }
 
 accounts_summary() {
-    say "  - create user $ACC_USER${ACC_FULLNAME:+ ($ACC_FULLNAME)}$([ "$ACC_ADMIN" = yes ] && echo ', may become root with su')"
+    say "  - create user $ACC_USER${ACC_FULLNAME:+ ($ACC_FULLNAME)}$([ "$ACC_ADMIN" = yes ] && echo ', administrator (sudo, su)')"
     say "  - set the root password and the computer name ($ACC_HOSTNAME)"
 }
 

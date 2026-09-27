@@ -1,18 +1,18 @@
 #!/bin/sh
 # Early boot: mount the kernel filesystems, then run /etc/init.d/S??* start.
 
-# The kernel creates the initramfs root directory world-writable (1777);
-# with users on the system it must not be.
-chmod 0755 /
-
-mount -t proc     proc     /proc
-mount -t sysfs    sysfs    /sys
-mount -t devtmpfs devtmpfs /dev 2>/dev/null
+# /proc, /sys, /dev and /run come mounted from the initramfs (which left the
+# boot mode in /run/jk-mode); mount only what is missing.
+mnt() { mountpoint -q "$3" || mount -t "$1" "$2" "$3"; }
+mnt proc     proc     /proc
+mnt sysfs    sysfs    /sys
+mnt devtmpfs devtmpfs /dev
 mkdir -p /dev/pts /dev/shm
-mount -t devpts   devpts   /dev/pts
-mount -t tmpfs    tmpfs    /dev/shm
-mount -t tmpfs    tmpfs    /run
-mount -t tmpfs    tmpfs    /tmp
+mnt devpts   devpts   /dev/pts
+mnt tmpfs    tmpfs    /dev/shm
+mnt tmpfs    tmpfs    /run
+mnt tmpfs    tmpfs    /tmp
+chmod 1777 /tmp
 
 hostname -F /etc/hostname
 ip link set lo up

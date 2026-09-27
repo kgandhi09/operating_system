@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Assemble the small initramfs built into the kernel (build/<arch>/initramfs):
+# BusyBox, e2fsck, the early-boot /init (initramfs/init), and the firmware
+# network drivers load before the real root exists. /init mounts the OS image
+# (jk_os.squashfs) and switches into it; see initramfs/init.
+source "$(dirname "$0")/common.sh"
+
+[[ -x "$BUSYBOX_OUT/busybox" ]] || die "busybox not built yet (run: make busybox)"
+[[ -x "$TOOLS_OUT/sbin/e2fsck" ]] || die "disk tools not built yet (run: make tools)"
+
+log "assembling initramfs ($ARCH)"
+rm -rf "$INITRAMFS_DIR"
+mkdir -p "$INITRAMFS_DIR"/{bin,sbin,dev,proc,sys,run,newroot}
+cd "$INITRAMFS_DIR"
+
+install -m 0755 "$BUSYBOX_OUT/busybox" bin/busybox
+for a in sh mount umount mkdir sleep cat echo sed head grep mv rm ls ln chmod \
+         blkid findfs switch_root setsid cttyhack mountpoint dmesg; do
+    ln -s busybox "bin/$a"
+done
+install -m 0755 "$TOOLS_OUT/sbin/e2fsck" sbin/e2fsck
+ln -s e2fsck sbin/fsck.ext4
+install -m 0755 "$ROOT_DIR/initramfs/init" init
+
+# Drivers built into the kernel (Wi-Fi, some Ethernet) ask for firmware while
+# the kernel starts, before jk_os.squashfs is mounted. The image has the same
+# files for devices plugged in later.
+FW_SRC="$ROOT_DIR/userland/firmware"
+if [[ -f "$FW_SRC/$ARCH.files" ]]; then
+    while IFS= read -r f; do
+        [[ -f "$FW_SRC/$f" ]] || die "userland/firmware/$f missing (run scripts/update-firmware.sh)"
+        mkdir -p "lib/firmware/$(dirname "$f")"
+        cp "$FW_SRC/$f" "lib/firmware/$f"
+    done < "$FW_SRC/$ARCH.files"
+else
+    warn "no userland/firmware/$ARCH.files: Wi-Fi and some Ethernet chips will lack firmware"
+fi
+
+chmod -R go-w .
+log "initramfs: $(du -sh . | cut -f1) in $INITRAMFS_DIR"

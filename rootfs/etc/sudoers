@@ -1,0 +1,22 @@
+# /etc/sudoers: who may run what as another user. Edit it (and files in
+# /etc/sudoers.d) only with visudo, which checks the syntax before saving.
+# See sudoers(5).
+
+Defaults env_reset
+Defaults secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+# Asking again after 15 minutes; a wrong password is retried 3 times.
+Defaults timestamp_timeout=15
+Defaults passwd_tries=3
+Defaults lecture=once
+Defaults passprompt="[sudo] password for %p: "
+# Every command is logged to syslog (read it with: logread | grep sudo).
+Defaults syslog=authpriv
+
+root    ALL=(ALL:ALL) ALL
+
+# Administrators: members of group wheel, with their own password. The
+# installer puts the first user here if asked; root adds more with
+#   usermod -aG wheel <user>
+%wheel  ALL=(ALL:ALL) ALL
+
+@includedir /etc/sudoers.d

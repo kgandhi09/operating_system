@@ -1,0 +1,98 @@
+#!/bin/sh
+# jk_os early boot: the /init of the small initramfs built into the kernel.
+#
+# The OS itself is a compressed read-only image (jk_os.squashfs). This finds
+# it, puts a writable layer on top with overlayfs, and switches into the
+# result, much like Ubuntu's initramfs and its live system (casper):
+#
+#   live       the installer medium (label JK_OS, the ISO on a USB stick or
+#              CD) is attached: its jk_os.squashfs, with changes kept in RAM.
+#   installed  the ext4 partition labeled JK_DATA: /data/system/jk_os.squashfs,
+#              with changes kept on disk in /data/system/root (so anything
+#              written to /usr, /etc, /var ... survives a reboot).
+#   setup      installed, but no user created yet (see jk-setup).
+#
+# The mode is left in /run/jk-mode for the real system. Firmware sits in
+# this initramfs for drivers that start before the root exists; it is freed
+# with the rest of it by switch_root.
+
+export PATH=/bin:/sbin
+
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+mount -t devtmpfs devtmpfs /dev
+mount -t tmpfs -o mode=0755,nosuid,nodev tmpfs /run
+mkdir -p /run/jk/medium /run/jk/data /run/jk/lower /run/jk/rw /newroot
+
+say() { echo "jk_os: $*"; }
+
+# rescue <message>: a shell on the console to look around; exit retries.
+rescue() {
+    say "$*"
+    say "starting a shell; type 'exit' to try booting again"
+    setsid cttyhack sh
+    exec /init
+}
+
+# find_labels: set $live and $data to the devices labeled JK_OS / JK_DATA.
+find_labels() {
+    labels=$(blkid 2>/dev/null)
+    live=$(echo "$labels" | sed -n 's/^\([^:]*\):.* LABEL="JK_OS".*/\1/p' | head -n1)
+    data=$(echo "$labels" | sed -n 's/^\([^:]*\):.* LABEL="JK_DATA".*/\1/p' | head -n1)
+}
+
+# USB storage shows up a few seconds after boot. Wait up to 10 s for the
+# installer medium, but only 3 s once an installed system has been found.
+i=0
+while :; do
+    find_labels
+    [ -n "$live" ] && break
+    [ -n "$data" ] && [ $i -ge 12 ] && break
+    [ $i -ge 40 ] && break
+    sleep 0.25; i=$((i + 1))
+done
+
+# overlay_root <image> <upper> <work>: the OS image with a writable layer.
+overlay_root() {
+    [ -f "$1" ] || rescue "no system image at $1"
+    mount -t squashfs -o loop,ro "$1" /run/jk/lower || rescue "cannot mount $1"
+    mkdir -p "$2" "$3"
+    mount -t overlay overlay -o "lowerdir=/run/jk/lower,upperdir=$2,workdir=$3" /newroot \
+        || rescue "cannot set up the root filesystem"
+}
+
+if [ -n "$live" ]; then
+    say "starting the live system from $live"
+    mount -t iso9660 -o ro "$live" /run/jk/medium || rescue "cannot mount the installer medium $live"
+    mount -t tmpfs -o mode=0755 tmpfs /run/jk/rw
+    overlay_root /run/jk/medium/jk_os.squashfs /run/jk/rw/upper /run/jk/rw/work
+    mode=live
+elif [ -n "$data" ]; then
+    say "starting the system installed on $data"
+    # e2fsck exit codes: 0 clean, 1 fixed, 2 fixed (reboot advised), 4+ needs a human.
+    fsck.ext4 -p "$data"
+    [ $? -lt 4 ] || rescue "$data has errors 'fsck.ext4 -p' cannot fix; run: fsck.ext4 $data"
+    mount -t ext4 -o noatime "$data" /run/jk/data || rescue "cannot mount $data"
+    sys=/run/jk/data/system
+    # Systems installed before the OS moved out of RAM kept only /etc changes.
+    if [ -d "$sys/etc" ] && [ ! -d "$sys/root" ]; then
+        mkdir -p "$sys/root/upper"
+        mv "$sys/etc" "$sys/root/upper/etc"
+        rm -rf "$sys/.etc-work"
+    fi
+    overlay_root "$sys/jk_os.squashfs" "$sys/root/upper" "$sys/root/work"
+    if [ -f /run/jk/data/etc/jk_os-setup-done ]; then mode=installed; else mode=setup; fi
+    mkdir -p /newroot/data
+    mount --move /run/jk/data /newroot/data
+else
+    rescue "no jk_os found: neither the installer medium (JK_OS) nor an installed system (JK_DATA)"
+fi
+
+echo "$mode" > /run/jk-mode
+# Hand the kernel filesystems (and, under /run/jk, the image and medium
+# mounts) to the real system, then replace this initramfs with it.
+for m in /run /dev /proc /sys; do
+    mkdir -p "/newroot$m"
+    mount --move "$m" "/newroot$m"
+done
+exec switch_root /newroot /sbin/init

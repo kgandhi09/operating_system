@@ -1,30 +1,16 @@
 #!/bin/sh
-# Boot mode and persistent storage (see jk-install).
+# Storage of an installed jk_os (see jk-install).
 #
-# The mode, written to /run/jk-mode, decides what the consoles show:
-#   live       the installer medium (label JK_OS: the ISO, on a USB stick or
-#              CD) is attached: the consoles open the installer menu
-#              (/sbin/jk-live) instead of a login prompt, and no disk is
-#              mounted, so every disk is free to be partitioned.
-#   installed  no installer medium, but an installed system (the ext4
-#              partition labeled JK_DATA): it is mounted at /data, then
-#              everything in /data/etc/fstab (/boot, /home, swap, ...);
-#              /home falls back to /data/home. /data/system/etc is overlaid
-#              on /etc, so changes there (users, passwords, hostname, ...)
-#              are kept; files never changed still come from the image.
-#   setup      installed, but no user created yet (jk-install --auto without
-#              --user): the consoles open the first-boot setup (jk-setup).
-#   ram        neither: RAM only, as before any install.
+# The kernel's initramfs has already picked the boot mode (/run/jk-mode) and
+# set up the root: the OS image with a writable layer, in RAM when live, in
+# /data/system/root when installed, with the data partition (JK_DATA) on
+# /data. This mounts the rest listed in /data/etc/fstab (/boot, /home,
+# swap, ...); /home falls back to /data/home.
 #
-#   S05storage start   detect the mode (and mount, when installed)
-#   S05storage mount   mount the installed system's storage (jk-live uses
-#                      this to start the installed system from a live boot)
-#   S05storage stop    unmount it
+#   S05storage start | stop
 
 FSTAB=/data/etc/fstab
-ETC_UPPER=/data/system/etc
-ETC_WORK=/data/system/.etc-work
-SETUP_DONE=/data/etc/jk_os-setup-done
+IMAGE_ETC=/run/jk/lower/etc    # the image's own /etc, under the writable layer
 
 # check <device>: repair an ext4 filesystem before mounting it. e2fsck exit
 # codes: 0 clean, 1 fixed, 2 fixed (reboot advised), 4+ needs a human.
@@ -42,68 +28,26 @@ check() {
 sync_system_accounts() {
     for pair in passwd:shadow group:gshadow; do
         f=${pair%:*} sf=${pair#*:}
+        [ -f "$IMAGE_ETC/$f" ] || continue
         while IFS= read -r line; do
             name=${line%%:*}
             id=$(echo "$line" | cut -d: -f3)
             [ -n "$id" ] && [ "$id" -lt 1000 ] || continue
             grep -q "^$name:" "/etc/$f" && continue
             echo "$line" >> "/etc/$f"
-            grep "^$name:" "/run/jk-image-etc/$sf" >> "/etc/$sf"
+            grep "^$name:" "$IMAGE_ETC/$sf" >> "/etc/$sf"
             echo "storage: added system account $name to /etc/$f"
-        done < "/run/jk-image-etc/$f"
+        done < "$IMAGE_ETC/$f"
     done
-}
-
-# find_labels: set $live and $data to the devices labeled JK_OS / JK_DATA.
-find_labels() {
-    labels=$(blkid 2>/dev/null)
-    live=$(echo "$labels" | sed -n 's/^\([^:]*\):.* LABEL="JK_OS".*/\1/p' | head -n1)
-    data=$(echo "$labels" | sed -n 's/^\([^:]*\):.* LABEL="JK_DATA".*/\1/p' | head -n1)
 }
 
 start() {
-    # USB storage shows up a few seconds after boot. Wait up to 10 s for the
-    # installer medium, but only 3 s once an installed system has been found.
-    i=0
-    while :; do
-        find_labels
-        [ -n "$live" ] && break
-        [ -n "$data" ] && [ $i -ge 12 ] && break
-        [ $i -ge 40 ] && break
-        sleep 0.25; i=$((i + 1))
-    done
-    if [ -n "$live" ]; then
-        echo live > /run/jk-mode
-        echo "storage: booted from the installer medium ($live)"
-        return 0
-    fi
-    if [ -z "$data" ]; then
-        echo ram > /run/jk-mode
-        echo "storage: no installed system found, running from RAM only"
-        return 0
-    fi
-    mount_storage
-}
-
-mount_storage() {
-    [ -n "${data:-}" ] || find_labels
-    [ -n "$data" ] || { echo "storage: no JK_DATA partition" >&2; return 1; }
-    mountpoint -q /data && return 0
-    check "$data" || return 1
-    mkdir -p /data
-    mount -t ext4 -o noatime "$data" /data || return 1
-    echo "storage: $data on /data"
-
-    # /etc: the image's files, with the installed system's changes on top.
-    mkdir -p "$ETC_UPPER" "$ETC_WORK" /run/jk-image-etc
-    cp -p /etc/passwd /etc/group /etc/shadow /etc/gshadow /run/jk-image-etc/
-    if mount -t overlay overlay -o "lowerdir=/etc,upperdir=$ETC_UPPER,workdir=$ETC_WORK" /etc; then
-        sync_system_accounts
-        hostname -F /etc/hostname
-    else
-        echo "storage: cannot overlay /etc; changes to it will not be kept" >&2
-    fi
-    if [ -f "$SETUP_DONE" ]; then echo installed; else echo setup; fi > /run/jk-mode
+    case "$(cat /run/jk-mode 2>/dev/null)" in
+        installed|setup) ;;
+        *) return 0 ;;    # live: everything is in RAM
+    esac
+    echo "storage: $(awk '$2 == "/data" { print $1 }' /proc/mounts) on /data"
+    sync_system_accounts
 
     if [ -f "$FSTAB" ]; then
         while read -r spec mnt type opts _; do
@@ -128,15 +72,14 @@ mount_storage() {
 stop() {
     sync
     swapoff -a 2>/dev/null
-    # Reverse name order unmounts /home (a bind of /data/home) and the /etc
-    # overlay before /data.
-    for m in $(awk '$2 == "/data" || ($2 == "/etc" && $3 == "overlay") || $2 ~ "^/(boot|home|var/log|srv|opt|mnt)(/|$)" { print $2 }' /proc/mounts | sort -r); do
+    # Reverse name order unmounts nested mounts first. /data stays: the root
+    # filesystem's writable layer is on it (init remounts it read-only last).
+    for m in $(awk '$2 ~ "^/(boot|home|var/log|srv|opt|mnt)(/|$)" { print $2 }' /proc/mounts | sort -r); do
         umount "$m" 2>/dev/null || mount -o remount,ro "$m" 2>/dev/null
     done
 }
 
 case "$1" in
     start) start ;;
-    mount) mount_storage ;;
     stop)  stop ;;
 esac
