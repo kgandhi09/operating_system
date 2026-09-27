@@ -1,18 +1,15 @@
 #!/bin/sh
-# Bring up every wired interface and ask for a DHCP lease in the background.
+# NetworkManager: wired (DHCP by default), Wi-Fi and IPv6. Manage it with
+# nmcli. wpa_supplicant is its Wi-Fi backend, reached over D-Bus.
 
 case "$1" in
     start)
-        for dev in /sys/class/net/*; do
-            iface="${dev##*/}"
-            [ "$iface" = lo ] && continue
-            [ -d "$dev/wireless" ] && continue
-            ip link set "$iface" up
-            udhcpc -b -S -i "$iface" -p "/run/udhcpc.$iface.pid" >/dev/null 2>&1
-        done
+        mkdir -p /run/wpa_supplicant /var/lib/NetworkManager
+        wpa_supplicant -B -u -s -O /run/wpa_supplicant -P /run/wpa_supplicant.pid
+        NetworkManager
         ;;
     stop)
-        for pid in /run/udhcpc.*.pid; do
+        for pid in /run/NetworkManager/NetworkManager.pid /run/wpa_supplicant.pid; do
             [ -f "$pid" ] && kill "$(cat "$pid")" 2>/dev/null
         done
         ;;

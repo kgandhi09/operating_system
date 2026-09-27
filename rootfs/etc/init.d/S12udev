@@ -1,0 +1,15 @@
+#!/bin/sh
+# udev (eudev): device events and names. NetworkManager only manages
+# interfaces udev has seen, and udev gives them their predictable names.
+
+case "$1" in
+    start)
+        udevd --daemon
+        udevadm trigger --type=subsystems --action=add
+        udevadm trigger --type=devices --action=add
+        udevadm settle --timeout=10
+        ;;
+    stop)
+        udevadm control --exit 2>/dev/null
+        ;;
+esac

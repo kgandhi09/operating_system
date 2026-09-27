@@ -1,0 +1,12 @@
+#!/bin/sh
+# pager: page output only when it is taller than the terminal, like
+# "less -FRX" (nmcli and others run "pager"; BusyBox less has no -F).
+tmp=$(mktemp) || exec cat
+cat > "$tmp"
+rows=$(stty size </dev/tty 2>/dev/null | cut -d' ' -f1)
+if [ -z "$rows" ] || [ "$(wc -l < "$tmp")" -lt "$rows" ]; then
+    cat "$tmp"
+else
+    less -R "$tmp" </dev/tty
+fi
+rm -f "$tmp"

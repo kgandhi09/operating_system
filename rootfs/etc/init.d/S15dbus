@@ -1,0 +1,16 @@
+#!/bin/sh
+# The D-Bus system bus: NetworkManager, nmcli and wpa_supplicant talk over it.
+
+case "$1" in
+    start)
+        mkdir -p /run/dbus /var/lib/dbus
+        # A stable machine id (kept on an installed system: /etc is on /data).
+        dbus-uuidgen --ensure=/etc/machine-id
+        ln -sf /etc/machine-id /var/lib/dbus/machine-id
+        dbus-daemon --system
+        ;;
+    stop)
+        [ -f /run/dbus/pid ] && kill "$(cat /run/dbus/pid)" 2>/dev/null
+        rm -f /run/dbus/pid
+        ;;
+esac

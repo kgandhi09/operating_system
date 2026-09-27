@@ -1,0 +1,60 @@
+{
+    "hover.target": "float",
+    "hover.floatConfig": {
+        "border": true,
+        "highlight": "CocFloating"
+    },
+
+    "colors.enable": true,
+
+    //c-cpp configuration
+    "clangd.enabled": true,
+    "clangd.path": "/bin/clangd",
+    "clangd.arguments": [
+        "--compile-commands-dir=.",
+        "--background-index",
+        "--query-driver=/opt/arm-gnu-toolchain-15.2.rel1-x86_64-arm-none-eabi/bin/arm-none-eabi-*",
+        "--log=verbose"
+    ],
+    "clangd.checkUpdates": false,
+    "clangd.disableCompletion": false,
+    "clangd.disableDiagnostics": false,
+    "clangd.disableFileStatus": false,
+    "clangd.disableSnippetCompletion": false,
+
+    //flutter configuration
+    "flutter.enabled": true,
+    "flutter.trace.server": "verbose",
+    "flutter.lsp.debug": true,
+    "flutter.lsp.initialization.onlyAnalyzeProjectsWithOpenFiles": false,
+    "flutter.lsp.initialization.suggestFromUnimportedLibraries": true,
+    "flutter.sdk.searchPaths": [],
+    "flutter.sdk.dart-lookup": "",
+    "flutter.sdk.flutter-lookup": "/usr/local/flutter/",
+    "flutter.provider.enableSnippet": true,
+
+    //dart configuration
+    "dart.analysisExcludedFolders": [],
+    "dart.enableSdkFormatter": true,
+    "dart.completeFunctionCalls": true,
+    "dart.showTodos": true,
+
+    // coc diagnostics
+    "diagnostic.enable": true,
+    "diagnostic.floatConfig": {
+        "border": true,
+        "highlight": "CocFloating"
+    },
+    "snippets.ultisnips.pythonPrompt": false,
+
+    "dialog.rounded": true,
+    "prettier.enable": true,
+    "prettier.requireConfig": false,
+    "prettier.disableLanguages": ["c", "cpp", "cmake", "python"],
+    "prettier.singleQuote": true,
+    "prettier.trailingComma": "es5",
+    "prettier.printWidth": 100,
+    "prettier.tabWidth": 4,
+    "prettier.useTabs": false,
+    "coc.preferences.formatOnSave": true
+}

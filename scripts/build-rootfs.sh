@@ -7,6 +7,8 @@ source "$(dirname "$0")/common.sh"
 [[ -x "$BUSYBOX_OUT/busybox" ]] || die "busybox not built yet (run: make busybox)"
 [[ -f "$BINARIES_DIR/sources.lock" ]] || die "binaries not fetched yet (run: make binaries)"
 [[ -x "$TOOLS_OUT/sbin/sfdisk" ]] || die "disk tools not built yet (run: make tools)"
+DYN="$OUT_DIR/dyn"
+[[ -x "$DYN/usr/sbin/NetworkManager" ]] || die "network stack not built yet (run: make network)"
 
 log "assembling rootfs ($ARCH)"
 rm -rf "$ROOTFS_DIR"
@@ -28,6 +30,67 @@ for f in "$TOOLS_OUT/sbin/"* "$TOOLS_OUT/bin/"*; do
 done
 cp -a "$TOOLS_OUT/sbin/." sbin/
 cp -a "$TOOLS_OUT/bin/." bin/   # passwd, su, ... keep their setuid bit
+# The network stack (build-network.sh): NetworkManager, D-Bus, udev, GLib,
+# wpa_supplicant. Only what runs: no headers, static libraries, docs,
+# translations or build tools. BusyBox keeps clear/reset/tput and friends.
+(cd "$DYN" && tar -cf - \
+    --exclude=./usr/include --exclude=./usr/lib/pkgconfig --exclude=./usr/share/pkgconfig \
+    --exclude=./usr/lib/cmake --exclude=./usr/lib/glib-2.0 --exclude=./usr/lib/dbus-1.0 \
+    --exclude=./usr/lib/engines-3 --exclude=./usr/lib/ossl-modules \
+    --exclude='*.a' --exclude='*.la' \
+    --exclude=./usr/share/man --exclude=./usr/share/doc --exclude=./usr/share/info \
+    --exclude=./usr/share/locale --exclude=./usr/share/aclocal --exclude=./usr/share/gdb \
+    --exclude=./usr/share/bash-completion --exclude=./usr/share/gettext \
+    --exclude=./usr/share/glib-2.0 --exclude=./usr/share/terminfo \
+    --exclude=./usr/share/dbus-1/session.conf --exclude=./usr/share/dbus-1/session.d \
+    --exclude=./usr/share/dbus-1/services --exclude=./etc/dbus-1/session.conf \
+    --exclude=./etc/NetworkManager/dnsmasq.d --exclude=./etc/NetworkManager/dnsmasq-shared.d \
+    --exclude=./usr/libexec/gio-launch-desktop --exclude=./usr/libexec/nm-initrd-generator \
+    --exclude=./usr/libexec/dbus-daemon-launch-helper \
+    $(for b in glib-compile-resources glib-compile-schemas glib-genmarshal glib-gettextize \
+               glib-mkenums gdbus-codegen gtester gtester-report gi-compile-repository \
+               gi-decompile-typelib gi-inspect-typelib gresource gobject-query gio-querymodules \
+               gapplication pcre2-config pcre2grep pcre2test xmlwf ncursesw6-config dbus-launch \
+               dbus-test-tool dbus-run-session dbus-cleanup-sockets \
+               clear reset tput tset tabs captoinfo infocmp infotocap tic toe; do
+          echo "--exclude=./usr/bin/$b"; done) .) | tar -xf - -C "$ROOTFS_DIR"
+# Terminal descriptions for the consoles and common terminals only.
+for t in d/dumb l/linux v/vt100 v/vt102 v/vt220 x/xterm x/xterm-256color x/xterm-color \
+         s/screen s/screen-256color t/tmux t/tmux-256color a/ansi; do
+    [[ -e "$DYN/usr/share/terminfo/$t" ]] || continue
+    mkdir -p "usr/share/terminfo/${t%/*}"
+    cp -L "$DYN/usr/share/terminfo/$t" "usr/share/terminfo/$t"
+done
+find usr/bin usr/sbin usr/libexec usr/lib -type f \( -perm -u+x -o -name '*.so*' \) \
+    -exec "${CROSS_COMPILE}strip" --strip-unneeded {} + 2>/dev/null || true
+
+# The glibc runtime those programs link against, from the cross toolchain:
+# every library some ELF file needs and the image doesn't have yet.
+elf_needs() {
+    find . -xdev -type f \( -perm -u+x -o -name '*.so*' \) -print0 \
+        | xargs -0 "${CROSS_COMPILE}readelf" -d 2>/dev/null \
+        | sed -n 's/.*(NEEDED).*\[\(.*\)\]/\1/p' | sort -u
+}
+while :; do
+    added=0
+    for lib in $(elf_needs); do
+        [[ -e "usr/lib/$lib" ]] && continue
+        from="$("${CROSS_COMPILE}gcc" -print-file-name="$lib")"
+        [[ "$from" == /* && -f "$from" ]] || die "no $lib in the toolchain (needed by the network stack)"
+        cp -L "$from" "usr/lib/$lib"
+        added=1
+    done
+    (( added )) || break
+done
+# pthread_cancel/exit unwinding makes glibc dlopen libgcc_s.
+[[ -e usr/lib/libgcc_s.so.1 ]] || cp -L "$("${CROSS_COMPILE}gcc" -print-file-name=libgcc_s.so.1)" usr/lib/
+# The dynamic loader where the programs look for it (/lib64/ld-linux-x86-64.so.2,
+# /lib/ld-linux-aarch64.so.1): /lib and /lib64 point at /usr/lib.
+ln -s usr/lib lib
+[[ "$ARCH" == x86_64 ]] && ln -s usr/lib lib64
+interp="$("${CROSS_COMPILE}readelf" -l usr/sbin/NetworkManager | sed -n 's/.*interpreter: \(.*\)\]/\1/p')"
+[[ -e ".$interp" ]] || die "dynamic loader $interp missing from the image"
+
 # /usr/local/bin comes first in PATH, so these win over BusyBox applets.
 mkdir -p usr/local/bin
 if compgen -G "$BINARIES_DIR/bin/*" >/dev/null; then

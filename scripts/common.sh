@@ -66,6 +66,12 @@ UTIL_LINUX_SRC="$ROOT_DIR/$UTIL_LINUX_TREE"
 E2FSPROGS_SRC="$ROOT_DIR/$E2FSPROGS_TREE"
 SHADOW_SRC="$ROOT_DIR/$SHADOW_TREE"
 LIBXCRYPT_SRC="$ROOT_DIR/$LIBXCRYPT_TREE"
+# Network stack (scripts/build-network.sh): NetworkManager and what it needs.
+NET_TREES=(ZLIB LIBFFI PCRE2 GLIB EXPAT DBUS EUDEV LIBNDP LIBNL OPENSSL WPA_SUPPLICANT NCURSES READLINE NETWORKMANAGER)
+for t in "${NET_TREES[@]}"; do
+    v="${t}_TREE"; declare "${t}_SRC=$ROOT_DIR/${!v}"
+done
+unset t v
 # Disk tools (util-linux, e2fsprogs) are installed here, then into the rootfs.
 TOOLS_OUT="$OUT_DIR/tools"
 ROOTFS_DIR="$OUT_DIR/rootfs"
@@ -78,7 +84,17 @@ ISO_DIR="$OUT_DIR/iso"
 # PACKAGE_VERSION; Linux and BusyBox in a Kbuild-style Makefile
 # (VERSION/PATCHLEVEL/SUBLEVEL).
 tree_version() {
+    if [[ -f "$1/.jk_os-version" ]]; then cat "$1/.jk_os-version"; return; fi   # fetched by git tag
     if [[ -f "$1/.tarball-version" ]]; then cat "$1/.tarball-version"; return; fi
+    if [[ -f "$1/VERSION.dat" ]]; then                                          # OpenSSL
+        awk -F= '{ v[$1] = $2 } END { print v["MAJOR"] "." v["MINOR"] "." v["PATCH"] }' "$1/VERSION.dat"; return
+    fi
+    if [[ -f "$1/zlib.h" ]]; then
+        sed -n 's/^#define ZLIB_VERSION "\(.*\)"/\1/p' "$1/zlib.h"; return
+    fi
+    if [[ ! -f "$1/Makefile" && -f "$1/meson.build" ]]; then                  # project(..., version: 'x')
+        sed -n "1,40s/^[[:space:]]*version[[:space:]]*:[[:space:]]*'\\([0-9][^']*\\)'.*/\\1/p" "$1/meson.build" | head -n1; return
+    fi
     if [[ -f "$1/version.h" ]]; then
         sed -n 's/^#define E2FSPROGS_VERSION "\(.*\)"/\1/p' "$1/version.h"; return
     fi
