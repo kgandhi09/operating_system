@@ -42,6 +42,7 @@ TTYGROUP             tty
 TTYPERM              0600
 UMASK                022
 HUSHLOGIN_FILE       .hushlogin
+MOTD_FILE            /etc/motd
 
 # ---- New accounts
 UID_MIN              1000

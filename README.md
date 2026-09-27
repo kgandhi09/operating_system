@@ -6,6 +6,8 @@ A minimal 64-bit Linux system built from source:
 - **BusyBox** as the base userland (shell, init, coreutils, networking),
 - **util-linux** and **e2fsprogs** disk tools (GPT partitioning, ext4) for the installer,
 - **shadow-utils** (with **libxcrypt**) for users and passwords: `useradd`, `passwd`, `su`, `login`, ..., and **sudo**,
+- **NetworkManager** (`nmcli`) for wired, Wi-Fi and IPv6, with the firmware common network chips need,
+- a **C/C++ toolchain**: GCC 16 and Clang 23 (C++20 by default), binutils, CMake, Ninja and GDB,
 - a short list of **prebuilt static binaries pulled from GitHub releases** (`jq`, `rg`, `fd`, ...),
 - no display manager, X or Wayland: text console on screen plus serial console.
 
@@ -38,7 +40,7 @@ make ARCH=aarch64 run
 make ARCH=x86_64          # from an aarch64 host, with x86_64-linux-gnu-gcc
 ```
 
-Override the toolchain with `CROSS_COMPILE=<prefix>` and the job count with `JOBS=N`.
+Override the toolchain with `CROSS_COMPILE=<prefix>` and the job count with `JOBS=N` (default: half the CPUs).
 
 ### Flash to USB / SD card
 
@@ -252,6 +254,36 @@ network settings, files added to `/usr/local`) is kept across reboots, and `/hom
 is on `/data`. Files never changed keep coming from the image, so a new jk_os
 version updates them. A file you changed keeps your version. System accounts a
 new image adds are merged into your `/etc/passwd` at boot.
+
+## C and C++ development
+
+Every jk_os image carries a toolchain (`scripts/build-toolchain.sh`, `make toolchain`):
+
+| | |
+|---|---|
+| Compilers | **GCC 16.2** (`gcc`, `g++`, `cc`, `c++`) and **Clang 23.1** (`clang`, `clang++`, with `lld`) |
+| C++ | **C++20** (`gnu++20`) unless a project asks for another standard (`-std=`, `CMAKE_CXX_STANDARD`). GCC's own default; Clang reads it from `/etc/clang/clang++.cfg`. Both use GCC's `libstdc++` |
+| Language tools | `clangd` (language server for editors), `clang-format`, `clang-tidy` |
+| Binutils | `as`, `ld`, `ar`, `objdump`, `nm`, `strip`, ... (2.47) |
+| Build systems | **CMake 4.4** (HTTPS works, e.g. `FetchContent`) and **Ninja 1.13**; `CMAKE_GENERATOR=Ninja` is set in `/etc/profile` |
+| Debugger | **GDB 18.1** and `gdbserver` |
+| Headers | glibc (from the toolchain that builds jk_os) and Linux (`make headers_install` from jk_os's kernel) |
+
+Clang also cross-compiles for the other architectures (`--target=aarch64-linux-gnu`,
+`arm-none-eabi`, `riscv64-...`). On an installed system anything you build and
+install goes into `/data/system/root` and survives reboots.
+
+```sh
+cmake -S . -B build && cmake --build build          # Ninja by default
+CC=clang CXX=clang++ cmake -S . -B build-clang
+gdb ./build/myrobot
+```
+
+For aarch64, built on an x86_64 host, `build-toolchain.sh` first builds a GCC 16
+cross compiler (`build/aarch64/cross`), then cross-builds everything with it.
+The glibc headers and libraries come from the host's Debian/Ubuntu packages
+(`libc6-dev`, `libc6-dev-arm64-cross`), so the toolchain build needs a
+Debian-based host.
 
 ## Binaries from GitHub
 

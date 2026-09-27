@@ -21,6 +21,8 @@ LOCK=/run/jk-setup.lock
 SETUP_DONE=/data/etc/jk_os-setup-done
 
 clear
+echo
+cat /usr/share/jk_os/banner
 printf '\n  %sWelcome to %s%s\n\n' "$C_B" "$PRETTY_NAME" "$C_N"
 say "  This computer has no user yet. Create one to finish the setup."
 printf '\n  Press Enter to start. '

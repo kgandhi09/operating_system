@@ -8,7 +8,13 @@ need make "${CROSS_COMPILE}gcc"
 frags=("$ROOT_DIR/configs/busybox/common.config")
 [[ -f "$ROOT_DIR/configs/busybox/$ARCH.config" ]] && frags+=("$ROOT_DIR/configs/busybox/$ARCH.config")
 mkdir -p "$BUSYBOX_OUT"
-bb_make() { make -C "$BUSYBOX_SRC" O="$BUSYBOX_OUT" ARCH="$KARCH" CROSS_COMPILE="$CROSS_COMPILE" "$@"; }
+# NOWARN_CFLAGS (set in the Makefile) for BusyBox itself and for the helper
+# programs it builds for the host (kconfig, usage text).
+bb_make() {
+    make -C "$BUSYBOX_SRC" O="$BUSYBOX_OUT" ARCH="$KARCH" CROSS_COMPILE="$CROSS_COMPILE" \
+        EXTRA_CFLAGS="${NOWARN_CFLAGS:-}" \
+        HOSTCFLAGS="-Wall -Wstrict-prototypes -O2 -fomit-frame-pointer ${NOWARN_CFLAGS:-}" "$@"
+}
 
 # The stamp is written only after a complete configure, so an interrupted
 # one is redone rather than leaving a half-merged .config behind.

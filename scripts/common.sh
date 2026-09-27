@@ -5,7 +5,8 @@
 #   ARCH           x86_64 | aarch64 (aliases: amd64, arm64). Default: host arch.
 #   CROSS_COMPILE  toolchain prefix. Default: none when building for the host
 #                  arch, otherwise x86_64-linux-gnu- / aarch64-linux-gnu-.
-#   JOBS           parallel make jobs. Default: nproc.
+#   JOBS           parallel build jobs. Default: half the CPUs, so the machine
+#                  stays usable while jk_os builds.
 
 set -euo pipefail
 
@@ -51,7 +52,7 @@ esac
 if [[ -z "${CROSS_COMPILE+set}" ]]; then
     if [[ "$ARCH" == "$HOST_ARCH" ]]; then CROSS_COMPILE=""; else CROSS_COMPILE="$CROSS_DEFAULT"; fi
 fi
-JOBS="${JOBS:-$(nproc)}"
+JOBS="${JOBS:-$(( $(nproc) > 1 ? $(nproc) / 2 : 1 ))}"
 
 OUT_DIR="$ROOT_DIR/build/$ARCH"
 
@@ -72,6 +73,11 @@ NET_TREES=(ZLIB LIBFFI PCRE2 GLIB EXPAT DBUS EUDEV LIBNDP LIBNL OPENSSL WPA_SUPP
 for t in "${NET_TREES[@]}"; do
     v="${t}_TREE"; declare "${t}_SRC=$ROOT_DIR/${!v}"
 done
+# Toolchain (scripts/build-toolchain.sh).
+TC_TREES=(GCC BINUTILS GDB GMP MPFR MPC LLVM CMAKE NINJA)
+for t in "${TC_TREES[@]}"; do
+    v="${t}_TREE"; declare "${t}_SRC=$ROOT_DIR/${!v}"
+done
 unset t v
 # Disk tools (util-linux, e2fsprogs) are installed here, then into the rootfs.
 TOOLS_OUT="$OUT_DIR/tools"
@@ -89,6 +95,19 @@ ISO_DIR="$OUT_DIR/iso"
 # (VERSION/PATCHLEVEL/SUBLEVEL).
 tree_version() {
     if [[ -f "$1/.jk_os-version" ]]; then cat "$1/.jk_os-version"; return; fi   # fetched by git tag
+    if [[ -f "$1/gcc/BASE-VER" ]]; then cat "$1/gcc/BASE-VER"; return; fi       # GCC
+    if [[ -f "$1/gdb/version.in" ]]; then cat "$1/gdb/version.in"; return; fi   # GDB
+    if [[ -f "$1/binutils/configure" ]]; then                                   # binutils
+        sed -n "s/^PACKAGE_VERSION='\\(.*\\)'$/\\1/p" "$1/binutils/configure" | head -n1; return
+    fi
+    if [[ -f "$1/Source/CMakeVersion.cmake" ]]; then                           # CMake
+        sed -n 's/^set(CMake_VERSION_\(MAJOR\|MINOR\|PATCH\) \([0-9]*\))/\2/p' "$1/Source/CMakeVersion.cmake" \
+            | paste -sd.; return
+    fi
+    if [[ -f "$1/cmake/Modules/LLVMVersion.cmake" ]]; then                      # llvm-project
+        sed -n 's/^ *set(LLVM_VERSION_\(MAJOR\|MINOR\|PATCH\) \([0-9]*\))/\2/p' \
+            "$1/cmake/Modules/LLVMVersion.cmake" | paste -sd.; return
+    fi
     if [[ -f "$1/.tarball-version" ]]; then cat "$1/.tarball-version"; return; fi
     if [[ -f "$1/VERSION.dat" ]]; then                                          # OpenSSL
         awk -F= '{ v[$1] = $2 } END { print v["MAJOR"] "." v["MINOR"] "." v["PATCH"] }' "$1/VERSION.dat"; return

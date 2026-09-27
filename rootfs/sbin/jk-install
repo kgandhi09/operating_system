@@ -614,6 +614,7 @@ if [ -n "$AUTO" ]; then
     [ "$SWAP" = 0 ] || swap=$(parse_size "$SWAP" "$LAST") || die "bad --swap size: $SWAP"
     auto_layout "$swap"
 else
+    echo; cat /usr/share/jk_os/banner
     head_line "Install $PRETTY_NAME"
     say "  The system runs from RAM; the disk keeps the kernel (/boot) and your"
     say "  data (/data, /home, ...), so installing needs little space."

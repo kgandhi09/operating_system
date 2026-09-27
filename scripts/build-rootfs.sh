@@ -10,6 +10,8 @@ source "$(dirname "$0")/common.sh"
 [[ -x "$TOOLS_OUT/sbin/sfdisk" ]] || die "disk tools not built yet (run: make tools)"
 DYN="$OUT_DIR/dyn"
 [[ -x "$DYN/usr/sbin/NetworkManager" ]] || die "network stack not built yet (run: make network)"
+TC="$OUT_DIR/toolchain"
+[[ -x "$TC/usr/bin/gcc" && -x "$TC/usr/bin/clang" ]] || die "toolchain not built yet (run: make toolchain)"
 
 log "assembling rootfs ($ARCH)"
 rm -rf "$ROOTFS_DIR"
@@ -54,6 +56,12 @@ cp -a "$TOOLS_OUT/bin/." bin/   # passwd, su, ... keep their setuid bit
                dbus-test-tool dbus-run-session dbus-cleanup-sockets \
                clear reset tput tset tabs captoinfo infocmp infotocap tic toe; do
           echo "--exclude=./usr/bin/$b"; done) .) | tar -xf - -C "$ROOTFS_DIR"
+# The C/C++ toolchain (build-toolchain.sh): GCC, Clang/LLVM, binutils,
+# CMake, Ninja, GDB, glibc and Linux headers. Docs and translations stay out.
+(cd "$TC" && tar -cf - --exclude=./lib --exclude=./lib64 \
+    --exclude=./usr/share/doc --exclude=./usr/share/info --exclude=./usr/share/man \
+    --exclude=./usr/share/locale --exclude=./usr/share/gdb/python .) | tar -xf - -C "$ROOTFS_DIR"
+
 # Terminal descriptions for the consoles and common terminals only.
 for t in d/dumb l/linux v/vt100 v/vt102 v/vt220 x/xterm x/xterm-256color x/xterm-color \
          s/screen s/screen-256color t/tmux t/tmux-256color a/ansi; do
@@ -87,7 +95,7 @@ done
 # The dynamic loader where the programs look for it (/lib64/ld-linux-x86-64.so.2,
 # /lib/ld-linux-aarch64.so.1): /lib and /lib64 point at /usr/lib.
 ln -s usr/lib lib
-[[ "$ARCH" == x86_64 ]] && ln -s usr/lib lib64
+ln -s usr/lib lib64
 interp="$("${CROSS_COMPILE}readelf" -l usr/sbin/NetworkManager | sed -n 's/.*interpreter: \(.*\)\]/\1/p')"
 [[ -e ".$interp" ]] || die "dynamic loader $interp missing from the image"
 
@@ -122,7 +130,23 @@ VERSION_ID=$OS_VERSION
 PRETTY_NAME="$OS_NAME $OS_VERSION ($ARCH)"
 OSR
 
-printf '\n%s %s (%s) \\n \\l\n\n' "$OS_NAME" "$OS_VERSION" "$ARCH" > etc/issue
+# Before login: the banner (getty reads backslashes as escapes such as \n,
+# so the art's own are doubled), then name, version, hostname and console.
+{
+    echo
+    sed 's/\\/\\\\/g' usr/share/jk_os/banner
+    printf '\n  %s %s (%s) - \\n - \\l\n\n' "$OS_NAME" "$OS_VERSION" "$ARCH"
+} > etc/issue
+# After login: a short welcome (shadow's login shows it; ~/.hushlogin silences it).
+cat > etc/motd <<MOTD
+
+  Welcome to $OS_NAME $OS_VERSION, the J.K. Robotics Pvt. Ltd. OS.
+
+    sudo <command>     run a command as root (administrators)
+    nmcli              network: wired, Wi-Fi, IPv6
+    gcc / clang        C and C++ (C++20), with cmake, ninja and gdb
+
+MOTD
 
 chmod -R go-w .
 chmod 0700 root

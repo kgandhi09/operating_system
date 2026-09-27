@@ -112,7 +112,7 @@ mesonpkg() {    # mesonpkg <src> <out> <meson options...>
     meson setup "$out" "$src" --cross-file "$CROSS_FILE" --native-file "$NATIVE_FILE" \
         --prefix=/usr --libdir=lib --sysconfdir=/etc --localstatedir=/var \
         --buildtype=release --wrap-mode=nodownload -Ddefault_library=shared "$@"
-    ninja -C "$out"
+    ninja -C "$out" -j"$JOBS"
     DESTDIR="$DYN" meson install -C "$out" --no-rebuild
 }
 

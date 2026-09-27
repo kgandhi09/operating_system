@@ -12,18 +12,21 @@
 #   scripts/update-source.sh kernel ~/Downloads/linux-7.3.tar.xz
 #
 # Every download is verified: against the project's published SHA-256 sums,
-# the GitHub release asset digest, or, for projects that publish neither,
-# by fetching the release tag with git (content-addressed) and exporting it.
+# the GitHub release asset digest, the GNU project's signature (GNU keyring
+# from ftp.gnu.org), or, for projects that publish none of these, by
+# fetching the release tag with git (content-addressed) and exporting it.
 source "$(dirname "$0")/common.sh"
 need tar sha256sum
 
 # source_spec <source> <version>: set $tree (default destination) and how to
-# fetch it: $kind (sums | github | git), plus
+# fetch it: $kind (sums | github | gnu | git), plus
 #   sums:   $base (directory URL), $name (tarball), $sums (checksum file URL)
+#   gnu:    $base, $name (checked against $name.sig)
 #   github: $repo, $tag, $name (release asset)
 #   git:    $url, $tag
 SOURCES="kernel busybox util-linux e2fsprogs shadow libxcrypt sudo zlib libffi pcre2 glib
-expat dbus eudev libndp libnl openssl wpa_supplicant ncurses readline networkmanager"
+expat dbus eudev libndp libnl openssl wpa_supplicant ncurses readline networkmanager
+gcc binutils gdb gmp mpfr mpc llvm cmake ninja"
 source_spec() {
     local v="$2"
     case "$1" in
@@ -59,6 +62,15 @@ source_spec() {
         expat)     tree=$EXPAT_TREE     kind=github repo=libexpat/libexpat   tag="R_${v//./_}" name="expat-$v.tar.xz" ;;
         libnl)     tree=$LIBNL_TREE     kind=github repo=thom311/libnl       tag="libnl${v//./_}" name="libnl-$v.tar.gz" ;;
         openssl)   tree=$OPENSSL_TREE   kind=github repo=openssl/openssl     tag="openssl-$v" name="openssl-$v.tar.gz" ;;
+        gcc)       tree=$GCC_TREE       kind=gnu base="https://ftp.gnu.org/gnu/gcc/gcc-$v" name="gcc-$v.tar.xz" ;;
+        binutils)  tree=$BINUTILS_TREE  kind=gnu base="https://ftp.gnu.org/gnu/binutils"  name="binutils-$v.tar.xz" ;;
+        gdb)       tree=$GDB_TREE       kind=gnu base="https://ftp.gnu.org/gnu/gdb"       name="gdb-$v.tar.xz" ;;
+        gmp)       tree=$GMP_TREE       kind=gnu base="https://ftp.gnu.org/gnu/gmp"       name="gmp-$v.tar.xz" ;;
+        mpfr)      tree=$MPFR_TREE      kind=gnu base="https://ftp.gnu.org/gnu/mpfr"      name="mpfr-$v.tar.xz" ;;
+        mpc)       tree=$MPC_TREE       kind=gnu base="https://ftp.gnu.org/gnu/mpc"       name="mpc-$v.tar.xz" ;;
+        llvm)      tree=$LLVM_TREE      kind=github repo=llvm/llvm-project tag="llvmorg-$v" name="llvm-project-$v.src.tar.xz" ;;
+        cmake)     tree=$CMAKE_TREE     kind=github repo=Kitware/CMake     tag="v$v"     name="cmake-$v.tar.gz" ;;
+        ninja)     tree=$NINJA_TREE     kind=git url=https://github.com/ninja-build/ninja.git tag="v$v" ;;
         dbus)      tree=$DBUS_TREE      kind=git url=https://gitlab.freedesktop.org/dbus/dbus.git tag="dbus-$v" ;;
         eudev)     tree=$EUDEV_TREE     kind=git url=https://github.com/eudev-project/eudev.git   tag="v$v" ;;
         libndp)    tree=$LIBNDP_TREE    kind=git url=https://github.com/jpirko/libndp.git         tag="v$v" ;;
@@ -96,7 +108,16 @@ elif [[ "$kind" == git ]]; then
     tarball="$tmp/$what-$ver.tar"
     git -C "$tmp/git" archive --prefix="$what-$ver/" -o "$tarball" HEAD
 else
-    if [[ "$kind" == github ]]; then
+    if [[ "$kind" == gnu ]]; then
+        need gpgv
+        fetch "$base/$name" "$tmp/$name"
+        fetch "$base/$name.sig" "$tmp/$name.sig"
+        fetch https://ftp.gnu.org/gnu/gnu-keyring.gpg "$tmp/gnu-keyring.gpg"
+        gpgv --keyring "$tmp/gnu-keyring.gpg" "$tmp/$name.sig" "$tmp/$name" 2>"$tmp/gpgv.log" \
+            || { cat "$tmp/gpgv.log" >&2; die "bad GNU signature on $name"; }
+        log "$(grep -o 'Good signature from.*' "$tmp/gpgv.log" | head -n1)"
+        sha256sum "$tmp/$name" | sed "s|$tmp/||" > "$tmp/sums"
+    elif [[ "$kind" == github ]]; then
         need jq
         base="https://github.com/$repo/releases/download/$tag"
         log "reading $repo $tag from the GitHub API"
@@ -107,7 +128,7 @@ else
     else
         fetch "$sums" "$tmp/sums"
     fi
-    fetch "$base/$name" "$tmp/$name"
+    [[ -f "$tmp/$name" ]] || fetch "$base/$name" "$tmp/$name"
     # "<sum>  <name>" or "<sum> *<name>" (binary mode, as NetworkManager writes it)
     grep -E "[[:space:]]\*?$name\$" "$tmp/sums" | head -n1 | sed 's/ \*/  /' > "$tmp/check"
     [[ -s "$tmp/check" ]] || die "no published checksum for $name"
@@ -120,7 +141,7 @@ mkdir "$tmp/x"
 tar -xf "$tarball" -C "$tmp/x"
 top=("$tmp/x"/*)
 [[ ${#top[@]} -eq 1 && -d "${top[0]}" ]] || die "unexpected tarball layout: $tarball"
-for f in Makefile configure meson.build CMakeLists.txt autogen.sh Configure wpa_supplicant/Makefile; do
+for f in Makefile configure meson.build CMakeLists.txt autogen.sh Configure wpa_supplicant/Makefile llvm/CMakeLists.txt bootstrap; do
     [[ -e "${top[0]}/$f" ]] && break
 done || die "unexpected tarball layout: $tarball (no build files)"
 

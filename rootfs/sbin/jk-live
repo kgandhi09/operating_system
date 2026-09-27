@@ -11,6 +11,8 @@ C_B=$(printf '\033[1m'); C_N=$(printf '\033[0m')
 dmesg -n 1 2>/dev/null
 
 clear
+echo
+cat /usr/share/jk_os/banner
 printf '\n  %sWelcome to %s%s\n\n' "$C_B" "$PRETTY_NAME" "$C_N"
 echo "  You booted from the installer medium. Nothing is written to any disk"
 echo "  unless you install; changes in this live session are kept in RAM only."

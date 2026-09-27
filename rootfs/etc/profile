@@ -3,3 +3,5 @@ export HOME="${HOME:-/root}"
 export TERM="${TERM:-linux}"
 export PS1='\u@\h:\w\$ '
 umask 022
+# CMake builds with Ninja unless a project says otherwise (-G).
+export CMAKE_GENERATOR=Ninja
