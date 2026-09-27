@@ -1,0 +1,33 @@
+# Firmware for x86_64 PCs and laptops (same format as common.list).
+
+# Wired Ethernet.
+driver r8169
+driver tg3
+
+# Wi-Fi cards.
+driver iwlwifi
+# Intel's platform tables for newer cards (loaded after the .ucode).
+file iwlwifi-*.pnvm
+driver ath10k_pci
+driver ath11k_pci
+driver ath12k
+# Access-point / router radios, not found in PCs.
+skip ath11k/QCN9074/*
+skip ath11k/IPQ*
+skip ath12k/QCN9274/*
+skip ath12k/IPQ*
+driver rtw88_8723d
+driver rtw89_8851b
+driver rtw89_8852a
+driver rtw89_8852b
+driver rtw89_8852bt
+driver rtw89_8852c
+driver rtw89_8922a
+driver rtl8188ee
+driver rtl8192ee
+driver rtl8723be
+driver rtl8821ae
+driver mt7921e
+driver mt7925e
+driver brcmsmac
+driver mwifiex_pcie

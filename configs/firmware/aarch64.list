@@ -1,0 +1,10 @@
+# Firmware for aarch64 boards and laptops (same format as common.list).
+# brcmfmac (Raspberry Pi and many boards) is in common.list.
+
+driver r8169
+driver iwlwifi
+file iwlwifi-*.pnvm
+driver ath10k_pci
+driver ath11k_pci
+driver mwifiex_sdio
+driver mwifiex_pcie

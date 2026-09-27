@@ -91,6 +91,19 @@ ln -s usr/lib lib
 interp="$("${CROSS_COMPILE}readelf" -l usr/sbin/NetworkManager | sed -n 's/.*interpreter: \(.*\)\]/\1/p')"
 [[ -e ".$interp" ]] || die "dynamic loader $interp missing from the image"
 
+# Firmware for this arch's network chips (userland/firmware/<arch>.files,
+# see scripts/update-firmware.sh), zstd-compressed as the kernel loads it.
+FW_SRC="$ROOT_DIR/userland/firmware"
+if [[ -f "$FW_SRC/$ARCH.files" ]]; then
+    while IFS= read -r f; do
+        [[ -f "$FW_SRC/$f" ]] || die "userland/firmware/$f missing (run scripts/update-firmware.sh)"
+        mkdir -p "usr/lib/firmware/$(dirname "$f")"
+        cp "$FW_SRC/$f" "usr/lib/firmware/$f"
+    done < "$FW_SRC/$ARCH.files"
+else
+    warn "no userland/firmware/$ARCH.files: Wi-Fi and some Ethernet chips will lack firmware"
+fi
+
 # /usr/local/bin comes first in PATH, so these win over BusyBox applets.
 mkdir -p usr/local/bin
 if compgen -G "$BINARIES_DIR/bin/*" >/dev/null; then

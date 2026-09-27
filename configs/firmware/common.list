@@ -1,0 +1,28 @@
+# Firmware kept for every arch (scripts/update-firmware.sh):
+#   driver <name>   what that built-in driver may load (per the kernel build)
+#   file <glob>     files no driver declares
+
+# Wi-Fi regulatory database (allowed channels and power per country).
+file regulatory.db
+file regulatory.db.p7s
+
+# USB Ethernet dongles.
+driver r8152
+
+# USB Wi-Fi adapters.
+driver rtl8xxxu
+# (rtw88 and rtw89 chips declare their firmware in the chip driver, shared
+# by the USB and PCIe variants.)
+driver rtw88_8822b
+driver rtw88_8822c
+driver rtw88_8821c
+driver mt7601u
+driver mt76x2u
+driver mt7921u
+driver mt7925u
+driver rt2800usb
+driver ath9k_htc
+driver brcmfmac
+# Board files (NVRAM, per-country tables) brcmfmac picks by board name.
+file brcm/brcmfmac*.txt
+file brcm/brcmfmac*.clm_blob

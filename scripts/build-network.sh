@@ -141,6 +141,8 @@ b_eudev() {     # from git: generate configure first
 }
 
 b_openssl() {
+    # OpenSSL would put $CROSS_COMPILE in front of the already prefixed $CC.
+    unset CROSS_COMPILE
     (cd "$2" && "$1/Configure" "$OPENSSL_TARGET" --prefix=/usr --libdir=lib --openssldir=/etc/ssl \
         shared no-tests no-docs no-apps no-legacy no-engine no-module no-ssl3 \
         CC="$CC" AR="$AR" RANLIB="$RANLIB")
