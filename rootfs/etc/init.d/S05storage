@@ -9,7 +9,11 @@
 #   installed  no installer medium, but an installed system (the ext4
 #              partition labeled JK_DATA): it is mounted at /data, then
 #              everything in /data/etc/fstab (/boot, /home, swap, ...);
-#              /home falls back to /data/home.
+#              /home falls back to /data/home. /data/system/etc is overlaid
+#              on /etc, so changes there (users, passwords, hostname, ...)
+#              are kept; files never changed still come from the image.
+#   setup      installed, but no user created yet (jk-install --auto without
+#              --user): the consoles open the first-boot setup (jk-setup).
 #   ram        neither: RAM only, as before any install.
 #
 #   S05storage start   detect the mode (and mount, when installed)
@@ -18,6 +22,9 @@
 #   S05storage stop    unmount it
 
 FSTAB=/data/etc/fstab
+ETC_UPPER=/data/system/etc
+ETC_WORK=/data/system/.etc-work
+SETUP_DONE=/data/etc/jk_os-setup-done
 
 # check <device>: repair an ext4 filesystem before mounting it. e2fsck exit
 # codes: 0 clean, 1 fixed, 2 fixed (reboot advised), 4+ needs a human.
@@ -56,7 +63,6 @@ start() {
         echo "storage: no installed system found, running from RAM only"
         return 0
     fi
-    echo installed > /run/jk-mode
     mount_storage
 }
 
@@ -68,6 +74,15 @@ mount_storage() {
     mkdir -p /data
     mount -t ext4 -o noatime "$data" /data || return 1
     echo "storage: $data on /data"
+
+    # /etc: the image's files, with the installed system's changes on top.
+    mkdir -p "$ETC_UPPER" "$ETC_WORK"
+    if mount -t overlay overlay -o "lowerdir=/etc,upperdir=$ETC_UPPER,workdir=$ETC_WORK" /etc; then
+        hostname -F /etc/hostname
+    else
+        echo "storage: cannot overlay /etc; changes to it will not be kept" >&2
+    fi
+    if [ -f "$SETUP_DONE" ]; then echo installed; else echo setup; fi > /run/jk-mode
 
     if [ -f "$FSTAB" ]; then
         while read -r spec mnt type opts _; do
@@ -92,8 +107,9 @@ mount_storage() {
 stop() {
     sync
     swapoff -a 2>/dev/null
-    # Reverse name order unmounts /home (a bind of /data/home) before /data.
-    for m in $(awk '$2 == "/data" || $2 ~ "^/(boot|home|var/log|srv|opt|mnt)(/|$)" { print $2 }' /proc/mounts | sort -r); do
+    # Reverse name order unmounts /home (a bind of /data/home) and the /etc
+    # overlay before /data.
+    for m in $(awk '$2 == "/data" || ($2 == "/etc" && $3 == "overlay") || $2 ~ "^/(boot|home|var/log|srv|opt|mnt)(/|$)" { print $2 }' /proc/mounts | sort -r); do
         umount "$m" 2>/dev/null || mount -o remount,ro "$m" 2>/dev/null
     done
 }

@@ -64,6 +64,8 @@ BUSYBOX_SRC="$ROOT_DIR/$BUSYBOX_TREE"
 BUSYBOX_OUT="$OUT_DIR/busybox"
 UTIL_LINUX_SRC="$ROOT_DIR/$UTIL_LINUX_TREE"
 E2FSPROGS_SRC="$ROOT_DIR/$E2FSPROGS_TREE"
+SHADOW_SRC="$ROOT_DIR/$SHADOW_TREE"
+LIBXCRYPT_SRC="$ROOT_DIR/$LIBXCRYPT_TREE"
 # Disk tools (util-linux, e2fsprogs) are installed here, then into the rootfs.
 TOOLS_OUT="$OUT_DIR/tools"
 ROOTFS_DIR="$OUT_DIR/rootfs"
@@ -72,12 +74,16 @@ BINARIES_DIR="$ROOT_DIR/userland/binaries/$ARCH"
 ISO_DIR="$OUT_DIR/iso"
 
 # tree_version <dir>: "7.2", "1.37.0", ... Autotools release tarballs record
-# it in .tarball-version (util-linux) or version.h (e2fsprogs); Linux and
-# BusyBox in a Kbuild-style Makefile (VERSION/PATCHLEVEL/SUBLEVEL).
+# it in .tarball-version (util-linux), version.h (e2fsprogs) or configure's
+# PACKAGE_VERSION; Linux and BusyBox in a Kbuild-style Makefile
+# (VERSION/PATCHLEVEL/SUBLEVEL).
 tree_version() {
     if [[ -f "$1/.tarball-version" ]]; then cat "$1/.tarball-version"; return; fi
     if [[ -f "$1/version.h" ]]; then
         sed -n 's/^#define E2FSPROGS_VERSION "\(.*\)"/\1/p' "$1/version.h"; return
+    fi
+    if [[ ! -f "$1/Makefile" && -f "$1/configure" ]]; then   # any other autoconf tarball
+        sed -n "s/^PACKAGE_VERSION='\\(.*\\)'$/\\1/p" "$1/configure" | head -n1; return
     fi
     [[ -f "$1/Makefile" ]] || { echo unknown; return; }
     awk -F' *= *' '

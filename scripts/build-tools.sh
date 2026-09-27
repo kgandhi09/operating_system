@@ -1,20 +1,32 @@
 #!/usr/bin/env bash
-# Build the static disk tools BusyBox lacks, for the installer (jk-install):
-#   util-linux: sfdisk fdisk lsblk wipefs partx   (GPT partitioning)
+# Build the static tools BusyBox lacks or does too little of:
+#   util-linux: sfdisk fdisk lsblk wipefs partx   (GPT partitioning, jk-install)
 #   e2fsprogs:  mke2fs e2fsck resize2fs tune2fs   (journaled ext4)
-# Both build out of tree under build/<arch>/ and land in build/<arch>/tools/sbin.
+#   shadow:     useradd usermod passwd su login ... (user management), linked
+#               against libxcrypt (yescrypt / sha512 password hashes)
+# All build out of tree under build/<arch>/ and land in build/<arch>/tools.
 source "$(dirname "$0")/common.sh"
 need make "${CROSS_COMPILE}gcc"
 
-for src in "$UTIL_LINUX_SRC" "$E2FSPROGS_SRC"; do
+for src in "$UTIL_LINUX_SRC" "$E2FSPROGS_SRC" "$SHADOW_SRC" "$LIBXCRYPT_SRC"; do
     [[ -x "$src/configure" ]] || die "no source at ${src#"$ROOT_DIR"/} (see versions.env)"
 done
 
 HOST_TRIPLE="$ARCH-linux-gnu"
 UL_OUT="$OUT_DIR/util-linux"
 E2_OUT="$OUT_DIR/e2fsprogs"
+XC_OUT="$OUT_DIR/libxcrypt"
+SH_OUT="$OUT_DIR/shadow"
+SYSROOT="$OUT_DIR/sysroot"   # static libraries built here for later packages
 # fdisks=check: fdisk and sfdisk, but no cfdisk (it needs ncurses).
 UL_PROGS=(sfdisk fdisk lsblk wipefs partx)
+# Account tools, root only (they land in sbin/) ...
+SH_ADMIN=(useradd usermod userdel groupadd groupmod groupdel chpasswd chgpasswd
+          newusers pwck grpck pwconv grpconv chage)
+# ... and what users run on their own account (bin/; setuid root, but they
+# only let a non-root user change themselves).
+SH_USER=(passwd chfn chsh su login newgrp)
+SH_PROGS=("${SH_ADMIN[@]}" "${SH_USER[@]}")
 # Keep pkg-config from handing the host's shared libraries to a static cross build.
 export PKG_CONFIG_LIBDIR=/nonexistent PKG_CONFIG_PATH=
 export CC="${CROSS_COMPILE}gcc"
@@ -65,21 +77,48 @@ qmake "$E2_OUT/misc" mke2fs tune2fs
 qmake "$E2_OUT/e2fsck" e2fsck
 qmake "$E2_OUT/resize" resize2fs
 
+# libxcrypt: only the static library, installed into the build sysroot.
+configure_once "$LIBXCRYPT_SRC" "$XC_OUT" \
+    --enable-hashes=strong,glibc --enable-obsolete-api=no --disable-failure-tokens \
+    --disable-valgrind --disable-werror
+log "building libxcrypt ($ARCH)"
+qmake "$XC_OUT"
+qmake "$XC_OUT" DESTDIR="$SYSROOT" install-libLTLIBRARIES install-nodist_includeHEADERS
+
+# shadow: no PAM, so the tools read /etc/login.defs and hash with libxcrypt.
+# nscd support stays on: shadow 4.20's --without-nscd stub doesn't compile, and
+# with no nscd running the cache flush is a no-op.
+configure_once "$SHADOW_SRC" "$SH_OUT" \
+    --sysconfdir=/etc --with-su --with-yescrypt --without-libpam --without-audit \
+    --without-selinux --without-acl --without-attr --without-btrfs --without-tcb \
+    --without-sssd --without-libbsd --without-skey --disable-logind \
+    --disable-subordinate-ids --disable-man --enable-shadowgrp \
+    CPPFLAGS="-I$SYSROOT/usr/include" LDFLAGS="-static -L$SYSROOT/usr/lib"
+log "building shadow ($ARCH)"
+qmake "$SH_OUT/lib"
+qmake "$SH_OUT/src" LDFLAGS="-all-static -L$SYSROOT/usr/lib" "${SH_PROGS[@]}"
+
 rm -rf "$TOOLS_OUT"
-mkdir -p "$TOOLS_OUT/sbin"
+mkdir -p "$TOOLS_OUT/sbin" "$TOOLS_OUT/bin"
 for p in "${UL_PROGS[@]}"; do install -m 0755 "$UL_OUT/$p" "$TOOLS_OUT/sbin/"; done
 install -m 0755 "$E2_OUT/misc/mke2fs" "$E2_OUT/misc/tune2fs" \
     "$E2_OUT/e2fsck/e2fsck" "$E2_OUT/resize/resize2fs" "$TOOLS_OUT/sbin/"
-"${CROSS_COMPILE}strip" "$TOOLS_OUT/sbin/"*
+for p in "${SH_ADMIN[@]}"; do install -m 0755 "$SH_OUT/src/$p" "$TOOLS_OUT/sbin/"; done
+for p in "${SH_USER[@]}"; do install -m 0755 "$SH_OUT/src/$p" "$TOOLS_OUT/bin/"; done
+"${CROSS_COMPILE}strip" "$TOOLS_OUT/sbin/"* "$TOOLS_OUT/bin/"*
+# setuid root: a user changes their own password, name or shell, switches to
+# one of their own groups (newgrp), or becomes root with su (only group
+# wheel, see /etc/login.defs). login is run by root (getty) and needs none.
+chmod 4755 "$TOOLS_OUT/bin/"{passwd,chfn,chsh,su,newgrp}
 # Names the e2fsprogs tools answer to (they check argv[0]).
 ln -s mke2fs  "$TOOLS_OUT/sbin/mkfs.ext4"
 ln -s e2fsck  "$TOOLS_OUT/sbin/fsck.ext4"
 ln -s tune2fs "$TOOLS_OUT/sbin/e2label"
 
 if command -v file >/dev/null; then
-    for f in "$TOOLS_OUT/sbin/"*; do
+    for f in "$TOOLS_OUT/sbin/"* "$TOOLS_OUT/bin/"*; do
         [[ -L "$f" ]] && continue
         file -b "$f" | grep -qE 'statically linked|static-pie linked' || warn "$(basename "$f") is not static"
     done
 fi
-log "tools: $(cd "$TOOLS_OUT/sbin" && echo *)"
+log "tools: $(cd "$TOOLS_OUT/sbin" && echo *) $(cd "$TOOLS_OUT/bin" && echo *)"

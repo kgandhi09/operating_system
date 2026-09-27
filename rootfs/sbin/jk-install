@@ -4,6 +4,9 @@
 #
 #   jk-install                                   interactive
 #   jk-install --auto /dev/sdX [--swap 2G] [--yes]  erase the disk, default layout
+#       [--user NAME [--fullname "Full Name"] [--no-admin]] [--hostname NAME]
+#       passwords come from $JK_USER_PASSWORD and $JK_ROOT_PASSWORD; with no
+#       --user, the accounts are set up at first boot (jk-setup)
 #
 # The OS itself stays one kernel file (it carries the root filesystem), so an
 # installed disk holds:
@@ -17,6 +20,7 @@
 # Nothing is written until the final summary is confirmed.
 
 set -u
+. /usr/lib/jk_os/accounts.sh
 
 ESP_GUID=C12A7328-F81F-11D2-BA4B-00A0C93EC93B
 LINUX_GUID=0FC63DAF-8483-4772-8E79-3D69D8477DE4
@@ -433,6 +437,11 @@ summary() {
         [ "$mount" != - ] && say "  - use $dev as $mount"
     done
     say "  - install $PRETTY_NAME to /boot/EFI/BOOT/$EFI_NAME"
+    case "$ACCOUNTS" in
+        new)   accounts_summary ;;
+        keep)  say "  - keep the users and settings already on /data" ;;
+        later) say "  - no user yet: the first boot asks for one" ;;
+    esac
     echo
     others=$(findfs LABEL=JK_DATA 2>/dev/null || true)
     if [ -n "$others" ] && [ "$(parent_disk "$others")" != "$DISK" ]; then
@@ -542,6 +551,27 @@ apply() {
     printf 'OS=%s\nVERSION=%s\nARCH=%s\nDISK=%s\nDATE=%s\n' "$NAME" "$VERSION_ID" \
         "$(uname -m)" "$DISK" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$TARGET/data/etc/jk_os-install"
 
+    case "$ACCOUNTS" in
+        new)
+            say "  creating the user $ACC_USER"
+            # shadow's tools edit a staging copy of /etc (--prefix); the files
+            # they change go to /data/system/etc, which is overlaid on /etc at boot.
+            stage="$WORK/stage"
+            rm -rf "$stage"; mkdir -p "$stage/etc/default"
+            for f in passwd shadow group gshadow login.defs hostname hosts default/useradd; do
+                cp -p "/etc/$f" "$stage/etc/$f"
+            done
+            run mkdir -p "$TARGET/data/home"
+            accounts_apply "$stage" "$TARGET/data/home"
+            run mkdir -p "$TARGET/data/system/etc"
+            for f in passwd shadow group gshadow hostname hosts; do
+                run cp -p "$stage/etc/$f" "$TARGET/data/system/etc/$f"
+            done
+            : > "$TARGET/data/etc/jk_os-setup-done"
+            ;;
+        later) rm -f "$TARGET/data/etc/jk_os-setup-done" ;;
+    esac
+
     sync
     cleanup
     : > "$WORK/installed"   # tells jk-live to offer the reboot
@@ -553,7 +583,7 @@ apply() {
 
 # ---------------------------------------------------------------- main
 
-usage() { sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
+usage() { sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
 
 [ "$(id -u)" = 0 ] || { echo "jk-install: run as root" >&2; exit 1; }
 for t in sfdisk wipefs partx mkfs.ext4 e2label mkfs.vfat mkswap blkid findfs lsblk; do
@@ -565,12 +595,17 @@ mkdir "$LOCK" 2>/dev/null || { echo "jk-install: already running (remove $LOCK i
 trap 'rmdir "$LOCK" 2>/dev/null' EXIT
 rm -rf "$WORK"; mkdir -p "$WORK"
 
-AUTO="" SWAP=0 YES=0
+AUTO="" SWAP=0 YES=0 ACCOUNTS=new
+ACC_USER="" ACC_FULLNAME="" ACC_ADMIN=yes ACC_HOSTNAME=$(cat /etc/hostname)
 while [ $# -gt 0 ]; do
     case "$1" in
         --auto) AUTO="${2:-}"; shift ;;
         --swap) SWAP="${2:-}"; shift ;;
         --yes)  YES=1 ;;
+        --user) ACC_USER="${2:-}"; shift ;;
+        --fullname) ACC_FULLNAME="${2:-}"; shift ;;
+        --hostname) ACC_HOSTNAME="${2:-}"; shift ;;
+        --no-admin) ACC_ADMIN=no ;;
         -h|--help) usage ;;
         *) usage 1 ;;
     esac
@@ -606,6 +641,26 @@ else
         2) partition_editor ;;
         *) die "no such choice" ;;
     esac
+fi
+
+# Who are you? Asked after the disk layout, as in Ubuntu's installer.
+if [ -n "$AUTO" ]; then
+    if [ -z "$ACC_USER" ]; then
+        ACCOUNTS=later
+    else
+        echo "$ACC_USER" | grep -qE '^[a-z_][a-z0-9_-]{0,31}$' || die "bad --user: $ACC_USER"
+        ACC_PASS="${JK_USER_PASSWORD:-}" ACC_ROOTPASS="${JK_ROOT_PASSWORD:-}"
+        [ -n "$ACC_PASS" ] && [ -n "$ACC_ROOTPASS" ] \
+            || die "--user needs JK_USER_PASSWORD and JK_ROOT_PASSWORD in the environment"
+    fi
+else
+    if awk -F'|' '$5 != "del" && $7 == "/data" && $6 == "keep"' "$PLAN" | grep -q .; then
+        head_line "Users"
+        say "  /data is kept as it is, with any users and settings already on it."
+        ask "  Keep those users and settings? (yes/no)" yes
+        [ "$ans" = yes ] && ACCOUNTS=keep
+    fi
+    [ "$ACCOUNTS" = new ] && accounts_ask
 fi
 
 summary

@@ -7,24 +7,30 @@
 #   scripts/update-source.sh busybox 1.38.0
 #   scripts/update-source.sh util-linux 2.42.4
 #   scripts/update-source.sh e2fsprogs 1.47.4
+#   scripts/update-source.sh shadow 4.20.3
+#   scripts/update-source.sh libxcrypt 4.5.2
 #
 # Instead of a version you can pass a local tarball (works offline):
 #   scripts/update-source.sh kernel ~/Downloads/linux-7.3.tar.xz
 #
 # Downloads come from cdn.kernel.org (Torvalds' mainline releases, util-linux,
-# e2fsprogs) and busybox.net, and are checked against the published SHA-256 sums.
+# e2fsprogs), busybox.net and GitHub releases (shadow, libxcrypt), and are
+# checked against the published SHA-256 sums (for GitHub, the asset digest).
+SOURCES="kernel, busybox, util-linux, e2fsprogs, shadow or libxcrypt"
 source "$(dirname "$0")/common.sh"
 need tar sha256sum
 
 what="${1:-}" ver="${2:-}"
-[[ -n "$what" && -n "$ver" ]] || die "usage: $0 kernel|busybox|util-linux|e2fsprogs <version|tarball> [tree]"
+[[ -n "$what" && -n "$ver" ]] || die "usage: $0 <source> <version|tarball> [tree]   (source: $SOURCES)"
 
 case "$what" in
     kernel)     tree="${3:-kernel/mainline}" ;;
     busybox)    tree="${3:-$BUSYBOX_TREE}" ;;
     util-linux) tree="${3:-$UTIL_LINUX_TREE}" ;;
     e2fsprogs)  tree="${3:-$E2FSPROGS_TREE}" ;;
-    *) die "unknown source '$what' (kernel, busybox, util-linux or e2fsprogs)" ;;
+    shadow)     tree="${3:-$SHADOW_TREE}" ;;
+    libxcrypt)  tree="${3:-$LIBXCRYPT_TREE}" ;;
+    *) die "unknown source '$what' ($SOURCES)" ;;
 esac
 
 tmp="$(mktemp -d "$ROOT_DIR/.update-source.XXXXXX")"
@@ -62,6 +68,18 @@ else
             base="https://cdn.kernel.org/pub/linux/kernel/people/tytso/e2fsprogs/v$ver"
             name="e2fsprogs-$ver.tar.xz"
             fetch "$base/sha256sums.asc" "$tmp/sums"
+            ;;
+        shadow|libxcrypt)
+            need jq
+            if [[ "$what" == shadow ]]; then repo=shadow-maint/shadow tag="$ver"
+            else repo=besser82/libxcrypt tag="v$ver"; fi
+            name="$what-$ver.tar.xz"
+            base="https://github.com/$repo/releases/download/$tag"
+            log "reading $repo $tag from the GitHub API"
+            curl -fsSL "https://api.github.com/repos/$repo/releases/tags/$tag" > "$tmp/release.json" \
+                || die "no release $tag of $repo"
+            jq -r --arg n "$name" '.assets[] | select(.name == $n) | .digest // empty' "$tmp/release.json" \
+                | sed -n "s/^sha256:\(.*\)/\1  $name/p" > "$tmp/sums"
             ;;
     esac
     fetch "$base/$name" "$tmp/$name"

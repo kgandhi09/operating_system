@@ -16,10 +16,15 @@ if [ "$present" = 0 ]; then
     exec sleep 2147483647
 fi
 
-# Booted from the installer medium (see S05storage): every console opens
-# the installer menu instead of a login prompt. getty still sets the line up;
-# -n -l makes it run jk-live where it would run login.
-[ "$(cat /run/jk-mode 2>/dev/null)" = live ] && set -- -n -i -l /sbin/jk-live
+# Before any user exists, the consoles open a program instead of a login
+# prompt (the mode comes from S05storage): the installer menu when booted
+# from the installer medium (or with no system at all), the first-boot setup
+# on an installed system that has no user yet. getty still sets the line
+# up; -n -l makes it run that program where it would run login.
+case "$(cat /run/jk-mode 2>/dev/null)" in
+    live|ram) set -- -n -i -l /sbin/jk-live ;;
+    setup)    set -- -n -i -l /sbin/jk-setup ;;
+esac
 
 case "$tty" in
     tty[0-9]*) exec /sbin/getty "$@" 38400 "$tty" linux ;;

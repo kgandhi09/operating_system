@@ -5,6 +5,7 @@ A minimal 64-bit Linux system built from source:
 - the **official Linux kernel** from Linus Torvalds' mainline releases, kept in this repo as plain source,
 - **BusyBox** as the base userland (shell, init, coreutils, networking),
 - **util-linux** and **e2fsprogs** disk tools (GPT partitioning, ext4) for the installer,
+- **shadow-utils** (with **libxcrypt**) for users and passwords: `useradd`, `passwd`, `su`, `login`, ...
 - a short list of **prebuilt static binaries pulled from GitHub releases** (`jq`, `rg`, `fd`, ...),
 - no display manager, X or Wayland: text console on screen plus serial console.
 
@@ -75,6 +76,8 @@ kernel/mainline/          Linux source, Torvalds' mainline release (plain files)
 userland/busybox/         BusyBox source (plain files)
 userland/util-linux/      util-linux source: sfdisk, fdisk, lsblk, wipefs, partx
 userland/e2fsprogs/       e2fsprogs source: mkfs.ext4, e2fsck, resize2fs, tune2fs
+userland/shadow/          shadow-utils source: useradd, usermod, passwd, su, login, ...
+userland/libxcrypt/       libxcrypt source: password hashing (yescrypt) for shadow
 configs/kernel/           kernel config fragments merged over the arch defconfig
 configs/busybox/          BusyBox config fragments merged over defconfig
 configs/binaries/         GitHub binaries: common.list (every arch) + <arch>.list
@@ -115,6 +118,8 @@ scripts/update-source.sh kernel 7.3                 # kernel/mainline -> 7.3
 scripts/update-source.sh busybox 1.38.0
 scripts/update-source.sh util-linux 2.42.5
 scripts/update-source.sh e2fsprogs 1.47.5
+scripts/update-source.sh shadow 4.20.4
+scripts/update-source.sh libxcrypt 4.5.3
 scripts/update-source.sh kernel ./linux-7.3.tar.xz  # offline, from a tarball you have
 make clean && make
 ```
@@ -190,7 +195,43 @@ to 10 s for the installer medium (3 s once an installed system is found).
   installer medium (label `JK_OS`), or the running system's `/boot` kernel if no
   medium is attached. `JK_KERNEL=<file>` overrides both.
 - **Scripted installs.** `jk-install --auto /dev/sdX [--swap 2G] --yes` erases
-  the disk and uses the default layout without asking.
+  the disk and uses the default layout without asking. Add
+  `--user NAME [--fullname "Full Name"] [--no-admin] [--hostname NAME]`, with the
+  passwords in `$JK_USER_PASSWORD` and `$JK_ROOT_PASSWORD`, to create the accounts
+  too. Without `--user`, the first boot asks for them (see below).
+
+## Users
+
+The image ships with no user, and root is locked (`*`). Accounts are created
+during the install, in a **"Who are you?"** step after the disk layout: your name,
+a username and password, the computer name, whether you may become root, and
+the root password. If a disk was installed without that step, the first boot of
+the installed system shows the same questions on every console before any login
+prompt (`/sbin/jk-setup`). Only then do login prompts appear.
+
+The tools are **shadow-utils**, as on Ubuntu/Debian/Arch, built without PAM and
+configured in `/etc/login.defs`. Passwords are hashed with yescrypt. BusyBox's own
+account applets are disabled.
+
+| Who | May |
+|---|---|
+| root | everything: `useradd`, `usermod`, `userdel`, `groupadd`, `groupmod`, `groupdel`, `chpasswd`, `chage`, `newusers`, and setting any user's password |
+| a user | change only their own password (`passwd`), name and details (`chfn`), and shell (`chsh`, from `/etc/shells`); switch to one of their own groups (`newgrp`) |
+| a member of `wheel` | become root with `su` (with the root password). The installer puts the first user in `wheel` if you say so; root adds others with `usermod -aG wheel <user>` |
+
+```sh
+su -                                  # as a wheel member, then:
+useradd -m -c "Robot Operator" op     # a new user, with /home/op
+passwd op                             # set their password
+usermod -aG wheel op                  # let them su
+userdel -r op                         # remove them and their home
+```
+
+On an installed system `/etc` is an **overlay**: the image's `/etc` with
+`/data/system/etc` on top. Anything changed there (users, passwords, groups,
+hostname, network settings) is kept across reboots, and `/home` is on `/data`.
+Files never changed keep coming from the image, so a new jk_os version updates
+them. A file you changed keeps your version.
 
 ## Binaries from GitHub
 

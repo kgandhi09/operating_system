@@ -1,6 +1,7 @@
 #!/bin/sh
 # jk-live: the installer menu that every console shows, instead of a login
-# prompt, when jk_os boots from its installer medium (/run/jk-mode = live).
+# prompt, when jk_os boots from its installer medium (/run/jk-mode = live),
+# or finds no installed system at all (ram).
 # getty runs it as root on the console (jk-getty: getty -n -l jk-live); when
 # it exits, init starts it again.
 
@@ -15,7 +16,11 @@ installed=$(findfs LABEL=JK_DATA 2>/dev/null)
 
 clear
 printf '\n  %sWelcome to %s%s\n\n' "$C_B" "$PRETTY_NAME" "$C_N"
-echo "  You booted from the installer medium. The system runs from RAM:"
+if [ "$(cat /run/jk-mode 2>/dev/null)" = ram ]; then
+    echo "  No installed system was found. The system runs from RAM:"
+else
+    echo "  You booted from the installer medium. The system runs from RAM:"
+fi
 echo "  nothing is written to any disk unless you install."
 echo
 echo "  1) Install $NAME"
@@ -59,9 +64,9 @@ case "${ans:-1}" in
         ;;
     3)
         [ -n "$installed" ] || exit 0
+        # Mounting sets /run/jk-mode (installed, or setup if it has no user
+        # yet); the consoles restart with what that mode shows.
         /etc/init.d/S05storage mount || { printf '  Press Enter to go back. '; read -r _; exit 0; }
-       echo installed > /run/jk-mode
-        # The other consoles restart with a login prompt, and so does this one.
         for pid in $(pidof jk-live); do
             [ "$pid" = $$ ] || kill "$pid" 2>/dev/null
         done

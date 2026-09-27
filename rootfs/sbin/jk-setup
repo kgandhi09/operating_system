@@ -1,0 +1,58 @@
+#!/bin/sh
+# jk-setup: first-boot setup of an installed jk_os that has no user yet
+# (installed with jk-install --auto and no --user). Every console shows it
+# instead of a login prompt (/run/jk-mode = setup, see S05storage); getty
+# runs it as root. Once the accounts exist, the consoles switch to login.
+
+. /etc/os-release
+. /usr/lib/jk_os/accounts.sh
+C_B=$(printf '\033[1m'); C_N=$(printf '\033[0m'); C_R=$(printf '\033[1;31m')
+say()  { printf '%s\n' "$*"; }
+warn() { printf '%swarning:%s %s\n' "$C_R" "$C_N" "$*" >&2; }
+die()  { printf '%serror:%s %s\n' "$C_R" "$C_N" "$*" >&2; rmdir "$LOCK" 2>/dev/null; printf 'Press Enter. '; read -r _; exit 1; }
+head_line() { printf '\n%s== %s ==%s\n\n' "$C_B" "$*" "$C_N"; }
+ask() {
+    if [ -n "${2:-}" ]; then printf '%s [%s]: ' "$1" "$2"; else printf '%s: ' "$1"; fi
+    read -r ans || exit 0
+    [ -n "$ans" ] || ans="${2:-}"
+}
+
+LOCK=/run/jk-setup.lock
+SETUP_DONE=/data/etc/jk_os-setup-done
+
+clear
+printf '\n  %sWelcome to %s%s\n\n' "$C_B" "$PRETTY_NAME" "$C_N"
+say "  This computer has no user yet. Create one to finish the setup."
+printf '\n  Press Enter to start. '
+read -r _ || exit 0
+
+if ! mkdir "$LOCK" 2>/dev/null; then
+    say "  The setup is already running on another console."
+    printf '  Press Enter to go back. '; read -r _
+    exit 0
+fi
+trap 'rmdir "$LOCK" 2>/dev/null' EXIT
+
+ACC_HOSTNAME=$(cat /etc/hostname)
+accounts_ask
+head_line "Summary"
+accounts_summary
+echo
+ask "Create them now? (yes/no)" yes
+[ "$ans" = yes ] || exit 0
+
+# /etc is the overlay on /data/system/etc, so the changes are kept.
+accounts_apply / /home
+hostname -F /etc/hostname
+: > "$SETUP_DONE"
+sync
+echo installed > /run/jk-mode
+
+say ""
+say "  Done. Log in as $ACC_USER."
+sleep 2
+# Every console restarts with a login prompt, this one included.
+for pid in $(pidof jk-setup); do
+    [ "$pid" = $$ ] || kill "$pid" 2>/dev/null
+done
+exit 0

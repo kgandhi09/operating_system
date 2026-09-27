@@ -1,0 +1,6 @@
+# Defaults for useradd(8). Each user also gets a group of their own
+# (USERGROUPS_ENAB in /etc/login.defs).
+SHELL=/bin/sh
+HOME=/home
+SKEL=/etc/skel
+CREATE_MAIL_SPOOL=no

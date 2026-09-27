@@ -20,13 +20,14 @@ cd "$ROOTFS_DIR"
 mkdir -p dev proc sys run tmp mnt root home var/log etc boot data
 ln -s ../run var/run
 ln -s bin/busybox init   # the kernel runs /init from an initramfs
-# util-linux / e2fsprogs replace BusyBox's more limited applets (fdisk,
-# mke2fs, ...). Drop the applet links first: cp would follow them and
+# util-linux / e2fsprogs / shadow replace BusyBox's more limited applets
+# (fdisk, mke2fs, ...). Drop the applet links first: cp would follow them and
 # overwrite the busybox binary itself.
-for f in "$TOOLS_OUT/sbin/"*; do
+for f in "$TOOLS_OUT/sbin/"* "$TOOLS_OUT/bin/"*; do
     rm -f {bin,sbin,usr/bin,usr/sbin}/"$(basename "$f")"
 done
 cp -a "$TOOLS_OUT/sbin/." sbin/
+cp -a "$TOOLS_OUT/bin/." bin/   # passwd, su, ... keep their setuid bit
 # /usr/local/bin comes first in PATH, so these win over BusyBox applets.
 mkdir -p usr/local/bin
 if compgen -G "$BINARIES_DIR/bin/*" >/dev/null; then
@@ -49,7 +50,7 @@ printf '\n%s %s (%s) \\n \\l\n\n' "$OS_NAME" "$OS_VERSION" "$ARCH" > etc/issue
 
 chmod -R go-w .
 chmod 0700 root
-chmod 0600 etc/shadow
+chmod 0600 etc/shadow etc/gshadow
 chmod 1777 tmp
 
 log "rootfs: $(du -sh . | cut -f1) in $ROOTFS_DIR"

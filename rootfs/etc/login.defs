@@ -1,0 +1,57 @@
+# jk_os: settings for shadow-utils (useradd, passwd, su, login, ...), which
+# are built without PAM and read everything from here. See login.defs(5).
+
+# ---- Who may do what
+# Only root creates, changes or removes accounts: useradd, usermod, userdel
+# and the group tools refuse anyone else. A user can change only their own
+# password (passwd), details (chfn) and shell (chsh, from /etc/shells).
+CHFN_RESTRICT        frwh
+CHFN_AUTH            yes
+CHSH_AUTH            yes
+# su only for members of group wheel: the admins picked in the installer or
+# setup, or added later by root with: usermod -aG wheel <user>
+# (shadow's su checks group "wheel", whatever login.defs(5) says about gid 0)
+SU_WHEEL_ONLY        yes
+# (No SU_NAME: su would start the shell as "-su", which BusyBox's multi-call
+# binary doesn't know; without it the shell runs as "-sh".)
+SYSLOG_SU_ENAB       yes
+SYSLOG_SG_ENAB       yes
+# Nobody logs in without a password (root is locked until one is set).
+PREVENT_NO_AUTH      yes
+
+# ---- Passwords
+ENCRYPT_METHOD       YESCRYPT
+YESCRYPT_COST_FACTOR 5
+PASS_MAX_DAYS        99999
+PASS_MIN_DAYS        0
+PASS_WARN_AGE        7
+PASS_MIN_LEN         8
+OBSCURE_CHECKS_ENAB  yes
+PASS_CHANGE_TRIES    3
+
+# ---- Logins
+LOGIN_RETRIES        5
+LOGIN_TIMEOUT        60
+FAIL_DELAY           3
+LOG_UNKFAIL_ENAB     no
+LOG_OK_LOGINS        no
+DEFAULT_HOME         yes
+ENV_PATH             PATH=/usr/local/bin:/usr/bin:/bin
+ENV_SUPATH           PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+TTYGROUP             tty
+TTYPERM              0600
+UMASK                022
+HUSHLOGIN_FILE       .hushlogin
+
+# ---- New accounts
+UID_MIN              1000
+UID_MAX              60000
+SYS_UID_MIN          100
+SYS_UID_MAX          999
+GID_MIN              1000
+GID_MAX              60000
+SYS_GID_MIN          100
+SYS_GID_MAX          999
+USERGROUPS_ENAB      yes
+CREATE_HOME          yes
+HOME_MODE            0700
