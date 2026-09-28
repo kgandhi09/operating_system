@@ -173,16 +173,21 @@ b_gcc() {
     # build != host for aarch64: the target libraries are built by the cross
     # compiler above ($TRIPLE-gcc on $PATH); for x86_64 by the new compiler.
     # The host's binutils have to be named too, or the plugin checks find no nm.
-    local host_tools=()
-    [[ -n "$CROSS" ]] && host_tools=(AR="$TRIPLE-ar" NM="$TRIPLE-nm" RANLIB="$TRIPLE-ranlib"
-                                     OBJDUMP="$TRIPLE-objdump" STRIP="$TRIPLE-strip")
+    # libcc1 (GDB's "compile" command plugin) is left out: its configure can't
+    # check a cross-built host (it needs an objdump it never looks for).
+    local host_tools=() extra=()
+    if [[ -n "$CROSS" ]]; then
+        host_tools=(AR="$TRIPLE-ar" NM="$TRIPLE-nm" RANLIB="$TRIPLE-ranlib"
+                    OBJDUMP="$TRIPLE-objdump" STRIP="$TRIPLE-strip")
+        extra=(--disable-libcc1)
+    fi
     (cd "$2" && env CC="$TCC" CXX="$TCXX" "${host_tools[@]}" "$GCC_SRC/configure" "${TARGET_ARGS[@]}" \
         --with-build-sysroot="$TC" --with-native-system-header-dir=/usr/include \
         --enable-languages=c,c++ --disable-multilib --disable-multiarch --disable-bootstrap \
         --enable-shared --enable-threads=posix --enable-__cxa_atexit --enable-clocale=gnu \
         --enable-default-pie --enable-default-ssp --enable-linker-build-id --enable-lto \
         --enable-plugin --with-gmp="$DEPS" --with-mpfr="$DEPS" --with-mpc="$DEPS" \
-        --with-pkgversion="$OS_NAME $OS_VERSION")
+        --with-pkgversion="$OS_NAME $OS_VERSION" "${extra[@]}")
     make -C "$2" -j"$JOBS"
     make -C "$2" install DESTDIR="$TC"
     # One library directory: what GCC put in lib64 goes to lib (lib64 links there).
@@ -210,6 +215,8 @@ cmake_target_args() {
 
 b_llvm() {
     local targets="X86;AArch64;ARM;RISCV"
+    # LLVM_APPEND_VC_REV=OFF: the source sits inside this repo, and LLVM would
+    # otherwise put the repo's git URL and commit into "clang --version".
     # shellcheck disable=SC2046 # word-split the option list
     cmake -G Ninja -S "$1/llvm" -B "$2" $(cmake_target_args) \
         -DLLVM_ENABLE_PROJECTS="clang;lld;clang-tools-extra" -DLLVM_TARGETS_TO_BUILD="$targets" \
@@ -221,7 +228,8 @@ b_llvm() {
         -DLLVM_ENABLE_LIBEDIT=OFF -DLLVM_ENABLE_LIBPFM=OFF -DLLVM_ENABLE_BINDINGS=OFF \
         -DLLVM_INSTALL_UTILS=OFF -DCLANG_DEFAULT_CXX_STDLIB=libstdc++ \
         -DCLANG_CONFIG_FILE_SYSTEM_DIR=/etc/clang -DCLANG_ENABLE_ARCMT=OFF \
-        -DCLANG_ENABLE_STATIC_ANALYZER=ON -DLLVM_PARALLEL_LINK_JOBS=2
+        -DCLANG_ENABLE_STATIC_ANALYZER=ON -DLLVM_PARALLEL_LINK_JOBS=2 \
+        -DLLVM_APPEND_VC_REV=OFF -DCLANG_VENDOR="$OS_NAME"
     ninja -C "$2" -j"$JOBS"
     DESTDIR="$TC" ninja -C "$2" -j"$JOBS" install
 }
