@@ -26,7 +26,7 @@ need tar sha256sum
 #   git:    $url, $tag
 SOURCES="kernel busybox util-linux e2fsprogs shadow libxcrypt sudo zlib libffi pcre2 glib
 expat dbus eudev libndp libnl openssl wpa_supplicant ncurses readline networkmanager
-gcc binutils gdb gmp mpfr mpc llvm cmake ninja"
+gcc binutils gdb gmp mpfr mpc llvm cmake ninja curl cacert openssh git"
 source_spec() {
     local v="$2"
     case "$1" in
@@ -53,6 +53,13 @@ source_spec() {
             tree=$NETWORKMANAGER_TREE kind=sums name="NetworkManager-$v.tar.xz"
             base="https://gitlab.freedesktop.org/api/v4/projects/411/packages/generic/NetworkManager/$v"
             sums="$base/$name.sha256sum" ;;
+        git)
+            tree=$GIT_TREE kind=sums name="git-$v.tar.xz"
+            base="https://mirrors.edge.kernel.org/pub/software/scm/git" sums="$base/sha256sums.asc" ;;
+        cacert)    # the Mozilla CA certificates as curl publishes them (version: the date)
+            tree=$CACERT_TREE kind=sums name="cacert-$v.pem"
+            base="https://curl.se/ca" sums="$base/$name.sha256" ;;
+        curl)      tree=$CURL_TREE      kind=github repo=curl/curl tag="curl-${v//./_}" name="curl-$v.tar.xz" ;;
         shadow)    tree=$SHADOW_TREE    kind=github repo=shadow-maint/shadow tag="$v"      name="shadow-$v.tar.xz" ;;
         sudo)      tree=$SUDO_TREE      kind=github repo=sudo-project/sudo   tag="v$v"     name="sudo-$v.tar.gz" ;;
         libxcrypt) tree=$LIBXCRYPT_TREE kind=github repo=besser82/libxcrypt  tag="v$v"     name="libxcrypt-$v.tar.xz" ;;
@@ -76,6 +83,8 @@ source_spec() {
         libndp)    tree=$LIBNDP_TREE    kind=git url=https://github.com/jpirko/libndp.git         tag="v$v" ;;
         ncurses)   tree=$NCURSES_TREE   kind=git url=https://github.com/ThomasDickey/ncurses-snapshots.git tag="v${v//./_}" ;;
         readline)  tree=$READLINE_TREE  kind=git url=https://git.savannah.gnu.org/git/readline.git tag="readline-$v" ;;
+        openssh)   # 10.5p1: tag V_10_5_P1
+                   t=${v//./_}; tree=$OPENSSH_TREE kind=git url=https://github.com/openssh/openssh-portable.git tag="V_${t/p/_P}" ;;
         wpa_supplicant)
                    tree=$WPA_SUPPLICANT_TREE kind=git url=https://w1.fi/hostap.git tag="hostap_${v//./_}" ;;
         *) die "unknown source '$1' (one of: $(echo $SOURCES))" ;;
@@ -136,6 +145,15 @@ else
     tarball="$tmp/$name"
 fi
 
+if [[ "$tarball" == *.pem ]]; then     # a single file, not a source tarball
+    dest="$ROOT_DIR/$tree"
+    rm -rf "$dest"; mkdir -p "$dest"
+    cp "$tarball" "$dest/cacert.pem"
+    echo "$ver" > "$dest/.jk_os-version"
+    log "$tree is now $what $ver"
+    exit 0
+fi
+
 log "unpacking $(basename "$tarball")"
 mkdir "$tmp/x"
 tar -xf "$tarball" -C "$tmp/x"
@@ -150,7 +168,9 @@ dest="$ROOT_DIR/$tree"
 mkdir -p "$(dirname "$dest")"
 [[ -e "$dest" ]] && mv "$dest" "$tmp/old"
 mv "${top[0]}" "$dest"
-[[ "$kind" == git ]] && echo "$ver" > "$dest/.jk_os-version"
+# git exports carry no version; some tarballs name it only in a header.
+if [[ "$kind" == git ]]; then echo "$ver" > "$dest/.jk_os-version"
+elif [[ ! -f "$ver" && "$(tree_version "$dest")" == @(|-|unknown) ]]; then echo "$ver" > "$dest/.jk_os-version"; fi
 
 log "$tree is now $what $(tree_version "$dest")"
 echo "Rebuild with: make clean && make"

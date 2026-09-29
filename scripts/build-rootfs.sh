@@ -64,7 +64,7 @@ cp -a "$TOOLS_OUT/bin/." bin/   # passwd, su, ... keep their setuid bit
                dbus-test-tool dbus-cleanup-sockets \
                qmake qmake6 qtpaths qtpaths6 target_qt.conf qt-cmake qt-cmake-create \
                qt-configure-module icu-config libtool libtoolize libtool-next-version \
-               libpng-config libpng16-config xml2-config wayland-scanner genbrk gencfu \
+               libpng-config libpng16-config xml2-config wayland-scanner genbrk gencfu curl-config \
                gencnval gendict genrb makeconv pkgdata icuexportdata derb \
                clear reset tput tset tabs captoinfo infocmp infotocap tic toe; do
           echo "--exclude=./usr/bin/$b"; done) .) | tar -xf - -C "$ROOTFS_DIR"
@@ -159,6 +159,7 @@ cat > etc/motd <<MOTD
     sudo <command>     run a command as root (administrators)
     nmcli              network: wired, Wi-Fi, IPv6
     gcc / clang        C and C++ (C++20), with cmake, ninja and gdb
+    git / ssh / curl   version control, remote login, downloads
     jk-gui             the desktop (KDE Plasma), on tty2 (Ctrl+Alt+F2)
 
 MOTD
