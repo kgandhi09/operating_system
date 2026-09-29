@@ -1,0 +1,30 @@
+#!/bin/sh
+# jk-gui: start the desktop (KDE Plasma) on this console.
+#
+# The desktop runs on tty2 (Ctrl+Alt+F2): log in there and run jk-gui.
+# tty1 (Ctrl+Alt+F1) stays a text console the whole time; logging out of
+# Plasma comes back to the shell on tty2.
+
+case "$(tty)" in
+    /dev/tty2) ;;
+    /dev/tty[0-9]*)
+        echo "jk-gui: the desktop runs on tty2: press Ctrl+Alt+F2, log in there and run jk-gui" >&2
+        exit 1 ;;
+    *)
+        echo "jk-gui: run this on the tty2 console (Ctrl+Alt+F2), not over a serial line or SSH" >&2
+        exit 1 ;;
+esac
+if [ ! -x /usr/bin/startplasma-wayland ]; then
+    echo "jk-gui: the desktop is not installed in this image" >&2
+    exit 1
+fi
+if [ "$(id -u)" = 0 ]; then
+    echo "jk-gui: log in as a regular user to start the desktop" >&2
+    exit 1
+fi
+if pidof kwin_wayland >/dev/null 2>&1; then
+    echo "jk-gui: the desktop is already running (Ctrl+Alt+F2)" >&2
+    exit 1
+fi
+echo "Starting the desktop... (log out from its menu to come back here)"
+exec /usr/lib/jk_os/jk-session

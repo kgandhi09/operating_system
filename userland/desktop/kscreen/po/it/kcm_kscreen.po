@@ -1,0 +1,1045 @@
+# Copyright (C) YEAR This_file_is_part_of_KDE
+# This file is distributed under the same license as the PACKAGE package.
+# SPDX-FileCopyrightText: 2013-2015, 2018-2026 Vincenzo Reale <smart2128vr@gmail.com>
+# SPDX-FileCopyrightText: 2024 Paolo Zamponi <feus73@gmail.com>
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: kcm_displayconfiguration\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-06-07 02:48+0000\n"
+"PO-Revision-Date: 2026-05-08 11:22+0200\n"
+"Last-Translator: Vincenzo Reale <smart2128vr@gmail.com>\n"
+"Language-Team: Italian <kde-i18n-it@kde.org>\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Lokalize 26.04.0\n"
+
+#: kcm.cpp:149 kcm.cpp:171
+#, kde-format
+msgid "Implementation error"
+msgstr "Errore di implementazione"
+
+#: kcm.cpp:199
+#, kde-format
+msgid "Outputs changed while trying to apply settings"
+msgstr ""
+"Le uscite sono cambiate durante il tentativo di applicare le impostazioni"
+
+#: output_model.cpp:101
+#, kde-format
+msgid "%1 Hz"
+msgstr "%1 Hz"
+
+#: output_model.cpp:764
+#, kde-format
+msgctxt "Width x height"
+msgid "%1 × %2"
+msgstr "%1 × %2"
+
+#: output_model.cpp:783
+#, kde-format
+msgctxt "Width x height (aspect ratio)"
+msgid "%1 × %2 (%3:%4)"
+msgstr "%1 × %2 (%3:%4)"
+
+#: output_model.cpp:892
+#, kde-format
+msgid "Replicated by other output"
+msgstr "Replicato da un'altra uscita"
+
+#: output_model.cpp:896
+#, kde-format
+msgid "None"
+msgstr "Nessuno"
+
+#: ui/ColorProfileSelector.qml:28
+#, kde-format
+msgctxt "@label:listbox"
+msgid "Color profile:"
+msgstr "Profilo dei colori:"
+
+#: ui/ColorProfileSelector.qml:37
+#, kde-format
+msgctxt "@item:inlistbox color profile"
+msgid "None"
+msgstr "Nessuno"
+
+#: ui/ColorProfileSelector.qml:42
+#, kde-format
+msgctxt "@item:inlistbox color profile"
+msgid "ICC profile"
+msgstr "Profilo ICC"
+
+#: ui/ColorProfileSelector.qml:47
+#, kde-format
+msgctxt "@item:inlistbox color profile"
+msgid "Built-in"
+msgstr "Integrato"
+
+#: ui/ColorProfileSelector.qml:68
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Use the color profile built into the screen itself, if present. Note that "
+"built-in color profiles are sometimes wrong, and often inaccurate. For "
+"optimal color fidelity, calibration using a colorimeter is recommended."
+msgstr ""
+"Utilizza il profilo di colore incorporato nello schermo stesso, se presente. "
+"Nota che i profili di colore incorporati a volte sono sbagliati e spesso "
+"imprecisi. Per una fedeltà cromatica ottimale, si consiglia la calibrazione "
+"tramite un colorimetro."
+
+#: ui/IccSelector.qml:33
+#, kde-format
+msgctxt "@info:placeholder"
+msgid "Enter ICC profile path…"
+msgstr "Inserisci il percorso del profilo ICC…"
+
+#: ui/IccSelector.qml:48
+#, kde-format
+msgctxt "@action:button"
+msgid "Select ICC profile…"
+msgstr "Seleziona profilo ICC…"
+
+#: ui/IccSelector.qml:58
+#, kde-format
+msgid "Opens a file picker for the ICC profile"
+msgstr "Apre un selettore di file per il profilo ICC"
+
+#: ui/IccSelector.qml:67
+#, kde-format
+msgctxt "@title:window"
+msgid "Select ICC Profile"
+msgstr "Seleziona profilo ICC"
+
+#: ui/main.qml:43
+#, kde-format
+msgctxt ""
+"@action:button Briefly show the display name in a popup label on each screen"
+msgid "Identify Screens"
+msgstr "Identifica gli schermi"
+
+#: ui/main.qml:56
+#, kde-format
+msgid "Keep display configuration?"
+msgstr "Vuoi mantenere la configurazione dello schermo?"
+
+#: ui/main.qml:67
+#, kde-format
+msgid "Will revert to previous configuration in %1 second."
+msgid_plural "Will revert to previous configuration in %1 seconds."
+msgstr[0] "La configurazione precedente sarà ripristinata in %1 secondo."
+msgstr[1] "La configurazione precedente sarà ripristinata in %1 secondi."
+
+#: ui/main.qml:84
+#, kde-format
+msgid "&Keep"
+msgstr "&Mantieni"
+
+#: ui/main.qml:97
+#, kde-format
+msgid "&Revert"
+msgstr "&Ripristina"
+
+#: ui/main.qml:117
+#, kde-format
+msgctxt "@info"
+msgid "All displays are disabled. Enable at least one."
+msgstr "Tutti gli schermi sono disabilitati. Abilitane almeno uno."
+
+#: ui/main.qml:119
+#, kde-format
+msgctxt "@info"
+msgid ""
+"Gaps between displays are not supported. Make sure all displays are touching."
+msgstr ""
+"Gli spazi tra gli schermi non sono supportati. Assicurati che tutti gli "
+"schermi si tocchino."
+
+#: ui/main.qml:124
+#, kde-format
+msgctxt "The argument contains the reason for the failure"
+msgid "Couldn’t apply display configuration: %1"
+msgstr "Impossibile applicare la configurazione dello schermo: %1"
+
+#: ui/main.qml:133
+#, kde-format
+msgid "A new output has been added. Settings have been reloaded."
+msgstr ""
+"Una nuova uscita è stata aggiunta. Le impostazioni sono state ricaricate."
+
+#: ui/main.qml:135
+#, kde-format
+msgid "An output has been removed. Settings have been reloaded."
+msgstr "Un'uscita è stata rimossa. Le impostazioni sono state ricaricate."
+
+#: ui/main.qml:189
+#, kde-format
+msgid "No KScreen backend found. Please check your KScreen installation."
+msgstr "Nessun motore di KScreen trovato. Verifica l'installazione di KScreen."
+
+#: ui/main.qml:198
+#, kde-format
+msgid "Outputs could not be saved due to error."
+msgstr "Le uscite non possono essere salvate a causa di un errore."
+
+#: ui/main.qml:207
+#, kde-format
+msgid ""
+"Global scale changes will come into effect after the system is restarted."
+msgstr ""
+"Le modifiche alla scala globale avranno effetto dopo il riavvio del sistema."
+
+#: ui/main.qml:213
+#, kde-format
+msgid "Restart"
+msgstr "Riavvia"
+
+#: ui/main.qml:231
+#, kde-format
+msgid "Display configuration reverted."
+msgstr "Configurazione dello schermo ripristinata."
+
+#: ui/main.qml:245
+#, kde-format
+msgctxt "@title:window"
+msgid "Change Priorities"
+msgstr "Cambia le priorità"
+
+#: ui/main.qml:275 ui/OutputPanel.qml:50
+#, kde-format
+msgid "Primary"
+msgstr "Principale"
+
+#: ui/main.qml:280
+#, kde-format
+msgid "Raise priority"
+msgstr "Aumenta la priorità"
+
+#: ui/main.qml:290
+#, kde-format
+msgid "Lower priority"
+msgstr "Riduci la priorità"
+
+#: ui/main.qml:402
+#, kde-format
+msgctxt "@action:button Shrink the height of a view"
+msgid "Collapse"
+msgstr "Contrai"
+
+#: ui/main.qml:403
+#, kde-format
+msgctxt "@action:button Edit the arrangement of display outputs"
+msgid "Edit Arrangement"
+msgstr "Modifica disposizione"
+
+#: ui/Orientation.qml:14
+#, kde-format
+msgid "Orientation:"
+msgstr "Orientamento:"
+
+#: ui/Orientation.qml:27 ui/OutputPanel.qml:172 ui/OutputPanel.qml:217
+#, kde-format
+msgid "Automatic"
+msgstr "Automatico"
+
+#: ui/Orientation.qml:42
+#, kde-format
+msgid "Only when in tablet mode"
+msgstr "Solo in modalità tablet"
+
+#: ui/Orientation.qml:58
+#, kde-format
+msgid "Manual"
+msgstr "Manuale"
+
+#: ui/Output.qml:21
+#, kde-format
+msgctxt "Width, height, scale; separated with no-break space"
+msgid "(%1 × %2, %3%)"
+msgstr "(%1 × %2, %3%)"
+
+#: ui/Output.qml:23
+#, kde-format
+msgctxt "Width, height; separated with no-break space"
+msgid "(%1 × %2)"
+msgstr "(%1 × %2)"
+
+#: ui/Output.qml:226
+#, kde-format
+msgid "%1, %2"
+msgstr "%1, %2"
+
+#: ui/Output.qml:252
+#, kde-format
+msgid "Replicas"
+msgstr "Repliche"
+
+#: ui/OutputPanel.qml:31
+#, kde-format
+msgctxt "@label for a checkbox that says 'Enabled'"
+msgid "Device:"
+msgstr "Dispositivo:"
+
+#: ui/OutputPanel.qml:32
+#, kde-format
+msgid "Enabled"
+msgstr "Abilitato"
+
+#: ui/OutputPanel.qml:43
+#, kde-format
+msgid "Change Screen Priorities…"
+msgstr "Cambia le priorità dello schermo..."
+
+#: ui/OutputPanel.qml:56
+#, kde-kuit-format
+msgctxt "@info"
+msgid ""
+"This determines which screen your main desktop appears on, along with any "
+"Plasma Panels in it. Some older games also use this setting to decide which "
+"screen to appear on.<nl/><nl/>It has no effect on what screen notifications "
+"or other windows appear on."
+msgstr ""
+"Questo determina su quale schermo vengono visualizzati il desktop principale "
+"e gli altri pannelli. Anche alcuni giochi meno recenti utilizzano questa "
+"impostazione per decidere su quale schermata apparire.<nl/><nl/>Non ha "
+"effetto per la scelta dello schermo sul quale vengono visualizzate le "
+"notifiche o altre finestre."
+
+#: ui/OutputPanel.qml:61
+#, kde-format
+msgid "Resolution:"
+msgstr "Risoluzione:"
+
+#: ui/OutputPanel.qml:82
+#, kde-format
+msgctxt "@info"
+msgid "“%1” is the only resolution supported by this display."
+msgstr "«%1» è l'unica risoluzione supportata da questo schermo."
+
+#: ui/OutputPanel.qml:92
+#, kde-format
+msgid "Scale:"
+msgstr "Scala:"
+
+#: ui/OutputPanel.qml:98 ui/Panel.qml:62
+#, kde-format
+msgctxt "@info accessible description of slider value"
+msgid "in percent of regular scale"
+msgstr "in percentuale della scala normale"
+
+#: ui/OutputPanel.qml:129 ui/Panel.qml:94
+#, kde-format
+msgctxt "Global scale factor expressed in percentage form"
+msgid "%1%"
+msgstr "%1%"
+
+#: ui/OutputPanel.qml:141
+#, kde-format
+msgid "Refresh rate:"
+msgstr "Velocità di aggiornamento:"
+
+#: ui/OutputPanel.qml:162
+#, kde-format
+msgctxt "@info"
+msgid "“%1” is the only refresh rate supported by this display."
+msgstr ""
+"«%1» è l'unica frequenza di aggiornamento supportata da questo schermo."
+
+#: ui/OutputPanel.qml:163
+#, kde-format
+msgctxt "@info"
+msgid ""
+"“%1” is the only refresh rate supported by this display at the current "
+"resolution."
+msgstr ""
+"«%1» è l'unica frequenza di aggiornamento supportata da questo schermo alla "
+"risoluzione attuale."
+
+#: ui/OutputPanel.qml:168
+#, kde-format
+msgid "Adaptive sync:"
+msgstr "Sincronizzazione adattiva:"
+
+#: ui/OutputPanel.qml:171
+#, kde-format
+msgid "Never"
+msgstr "Mai"
+
+#: ui/OutputPanel.qml:173
+#, kde-format
+msgid "Always"
+msgstr "Sempre"
+
+#: ui/OutputPanel.qml:184
+#, kde-format
+msgid "Overscan:"
+msgstr "Overscan:"
+
+#: ui/OutputPanel.qml:198
+#, kde-format
+msgctxt "Overscan expressed in percentage form"
+msgid "%1%"
+msgstr "%1%"
+
+#: ui/OutputPanel.qml:204
+#, kde-kuit-format
+msgctxt "@info"
+msgid ""
+"Determines how much padding is put around the image sent to the display to "
+"compensate for part of the content being cut off around the edges.<nl/><nl/"
+">This is sometimes needed when using a TV as a screen."
+msgstr ""
+"Determina la quantità di riempimento attorno all'immagine inviata allo "
+"schermo per compensare la parte del contenuto tagliata attorno ai bordi.<nl/"
+"><nl/>Questo è talvolta necessario quando si utilizza una TV come schermo."
+
+#: ui/OutputPanel.qml:209
+#, kde-format
+msgid "RGB range:"
+msgstr "Intervallo RGB:"
+
+#: ui/OutputPanel.qml:218
+#, kde-format
+msgid "Full"
+msgstr "Completo"
+
+#: ui/OutputPanel.qml:219
+#, kde-format
+msgid "Limited"
+msgstr "Limitato"
+
+#: ui/OutputPanel.qml:229
+#, kde-kuit-format
+msgctxt "@info"
+msgid ""
+"Determines whether the range of possible color values needs to be limited "
+"for the display. This should only be changed if the colors on the screen "
+"look washed out."
+msgstr ""
+"Determina se la gamma dei possibili valori di colore deve essere limitata o "
+"meno per lo schermo. Questa dovrebbe essere modificata solo se i colori "
+"sullo schermo appaiono sbiaditi."
+
+#: ui/OutputPanel.qml:280
+#, kde-format
+msgctxt "@label"
+msgid "High Dynamic Range:"
+msgstr "Elevata gamma dinamica (HDR):"
+
+#: ui/OutputPanel.qml:287
+#, kde-format
+msgctxt "@option:check"
+msgid "Enable &HDR"
+msgstr "Abilita &HDR"
+
+#: ui/OutputPanel.qml:293
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"HDR allows compatible applications to show brighter and more vivid colors."
+msgstr ""
+"HDR consente alle applicazioni compatibili di mostrare colori più luminosi e "
+"vivaci."
+
+#: ui/OutputPanel.qml:302
+#, kde-format
+msgctxt "@action:button"
+msgid "Calibrate HDR Brightness…"
+msgstr "Calibra la luminosità HDR..."
+
+#: ui/OutputPanel.qml:316
+#, kde-format
+msgid "Opens a window to calibrate HDR brightness"
+msgstr "Apre una finestra per calibrare la luminosità HDR"
+
+#: ui/OutputPanel.qml:321
+#, kde-kuit-format
+msgctxt "@info:tooltip"
+msgid "HDR calibration can only be started if all settings are applied."
+msgstr ""
+"La calibrazione HDR può essere avviata solo se sono state applicate tutte le "
+"impostazioni."
+
+#: ui/OutputPanel.qml:328
+#, kde-format
+msgctxt "@label:listbox"
+msgid "Color accuracy:"
+msgstr "Precisione del colore:"
+
+#: ui/OutputPanel.qml:337
+#, kde-format
+msgctxt "@item:inlistbox tradeoff between efficiency and color accuracy"
+msgid "Prefer efficiency"
+msgstr "Preferisci l'efficienza"
+
+#: ui/OutputPanel.qml:338
+#, kde-format
+msgctxt "@item:inlistbox tradeoff between efficiency and color accuracy"
+msgid "Prefer color accuracy"
+msgstr "Preferisci la precisione del colore"
+
+#: ui/OutputPanel.qml:348
+#, kde-kuit-format
+msgctxt "@info:tooltip"
+msgid ""
+"Preferring color accuracy limits potentially inaccurate offloading of color "
+"operations to the display driver and increases the maximum color resolution."
+"<nl/><nl/>Note that this setting can have a large impact on performance."
+msgstr ""
+"Privilegiare la precisione del colore limita il potenziale trasferimento "
+"impreciso delle operazioni di colore al driver dello schermo e aumenta la "
+"risoluzione massima del colore.<nl/><nl/>Nota che questa impostazione può "
+"avere un impatto significativo sulle prestazioni."
+
+#: ui/OutputPanel.qml:354
+#, kde-kuit-format
+msgctxt "@info:tooltip"
+msgid ""
+"Preferring efficiency simplifies the ICC profile to matrix+shaper, improving "
+"performance at the cost of color accuracy.<nl/><nl/>Note that changing this "
+"setting can have a large impact on performance."
+msgstr ""
+"Preferire l'efficienza semplifica il profilo ICC in matrice+shaper, "
+"migliorando le prestazioni a scapito della precisione del colore.<nl/><nl/"
+">Nota che questa impostazione può avere un impatto significativo sulle "
+"prestazioni."
+
+#: ui/OutputPanel.qml:362
+#, kde-format
+msgctxt "@label:listbox"
+msgid "Limit color resolution to:"
+msgstr "Limita la risoluzione del colore a:"
+
+#: ui/OutputPanel.qml:383
+#, kde-format
+msgctxt "@item:inlistbox color resolution"
+msgid "Automatic  (%1 bits per color)"
+msgstr "Automatica (%1 bit per colore)"
+
+#: ui/OutputPanel.qml:385 ui/OutputPanel.qml:398
+#, kde-format
+msgctxt "@item:inlistbox color resolution"
+msgid "%1 bits per color"
+msgstr "%1 bit per colore"
+
+#: ui/OutputPanel.qml:396
+#, kde-format
+msgctxt "@item:inlistbox color resolution"
+msgid "Automatic (%1 bits per color)"
+msgstr "Automatica (%1 bit per colore)"
+
+#: ui/OutputPanel.qml:408
+#, kde-kuit-format
+msgctxt "@info:tooltip"
+msgid ""
+"Limits the color resolution of the image that is sent to the display. This "
+"does not affect screenshots or recordings.<nl/><nl/>Because the display is "
+"currently connected through a dock, automatic color resolution has been "
+"temporarily reduced to 8 bits to avoid common dock issues.<nl/><nl/>Due to "
+"graphics driver limitations, the actually used resolution cannot be known."
+msgstr ""
+"Limita la risoluzione del colore dell'immagine inviata allo schermo. Ciò non "
+"influisce su schermate o registrazioni.<nl/><nl/>Poiché lo schermo è "
+"attualmente collegato tramite dock, la risoluzione automatica del colore è "
+"stata temporaneamente ridotta a 8 bit per evitare i comuni problemi della "
+"dock.<nl/><nl/>A causa di limitazioni del driver grafico, non è possibile "
+"conoscere la risoluzione effettivamente utilizzata."
+
+#: ui/OutputPanel.qml:412
+#, kde-kuit-format
+msgctxt "@info:tooltip"
+msgid ""
+"Limits the color resolution of the image that is sent to the display. This "
+"does not affect screenshots or recordings.<nl/><nl/>Limiting color "
+"resolution can be useful to work around display or graphics driver issues."
+"<nl/><nl/>Due to graphics driver limitations, the actually used resolution "
+"cannot be known."
+msgstr ""
+"Limita la risoluzione del colore dell'immagine inviata allo schermo. Ciò non "
+"influisce su schermate o registrazioni.<nl/><nl/>Limita la risoluzione del "
+"colore può essere utile per risolvere problemi relativi allo schermo o al "
+"driver grafico.<nl/><nl/>A causa delle limitazioni del driver grafico, non è "
+"possibile conoscere la risoluzione effettivamente utilizzata."
+
+#: ui/OutputPanel.qml:427
+#, kde-format
+msgctxt "@label"
+msgid "sRGB color intensity:"
+msgstr "Intensità del colore sRGB:"
+
+#: ui/OutputPanel.qml:459
+#, kde-format
+msgctxt "Color intensity factor expressed in percentage form"
+msgid "%1%"
+msgstr "%1%"
+
+#: ui/OutputPanel.qml:467
+#, kde-format
+msgctxt "@info:tooltip"
+msgid "Increases the intensity of sRGB content on the screen."
+msgstr "Aumenta l'intensità dei contenuti sRGB sullo schermo."
+
+#: ui/OutputPanel.qml:479
+#, kde-format
+msgctxt "@label"
+msgid "Adaptive Backlight Modulation:"
+msgstr "Modulazione adattiva della retroilluminazione:"
+
+#: ui/OutputPanel.qml:502
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Adaptive backlight modulation reduces power use at the cost of color accuracy"
+msgstr ""
+"La modulazione adattiva della retroilluminazione riduce il consumo "
+"energetico a scapito della precisione del colore."
+
+#: ui/OutputPanel.qml:511
+#, kde-format
+msgctxt "@label"
+msgid "Brightness:"
+msgstr "Luminosità:"
+
+#: ui/OutputPanel.qml:517
+#, kde-format
+msgctxt "@option:check"
+msgid "Control hardware brightness with DDC/CI"
+msgstr "Controlla la luminosità hardware con DDC/CI"
+
+#: ui/OutputPanel.qml:523
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"DDC/CI is a feature supported by many monitors. Plasma can use it to adjust "
+"screen brightness with desktop controls, as if using the monitor's own "
+"hardware buttons and OSD menu."
+msgstr ""
+"DDC/CI è una funzionalità supportata da molti monitor. I monitor al plasma "
+"possono utilizzarla per regolare la luminosità dello schermo tramite i "
+"controlli del desktop, come se si utilizzassero i pulsanti hardware e il "
+"menu OSD del monitor."
+
+#: ui/OutputPanel.qml:558
+#, kde-format
+msgctxt "Brightness expressed in percentage form"
+msgid "%1%"
+msgstr "%1%"
+
+#: ui/OutputPanel.qml:572
+#, kde-format
+msgid "Automatically adapt to environment"
+msgstr "Adatta automaticamente all'ambiente"
+
+#: ui/OutputPanel.qml:577
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Automatically adjust the screen’s brightness based on the lighting level of "
+"the environment, as detected by the device’s ambient light sensor. If you "
+"adjust the brightness manually, those adjustments will be remembered and "
+"taken into account."
+msgstr ""
+"Regola automaticamente la luminosità dello schermo in base al livello di "
+"illuminazione dell'ambiente, rilevato dal sensore di luce ambientale del "
+"dispositivo. Se regoli manualmente la luminosità, tali modifiche saranno "
+"memorizzate e prese in considerazione."
+
+#: ui/OutputPanel.qml:589
+#, kde-format
+msgctxt "@label"
+msgid "Sharpness:"
+msgstr "Nitidezza:"
+
+#: ui/OutputPanel.qml:619
+#, kde-format
+msgctxt "@label"
+msgid "Extended Dynamic Range:"
+msgstr "Gamma dinamica estesa (EDR):"
+
+#: ui/OutputPanel.qml:624
+#, kde-format
+msgctxt "@option:check"
+msgid "Enable EDR"
+msgstr "Abilita EDR"
+
+#: ui/OutputPanel.qml:630
+#, kde-kuit-format
+msgctxt "@info:tooltip"
+msgid ""
+"EDR allows viewing HDR content on SDR displays by dynamically adjusting the "
+"backlight.<nl/><nl/>Note that this increases battery usage while viewing HDR "
+"content."
+msgstr ""
+"L'EDR consente la visualizzazione di contenuti HDR su schermi SDR regolando "
+"dinamicamente la retroilluminazione.<nl/><nl/>Nota che questo aumenta il "
+"consumo della batteria durante la visualizzazione di contenuti HDR."
+
+#: ui/OutputPanel.qml:635
+#, kde-format
+msgid "Replica of:"
+msgstr "Replica di:"
+
+#: ui/Panel.qml:55
+#, kde-format
+msgid "Global scale:"
+msgstr "Scala globale:"
+
+#: ui/Panel.qml:118 ui/Panel.qml:138
+#, kde-format
+msgid "Legacy applications (X11):"
+msgstr "Applicazioni obsolete (X11):"
+
+#: ui/Panel.qml:123
+#, kde-format
+msgctxt "The apps themselves should scale to fit the displays"
+msgid "Apply scaling themselves"
+msgstr "Ridimensionamento autonomo"
+
+#: ui/Panel.qml:128
+#, kde-format
+msgid ""
+"Legacy applications that support scaling will use it and look crisp, however "
+"those that don’t will not be scaled at all."
+msgstr ""
+"Le applicazioni obsolete che supportano il ridimensionamento lo "
+"utilizzeranno e avranno un aspetto nitido, tuttavia quelle che non lo "
+"supportano non saranno ridimensionate in alcun modo."
+
+#: ui/Panel.qml:139
+#, kde-format
+msgctxt "The system will perform the x11 apps scaling"
+msgid "Scaled by the system"
+msgstr "Ridimensionate dal sistema"
+
+#: ui/Panel.qml:144
+#, kde-format
+msgid ""
+"All legacy applications will be scaled by the system to the correct size, "
+"however they will always look slightly blurry."
+msgstr ""
+"Tutte le applicazioni obsolete saranno ridimensionate dal sistema alle "
+"dimensioni corrette, tuttavia appariranno sempre leggermente sfocate."
+
+#: ui/Panel.qml:149
+#, kde-format
+msgctxt "@label"
+msgid "Screen tearing:"
+msgstr "Tearing dello schermo"
+
+#: ui/Panel.qml:152
+#, kde-format
+msgctxt ""
+"@option:check The thing being allowed in fullscreen windows is screen tearing"
+msgid "Allow in fullscreen windows"
+msgstr "Consenti nelle finestre a schermo intero"
+
+#: ui/Panel.qml:157
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Screen tearing reduces latency with most displays. Note that not all "
+"graphics drivers support this setting."
+msgstr ""
+"Il tearing dello schermo riduce la latenza con la maggior parte dei monitor. "
+"Tieni presente che non tutti i driver grafici supportano questa impostazione."
+
+#: ui/Panel.qml:171
+#, kde-format
+msgid ""
+"The global scale factor is limited to multiples of 6.25% to minimize visual "
+"glitches in applications using the X11 windowing system."
+msgstr ""
+"Il fattore di scala globale è limitato a multipli di 6,25% per minimizzare "
+"gli artefatti visivi nelle applicazioni utilizzando il sistema di gestione "
+"delle finestre X11."
+
+#: ui/RotationButton.qml:54
+#, kde-format
+msgid "90° Clockwise"
+msgstr "90° in senso orario"
+
+#: ui/RotationButton.qml:58
+#, kde-format
+msgid "Upside Down"
+msgstr "Sottosopra"
+
+#: ui/RotationButton.qml:62
+#, kde-format
+msgid "90° Counterclockwise"
+msgstr "90° in senso antiorario"
+
+#: ui/RotationButton.qml:67
+#, kde-format
+msgid "No Rotation"
+msgstr "Nessuna rotazione"
+
+#: ui/ScreenView.qml:53
+#, kde-format
+msgid "Drag screens to re-arrange them"
+msgstr "Trascina gli schermi per ri-organizzarli"
+
+#~ msgctxt "@info:tooltip"
+#~ msgid "ICC profiles aren’t compatible with HDR yet."
+#~ msgstr "I profili ICC non sono ancora compatibili con HDR."
+
+#~ msgctxt "@info:tooltip"
+#~ msgid ""
+#~ "Limits the color resolution of the image that is sent to the display. "
+#~ "This does not affect screenshots or recordings.<nl/><nl/>"
+#~ msgstr ""
+#~ "Limita la risoluzione del colore dell'immagine inviata allo schermo. "
+#~ "Questo non influisce su schermate o registrazioni."
+
+#~ msgctxt "@info:tooltip"
+#~ msgid "The screen's built-in color profile is always used with HDR."
+#~ msgstr ""
+#~ "Con HDR viene sempre utilizzato il profilo di colore integrato nello "
+#~ "schermo."
+
+#~ msgctxt "@label"
+#~ msgid "Maximum SDR brightness:"
+#~ msgstr "Luminosità SDR massima:"
+
+#~ msgctxt "@info:tooltip"
+#~ msgid "Sets the maximum brightness for the normal brightness slider."
+#~ msgstr ""
+#~ "Imposta la luminosità massima per il cursore della luminosità normale."
+
+#~ msgctxt "@info:tooltip"
+#~ msgid "This setting can have a large impact on performance."
+#~ msgstr ""
+#~ "Questa impostazione può avere un impatto notevole sulle prestazioni."
+
+#~ msgctxt "Width x height"
+#~ msgid "%1x%2"
+#~ msgstr "%1x%2"
+
+#~ msgctxt "@info:tooltip"
+#~ msgid "Sets the brightness of non-HDR content on the screen, in nits"
+#~ msgstr "Imposta la luminosità dei contenuti non HDR sullo schermo, in nit"
+
+#~ msgctxt "@info"
+#~ msgid ""
+#~ "&quot;%1&quot; is the only resolution supported by this display.<nl/><nl/"
+#~ ">Using unsupported resolutions was possible in the Plasma X11 session, "
+#~ "but they were never guaranteed to work and are not available in this "
+#~ "Plasma Wayland session."
+#~ msgstr ""
+#~ "«%1» è l'unica risoluzione supportata da questo schermo.<nl/><nl/"
+#~ ">L'utilizzo di risoluzioni non supportate era possibile nella sessione "
+#~ "Plasma X11, ma non è mai stato garantito il funzionamento e non sono "
+#~ "disponibili in questa sessione Plasma Wayland."
+
+#~ msgid "Save displays' properties:"
+#~ msgstr "Salva le proprietà degli schermi:"
+
+#~ msgid "For any display arrangement"
+#~ msgstr "Per qualsiasi disposizione degli schermi"
+
+#~ msgid "For only this specific display arrangement"
+#~ msgstr "Solo per questa specifica disposizione degli schermi"
+
+#~ msgid ""
+#~ "Are you sure you want to disable all outputs? This might render the "
+#~ "device unusable."
+#~ msgstr ""
+#~ "Sei sicuro di voler disabilitare tutte le uscite? Questo potrebbe rendere "
+#~ "il dispositivo inutilizzabile."
+
+#~ msgid "Disable All Outputs"
+#~ msgstr "Disabilita tutte le uscite"
+
+#~ msgctxt "@info"
+#~ msgid ""
+#~ "Determines how much padding is put around the image sent to the display"
+#~ msgstr ""
+#~ "Determina la quantità di spaziatura interna inserita attorno all'immagine "
+#~ "inviata allo schermo"
+
+#~ msgctxt "NAME OF TRANSLATORS"
+#~ msgid "Your names"
+#~ msgstr "Vincenzo Reale"
+
+#~ msgctxt "EMAIL OF TRANSLATORS"
+#~ msgid "Your emails"
+#~ msgstr "smart2128vr@gmail.com"
+
+#~ msgid "Display Configuration"
+#~ msgstr "Configurazione dello schermo"
+
+#~ msgid "Manage and configure monitors and displays"
+#~ msgstr "Gestisci e configura monitor e schermi"
+
+#~ msgid "Copyright © 2019 Roman Gilg"
+#~ msgstr "Copyright © 2019 Roman Gilg"
+
+#~ msgid "Roman Gilg"
+#~ msgstr "Roman Gilg"
+
+#~ msgid "Developer"
+#~ msgstr "Sviluppatore"
+
+#~ msgid "Maintainer"
+#~ msgstr "Responsabile"
+
+#~ msgid "Settings for %1"
+#~ msgstr "Impostazioni per %1"
+
+#~ msgid "Center View"
+#~ msgstr "Vista centrata"
+
+#~ msgid ""
+#~ "Scale factors that are not a multiple of 0.25 may cause visual glitches "
+#~ "in applications. Consider setting the scale factor to a multiple of 0.25 "
+#~ "and adjusting the font size instead."
+#~ msgstr ""
+#~ "I fattori di scala che non sono un multiplo di 0,25 potrebbero causare "
+#~ "anomalie nella visualizzazione delle applicazione. Considera, invece, "
+#~ "l'impostazione del fattore di scala a un multiplo di 0,25 e la "
+#~ "regolazione della dimensione dei caratteri."
+
+#~ msgid "Disable all outputs"
+#~ msgstr "Disabilita tutte le uscite"
+
+#~ msgid "New global scale applied. "
+#~ msgstr "Applicata nuova scala globale. "
+
+#~ msgid "Configuration for displays"
+#~ msgstr "Configurazione degli schermi"
+
+#~ msgid "Output settings"
+#~ msgstr "Impostazioni dell'uscita"
+
+#~ msgid "Save values of an output:"
+#~ msgstr "Salva i valori di un'uscita:"
+
+#~ msgid "For this and other combination of outputs"
+#~ msgstr "Per questa e altre combinazioni di uscite"
+
+#~ msgid "For this specific setup independently of others"
+#~ msgstr "Per questa configurazione specifica indipendentemente dalle altre"
+
+#~ msgid "Tip: Hold Ctrl while dragging a display to disable snapping"
+#~ msgstr ""
+#~ "Suggerimento: tieni premuto Ctrl mentre trascini uno schermo per "
+#~ "disabilitare lo spostamento a scatti"
+
+#~ msgid "Warning: There are no active outputs!"
+#~ msgstr "Avviso: non ci sono uscite attive!"
+
+#~ msgid "Your system only supports up to %1 active screen"
+#~ msgid_plural "Your system only supports up to %1 active screens"
+#~ msgstr[0] "Il tuo sistema supporta solo fino a %1 schermo attivo"
+#~ msgstr[1] "Il tuo sistema supporta solo fino a %1 schermi attivi"
+
+#~ msgid "Unified Outputs"
+#~ msgstr "Uscite unificate"
+
+#~ msgid "Laptop Screen"
+#~ msgstr "Schermo del portatile"
+
+#~ msgid "(c), 2012-2013 Daniel Vrátil"
+#~ msgstr "(c), 2012-2013 Daniel Vrátil"
+
+#~ msgid "Daniel Vrátil"
+#~ msgstr "Daniel Vrátil"
+
+#~ msgid "&Disable All Outputs"
+#~ msgstr "&Disabilita tutte le uscite"
+
+#~ msgid "&Reconfigure"
+#~ msgstr "&Riconfigura"
+
+#~ msgid ""
+#~ "Sorry, your configuration could not be applied.\n"
+#~ "\n"
+#~ "Common reasons are that the overall screen size is too big, or you "
+#~ "enabled more displays than supported by your GPU."
+#~ msgstr ""
+#~ "Spiacenti, la tua configurazione non può essere applicata.\n"
+#~ "\n"
+#~ "Tra le cause comuni c'è la dimensione complessiva dello schermo troppo "
+#~ "grande, o hai abilitato più schermi di quanti ne supporti la GPU."
+
+#~ msgctxt "@title:window"
+#~ msgid "Unsupported Configuration"
+#~ msgstr "Configurazione non supportata"
+
+#~ msgid "KCM Test App"
+#~ msgstr "Applicazione KCM di prova"
+
+#~ msgid "Unify Outputs"
+#~ msgstr "Unifica uscite"
+
+#~ msgid "Scale Display"
+#~ msgstr "Scala lo schermo"
+
+#~ msgid "Display:"
+#~ msgstr "Schermo:"
+
+#~ msgctxt "Scale multiplier, show everything at 2 times normal scale"
+#~ msgid "2x"
+#~ msgstr "2x"
+
+#~ msgid "Retention of values"
+#~ msgstr "Conservazione dei valori"
+
+#~ msgid "Save as new global values for this display."
+#~ msgstr "Salva come nuovi valori globali per questo schermo."
+
+#~ msgid "Save values only for display in this specific configuration."
+#~ msgstr ""
+#~ "Salva valori solo per lo schermo in questa configurazione specifica."
+
+#~ msgid "No available resolutions"
+#~ msgstr "Nessuna risoluzione disponibile"
+
+#~ msgid "Tab 1"
+#~ msgstr "Scheda 1"
+
+#~ msgid "Group Box"
+#~ msgstr "Riquadro di gruppo"
+
+#~ msgid "Radio button"
+#~ msgstr "Pulsante radio"
+
+#~ msgid "Checkbox"
+#~ msgstr "Casella di selezione"
+
+#~ msgid "Button"
+#~ msgstr "Pulsante"
+
+#~ msgid "Combobox"
+#~ msgstr "Casella combinata"
+
+#~ msgid "Tab 2"
+#~ msgstr "Scheda 2"
+
+#~ msgid "Normal"
+#~ msgstr "Normale"
+
+#~ msgid "No Primary Output"
+#~ msgstr "Nessuna uscita primaria"
+
+#~ msgid "Break Unified Outputs"
+#~ msgstr "Separa le uscite unificate"
+
+#~ msgid "Active profile"
+#~ msgstr "Profilo attivo"
+
+#~ msgid "Dialog"
+#~ msgstr "Finestra"
+
+#~ msgid "TextLabel"
+#~ msgstr "EtichettaTesto"
+
+#~ msgid "No primary screen"
+#~ msgstr "Nessuno schermo principale"
+
+#~ msgid "Unify outputs"
+#~ msgstr "Unifica le uscite"

@@ -1,0 +1,82 @@
+# Spanish translations for plasma_applet_org.kde.kscreen.po package.
+# Copyright (C) 2018-2025 This file is copyright:
+# This file is distributed under the same license as the kscreen package.
+# Automatically generated, 2018.
+#
+# SPDX-FileCopyrightText: 2018, 2021, 2025 Eloy Cuadra <ecuadra@eloihr.net>
+msgid ""
+msgstr ""
+"Project-Id-Version: plasma_applet_org.kde.kscreen\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-05-04 00:45+0000\n"
+"PO-Revision-Date: 2025-05-18 14:19+0100\n"
+"Last-Translator: Eloy Cuadra <ecuadra@eloihr.net>\n"
+"Language-Team: Spanish <kde-l10n-es@kde.org>\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Lokalize 21.08.3\n"
+
+#: main.qml:26
+#, kde-format
+msgid "Presentation mode is enabled"
+msgstr "El modo de presentación está activado"
+
+#: main.qml:66
+#, kde-format
+msgid "Configure Display Settings…"
+msgstr "Configurar las preferencias de la pantalla…"
+
+#: PresentationModeItem.qml:29
+#, kde-format
+msgid "Enable Presentation Mode"
+msgstr "Activar el modo de presentación"
+
+#: PresentationModeItem.qml:39
+#, kde-format
+msgid "User enabled presentation mode"
+msgstr "Modo de presentación activado por el usuario"
+
+#: PresentationModeItem.qml:60
+#, kde-format
+msgid ""
+"This will prevent your screen and computer from turning off automatically."
+msgstr ""
+"Esto impide que la pantalla y el equipo se apaguen de forma automática."
+
+#: PresentationModeItem.qml:74
+#, kde-format
+msgctxt "Some Application and n others enforce presentation mode"
+msgid "%2 and %1 other application are enforcing presentation mode."
+msgid_plural "%2 and %1 other applications are enforcing presentation mode."
+msgstr[0] "%2 y %1 aplicación más están forzando el modo de presentación."
+msgstr[1] "%2 y %1 aplicaciones más están forzando el modo de presentación."
+
+#: PresentationModeItem.qml:80
+#, kde-format
+msgctxt "Some Application enforce presentation mode"
+msgid "%1 is enforcing presentation mode."
+msgstr "%1 está forzando el modo de presentación."
+
+#: PresentationModeItem.qml:83
+#, kde-format
+msgctxt ""
+"Some Application enforce presentation mode: Reason provided by the app"
+msgid "%1 is enforcing presentation mode: %2"
+msgstr "%1 está forzando el modo de presentación: %2"
+
+#: ScreenLayoutSelection.qml:50
+#, kde-format
+msgid "Screen Layout"
+msgstr "Distribución de pantallas"
+
+#: ScreenLayoutSelection.qml:91
+#, kde-format
+msgid ""
+"You can only apply a different screen layout when there is more than one "
+"display device plugged in."
+msgstr ""
+"Solo puede aplicar una distribución de pantallas diferente cuando hay más de "
+"una pantalla conectada."

@@ -1,0 +1,806 @@
+# Copyright (C) 2024 This file is copyright:
+# This file is distributed under the same license as the kscreen package.
+#
+# SPDX-FileCopyrightText: 2024, 2025 Toms Trasuns <toms.trasuns@posteo.net>
+# Māris Nartišs <maris.kde@gmail.com>, 2024.
+msgid ""
+msgstr ""
+"Project-Id-Version: kscreen\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-06-07 02:48+0000\n"
+"PO-Revision-Date: 2025-08-22 14:57+0300\n"
+"Last-Translator: Toms Trasuns <toms.trasuns@posteo.net>\n"
+"Language-Team: Latvian <kde-i18n-doc@kde.org>\n"
+"Language: lv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n != 0 ? 1 : "
+"2);\n"
+"X-Generator: Lokalize 25.08.0\n"
+
+#: kcm.cpp:149 kcm.cpp:171
+#, kde-format
+msgid "Implementation error"
+msgstr "Implementācijas kļūda"
+
+#: kcm.cpp:199
+#, kde-format
+msgid "Outputs changed while trying to apply settings"
+msgstr "Iestatījumu pielietošanas laikā ir mainītas izvades"
+
+#: output_model.cpp:101
+#, kde-format
+msgid "%1 Hz"
+msgstr "%1 Hz"
+
+#: output_model.cpp:764
+#, kde-format
+msgctxt "Width x height"
+msgid "%1 × %2"
+msgstr "%1 × %2"
+
+#: output_model.cpp:783
+#, kde-format
+msgctxt "Width x height (aspect ratio)"
+msgid "%1 × %2 (%3:%4)"
+msgstr "%1 × %2 (%3:%4)"
+
+#: output_model.cpp:892
+#, kde-format
+msgid "Replicated by other output"
+msgstr "Kopēt ar citu izvadi"
+
+#: output_model.cpp:896
+#, kde-format
+msgid "None"
+msgstr "Nav"
+
+#: ui/ColorProfileSelector.qml:28
+#, kde-format
+msgctxt "@label:listbox"
+msgid "Color profile:"
+msgstr "Krāsu profils:"
+
+#: ui/ColorProfileSelector.qml:37
+#, kde-format
+msgctxt "@item:inlistbox color profile"
+msgid "None"
+msgstr "Nav"
+
+#: ui/ColorProfileSelector.qml:42
+#, kde-format
+msgctxt "@item:inlistbox color profile"
+msgid "ICC profile"
+msgstr "ICC profils"
+
+#: ui/ColorProfileSelector.qml:47
+#, kde-format
+msgctxt "@item:inlistbox color profile"
+msgid "Built-in"
+msgstr "Iebūvētais"
+
+#: ui/ColorProfileSelector.qml:68
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Use the color profile built into the screen itself, if present. Note that "
+"built-in color profiles are sometimes wrong, and often inaccurate. For "
+"optimal color fidelity, calibration using a colorimeter is recommended."
+msgstr ""
+"Izmantot krāsu profilu, kas ir iebūvēts pašā ekrānā, ja tāds ir. Ievērojiet, "
+"ka reizēm iebūvētie krāsu profili ir nepareizi, bet bieži — neprecīzi. Lai "
+"iegūtu optimālu krāsu atveidošanu, ieteicams veikt kalibrāciju ar "
+"kolorimetru."
+
+#: ui/IccSelector.qml:33
+#, kde-format
+msgctxt "@info:placeholder"
+msgid "Enter ICC profile path…"
+msgstr "Ievadīt ICC profila ceļu…"
+
+#: ui/IccSelector.qml:48
+#, kde-format
+msgctxt "@action:button"
+msgid "Select ICC profile…"
+msgstr "Atlasīt ICC profilu…"
+
+#: ui/IccSelector.qml:58
+#, kde-format
+msgid "Opens a file picker for the ICC profile"
+msgstr "Atver datņu atlasītāju ICC profilam"
+
+#: ui/IccSelector.qml:67
+#, kde-format
+msgctxt "@title:window"
+msgid "Select ICC Profile"
+msgstr "Atlasīt ICC profilu"
+
+#: ui/main.qml:43
+#, kde-format
+msgctxt ""
+"@action:button Briefly show the display name in a popup label on each screen"
+msgid "Identify Screens"
+msgstr "Identificēt ekrānus"
+
+#: ui/main.qml:56
+#, kde-format
+msgid "Keep display configuration?"
+msgstr "Vai paturēt displeja konfigurāciju?"
+
+#: ui/main.qml:67
+#, kde-format
+msgid "Will revert to previous configuration in %1 second."
+msgid_plural "Will revert to previous configuration in %1 seconds."
+msgstr[0] "Atgriezīsies pie iepriekšējās konfigurācijas pēc %1 sekundes."
+msgstr[1] "Atgriezīsies pie iepriekšējās konfigurācijas pēc %1 sekundēm."
+msgstr[2] "Atgriezīsies pie iepriekšējās konfigurācijas pēc %1 sekunžu."
+
+#: ui/main.qml:84
+#, kde-format
+msgid "&Keep"
+msgstr "&Paturēt"
+
+#: ui/main.qml:97
+#, kde-format
+msgid "&Revert"
+msgstr "&Atsaukt"
+
+#: ui/main.qml:117
+#, kde-format
+msgctxt "@info"
+msgid "All displays are disabled. Enable at least one."
+msgstr "Visi displeji ir izslēgti. Ieslēdziet vismaz vienu."
+
+#: ui/main.qml:119
+#, kde-format
+msgctxt "@info"
+msgid ""
+"Gaps between displays are not supported. Make sure all displays are touching."
+msgstr ""
+"Spraugas starp displejiem netiek atbalstīties. Pārliecinieties, ka visi "
+"displeji saskaras."
+
+#: ui/main.qml:124
+#, kde-format
+msgctxt "The argument contains the reason for the failure"
+msgid "Couldn’t apply display configuration: %1"
+msgstr "Neizdevās pielietot displeja konfigurāciju: %1"
+
+#: ui/main.qml:133
+#, kde-format
+msgid "A new output has been added. Settings have been reloaded."
+msgstr "Ir pievienota jauna izvade. Iestatījumi ir pārlādēti."
+
+#: ui/main.qml:135
+#, kde-format
+msgid "An output has been removed. Settings have been reloaded."
+msgstr "Ir noņemta izvade. Iestatījumi ir pārlādēti."
+
+#: ui/main.qml:189
+#, kde-format
+msgid "No KScreen backend found. Please check your KScreen installation."
+msgstr ""
+"Nav atrasta „KScreen“ aizmugursistēma. Pārbaudiet savu „KScreen“ instalāciju."
+
+#: ui/main.qml:198
+#, kde-format
+msgid "Outputs could not be saved due to error."
+msgstr "Izvades nevar saglabāt kļūdas dēļ."
+
+#: ui/main.qml:207
+#, kde-format
+msgid ""
+"Global scale changes will come into effect after the system is restarted."
+msgstr "Globālā mēroga izmaiņas stāsies spēkā pēc sistēmas pārstartēšanas."
+
+#: ui/main.qml:213
+#, kde-format
+msgid "Restart"
+msgstr "Pārstartēt"
+
+#: ui/main.qml:231
+#, kde-format
+msgid "Display configuration reverted."
+msgstr "Displeja konfigurācija ir atsaukta."
+
+#: ui/main.qml:245
+#, kde-format
+msgctxt "@title:window"
+msgid "Change Priorities"
+msgstr "Mainīt prioritātes"
+
+#: ui/main.qml:275 ui/OutputPanel.qml:50
+#, kde-format
+msgid "Primary"
+msgstr "Primārais"
+
+#: ui/main.qml:280
+#, kde-format
+msgid "Raise priority"
+msgstr "Paaugstināt prioritāti"
+
+#: ui/main.qml:290
+#, kde-format
+msgid "Lower priority"
+msgstr "Pazemināt prioritāti"
+
+#: ui/main.qml:402
+#, kde-format
+msgctxt "@action:button Shrink the height of a view"
+msgid "Collapse"
+msgstr "Sakļaut"
+
+#: ui/main.qml:403
+#, kde-format
+msgctxt "@action:button Edit the arrangement of display outputs"
+msgid "Edit Arrangement"
+msgstr "Rediģēt izkārtojumu"
+
+#: ui/Orientation.qml:14
+#, kde-format
+msgid "Orientation:"
+msgstr "Orientācija:"
+
+#: ui/Orientation.qml:27 ui/OutputPanel.qml:172 ui/OutputPanel.qml:217
+#, kde-format
+msgid "Automatic"
+msgstr "Automātiska"
+
+#: ui/Orientation.qml:42
+#, kde-format
+msgid "Only when in tablet mode"
+msgstr "Tikai planšetdatora režīmā"
+
+#: ui/Orientation.qml:58
+#, kde-format
+msgid "Manual"
+msgstr "Manuāla"
+
+#: ui/Output.qml:21
+#, kde-format
+msgctxt "Width, height, scale; separated with no-break space"
+msgid "(%1 × %2, %3%)"
+msgstr "(%1 × %2, %3%)"
+
+#: ui/Output.qml:23
+#, kde-format
+msgctxt "Width, height; separated with no-break space"
+msgid "(%1 × %2)"
+msgstr "(%1 × %2)"
+
+#: ui/Output.qml:226
+#, kde-format
+msgid "%1, %2"
+msgstr "%1, %2"
+
+#: ui/Output.qml:252
+#, kde-format
+msgid "Replicas"
+msgstr "Replikas"
+
+#: ui/OutputPanel.qml:31
+#, kde-format
+msgctxt "@label for a checkbox that says 'Enabled'"
+msgid "Device:"
+msgstr "Ierīce:"
+
+#: ui/OutputPanel.qml:32
+#, kde-format
+msgid "Enabled"
+msgstr "Ieslēgts"
+
+#: ui/OutputPanel.qml:43
+#, kde-format
+msgid "Change Screen Priorities…"
+msgstr "Mainīt ekrāna prioritātes…"
+
+#: ui/OutputPanel.qml:56
+#, kde-kuit-format
+msgctxt "@info"
+msgid ""
+"This determines which screen your main desktop appears on, along with any "
+"Plasma Panels in it. Some older games also use this setting to decide which "
+"screen to appear on.<nl/><nl/>It has no effect on what screen notifications "
+"or other windows appear on."
+msgstr ""
+"Šis iestatījums nosaka, uz kura ekrāna ir redzama galvenā darbvirsma ar uz "
+"tās esošajiem „Plasma“ paneļiem. Reizēm arī vecākas spēles izmanto šo "
+"iestatījumu, lai izlemtu, uz kura ekrāna atvērties.<nl/><nl/>Tas neietekmē, "
+"uz kura ekrāna parādās paziņojumi un citi logi."
+
+#: ui/OutputPanel.qml:61
+#, kde-format
+msgid "Resolution:"
+msgstr "Izšķirtspēja:"
+
+#: ui/OutputPanel.qml:82
+#, kde-format
+msgctxt "@info"
+msgid "“%1” is the only resolution supported by this display."
+msgstr "„%1“ ir vienīgā izšķirtspēja, ko atbalsta šis displejs."
+
+#: ui/OutputPanel.qml:92
+#, kde-format
+msgid "Scale:"
+msgstr "Mērogs:"
+
+#: ui/OutputPanel.qml:98 ui/Panel.qml:62
+#, kde-format
+msgctxt "@info accessible description of slider value"
+msgid "in percent of regular scale"
+msgstr "procentuāli no parastā mēroga"
+
+#: ui/OutputPanel.qml:129 ui/Panel.qml:94
+#, kde-format
+msgctxt "Global scale factor expressed in percentage form"
+msgid "%1%"
+msgstr "%1%"
+
+#: ui/OutputPanel.qml:141
+#, kde-format
+msgid "Refresh rate:"
+msgstr "Atsvaidzināšanas biežums:"
+
+#: ui/OutputPanel.qml:162
+#, kde-format
+msgctxt "@info"
+msgid "“%1” is the only refresh rate supported by this display."
+msgstr "„%1“ ir vienīgais atsvaidzināšanas biežums, ko atbalsta šis displejs."
+
+#: ui/OutputPanel.qml:163
+#, kde-format
+msgctxt "@info"
+msgid ""
+"“%1” is the only refresh rate supported by this display at the current "
+"resolution."
+msgstr ""
+"„%1“ ir vienīgais atsvaidzināšanas biežums, ko atbalsta šis displejs šādā "
+"izšķirtspējā."
+
+#: ui/OutputPanel.qml:168
+#, kde-format
+msgid "Adaptive sync:"
+msgstr "Adaptīvā sinhronizācija:"
+
+#: ui/OutputPanel.qml:171
+#, kde-format
+msgid "Never"
+msgstr "Nekad"
+
+#: ui/OutputPanel.qml:173
+#, kde-format
+msgid "Always"
+msgstr "Vienmēr"
+
+#: ui/OutputPanel.qml:184
+#, kde-format
+msgid "Overscan:"
+msgstr "Manu apgriešanas novērse:"
+
+#: ui/OutputPanel.qml:198
+#, kde-format
+msgctxt "Overscan expressed in percentage form"
+msgid "%1%"
+msgstr "%1%"
+
+#: ui/OutputPanel.qml:204
+#, kde-kuit-format
+msgctxt "@info"
+msgid ""
+"Determines how much padding is put around the image sent to the display to "
+"compensate for part of the content being cut off around the edges.<nl/><nl/"
+">This is sometimes needed when using a TV as a screen."
+msgstr ""
+"Nosaka, cik lielas tukšas apmales ap attēlu tiek nosūtītas displejam, lai "
+"kompensētu satura apgriešanu ap attēla malām.<nl/><nl/>Šī opcija var būt "
+"noderīga, ja displejam izmantojat televizoru."
+
+#: ui/OutputPanel.qml:209
+#, kde-format
+msgid "RGB range:"
+msgstr "RGB diapazons:"
+
+#: ui/OutputPanel.qml:218
+#, kde-format
+msgid "Full"
+msgstr "Pilns"
+
+#: ui/OutputPanel.qml:219
+#, kde-format
+msgid "Limited"
+msgstr "Ierobežots"
+
+#: ui/OutputPanel.qml:229
+#, kde-kuit-format
+msgctxt "@info"
+msgid ""
+"Determines whether the range of possible color values needs to be limited "
+"for the display. This should only be changed if the colors on the screen "
+"look washed out."
+msgstr ""
+"Nosaka, vai displejam nosūtītajā signālā ir jāierobežo iespējamo krāsu "
+"vērtību diapazons. Šī opcija jāmaina tikai tad, ja krāsas ekrānā izskatās "
+"neskaidras."
+
+#: ui/OutputPanel.qml:280
+#, kde-format
+msgctxt "@label"
+msgid "High Dynamic Range:"
+msgstr "Augsts dinamiskais diapazons:"
+
+#: ui/OutputPanel.qml:287
+#, kde-format
+msgctxt "@option:check"
+msgid "Enable &HDR"
+msgstr "Ieslēgt &HDR"
+
+#: ui/OutputPanel.qml:293
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"HDR allows compatible applications to show brighter and more vivid colors."
+msgstr ""
+"HDR ļauj saderīgām programmām izskatīties spilgtākām un ar dzīvīgākām krāsām."
+
+#: ui/OutputPanel.qml:302
+#, kde-format
+msgctxt "@action:button"
+msgid "Calibrate HDR Brightness…"
+msgstr "Kalibrēt HDR gaišumu…"
+
+#: ui/OutputPanel.qml:316
+#, kde-format
+msgid "Opens a window to calibrate HDR brightness"
+msgstr "Atver logu HDR gaišuma kalibrēšanai"
+
+#: ui/OutputPanel.qml:321
+#, kde-kuit-format
+msgctxt "@info:tooltip"
+msgid "HDR calibration can only be started if all settings are applied."
+msgstr ""
+
+#: ui/OutputPanel.qml:328
+#, kde-format
+msgctxt "@label:listbox"
+msgid "Color accuracy:"
+msgstr "Krāsu precizitāte:"
+
+#: ui/OutputPanel.qml:337
+#, kde-format
+msgctxt "@item:inlistbox tradeoff between efficiency and color accuracy"
+msgid "Prefer efficiency"
+msgstr "Dot priekšroku veiktspējai"
+
+#: ui/OutputPanel.qml:338
+#, kde-format
+msgctxt "@item:inlistbox tradeoff between efficiency and color accuracy"
+msgid "Prefer color accuracy"
+msgstr "Dot priekšroku krāsu precizitātei"
+
+#: ui/OutputPanel.qml:348
+#, kde-kuit-format
+msgctxt "@info:tooltip"
+msgid ""
+"Preferring color accuracy limits potentially inaccurate offloading of color "
+"operations to the display driver and increases the maximum color resolution."
+"<nl/><nl/>Note that this setting can have a large impact on performance."
+msgstr ""
+"Dodot priekšroku krāsu precizitātei, šis iestatījums ierobežo potenciāli "
+"neprecīzu krāsu darbību izlādi uz displeja draiveri un palielina maksimālo "
+"krāsu izšķirtspēju.<nl/><nl/>Ievērojiet, ka šis iestatījums samazinās "
+"sistēmas veiktspēju."
+
+#: ui/OutputPanel.qml:354
+#, kde-kuit-format
+msgctxt "@info:tooltip"
+msgid ""
+"Preferring efficiency simplifies the ICC profile to matrix+shaper, improving "
+"performance at the cost of color accuracy.<nl/><nl/>Note that changing this "
+"setting can have a large impact on performance."
+msgstr ""
+"Priekšrokas došanas efektivitātei vienkāršo ICC profilu līdz matricai un "
+"formētājam, palielinot veiktspēju uz krāsu precizitātes rēķina.<nl/><nl/"
+">Ievērojiet, ka šī iestatījuma izmainīšana var stipri ietekmēt sistēmas "
+"veiktspēju."
+
+#: ui/OutputPanel.qml:362
+#, kde-format
+msgctxt "@label:listbox"
+msgid "Limit color resolution to:"
+msgstr "Ierobežot krāsu izšķirtspēju līdz:"
+
+#: ui/OutputPanel.qml:383
+#, kde-format
+msgctxt "@item:inlistbox color resolution"
+msgid "Automatic  (%1 bits per color)"
+msgstr "Automātisku (līdz %1 bitiem uz krāsu)"
+
+#: ui/OutputPanel.qml:385 ui/OutputPanel.qml:398
+#, kde-format
+msgctxt "@item:inlistbox color resolution"
+msgid "%1 bits per color"
+msgstr "%1 bitiem uz krāsu"
+
+#: ui/OutputPanel.qml:396
+#, kde-format
+msgctxt "@item:inlistbox color resolution"
+msgid "Automatic (%1 bits per color)"
+msgstr "Automātisku (līdz %1 bitiem uz krātu)"
+
+#: ui/OutputPanel.qml:408
+#, kde-kuit-format
+msgctxt "@info:tooltip"
+msgid ""
+"Limits the color resolution of the image that is sent to the display. This "
+"does not affect screenshots or recordings.<nl/><nl/>Because the display is "
+"currently connected through a dock, automatic color resolution has been "
+"temporarily reduced to 8 bits to avoid common dock issues.<nl/><nl/>Due to "
+"graphics driver limitations, the actually used resolution cannot be known."
+msgstr ""
+"Ierobežo attēla krāsu izšķirtspēju, kas tiek sūtīta uz displeju. Tas "
+"neietekmē ekrānattēlus un ekrāna ierakstus.<nl/><nl/>Tā kā displejs šobrīd "
+"ir pievienots caur dokstaciju, automātiskā krāsu izšķirtspēja ir uz laiku "
+"samazināta līdz 8 bitiem, lai izvairītos no biežākām dokstacijas darbības "
+"problēmām.<nl/><nl/>Grafikas draivera ierobežojuma dēļ faktiskā izmantotā "
+"izšķirtspēja nav zināma."
+
+#: ui/OutputPanel.qml:412
+#, kde-kuit-format
+msgctxt "@info:tooltip"
+msgid ""
+"Limits the color resolution of the image that is sent to the display. This "
+"does not affect screenshots or recordings.<nl/><nl/>Limiting color "
+"resolution can be useful to work around display or graphics driver issues."
+"<nl/><nl/>Due to graphics driver limitations, the actually used resolution "
+"cannot be known."
+msgstr ""
+"Ierobežo uz displeja nosūtāmā attēla krāsu izšķirtspēju. Šis iestatījums "
+"neietekmē ekrānattēlus un ekrāna ierakstus.<nl/><nl/>Krāsu izšķirtspējas "
+"samazināšana var būt noderīga, ja saskaraties ar displeja vai grafikas "
+"problēmām.<nl/><nl/>Grafikas draivera ierobežojuma dēļ faktiskā izmantotā "
+"izšķirtspēja nav zināma."
+
+#: ui/OutputPanel.qml:427
+#, kde-format
+msgctxt "@label"
+msgid "sRGB color intensity:"
+msgstr "sRGB krāsu intensitāte:"
+
+#: ui/OutputPanel.qml:459
+#, kde-format
+msgctxt "Color intensity factor expressed in percentage form"
+msgid "%1%"
+msgstr "%1 %"
+
+#: ui/OutputPanel.qml:467
+#, kde-format
+msgctxt "@info:tooltip"
+msgid "Increases the intensity of sRGB content on the screen."
+msgstr "Palielina ekrāna sRGB satura intensitāti."
+
+#: ui/OutputPanel.qml:479
+#, kde-format
+msgctxt "@label"
+msgid "Adaptive Backlight Modulation:"
+msgstr ""
+
+#: ui/OutputPanel.qml:502
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Adaptive backlight modulation reduces power use at the cost of color accuracy"
+msgstr ""
+
+#: ui/OutputPanel.qml:511
+#, kde-format
+msgctxt "@label"
+msgid "Brightness:"
+msgstr "Gaišums:"
+
+#: ui/OutputPanel.qml:517
+#, kde-format
+msgctxt "@option:check"
+msgid "Control hardware brightness with DDC/CI"
+msgstr "Pārvaldiet aparatūras gaišumu ar DDC/CI"
+
+#: ui/OutputPanel.qml:523
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"DDC/CI is a feature supported by many monitors. Plasma can use it to adjust "
+"screen brightness with desktop controls, as if using the monitor's own "
+"hardware buttons and OSD menu."
+msgstr ""
+"DDC/CI ir iespēja, ko atbalsta daudzi monitori. „Plasma“ var to lietot, lai "
+"koriģētu ekrāna gaišumu, izmantojot darbvirsmas vadīklas gluži tāpat, kā "
+"izmantojat pogas vai izvēlni pašā monitorā."
+
+#: ui/OutputPanel.qml:558
+#, kde-format
+msgctxt "Brightness expressed in percentage form"
+msgid "%1%"
+msgstr "%1 %"
+
+#: ui/OutputPanel.qml:572
+#, kde-format
+msgid "Automatically adapt to environment"
+msgstr ""
+
+#: ui/OutputPanel.qml:577
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Automatically adjust the screen’s brightness based on the lighting level of "
+"the environment, as detected by the device’s ambient light sensor. If you "
+"adjust the brightness manually, those adjustments will be remembered and "
+"taken into account."
+msgstr ""
+
+#: ui/OutputPanel.qml:589
+#, kde-format
+msgctxt "@label"
+msgid "Sharpness:"
+msgstr "Asums:"
+
+#: ui/OutputPanel.qml:619
+#, kde-format
+msgctxt "@label"
+msgid "Extended Dynamic Range:"
+msgstr "Paplašinātais dinamiskais diapazons"
+
+#: ui/OutputPanel.qml:624
+#, kde-format
+msgctxt "@option:check"
+msgid "Enable EDR"
+msgstr "Ieslēgt EDR"
+
+#: ui/OutputPanel.qml:630
+#, kde-kuit-format
+msgctxt "@info:tooltip"
+msgid ""
+"EDR allows viewing HDR content on SDR displays by dynamically adjusting the "
+"backlight.<nl/><nl/>Note that this increases battery usage while viewing HDR "
+"content."
+msgstr ""
+"EDR ļauj apskatīt HDR saturu uz SDR displejiem, dinamiski pielāgojot "
+"displeja izgaismojumu.<nl/><nl/>Ievērojiet, ka šis iestatījums palielina "
+"baterijas patēriņu, kad skatāties HDR saturu."
+
+#: ui/OutputPanel.qml:635
+#, kde-format
+msgid "Replica of:"
+msgstr "Replika no:"
+
+#: ui/Panel.qml:55
+#, kde-format
+msgid "Global scale:"
+msgstr "Globālais mērogs:"
+
+#: ui/Panel.qml:118 ui/Panel.qml:138
+#, kde-format
+msgid "Legacy applications (X11):"
+msgstr "Vecās programmas (X11):"
+
+#: ui/Panel.qml:123
+#, kde-format
+msgctxt "The apps themselves should scale to fit the displays"
+msgid "Apply scaling themselves"
+msgstr "Pašu programmu mērogošana"
+
+#: ui/Panel.qml:128
+#, kde-format
+msgid ""
+"Legacy applications that support scaling will use it and look crisp, however "
+"those that don’t will not be scaled at all."
+msgstr ""
+"Vecās programmas, kas atbalsta mērogošana, to izmantos un izskatīsies "
+"skaidri, tomēr citas, kas to neatbalsta, netiks mērogotas."
+
+#: ui/Panel.qml:139
+#, kde-format
+msgctxt "The system will perform the x11 apps scaling"
+msgid "Scaled by the system"
+msgstr "Sistēmas mērogošana"
+
+#: ui/Panel.qml:144
+#, kde-format
+msgid ""
+"All legacy applications will be scaled by the system to the correct size, "
+"however they will always look slightly blurry."
+msgstr ""
+"Sistēma mērogos visas vecās programmas līdz atbilstošajam izmēram, tomēr tās "
+"izskatīsies nedaudz izplūdušas."
+
+#: ui/Panel.qml:149
+#, kde-format
+msgctxt "@label"
+msgid "Screen tearing:"
+msgstr "Attēla plēšana:"
+
+#: ui/Panel.qml:152
+#, kde-format
+msgctxt ""
+"@option:check The thing being allowed in fullscreen windows is screen tearing"
+msgid "Allow in fullscreen windows"
+msgstr "Atļaut pilnekrāna logos"
+
+#: ui/Panel.qml:157
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Screen tearing reduces latency with most displays. Note that not all "
+"graphics drivers support this setting."
+msgstr ""
+"Attēla plēšanas atļaušana lielākajā daļā logu samazina gaidīšanas laiku. "
+"Ievērojiet, ka šo iestatījumu neatbalsta visi grafikas draiveri."
+
+#: ui/Panel.qml:171
+#, kde-format
+msgid ""
+"The global scale factor is limited to multiples of 6.25% to minimize visual "
+"glitches in applications using the X11 windowing system."
+msgstr ""
+"Globālās mērogošanas faktors ir ierobežots līdz reizinājumiem ar 6,25%, lai "
+"samazinātu X11 logu sistēmu izmantoto programmu vizuālos kropļojumus."
+
+#: ui/RotationButton.qml:54
+#, kde-format
+msgid "90° Clockwise"
+msgstr "90° pulksteņrādītāja virzienā"
+
+#: ui/RotationButton.qml:58
+#, kde-format
+msgid "Upside Down"
+msgstr "Otrādi"
+
+#: ui/RotationButton.qml:62
+#, kde-format
+msgid "90° Counterclockwise"
+msgstr "90° pretēji pulksteņrādītāja virzienam"
+
+#: ui/RotationButton.qml:67
+#, kde-format
+msgid "No Rotation"
+msgstr "Negriezt"
+
+#: ui/ScreenView.qml:53
+#, kde-format
+msgid "Drag screens to re-arrange them"
+msgstr "Velciet ekrānus, lai tos pārkārtotu"
+
+#~ msgctxt "@info:tooltip"
+#~ msgid "ICC profiles aren’t compatible with HDR yet."
+#~ msgstr "ICC profili pagaidām nav saderīgi ar HDR."
+
+#~ msgctxt "@info:tooltip"
+#~ msgid ""
+#~ "Limits the color resolution of the image that is sent to the display. "
+#~ "This does not affect screenshots or recordings.<nl/><nl/>"
+#~ msgstr ""
+#~ "Ierobežo uz displeja nosūtāmā attēla krāsu izšķirtspēju. Šis iestatījums "
+#~ "neietekmē ekrānattēlus un ekrāna ierakstus.<nl/><nl/>"
+
+#~ msgctxt "@info:tooltip"
+#~ msgid "The screen's built-in color profile is always used with HDR."
+#~ msgstr "Ar HDR vienmēr izmanto iebūvēto krāsu profilu."
+
+#~ msgctxt "@label"
+#~ msgid "Maximum SDR brightness:"
+#~ msgstr "Maksimālais SDR gaišums:"
+
+#~ msgctxt "@info:tooltip"
+#~ msgid "Sets the maximum brightness for the normal brightness slider."
+#~ msgstr "Norāda maksimālo gaišumu gaišuma norādīšanas slīdnim."
+
+#~ msgctxt "@info:tooltip"
+#~ msgid "This setting can have a large impact on performance."
+#~ msgstr "Šim iestatījumam var būt liela ietekme uz sistēmas veiktspēju."
+
+#~ msgctxt "Width x height"
+#~ msgid "%1x%2"
+#~ msgstr "%1×%2"
+
+#~ msgctxt "@info:tooltip"
+#~ msgid "Sets the brightness of non-HDR content on the screen, in nits"
+#~ msgstr "Iestata gaišumu ekrāna ne HDR saturam (nitos)"

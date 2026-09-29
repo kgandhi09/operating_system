@@ -6,8 +6,8 @@
 #   make flash DEVICE=/dev/sdX   write the ISO to a USB stick / SD card
 #   make deps                    install host build dependencies (sudo)
 #
-# Steps can be run on their own: busybox, tools, network, toolchain, binaries,
-# rootfs (the OS image), initramfs, kernel, iso.
+# Steps can be run on their own: busybox, tools, network, toolchain, desktop,
+# binaries, rootfs (the OS image), initramfs, kernel, iso.
 #   make binaries [UPDATE=1]     pull configs/binaries/*.list from GitHub
 # Everything builds from what is in this repo: no network, no git (except
 # `make binaries` for a binary that is listed but not fetched yet).
@@ -27,7 +27,7 @@ export NOWARN_CFLAGS
 SHELL := /bin/bash
 S := scripts
 
-.PHONY: all iso kernel initramfs rootfs busybox tools network toolchain binaries run flash deps menuconfig clean distclean help
+.PHONY: all iso kernel initramfs rootfs busybox tools network toolchain desktop binaries run flash deps menuconfig clean distclean help
 
 all: iso
 
@@ -43,10 +43,14 @@ network:
 toolchain: network
 	$(S)/build-toolchain.sh
 
+# The desktop (KDE Plasma), started on demand with jk-gui on tty2.
+desktop: toolchain network
+	$(S)/build-desktop.sh
+
 binaries:
 	$(S)/fetch-binaries.sh
 
-rootfs: busybox tools network toolchain binaries
+rootfs: busybox tools network toolchain desktop binaries
 	$(S)/build-rootfs.sh
 
 initramfs: busybox tools

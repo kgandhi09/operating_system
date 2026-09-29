@@ -1,0 +1,843 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR This file is copyright:
+# This file is distributed under the same license as the kscreen package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: kscreen\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-06-07 02:48+0000\n"
+"PO-Revision-Date: 2026-05-08 05:18+0200\n"
+"Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
+"Language-Team: Georgian <kde-i18n-doc@kde.org>\n"
+"Language: ka\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.9\n"
+
+#: kcm.cpp:149 kcm.cpp:171
+#, kde-format
+msgid "Implementation error"
+msgstr "განხორციელების შეცდომა"
+
+#: kcm.cpp:199
+#, kde-format
+msgid "Outputs changed while trying to apply settings"
+msgstr "პარამეტრების გადატარების მცდელობისას გამოტანა შეიცვალა"
+
+#: output_model.cpp:101
+#, kde-format
+msgid "%1 Hz"
+msgstr "%1 ჰც"
+
+#: output_model.cpp:764
+#, kde-format
+msgctxt "Width x height"
+msgid "%1 × %2"
+msgstr "%1 × %2"
+
+#: output_model.cpp:783
+#, kde-format
+msgctxt "Width x height (aspect ratio)"
+msgid "%1 × %2 (%3:%4)"
+msgstr "%1 × %2 (%3:%4)"
+
+#: output_model.cpp:892
+#, kde-format
+msgid "Replicated by other output"
+msgstr "რეპლიცირებულია სხვა გამოტანის მიერ"
+
+#: output_model.cpp:896
+#, kde-format
+msgid "None"
+msgstr "არაფერი"
+
+#: ui/ColorProfileSelector.qml:28
+#, kde-format
+msgctxt "@label:listbox"
+msgid "Color profile:"
+msgstr "ფერის პროფილი:"
+
+#: ui/ColorProfileSelector.qml:37
+#, kde-format
+msgctxt "@item:inlistbox color profile"
+msgid "None"
+msgstr "არაფერი"
+
+#: ui/ColorProfileSelector.qml:42
+#, kde-format
+msgctxt "@item:inlistbox color profile"
+msgid "ICC profile"
+msgstr "ICC პროფილი"
+
+#: ui/ColorProfileSelector.qml:47
+#, kde-format
+msgctxt "@item:inlistbox color profile"
+msgid "Built-in"
+msgstr "ჩაშენებული"
+
+#: ui/ColorProfileSelector.qml:68
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Use the color profile built into the screen itself, if present. Note that "
+"built-in color profiles are sometimes wrong, and often inaccurate. For "
+"optimal color fidelity, calibration using a colorimeter is recommended."
+msgstr ""
+"თუ არსებობს, ეკრანში ჩაშენებული ფერის პროფილის გამოყენება. დაიმახსოვრეთ, რომ "
+"ჩაშენებული ფერის პროფილები ხანდახან არასწორია, თან ხშირად. ფერების "
+"სისწორისთვის რეკომენდებულია, კალიბრაცია colorimeter-ით გააკეთოთ."
+
+#: ui/IccSelector.qml:33
+#, kde-format
+msgctxt "@info:placeholder"
+msgid "Enter ICC profile path…"
+msgstr "შეიყვანეთ ICC პროფილის ბილიკი…"
+
+#: ui/IccSelector.qml:48
+#, kde-format
+msgctxt "@action:button"
+msgid "Select ICC profile…"
+msgstr "აირჩიეთ ICC პროფილი…"
+
+#: ui/IccSelector.qml:58
+#, kde-format
+msgid "Opens a file picker for the ICC profile"
+msgstr "გახსნის ფაილის არჩევის ფანჯარას ICC პროფილისთვის"
+
+#: ui/IccSelector.qml:67
+#, kde-format
+msgctxt "@title:window"
+msgid "Select ICC Profile"
+msgstr "აირჩიეთ ICC პროფილი"
+
+#: ui/main.qml:43
+#, kde-format
+msgctxt ""
+"@action:button Briefly show the display name in a popup label on each screen"
+msgid "Identify Screens"
+msgstr "ეკრანების იდენტიფიკაცია"
+
+#: ui/main.qml:56
+#, kde-format
+msgid "Keep display configuration?"
+msgstr "დაიტოვებთ ამ პარამეტრებს?"
+
+#: ui/main.qml:67
+#, kde-format
+msgid "Will revert to previous configuration in %1 second."
+msgid_plural "Will revert to previous configuration in %1 seconds."
+msgstr[0] "წინა კონფიგურაცია %1 წამში დაბრუნდება."
+msgstr[1] "წინა კონფიგურაცია %1 წამში დაბრუნდება."
+
+#: ui/main.qml:84
+#, kde-format
+msgid "&Keep"
+msgstr "&შენარჩუნება"
+
+#: ui/main.qml:97
+#, kde-format
+msgid "&Revert"
+msgstr "&დაბრუნება"
+
+#: ui/main.qml:117
+#, kde-format
+msgctxt "@info"
+msgid "All displays are disabled. Enable at least one."
+msgstr "ყველა ეკრანი გამორთულია. საჭიროა ერთი მაინც ჩართოთ."
+
+#: ui/main.qml:119
+#, kde-format
+msgctxt "@info"
+msgid ""
+"Gaps between displays are not supported. Make sure all displays are touching."
+msgstr ""
+"ეკრანებს შორის ადგილი მხარდაუჭერელია. დარწმუნდით, რომ ყველა ეკრანი ეხება."
+
+#: ui/main.qml:124
+#, kde-format
+msgctxt "The argument contains the reason for the failure"
+msgid "Couldn’t apply display configuration: %1"
+msgstr "ვერ გადავატარე ეკრანის კონფიგურაცია: %1"
+
+#: ui/main.qml:133
+#, kde-format
+msgid "A new output has been added. Settings have been reloaded."
+msgstr "ახალი გამოტანა დამატებულია. პარამეტრები თავიდან ჩაიტვირთა."
+
+#: ui/main.qml:135
+#, kde-format
+msgid "An output has been removed. Settings have been reloaded."
+msgstr "გამოტანილი წაშლილია. პარამეტრები თავიდან ჩაიტვირთა."
+
+#: ui/main.qml:189
+#, kde-format
+msgid "No KScreen backend found. Please check your KScreen installation."
+msgstr "KScreen-ის უკანაბოლოები ვერ ვიპოვე. შეამოწმეთ KScreen-ს ფაილები."
+
+#: ui/main.qml:198
+#, kde-format
+msgid "Outputs could not be saved due to error."
+msgstr "გამოტანის შენახვა შეუძლებელია შეცდომის გამო."
+
+#: ui/main.qml:207
+#, kde-format
+msgid ""
+"Global scale changes will come into effect after the system is restarted."
+msgstr ""
+"გადატარებულია ახალი გლობალური მასშტაბირება. ზოგიერთი ცვლილება ძალაში მხოლოდ "
+"სისტემის გადატვირთვის შემდეგ შევა."
+
+#: ui/main.qml:213
+#, kde-format
+msgid "Restart"
+msgstr "რესტარტ"
+
+#: ui/main.qml:231
+#, kde-format
+msgid "Display configuration reverted."
+msgstr "ეკრანის კონფიგურაცია დაბრუნებულია."
+
+#: ui/main.qml:245
+#, kde-format
+msgctxt "@title:window"
+msgid "Change Priorities"
+msgstr "პრიორიტეტების შეცვლა"
+
+#: ui/main.qml:275 ui/OutputPanel.qml:50
+#, kde-format
+msgid "Primary"
+msgstr "ძირითადი"
+
+#: ui/main.qml:280
+#, kde-format
+msgid "Raise priority"
+msgstr "პრიორიტეტის გაზრდა"
+
+#: ui/main.qml:290
+#, kde-format
+msgid "Lower priority"
+msgstr "პრიორიტეტის შემცირება"
+
+#: ui/main.qml:402
+#, kde-format
+msgctxt "@action:button Shrink the height of a view"
+msgid "Collapse"
+msgstr "ჩამოშლა"
+
+#: ui/main.qml:403
+#, kde-format
+msgctxt "@action:button Edit the arrangement of display outputs"
+msgid "Edit Arrangement"
+msgstr "დალაგების ჩასწორება"
+
+#: ui/Orientation.qml:14
+#, kde-format
+msgid "Orientation:"
+msgstr "ორიენტაცია:"
+
+#: ui/Orientation.qml:27 ui/OutputPanel.qml:172 ui/OutputPanel.qml:217
+#, kde-format
+msgid "Automatic"
+msgstr "ავტომატური"
+
+#: ui/Orientation.qml:42
+#, kde-format
+msgid "Only when in tablet mode"
+msgstr "მხოლოდ ტაბლეტის რეჟიმში"
+
+#: ui/Orientation.qml:58
+#, kde-format
+msgid "Manual"
+msgstr "ხელით"
+
+#: ui/Output.qml:21
+#, kde-format
+msgctxt "Width, height, scale; separated with no-break space"
+msgid "(%1 × %2, %3%)"
+msgstr "(%1 × %2, %3%)"
+
+#: ui/Output.qml:23
+#, kde-format
+msgctxt "Width, height; separated with no-break space"
+msgid "(%1 × %2)"
+msgstr "(%1 × %2)"
+
+#: ui/Output.qml:226
+#, kde-format
+msgid "%1, %2"
+msgstr "%1, %2"
+
+#: ui/Output.qml:252
+#, kde-format
+msgid "Replicas"
+msgstr "რეპლიკები"
+
+#: ui/OutputPanel.qml:31
+#, kde-format
+msgctxt "@label for a checkbox that says 'Enabled'"
+msgid "Device:"
+msgstr "მოწყობილობა:"
+
+#: ui/OutputPanel.qml:32
+#, kde-format
+msgid "Enabled"
+msgstr "ჩართულია"
+
+#: ui/OutputPanel.qml:43
+#, kde-format
+msgid "Change Screen Priorities…"
+msgstr "ეკრანის პრიორიტეტების შეცვლა…"
+
+#: ui/OutputPanel.qml:56
+#, kde-kuit-format
+msgctxt "@info"
+msgid ""
+"This determines which screen your main desktop appears on, along with any "
+"Plasma Panels in it. Some older games also use this setting to decide which "
+"screen to appear on.<nl/><nl/>It has no effect on what screen notifications "
+"or other windows appear on."
+msgstr ""
+"განსაზღვრავს, თქვენი მთავარი სამუშაო მაგიდა და პანელი რომელ ეკრანზე "
+"გამოჩნდება. ზოგიერთი ძველი თამაში ასევე იყენებს მას, რომ განსაზღვროს, რომელ "
+"ეკრანზე გამოჩნდეს <nl/><nl/>. იმაზე, გაფრთხილებები და სხვა ფანჯრები რომელ "
+"ეკრანზე გამოჩნდება, ეფექტი არ გააჩნია."
+
+#: ui/OutputPanel.qml:61
+#, kde-format
+msgid "Resolution:"
+msgstr "გარჩევადობა:"
+
+#: ui/OutputPanel.qml:82
+#, kde-format
+msgctxt "@info"
+msgid "“%1” is the only resolution supported by this display."
+msgstr "\"%1\" ამ ეკრანის მიერ მხარდაჭერილ ერთად ერთ გაფართოებას წარმოადგენს."
+
+#: ui/OutputPanel.qml:92
+#, kde-format
+msgid "Scale:"
+msgstr "გაფართოება:"
+
+#: ui/OutputPanel.qml:98 ui/Panel.qml:62
+#, kde-format
+msgctxt "@info accessible description of slider value"
+msgid "in percent of regular scale"
+msgstr "ჩვეულებრივი შკალის პროცენტებში"
+
+#: ui/OutputPanel.qml:129 ui/Panel.qml:94
+#, kde-format
+msgctxt "Global scale factor expressed in percentage form"
+msgid "%1%"
+msgstr "%1%"
+
+#: ui/OutputPanel.qml:141
+#, kde-format
+msgid "Refresh rate:"
+msgstr "განახლების სიხშირე:"
+
+#: ui/OutputPanel.qml:162
+#, kde-format
+msgctxt "@info"
+msgid "“%1” is the only refresh rate supported by this display."
+msgstr ""
+"\"%1\" ამ ეკრანის მიერ მხარდაჭერილ ერთადერთ განახლების სიხშირეს წარმოადგენს."
+
+#: ui/OutputPanel.qml:163
+#, kde-format
+msgctxt "@info"
+msgid ""
+"“%1” is the only refresh rate supported by this display at the current "
+"resolution."
+msgstr ""
+"\"%1\" ამ ეკრანის მიერ მხარდაჭერილ ერთადერთი განახლების სიხშირეს წარმოადგენს "
+"მიმდინარე გარჩევადობისთვის."
+
+#: ui/OutputPanel.qml:168
+#, kde-format
+msgid "Adaptive sync:"
+msgstr "ადაპტიური სინქი:"
+
+#: ui/OutputPanel.qml:171
+#, kde-format
+msgid "Never"
+msgstr "არასდროს"
+
+#: ui/OutputPanel.qml:173
+#, kde-format
+msgid "Always"
+msgstr "ყოველთვის"
+
+#: ui/OutputPanel.qml:184
+#, kde-format
+msgid "Overscan:"
+msgstr "გადასკანირება:"
+
+#: ui/OutputPanel.qml:198
+#, kde-format
+msgctxt "Overscan expressed in percentage form"
+msgid "%1%"
+msgstr "%1%"
+
+#: ui/OutputPanel.qml:204
+#, kde-kuit-format
+msgctxt "@info"
+msgid ""
+"Determines how much padding is put around the image sent to the display to "
+"compensate for part of the content being cut off around the edges.<nl/><nl/"
+">This is sometimes needed when using a TV as a screen."
+msgstr ""
+"დაადგენს, რამდენითაა საჭირო შევსება გამოსახულების გარშემო, რომელიც "
+"საჩვენებლადაა განკუთვნილი, რომ მოხდეს იმ ნაწილების კომპენსაცია, რომელის "
+"გამოსახულებას წიბოებთან მოეჭრება.<nl/><nl/>ეს ხანდახან დაგჭირდებათ, როცა "
+"ეკრანად ტელევიზორს იყენებთ."
+
+#: ui/OutputPanel.qml:209
+#, kde-format
+msgid "RGB range:"
+msgstr "RGB დიაპაზონი:"
+
+#: ui/OutputPanel.qml:218
+#, kde-format
+msgid "Full"
+msgstr "სრული"
+
+#: ui/OutputPanel.qml:219
+#, kde-format
+msgid "Limited"
+msgstr "შეზღუდული"
+
+#: ui/OutputPanel.qml:229
+#, kde-kuit-format
+msgctxt "@info"
+msgid ""
+"Determines whether the range of possible color values needs to be limited "
+"for the display. This should only be changed if the colors on the screen "
+"look washed out."
+msgstr ""
+"განსაზღვრავს, საჭიროა თუ არა ნაჩვენები ფერების რაოდენობის შეზღუდვა. ეს, "
+"მხოლოდ, მაშინ შეცვალეთ, თუ ეკრანი გარეცხილს წააგავს."
+
+#: ui/OutputPanel.qml:280
+#, kde-format
+msgctxt "@label"
+msgid "High Dynamic Range:"
+msgstr "მაღალი დინამიკური დიაპაზონი:"
+
+#: ui/OutputPanel.qml:287
+#, kde-format
+msgctxt "@option:check"
+msgid "Enable &HDR"
+msgstr "&HDR-ის ჩართვა"
+
+#: ui/OutputPanel.qml:293
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"HDR allows compatible applications to show brighter and more vivid colors."
+msgstr ""
+"HDR თავსებად აპლიკაციებს საშუალებას აძლევს, უფრო კაშკაშა და მკვეთრი ფერებით "
+"გამოჩნდეს."
+
+#: ui/OutputPanel.qml:302
+#, kde-format
+msgctxt "@action:button"
+msgid "Calibrate HDR Brightness…"
+msgstr "HDR სიკაშკაშის კალიბრაცია…"
+
+#: ui/OutputPanel.qml:316
+#, kde-format
+msgid "Opens a window to calibrate HDR brightness"
+msgstr "გახსნის ფანჯარას HDR სიკაშკაშის კალიბრაციისთვის"
+
+#: ui/OutputPanel.qml:321
+#, kde-kuit-format
+msgctxt "@info:tooltip"
+msgid "HDR calibration can only be started if all settings are applied."
+msgstr ""
+"HDR-ის კალიბრაციის დაწყება, მხოლოდ, ყველა პარამეტრის გადატარების შემდეგაა "
+"შესაძლებელი."
+
+#: ui/OutputPanel.qml:328
+#, kde-format
+msgctxt "@label:listbox"
+msgid "Color accuracy:"
+msgstr "ფერის სიზუსტე:"
+
+#: ui/OutputPanel.qml:337
+#, kde-format
+msgctxt "@item:inlistbox tradeoff between efficiency and color accuracy"
+msgid "Prefer efficiency"
+msgstr "მირჩევნია ეფექტურობა"
+
+#: ui/OutputPanel.qml:338
+#, kde-format
+msgctxt "@item:inlistbox tradeoff between efficiency and color accuracy"
+msgid "Prefer color accuracy"
+msgstr "მირჩევნია ფერის სიზუსტე"
+
+#: ui/OutputPanel.qml:348
+#, kde-kuit-format
+msgctxt "@info:tooltip"
+msgid ""
+"Preferring color accuracy limits potentially inaccurate offloading of color "
+"operations to the display driver and increases the maximum color resolution."
+"<nl/><nl/>Note that this setting can have a large impact on performance."
+msgstr ""
+"ფერის სიზუსტისთვის მეტი პრიორიტეტის მინიჭებამ, შეიძლება, ფერების ოპერაციების "
+"დატვირთვის ვიდეობარათის დრაივერზე გადატანის უზუსტობები გამოიწვიოს და "
+"გაზარდოს მაქსიმალური ფერის გაფართოება.<nl/><nl/>გაითვალისწინეთ, რომ ამ "
+"პარამეტრის ცვლილებას, შეიძლება, წარმადობაზე დიდი გავლენა ჰქონდეს."
+
+#: ui/OutputPanel.qml:354
+#, kde-kuit-format
+msgctxt "@info:tooltip"
+msgid ""
+"Preferring efficiency simplifies the ICC profile to matrix+shaper, improving "
+"performance at the cost of color accuracy.<nl/><nl/>Note that changing this "
+"setting can have a large impact on performance."
+msgstr ""
+"ეფექტურობისთვის პრიორიტეტის მინიჭება ამარტივებს ICC პროფილს მატრიცამდე"
+"+შეიპერამდე, რაც ზრდის წარმადობას ფერის სიზუსტის ხარჯზე.<nl/><nl/"
+">დაიმახსოვრეთ, რომ ამ პარამეტრის შეცვლას, შეიძლება, წარმადობაზე დიდი გავლენა "
+"იქონიოს."
+
+#: ui/OutputPanel.qml:362
+#, kde-format
+msgctxt "@label:listbox"
+msgid "Limit color resolution to:"
+msgstr "ფერების გარჩევადობის შეზღუდვა:"
+
+#: ui/OutputPanel.qml:383
+#, kde-format
+msgctxt "@item:inlistbox color resolution"
+msgid "Automatic  (%1 bits per color)"
+msgstr "ავტომატური  (%1 ბიტი თითოეული ფერისთვის)"
+
+#: ui/OutputPanel.qml:385 ui/OutputPanel.qml:398
+#, kde-format
+msgctxt "@item:inlistbox color resolution"
+msgid "%1 bits per color"
+msgstr "%1 ბიტი თითოეული ფერისთვის"
+
+#: ui/OutputPanel.qml:396
+#, kde-format
+msgctxt "@item:inlistbox color resolution"
+msgid "Automatic (%1 bits per color)"
+msgstr "ავტომატური (%1 ბიტი თითოეული ფერისთვის)"
+
+#: ui/OutputPanel.qml:408
+#, kde-kuit-format
+msgctxt "@info:tooltip"
+msgid ""
+"Limits the color resolution of the image that is sent to the display. This "
+"does not affect screenshots or recordings.<nl/><nl/>Because the display is "
+"currently connected through a dock, automatic color resolution has been "
+"temporarily reduced to 8 bits to avoid common dock issues.<nl/><nl/>Due to "
+"graphics driver limitations, the actually used resolution cannot be known."
+msgstr ""
+"ზღუდავს ფერის გაფართოებას გამოსახულებებისთვის, რომელიც ეკრანს ეგზავნება. ეს "
+"არ ეხება ეკრანის ანაბეჭდის აღებას და მის ჩაწერას.<nl/><nl/>იმის გამო, რომ "
+"ახლა ეკრანი დოკითაა მიერთებული, ზოგადი პრობლემების თავიდან ასაცილებლად "
+"ავტომატური ფერის გაფართოება დროებით შეიცვალა 8 ბიტამდე.<nl/><nl/>გრაფიკული "
+"დრაივერის შეზღუდვების გამო რეალურად გამოყენებული გაფართოების გაგება "
+"შეუძლებელია."
+
+#: ui/OutputPanel.qml:412
+#, kde-kuit-format
+msgctxt "@info:tooltip"
+msgid ""
+"Limits the color resolution of the image that is sent to the display. This "
+"does not affect screenshots or recordings.<nl/><nl/>Limiting color "
+"resolution can be useful to work around display or graphics driver issues."
+"<nl/><nl/>Due to graphics driver limitations, the actually used resolution "
+"cannot be known."
+msgstr ""
+"ზღუდავს ფერის გაფართოებას გამოსახულებებისთვის, რომელიც ეკრანს ეგზავნება. ეს "
+"არ ეხება ეკრანის ანაბეჭდის აღებას და მის ჩაწერას.<nl/><nl/>ფერის გაფარტოების "
+"შეზღუდვა ეკრანის ან გრაფიკული დრაივერის შეზღუდვების გვერდით ასავლელად "
+"გამოიყენება.<nl/><nl/>გრაფიკული დრაივერის შეზღუდვების გამო რეალურად "
+"გამოყენებული გაფართოების გაგება შეუძლებელია."
+
+#: ui/OutputPanel.qml:427
+#, kde-format
+msgctxt "@label"
+msgid "sRGB color intensity:"
+msgstr "sRGB ფერის ინტენსივობა:"
+
+#: ui/OutputPanel.qml:459
+#, kde-format
+msgctxt "Color intensity factor expressed in percentage form"
+msgid "%1%"
+msgstr "%1%"
+
+#: ui/OutputPanel.qml:467
+#, kde-format
+msgctxt "@info:tooltip"
+msgid "Increases the intensity of sRGB content on the screen."
+msgstr "ზრდის sRGB შემცველობის ინტენსივობას ეკრანზე."
+
+#: ui/OutputPanel.qml:479
+#, kde-format
+msgctxt "@label"
+msgid "Adaptive Backlight Modulation:"
+msgstr "ადაპტური განათების მოდულაცია:"
+
+#: ui/OutputPanel.qml:502
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Adaptive backlight modulation reduces power use at the cost of color accuracy"
+msgstr ""
+"ადაპტური განათების მოდულაცია ამცირებს ენერგიის მოხმარებას ფერის სიზუსტის "
+"ფასად"
+
+#: ui/OutputPanel.qml:511
+#, kde-format
+msgctxt "@label"
+msgid "Brightness:"
+msgstr "სიკაშკაშე:"
+
+#: ui/OutputPanel.qml:517
+#, kde-format
+msgctxt "@option:check"
+msgid "Control hardware brightness with DDC/CI"
+msgstr "აპარატურის სიკაშკაშის მართვა DDC/CI-ით"
+
+#: ui/OutputPanel.qml:523
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"DDC/CI is a feature supported by many monitors. Plasma can use it to adjust "
+"screen brightness with desktop controls, as if using the monitor's own "
+"hardware buttons and OSD menu."
+msgstr ""
+"DDC/CI ფუნქციაა, რომლის მხარდაჭერაც ბევრ ეკრანს გააჩნია. Plasma-ს შეუძლია, "
+"გამოიყენოთ ის ეკრანის სიკაშკაშის სამართავად, თითქოს ეკრანის აპარატურულ "
+"ღილაკებს და OSD მენიუს იყენებდეთ."
+
+#: ui/OutputPanel.qml:558
+#, kde-format
+msgctxt "Brightness expressed in percentage form"
+msgid "%1%"
+msgstr "%1%"
+
+#: ui/OutputPanel.qml:572
+#, kde-format
+msgid "Automatically adapt to environment"
+msgstr "ავტომატური მორგება გარემოსთან"
+
+#: ui/OutputPanel.qml:577
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Automatically adjust the screen’s brightness based on the lighting level of "
+"the environment, as detected by the device’s ambient light sensor. If you "
+"adjust the brightness manually, those adjustments will be remembered and "
+"taken into account."
+msgstr ""
+"ეკრანის სიკაშკაშის ავტომატური მორგება გარემოს განათებულობის დონეზე "
+"დაყრდნობით, რომელსაც მოწყობილობის გარემოს სინათლის სენსორი ადგენს. თუ "
+"სიკაშკაშეს ხელით ასწორებთ, ეს დამახსოვრებული და მხედველობაში მიღებული იქნება."
+
+#: ui/OutputPanel.qml:589
+#, kde-format
+msgctxt "@label"
+msgid "Sharpness:"
+msgstr "სიმკვეთრე:"
+
+#: ui/OutputPanel.qml:619
+#, kde-format
+msgctxt "@label"
+msgid "Extended Dynamic Range:"
+msgstr "გაფართოებული დინამიკური შუალედი:"
+
+#: ui/OutputPanel.qml:624
+#, kde-format
+msgctxt "@option:check"
+msgid "Enable EDR"
+msgstr "EDR-ის ჩართვა"
+
+#: ui/OutputPanel.qml:630
+#, kde-kuit-format
+msgctxt "@info:tooltip"
+msgid ""
+"EDR allows viewing HDR content on SDR displays by dynamically adjusting the "
+"backlight.<nl/><nl/>Note that this increases battery usage while viewing HDR "
+"content."
+msgstr ""
+"EDR საშუალებას გაძლევთ, იხილოთ HDR შემცველობა SDR ეკრანზე უკუნათების "
+"დინამიკურად გასწორებით.<nl/><nl/>დაიმახსოვრეთ, რომ ეს მეტ ელემენტს ხარჯავს "
+"HDR შემცველობის დათვალიერებისას."
+
+#: ui/OutputPanel.qml:635
+#, kde-format
+msgid "Replica of:"
+msgstr "რისი რეპლიკა:"
+
+#: ui/Panel.qml:55
+#, kde-format
+msgid "Global scale:"
+msgstr "გლობალურის მასშტაბი:"
+
+#: ui/Panel.qml:118 ui/Panel.qml:138
+#, kde-format
+msgid "Legacy applications (X11):"
+msgstr "მოძველებული აპლიკაციები (X11):"
+
+#: ui/Panel.qml:123
+#, kde-format
+msgctxt "The apps themselves should scale to fit the displays"
+msgid "Apply scaling themselves"
+msgstr "მასშტაბირების მათზევე გადატარება"
+
+#: ui/Panel.qml:128
+#, kde-format
+msgid ""
+"Legacy applications that support scaling will use it and look crisp, however "
+"those that don’t will not be scaled at all."
+msgstr ""
+"მოძველებული აპლიკაციები, რომლებსაც მასშტაბირების მხარდაჭერა გააჩნია, "
+"გამოიყენებს მას. მაგრამ გაითვალისწინეთ, აპლიკაციები, რომლებსაც ამისი "
+"მხარდაჭერა არ გააჩნია, საერთოდ არ იქნებიან მასშტაბირებული."
+
+#: ui/Panel.qml:139
+#, kde-format
+msgctxt "The system will perform the x11 apps scaling"
+msgid "Scaled by the system"
+msgstr "მასშტაბირებულია სისტემის მიერ"
+
+#: ui/Panel.qml:144
+#, kde-format
+msgid ""
+"All legacy applications will be scaled by the system to the correct size, "
+"however they will always look slightly blurry."
+msgstr ""
+"ყველა მოძველებული აპლიკაცია გადიდდება სისტემის მიერ სწორ ზომამდე. მაგრამ "
+"ისინი ყოველთვის ბუნდოვნების იქნებიან."
+
+#: ui/Panel.qml:149
+#, kde-format
+msgctxt "@label"
+msgid "Screen tearing:"
+msgstr "ეკრანის დაჭრა:"
+
+#: ui/Panel.qml:152
+#, kde-format
+msgctxt ""
+"@option:check The thing being allowed in fullscreen windows is screen tearing"
+msgid "Allow in fullscreen windows"
+msgstr "სრულ ეკრანზე გაშლილი ფანჯრების დაშვება"
+
+#: ui/Panel.qml:157
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Screen tearing reduces latency with most displays. Note that not all "
+"graphics drivers support this setting."
+msgstr ""
+"ეკრანის დაჭრა ამცირებს დაყოვნებას უმეტესი ეკრანებისთვის. დაიმახსოვრეთ, რომ "
+"ამ პარამეტრის მხარდაჭერა, ბევრ დრაივერს არ გააჩნია."
+
+#: ui/Panel.qml:171
+#, kde-format
+msgid ""
+"The global scale factor is limited to multiples of 6.25% to minimize visual "
+"glitches in applications using the X11 windowing system."
+msgstr ""
+"გლობალური მასშტაბის ფაქტორი შეზღუდულია 6.25%-ის ნამრავლებზე, რომ ვიზუალური "
+"შეცდომები მინიმუმამდე გავიდეს პროგრამებში, რომლებიც X11 სისტემას იყენებენ."
+
+#: ui/RotationButton.qml:54
+#, kde-format
+msgid "90° Clockwise"
+msgstr "90° საათის ისრის მიმართულებით"
+
+#: ui/RotationButton.qml:58
+#, kde-format
+msgid "Upside Down"
+msgstr "ქვემოდან ზემოთ"
+
+#: ui/RotationButton.qml:62
+#, kde-format
+msgid "90° Counterclockwise"
+msgstr "90° საათის ისრის საწინააღმდეგო მიმართულებით"
+
+#: ui/RotationButton.qml:67
+#, kde-format
+msgid "No Rotation"
+msgstr "შეტრიალების გარეშე"
+
+#: ui/ScreenView.qml:53
+#, kde-format
+msgid "Drag screens to re-arrange them"
+msgstr "ეკრანების გადასალაგებლად გადაათრიეთ ისინი"
+
+#~ msgctxt "@info:tooltip"
+#~ msgid "ICC profiles aren’t compatible with HDR yet."
+#~ msgstr "ICC პროფილები, ჯერჯერობით, HDR-სთან თავსებადი არაა."
+
+#~ msgctxt "@info:tooltip"
+#~ msgid ""
+#~ "Limits the color resolution of the image that is sent to the display. "
+#~ "This does not affect screenshots or recordings.<nl/><nl/>"
+#~ msgstr ""
+#~ "შეზღუდავს გამოსახულების ფერების გარჩევადობას, რომელიც ეკრანს ეგზავნება. "
+#~ "ეს არ ეხება ეკრანის ანაბეჭდებს ან ჩანაწერებს.<nl/><nl/>"
+
+#~ msgctxt "@info:tooltip"
+#~ msgid "The screen's built-in color profile is always used with HDR."
+#~ msgstr ""
+#~ "HDR-სთან ერთად, ყოველთვის, ეკრანში ჩაშენებული ფერის პროფილი გამოიყენება."
+
+#~ msgctxt "@label"
+#~ msgid "Maximum SDR brightness:"
+#~ msgstr "მაქსიმალური SDR სიკაშკაშე:"
+
+#~ msgctxt "@info:tooltip"
+#~ msgid "Sets the maximum brightness for the normal brightness slider."
+#~ msgstr ""
+#~ "აყენებს მაქსიმალურ სიკაშკაშეს ნორმალური სიკაშკაშის მქონე სლაიდერისთვის."
+
+#~ msgctxt "@info:tooltip"
+#~ msgid "This setting can have a large impact on performance."
+#~ msgstr "ამ პარამეტრს, შეიძლება, წარმადობაზე დიდი გავლენა ჰქონდეს."
+
+#~ msgctxt "Width x height"
+#~ msgid "%1x%2"
+#~ msgstr "%1x%2"
+
+#~ msgctxt "@info:tooltip"
+#~ msgid "Sets the brightness of non-HDR content on the screen, in nits"
+#~ msgstr "აყენებს სიკაშკაშეს არა-HDR შემცველობისთვის ეკრანზე, ნიტებში"
+
+#~ msgctxt "@info"
+#~ msgid ""
+#~ "&quot;%1&quot; is the only resolution supported by this display.<nl/><nl/"
+#~ ">Using unsupported resolutions was possible in the Plasma X11 session, "
+#~ "but they were never guaranteed to work and are not available in this "
+#~ "Plasma Wayland session."
+#~ msgstr ""
+#~ "&quot;%1&quot; ეს ამ ეკრანის მიერ მხარდაჭერილი ერთად ერთი გაფართოებაა.<nl/"
+#~ "><nl/>მხარდაუჭერელი გაფართოებების გამოყენება შესაძლებელი იყო Plasma X11-"
+#~ "ის გამოყენებით, მაგრამ გარანტია, რომ ეს იმუშავებდა, არ არსებობს. ასევე, "
+#~ "ეს პარამეტრი ხელმიუწვდომელია Plasma Wayland-ის სესიაში."
+
+#~ msgid "Save displays' properties:"
+#~ msgstr "ეკრანის პარამეტრების შენახვა:"
+
+#~ msgid "For only this specific display arrangement"
+#~ msgstr "მხოლოდ მითითებული ეკრანის გადაადგილებისთვის"
+
+#~ msgid ""
+#~ "Are you sure you want to disable all outputs? This might render the "
+#~ "device unusable."
+#~ msgstr ""
+#~ "დარწმუნებული ბრძანდებით, რომ გნებავთ, გამორთოთ ყველა გამოტანა? ამან "
+#~ "შეიძლება მოწყობილობა გამოუსადეგარი გახადოს."
+
+#~ msgid "Disable All Outputs"
+#~ msgstr "ყველა გამოტანის გამორთვა"

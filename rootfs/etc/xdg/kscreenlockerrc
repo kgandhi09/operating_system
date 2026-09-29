@@ -1,0 +1,5 @@
+# No automatic screen locking in the desktop; jk_os users log in on the
+# console and the desktop is started from there.
+[Daemon]
+Autolock=false
+LockOnResume=false

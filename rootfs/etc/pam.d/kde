@@ -1,0 +1,6 @@
+# KDE's screen locker, to unlock with the user's password. (Locking is off
+# by default: /etc/xdg/kscreenlockerrc.)
+auth      required  pam_unix.so
+account   required  pam_unix.so
+password  required  pam_deny.so
+session   required  pam_permit.so

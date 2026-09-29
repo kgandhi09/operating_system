@@ -3,6 +3,9 @@
 #   UEFI=1   (x86_64) boot through OVMF instead of legacy BIOS
 #   MEM=2G   guest memory (default 1G)
 #   AARCH64_EFI=/path/QEMU_EFI.fd   (aarch64) firmware, if not in a standard place
+#   GUI=1    also open a window with a virtual GPU, keyboard and mouse, for the
+#            desktop (log in on tty2 there and run jk-gui; MEM=4G or more)
+#   DISPLAY_OPT=vnc=:1   how QEMU shows that screen (default: gtk)
 # Quit QEMU with Ctrl-A then X.
 source "$(dirname "$0")/common.sh"
 
@@ -15,6 +18,16 @@ first_file() {
     for f in "$@"; do [[ -f "$f" ]] && { echo "$f"; return 0; }; done
     return 1
 }
+
+# The console stays on this terminal (the serial line); with GUI=1 a window
+# shows the virtual screen (tty1, tty2 and the desktop) too.
+if [[ "${GUI:-0}" == 1 ]]; then
+    screen=(-device virtio-vga -device qemu-xhci -device usb-kbd -device usb-tablet
+            -display "${DISPLAY_OPT:-gtk}" -serial mon:stdio)
+    [[ "$ARCH" == aarch64 ]] && screen[1]=virtio-gpu-pci
+else
+    screen=(-nographic)
+fi
 
 accel=(-cpu max)
 # Emulated arm64 (TCG): with -cpu max the kernel doesn't get past the
@@ -43,7 +56,7 @@ x86_64)
     exec qemu-system-x86_64 "${accel[@]}" "${fw[@]}" -m "$MEM" -smp 2 \
         -cdrom "$ISO" -boot d \
         -nic user,model=virtio-net-pci \
-        -nographic
+        "${screen[@]}"
     ;;
 aarch64)
     need qemu-system-aarch64
@@ -62,6 +75,6 @@ aarch64)
     exec qemu-system-aarch64 -machine virt,gic-version=max "${accel[@]}" "${fw[@]}" -m "$MEM" -smp 2 \
         -drive "if=virtio,format=raw,readonly=on,file=$ISO" \
         -nic user,model=virtio-net-pci \
-        -nographic
+        "${screen[@]}"
     ;;
 esac

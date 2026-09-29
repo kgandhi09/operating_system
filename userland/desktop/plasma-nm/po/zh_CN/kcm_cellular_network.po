@@ -1,0 +1,553 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: kdeorg\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-02-18 00:48+0000\n"
+"PO-Revision-Date: 2024-04-22 15:58\n"
+"Last-Translator: \n"
+"Language-Team: Chinese Simplified\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Crowdin-Project: kdeorg\n"
+"X-Crowdin-Project-ID: 269464\n"
+"X-Crowdin-Language: zh-CN\n"
+"X-Crowdin-File: /kf6-stable/messages/plasma-nm/kcm_cellular_network.pot\n"
+"X-Crowdin-File-ID: 57576\n"
+
+#: ui/AvailableNetworks.qml:18
+#, kde-format
+msgid "Available Networks"
+msgstr "可用网络"
+
+#: ui/AvailableNetworks.qml:42
+#, kde-format
+msgid "none"
+msgstr "无"
+
+#: ui/AvailableNetworks.qml:42
+#, kde-format
+msgid "Current operator: %1"
+msgstr "当前运营商：%1"
+
+#: ui/AvailableNetworks.qml:45
+#, kde-format
+msgid "Scan For Networks"
+msgstr "扫描网络"
+
+#: ui/EditProfilePage.qml:15
+#, kde-format
+msgid "New APN"
+msgstr "新建 APN"
+
+#: ui/EditProfilePage.qml:15
+#, kde-format
+msgid "Edit APN"
+msgstr "编辑 APN"
+
+#: ui/EditProfilePage.qml:37
+#, kde-format
+msgid "Name"
+msgstr "名称"
+
+#: ui/EditProfilePage.qml:45
+#, kde-format
+msgid "APN"
+msgstr "APN"
+
+#: ui/EditProfilePage.qml:53
+#, kde-format
+msgid "Username"
+msgstr "用户名"
+
+#: ui/EditProfilePage.qml:61
+#, kde-format
+msgid "Password"
+msgstr "密码"
+
+#: ui/EditProfilePage.qml:69
+#, kde-format
+msgid "Network type"
+msgstr "网络类型"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "4G/3G/2G"
+msgstr "4G/3G/2G"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "3G/2G"
+msgstr "3G/2G"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "2G"
+msgstr "2G"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "Only 4G"
+msgstr "仅 4G"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "Only 3G"
+msgstr "仅 3G"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "Only 2G"
+msgstr "仅 2G"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "Any"
+msgstr "任意"
+
+#: ui/EditProfilePage.qml:82
+#, kde-format
+msgid "Save profile"
+msgstr "保存方案"
+
+#: ui/main.qml:68
+#, kde-format
+msgid "Modem not available"
+msgstr "调制解调器不可用"
+
+#: ui/main.qml:87
+#, kde-format
+msgid "Mobile data"
+msgstr "移动数据"
+
+#: ui/main.qml:92
+#, kde-format
+msgid "No SIM is inserted."
+msgstr "尚未插入 SIM 卡。"
+
+#: ui/main.qml:94
+#, kde-format
+msgid "Mobile data is not available with this modem."
+msgstr "此调制解调器无法使用移动数据。"
+
+#: ui/main.qml:96
+#, kde-format
+msgid "An APN needs to be configured to have mobile data."
+msgstr "为了使用移动数据，您需要配置 APN。"
+
+#: ui/main.qml:98
+#, kde-format
+msgid "Whether mobile data is enabled."
+msgstr "是否启用移动数据。"
+
+#: ui/main.qml:129
+#, kde-format
+msgid "Data Usage"
+msgstr "流量使用情况"
+
+#: ui/main.qml:130
+#, kde-format
+msgid "View data usage."
+msgstr "查看流量使用情况。"
+
+#: ui/main.qml:138
+#, kde-format
+msgid "SIM"
+msgid_plural "SIMs"
+msgstr[0] "SIM 卡"
+
+#: ui/main.qml:159
+#, kde-format
+msgid "SIM %1"
+msgstr "SIM 卡 %1"
+
+#: ui/main.qml:160
+#, kde-format
+msgid "View SIM %1 details."
+msgstr "查看 SIM 卡 %1 详情。"
+
+#: ui/ModemPage.qml:22
+#, kde-format
+msgid "Modem %1"
+msgstr "调制解调器 %1"
+
+#: ui/ModemPage.qml:32
+#, kde-format
+msgid "Modem Control"
+msgstr "调制解调器控制"
+
+#: ui/ModemPage.qml:38
+#, kde-format
+msgid "Force Modem Restart"
+msgstr "强制调制解调器重启"
+
+#: ui/ModemPage.qml:44 ui/SimPage.qml:112
+#, kde-format
+msgid "Modem Details"
+msgstr "调制解调器详情"
+
+#: ui/ModemPage.qml:57
+#, kde-format
+msgid "Access Technologies"
+msgstr "接入技术"
+
+#: ui/ModemPage.qml:79
+#, kde-format
+msgid "IMEI"
+msgstr "IMEI"
+
+#: ui/ModemPage.qml:87
+#, kde-format
+msgid "Enabled"
+msgstr "已启用"
+
+#: ui/ModemPage.qml:95
+#, kde-format
+msgid "Manufacturer"
+msgstr "厂商"
+
+#: ui/ModemPage.qml:103
+#, kde-format
+msgid "Model"
+msgstr "型号"
+
+#: ui/ModemPage.qml:118
+#, kde-format
+msgid "Owned Numbers:"
+msgstr "自有编号："
+
+#: ui/ModemPage.qml:141
+#, kde-format
+msgid "Revision"
+msgstr "版本"
+
+#: ui/ModemPage.qml:149
+#, kde-format
+msgid "Signal Quality"
+msgstr "信号质量"
+
+#: ui/ModemPage.qml:157
+#, kde-format
+msgid "State"
+msgstr "状态"
+
+#: ui/ModemPage.qml:165
+#, kde-format
+msgid "Failure Reason"
+msgstr "失败原因"
+
+#: ui/ModemPage.qml:173
+#, kde-format
+msgid "Registration State"
+msgstr "注册状态"
+
+#: ui/ModemPage.qml:181
+#, kde-format
+msgid "Firmware Version"
+msgstr "固件版本"
+
+#: ui/ModemPage.qml:189
+#, kde-format
+msgid "Interface Name"
+msgstr "接口名称"
+
+#: ui/ModemPage.qml:197
+#, kde-format
+msgid "Metered"
+msgstr "按流量计费"
+
+#: ui/ModemPage.qml:205
+#, kde-format
+msgid "Active NetworkManager Connection"
+msgstr "活跃网络管理器连接"
+
+#: ui/ModemPage.qml:213
+#, kde-format
+msgid "Device"
+msgstr "设备"
+
+#: ui/ModemPage.qml:221
+#, kde-format
+msgid "Device ID"
+msgstr "设备 ID"
+
+#: ui/ModemPage.qml:236
+#, kde-format
+msgid "Drivers:"
+msgstr "驱动程序："
+
+#: ui/ModemPage.qml:258
+#, kde-format
+msgid "Plugin"
+msgstr "插件"
+
+#: ui/ModemPage.qml:266
+#, kde-format
+msgid "Power State"
+msgstr "功率状态"
+
+#: ui/ModemPage.qml:274
+#, kde-format
+msgid "SIM Path"
+msgstr "SIM 卡路径"
+
+#: ui/ProfileList.qml:25
+#, kde-format
+msgid "APNs"
+msgstr "APN"
+
+#: ui/ProfileList.qml:28 ui/ProfileList.qml:99
+#, kde-format
+msgid "Edit"
+msgstr "编辑"
+
+#: ui/ProfileList.qml:55
+#, kde-format
+msgid ""
+"Unable to autodetect connection settings for your carrier. Please find your "
+"carrier's APN settings by either contacting support or searching online."
+msgstr ""
+"无法自动检测您的运营商的连接设置。请联系运营商的技术支持或者通过网上搜索找到"
+"该运营商的 APN 设置。"
+
+#: ui/ProfileList.qml:66
+#, kde-format
+msgid "APN List"
+msgstr "APN 列表"
+
+#: ui/ProfileList.qml:119
+#, kde-format
+msgid "Delete"
+msgstr "删除"
+
+#: ui/ProfileList.qml:128
+#, kde-format
+msgid "Add APN"
+msgstr "添加 APN"
+
+#: ui/ProfileList.qml:136
+#, kde-format
+msgid "Automatically detect APN"
+msgstr "自动检测 APN"
+
+#: ui/SimLockPage.qml:21 ui/SimPage.qml:101
+#, kde-format
+msgid "SIM Lock"
+msgstr "SIM 卡锁定"
+
+#: ui/SimLockPage.qml:40
+#, kde-format
+msgid "SIM is locked"
+msgstr "SIM 卡已锁定"
+
+#: ui/SimLockPage.qml:41
+#, kde-format
+msgid "In order to use this SIM, you must first unlock it."
+msgstr "要使用此 SIM 卡，您必须先解锁它。"
+
+#: ui/SimLockPage.qml:63
+#, kde-format
+msgid "SIM is not locked"
+msgstr "SIM 卡未锁定"
+
+#: ui/SimLockPage.qml:64
+#, kde-format
+msgid ""
+"You can lock your SIM to require a set PIN code for phone calls and mobile "
+"data."
+msgstr "您可以锁定您的 SIM 卡，在使用手机通话和移动数据时要求输入 PIN 码。"
+
+#: ui/SimLockPage.qml:68
+#, kde-format
+msgid "Lock SIM"
+msgstr "锁定 SIM 卡"
+
+#: ui/SimLockPage.qml:80
+#, kde-format
+msgid "Disable SIM Lock"
+msgstr "禁用 SIM 卡"
+
+#: ui/SimLockPage.qml:81
+#, kde-format
+msgid "Disable the SIM lock feature and remove the passcode on the SIM."
+msgstr "禁用 SIM 卡锁定功能并移除SIM卡上的密码。"
+
+#: ui/SimLockPage.qml:93
+#, kde-format
+msgid "Change PIN"
+msgstr "更改PIN 码"
+
+#: ui/SimLockPage.qml:94
+#, kde-format
+msgid "Change the passcode set on the SIM."
+msgstr "更改 SIM 卡上设置的密码。"
+
+#: ui/SimLockPage.qml:108
+#, kde-format
+msgid "Unlock SIM"
+msgstr "解锁 SIM 卡"
+
+#: ui/SimLockPage.qml:116
+#, kde-format
+msgid "Attempts left: %1"
+msgstr "剩余可尝试次数：%1"
+
+#: ui/SimLockPage.qml:121
+#, kde-format
+msgid "Enter PIN"
+msgstr "输入 PIN 码"
+
+#: ui/SimLockPage.qml:129
+#, kde-format
+msgid "Change SIM PIN"
+msgstr "更改 SIM 卡 PIN 码"
+
+#: ui/SimLockPage.qml:148 ui/SimLockPage.qml:213
+#, kde-format
+msgid "PINs don't match!"
+msgstr "PIN 码不匹配。"
+
+#: ui/SimLockPage.qml:154 ui/SimLockPage.qml:219
+#, kde-format
+msgid "PINs must be between 4 and 8 digits!"
+msgstr "PIN 码必须介于 4 到 8 位数字之间 。"
+
+#: ui/SimLockPage.qml:159 ui/SimLockPage.qml:186
+#, kde-format
+msgid "Current PIN"
+msgstr "当前 PIN 码"
+
+#: ui/SimLockPage.qml:164 ui/SimLockPage.qml:224
+#, kde-format
+msgid "New PIN"
+msgstr "新 PIN 码"
+
+#: ui/SimLockPage.qml:169 ui/SimLockPage.qml:229
+#, kde-format
+msgid "Confirm PIN"
+msgstr "确认 PIN 码"
+
+#: ui/SimLockPage.qml:177
+#, kde-format
+msgid "Remove SIM PIN"
+msgstr "移除 SIM 卡 PIN 码"
+
+#: ui/SimLockPage.qml:194
+#, kde-format
+msgid "Add SIM PIN"
+msgstr "添加 SIM 卡 PIN 码"
+
+#: ui/SimPage.qml:34
+#, kde-format
+msgctxt "@title"
+msgid "SIM %1"
+msgstr "SIM 卡 %1"
+
+#: ui/SimPage.qml:44
+#, kde-format
+msgid ""
+"This SIM slot is empty, a SIM card needs to be inserted in order for it to "
+"be used."
+msgstr "此 SIM 卡槽为空，必须插入一张 SIM 才能使用。"
+
+#: ui/SimPage.qml:59
+#, kde-format
+msgid "Roaming"
+msgstr "数据漫游"
+
+#: ui/SimPage.qml:60
+#, kde-format
+msgid "Allow mobile data when on a roaming network."
+msgstr "允许在漫游网络上使用移动流量。"
+
+#: ui/SimPage.qml:79
+#, kde-format
+msgid "Modify APNs"
+msgstr "修改 APN"
+
+#: ui/SimPage.qml:80
+#, kde-format
+msgid "Configure access point names for your carrier."
+msgstr "配置运营商的接入点名。"
+
+#: ui/SimPage.qml:90
+#, kde-format
+msgid "Networks"
+msgstr "网络"
+
+#: ui/SimPage.qml:91
+#, kde-format
+msgid "Select a network operator."
+msgstr "选择网络运营商。"
+
+#: ui/SimPage.qml:102
+#, kde-format
+msgid "Modify SIM lock settings."
+msgstr "修改 SIM 卡锁定设置。"
+
+#: ui/SimPage.qml:113
+#, kde-format
+msgid "View the details of the modem this SIM is connected to."
+msgstr "查看此 SIM 卡连接的调制解调器的详细信息。"
+
+#: ui/SimPage.qml:119
+#, kde-format
+msgid "SIM Details"
+msgstr "SIM 卡详情"
+
+#: ui/SimPage.qml:125
+#, kde-format
+msgid "Locked"
+msgstr "已锁定"
+
+#: ui/SimPage.qml:126
+#, kde-format
+msgid "Yes"
+msgstr "是"
+
+#: ui/SimPage.qml:126
+#, kde-format
+msgid "No"
+msgstr "否"
+
+#: ui/SimPage.qml:133
+#, kde-format
+msgid "IMSI"
+msgstr "IMSI"
+
+#: ui/SimPage.qml:141
+#, kde-format
+msgid "EID"
+msgstr "EID"
+
+#: ui/SimPage.qml:149
+#, kde-format
+msgid "Operator Code (modem)"
+msgstr "运营商代码 (调制解调器)"
+
+#: ui/SimPage.qml:157
+#, kde-format
+msgid "Operator Name (modem)"
+msgstr "运营商名称(调制解调器)"
+
+#: ui/SimPage.qml:165
+#, kde-format
+msgid "Operator Code (provided by SIM)"
+msgstr "运营商代码 (由 SIM 卡提供)"
+
+#: ui/SimPage.qml:173
+#, kde-format
+msgid "Operator Name (provided by SIM)"
+msgstr "运营商名称 (由SIM卡提供)"
+
+#: ui/SimPage.qml:181
+#, kde-format
+msgid "SIM ID"
+msgstr "SIM 卡 ID"
+
+#: ui/SimPage.qml:197
+#, kde-format
+msgid "Emergency Numbers"
+msgstr "紧急电话号码"

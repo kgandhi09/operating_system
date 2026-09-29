@@ -1,0 +1,87 @@
+# Copyright (C) YEAR This_file_is_part_of_KDE
+# This file is distributed under the same license as the PACKAGE package.
+#
+# SPDX-FileCopyrightText: 2017, 2020, 2023, 2025, 2026 giovanni <g.sora@tiscali.it>
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2025-11-17 11:53+0000\n"
+"PO-Revision-Date: 2026-01-22 13:50+0100\n"
+"Last-Translator: giovanni <g.sora@tiscali.it>\n"
+"Language-Team: Interlingua <kde-i18n-doc@kde.org>\n"
+"Language: ia\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Lokalize 23.08.5\n"
+
+#: osdaction.cpp:28
+#, kde-format
+msgid "Only use external screen"
+msgstr "Commuta  a schermo externe "
+
+#: osdaction.cpp:29
+#, kde-format
+msgid "Only use built-in screen"
+msgstr "Usa solmente Schermo includite"
+
+#: osdaction.cpp:30
+#, kde-format
+msgid "Mirror screens"
+msgstr " Schermos a speculos"
+
+#: osdaction.cpp:31
+#, kde-format
+msgid "Extend to left of built-in screen"
+msgstr "Extende a sinistra del schermo incorporate"
+
+#: osdaction.cpp:32
+#, kde-format
+msgid "Extend to right of built-in screen"
+msgstr "Extende a dextera del schermo includite"
+
+#: osdaction.cpp:33
+#, kde-format
+msgid "Leave unchanged"
+msgstr "Lassa sin modificationes"
+
+#: utils.cpp:22
+#, kde-format
+msgid "Built-in Screen"
+msgstr "Schermo includite"
+
+#~ msgid "Switch to laptop screen"
+#~ msgstr "Commuta  a schermo de laptop "
+
+#~ msgid "Unify outputs"
+#~ msgstr "Unifica exitos"
+
+#~ msgid "Extend to left"
+#~ msgstr "Extende a sinistra"
+
+#~ msgid "Switch Display"
+#~ msgstr "Commuta Monstrator"
+
+#~ msgctxt "OSD text after XF86Display button press"
+#~ msgid "No External Display"
+#~ msgstr "Necun monstrator externe"
+
+#~ msgctxt "OSD text after XF86Display button press"
+#~ msgid "Changing Screen Layout"
+#~ msgstr "Modificante disposition de monstrator"
+
+#, fuzzy
+#~| msgctxt "OSD text after XF86Display button press"
+#~| msgid "No External Display"
+#~ msgctxt "osd when displaybutton is pressed"
+#~ msgid "Cloned Display"
+#~ msgstr "Necun monstrator externe"
+
+#, fuzzy
+#~| msgctxt "OSD text after XF86Display button press"
+#~| msgid "No External Display"
+#~ msgctxt "osd when displaybutton is pressed"
+#~ msgid "External Only"
+#~ msgstr "Necun monstrator externe"

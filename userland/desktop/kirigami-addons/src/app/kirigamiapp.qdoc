@@ -1,0 +1,8 @@
+/*!
+   \module KirigamiApp
+   \title Kirigami Addons App C++ Classes
+   \ingroup modules
+   \cmakepackage KF6
+   \cmakecomponent KirigamiAddons
+   \brief Todo
+ */

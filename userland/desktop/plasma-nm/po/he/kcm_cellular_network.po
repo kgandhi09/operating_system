@@ -1,0 +1,837 @@
+# Copyright (C) 2024 This file is copyright:
+# This file is distributed under the same license as the plasma-mobile package.
+#
+# SPDX-FileCopyrightText: 2024, 2025, 2026 Yaron Shahrabani <sh.yaron@gmail.com>
+msgid ""
+msgstr ""
+"Project-Id-Version: plasma-mobile\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-02-18 00:48+0000\n"
+"PO-Revision-Date: 2026-02-19 09:56+0200\n"
+"Last-Translator: Yaron Shahrabani <sh.yaron@gmail.com>\n"
+"Language-Team: צוות התרגום של KDE ישראל\n"
+"Language: he\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=(n == 1) ? 0 : ((n == 2) ? 1 : ((n > 10 && "
+"n % 10 == 0) ? 2 : 3));\n"
+"X-Generator: Lokalize 25.12.1\n"
+
+#: ui/AvailableNetworks.qml:18
+#, kde-format
+msgid "Available Networks"
+msgstr "רשתות זמינות"
+
+#: ui/AvailableNetworks.qml:42
+#, kde-format
+msgid "none"
+msgstr "אין"
+
+#: ui/AvailableNetworks.qml:42
+#, kde-format
+msgid "Current operator: %1"
+msgstr "ספק נוכחי: %1"
+
+#: ui/AvailableNetworks.qml:45
+#, kde-format
+msgid "Scan For Networks"
+msgstr "סריקת לאיתור רשתות"
+
+#: ui/EditProfilePage.qml:15
+#, kde-format
+msgid "New APN"
+msgstr "שם נק׳ גישה (APN) חדש"
+
+#: ui/EditProfilePage.qml:15
+#, kde-format
+msgid "Edit APN"
+msgstr "עריכת נקודת גישה (APN)"
+
+#: ui/EditProfilePage.qml:37
+#, kde-format
+msgid "Name"
+msgstr "שם"
+
+#: ui/EditProfilePage.qml:45
+#, kde-format
+msgid "APN"
+msgstr "נקודת גישה (APN)"
+
+#: ui/EditProfilePage.qml:53
+#, kde-format
+msgid "Username"
+msgstr "שם משתמש"
+
+#: ui/EditProfilePage.qml:61
+#, kde-format
+msgid "Password"
+msgstr "סיסמה"
+
+#: ui/EditProfilePage.qml:69
+#, kde-format
+msgid "Network type"
+msgstr "סוג רשת"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "4G/3G/2G"
+msgstr "דור 4/דור 3/דור 2"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "3G/2G"
+msgstr "דור 3/דור 2"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "2G"
+msgstr "דור 2"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "Only 4G"
+msgstr "דור 4 בלבד"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "Only 3G"
+msgstr "דור 3 בלבד"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "Only 2G"
+msgstr "דור 2 בלבד"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "Any"
+msgstr "כלשהו"
+
+#: ui/EditProfilePage.qml:82
+#, kde-format
+msgid "Save profile"
+msgstr "שמירת פרופיל"
+
+#: ui/main.qml:68
+#, kde-format
+msgid "Modem not available"
+msgstr "מודם לא זמין"
+
+#: ui/main.qml:87
+#, kde-format
+msgid "Mobile data"
+msgstr "נתונים סלולריים"
+
+#: ui/main.qml:92
+#, kde-format
+msgid "No SIM is inserted."
+msgstr "אין SIM במגירה."
+
+#: ui/main.qml:94
+#, kde-format
+msgid "Mobile data is not available with this modem."
+msgstr "נתונים סלולריים לא זמינים עם המודם הזה."
+
+#: ui/main.qml:96
+#, kde-format
+msgid "An APN needs to be configured to have mobile data."
+msgstr "יש להגדיר נקודת גישה (APN) כדי לאפשר גישה לנתונים סלולריים."
+
+#: ui/main.qml:98
+#, kde-format
+msgid "Whether mobile data is enabled."
+msgstr "האם נתונים סלולריים פעילים."
+
+#: ui/main.qml:129
+#, kde-format
+msgid "Data Usage"
+msgstr "ניצולת נתונים"
+
+#: ui/main.qml:130
+#, kde-format
+msgid "View data usage."
+msgstr "הצגת ניצולת נתונים."
+
+#: ui/main.qml:138
+#, kde-format
+msgid "SIM"
+msgid_plural "SIMs"
+msgstr[0] "כרטיס SIM"
+msgstr[1] "כרטיסי SIM"
+msgstr[2] "כרטיסי SIM"
+msgstr[3] "כרטיסי SIM"
+
+#: ui/main.qml:159
+#, kde-format
+msgid "SIM %1"
+msgstr "SIM %1"
+
+#: ui/main.qml:160
+#, kde-format
+msgid "View SIM %1 details."
+msgstr "הצגת פרטי SIM %1."
+
+#: ui/ModemPage.qml:22
+#, kde-format
+msgid "Modem %1"
+msgstr "מודם %1"
+
+#: ui/ModemPage.qml:32
+#, kde-format
+msgid "Modem Control"
+msgstr "בקרת מודם"
+
+#: ui/ModemPage.qml:38
+#, kde-format
+msgid "Force Modem Restart"
+msgstr "אילוץ הפעלת מודם מחדש"
+
+#: ui/ModemPage.qml:44 ui/SimPage.qml:112
+#, kde-format
+msgid "Modem Details"
+msgstr "פרטי מודם"
+
+#: ui/ModemPage.qml:57
+#, kde-format
+msgid "Access Technologies"
+msgstr "טכנולוגיות גישה"
+
+#: ui/ModemPage.qml:79
+#, kde-format
+msgid "IMEI"
+msgstr "מס׳ ברזל (IMEI)"
+
+#: ui/ModemPage.qml:87
+#, kde-format
+msgid "Enabled"
+msgstr "מופעל"
+
+#: ui/ModemPage.qml:95
+#, kde-format
+msgid "Manufacturer"
+msgstr "יצרן"
+
+#: ui/ModemPage.qml:103
+#, kde-format
+msgid "Model"
+msgstr "דגם"
+
+#: ui/ModemPage.qml:118
+#, kde-format
+msgid "Owned Numbers:"
+msgstr "מספרים בבעלות:"
+
+#: ui/ModemPage.qml:141
+#, kde-format
+msgid "Revision"
+msgstr "מהדורה"
+
+#: ui/ModemPage.qml:149
+#, kde-format
+msgid "Signal Quality"
+msgstr "איכות קליטה"
+
+#: ui/ModemPage.qml:157
+#, kde-format
+msgid "State"
+msgstr "מצב"
+
+#: ui/ModemPage.qml:165
+#, kde-format
+msgid "Failure Reason"
+msgstr "סיבת הכשל"
+
+#: ui/ModemPage.qml:173
+#, kde-format
+msgid "Registration State"
+msgstr "מצב רישום"
+
+#: ui/ModemPage.qml:181
+#, kde-format
+msgid "Firmware Version"
+msgstr "גרסת קושחה"
+
+#: ui/ModemPage.qml:189
+#, kde-format
+msgid "Interface Name"
+msgstr "שם ממשק"
+
+#: ui/ModemPage.qml:197
+#, kde-format
+msgid "Metered"
+msgstr "מדוד"
+
+#: ui/ModemPage.qml:205
+#, kde-format
+msgid "Active NetworkManager Connection"
+msgstr "הפעלת חיבור NetworkManager"
+
+#: ui/ModemPage.qml:213
+#, kde-format
+msgid "Device"
+msgstr "מכשיר"
+
+#: ui/ModemPage.qml:221
+#, kde-format
+msgid "Device ID"
+msgstr "מזהה מכשיר"
+
+#: ui/ModemPage.qml:236
+#, kde-format
+msgid "Drivers:"
+msgstr "מנהלי התקן:"
+
+#: ui/ModemPage.qml:258
+#, kde-format
+msgid "Plugin"
+msgstr "תוסף"
+
+#: ui/ModemPage.qml:266
+#, kde-format
+msgid "Power State"
+msgstr "מצב צריכת חשמל"
+
+#: ui/ModemPage.qml:274
+#, kde-format
+msgid "SIM Path"
+msgstr "נתיב SIM"
+
+#: ui/ProfileList.qml:25
+#, kde-format
+msgid "APNs"
+msgstr "נקודות גישה (APN)"
+
+#: ui/ProfileList.qml:28 ui/ProfileList.qml:99
+#, kde-format
+msgid "Edit"
+msgstr "עריכה"
+
+#: ui/ProfileList.qml:55
+#, kde-format
+msgid ""
+"Unable to autodetect connection settings for your carrier. Please find your "
+"carrier's APN settings by either contacting support or searching online."
+msgstr ""
+"לא ניתן לזהות את הגדרות החיבור לספק שלך אוטומטית. נא לאתר את הגדרות נקודות "
+"הגישה (APN) של הספק שלך על ידי יצירת קשר עם התמיכה או בחיפוש באינטרנט."
+
+#: ui/ProfileList.qml:66
+#, kde-format
+msgid "APN List"
+msgstr "רשימת נקודות גישה (APN)"
+
+#: ui/ProfileList.qml:119
+#, kde-format
+msgid "Delete"
+msgstr "מחיקה"
+
+#: ui/ProfileList.qml:128
+#, kde-format
+msgid "Add APN"
+msgstr "הוספת נקודת גישה (APN)"
+
+#: ui/ProfileList.qml:136
+#, kde-format
+msgid "Automatically detect APN"
+msgstr "זיהוי נקודת גישה (APN) אוטומטית"
+
+#: ui/SimLockPage.qml:21 ui/SimPage.qml:101
+#, kde-format
+msgid "SIM Lock"
+msgstr "נעילת SIM"
+
+#: ui/SimLockPage.qml:40
+#, kde-format
+msgid "SIM is locked"
+msgstr "ה־SIM נעול"
+
+#: ui/SimLockPage.qml:41
+#, kde-format
+msgid "In order to use this SIM, you must first unlock it."
+msgstr "כדי להשתמש ב־SIM צריך קודם לשחרר אותו."
+
+#: ui/SimLockPage.qml:63
+#, kde-format
+msgid "SIM is not locked"
+msgstr "ה־SIM לא נעול"
+
+#: ui/SimLockPage.qml:64
+#, kde-format
+msgid ""
+"You can lock your SIM to require a set PIN code for phone calls and mobile "
+"data."
+msgstr ""
+"אפשר לנעול את ה־SIM שלך כך שיידרש קוד PIN כדי להתקשר ולגלוש ברשת הסלולרית."
+
+#: ui/SimLockPage.qml:68
+#, kde-format
+msgid "Lock SIM"
+msgstr "נעילת SIM"
+
+#: ui/SimLockPage.qml:80
+#, kde-format
+msgid "Disable SIM Lock"
+msgstr "השבתת נעילת SIM"
+
+#: ui/SimLockPage.qml:81
+#, kde-format
+msgid "Disable the SIM lock feature and remove the passcode on the SIM."
+msgstr "להשבית את יכולת נעילת ה־SIM ולהסיר את קוד הגישה מה־SIM."
+
+#: ui/SimLockPage.qml:93
+#, kde-format
+msgid "Change PIN"
+msgstr "החלפת PIN"
+
+#: ui/SimLockPage.qml:94
+#, kde-format
+msgid "Change the passcode set on the SIM."
+msgstr "להחליף את קוד הגישה שהוגדר ל־SIM."
+
+#: ui/SimLockPage.qml:108
+#, kde-format
+msgid "Unlock SIM"
+msgstr "שחרור SIM"
+
+#: ui/SimLockPage.qml:116
+#, kde-format
+msgid "Attempts left: %1"
+msgstr "ניסיונות שנותרו: %1"
+
+#: ui/SimLockPage.qml:121
+#, kde-format
+msgid "Enter PIN"
+msgstr "נא למלא PIN"
+
+#: ui/SimLockPage.qml:129
+#, kde-format
+msgid "Change SIM PIN"
+msgstr "החלפת ה־PIN של ה־SIM"
+
+#: ui/SimLockPage.qml:148 ui/SimLockPage.qml:213
+#, kde-format
+msgid "PINs don't match!"
+msgstr "הקודים של ה־PIN לא תואמים!"
+
+#: ui/SimLockPage.qml:154 ui/SimLockPage.qml:219
+#, kde-format
+msgid "PINs must be between 4 and 8 digits!"
+msgstr "קוד PIN חייב להיות בין 4 ל־8 ספרות!"
+
+#: ui/SimLockPage.qml:159 ui/SimLockPage.qml:186
+#, kde-format
+msgid "Current PIN"
+msgstr "PIN נוכחי"
+
+#: ui/SimLockPage.qml:164 ui/SimLockPage.qml:224
+#, kde-format
+msgid "New PIN"
+msgstr "PIN חדש"
+
+#: ui/SimLockPage.qml:169 ui/SimLockPage.qml:229
+#, kde-format
+msgid "Confirm PIN"
+msgstr "אישור PIN"
+
+#: ui/SimLockPage.qml:177
+#, kde-format
+msgid "Remove SIM PIN"
+msgstr "הסרת PIN מה־SIM"
+
+#: ui/SimLockPage.qml:194
+#, kde-format
+msgid "Add SIM PIN"
+msgstr "הוספת PIN ל־SIM"
+
+#: ui/SimPage.qml:34
+#, kde-format
+msgctxt "@title"
+msgid "SIM %1"
+msgstr "SIM %1"
+
+#: ui/SimPage.qml:44
+#, kde-format
+msgid ""
+"This SIM slot is empty, a SIM card needs to be inserted in order for it to "
+"be used."
+msgstr "חריץ ה־SIM הזה ריק, יש להכניס כרטיס SIM כדי להשתמש בו."
+
+#: ui/SimPage.qml:59
+#, kde-format
+msgid "Roaming"
+msgstr "נדידה"
+
+#: ui/SimPage.qml:60
+#, kde-format
+msgid "Allow mobile data when on a roaming network."
+msgstr "לאפשר תקשורת נתונים בעת נדידת רשת."
+
+#: ui/SimPage.qml:79
+#, kde-format
+msgid "Modify APNs"
+msgstr "שינוי נקודות גישה (APN)"
+
+#: ui/SimPage.qml:80
+#, kde-format
+msgid "Configure access point names for your carrier."
+msgstr "הגדרת שמות נקודות גישה לספק שלך."
+
+#: ui/SimPage.qml:90
+#, kde-format
+msgid "Networks"
+msgstr "רשתות"
+
+#: ui/SimPage.qml:91
+#, kde-format
+msgid "Select a network operator."
+msgstr "נא לבחור ספק רשת."
+
+#: ui/SimPage.qml:102
+#, kde-format
+msgid "Modify SIM lock settings."
+msgstr "שינוי הגדרות נעילת SIM."
+
+#: ui/SimPage.qml:113
+#, kde-format
+msgid "View the details of the modem this SIM is connected to."
+msgstr "הצגת פרטי המודם שאליו מחובר ה־SIM הזה."
+
+#: ui/SimPage.qml:119
+#, kde-format
+msgid "SIM Details"
+msgstr "פרטי SIM"
+
+#: ui/SimPage.qml:125
+#, kde-format
+msgid "Locked"
+msgstr "נעול"
+
+#: ui/SimPage.qml:126
+#, kde-format
+msgid "Yes"
+msgstr "כן"
+
+#: ui/SimPage.qml:126
+#, kde-format
+msgid "No"
+msgstr "לא"
+
+#: ui/SimPage.qml:133
+#, kde-format
+msgid "IMSI"
+msgstr "IMSI"
+
+#: ui/SimPage.qml:141
+#, kde-format
+msgid "EID"
+msgstr "EID"
+
+#: ui/SimPage.qml:149
+#, kde-format
+msgid "Operator Code (modem)"
+msgstr "קוד מפעיל (מודם)"
+
+#: ui/SimPage.qml:157
+#, kde-format
+msgid "Operator Name (modem)"
+msgstr "שם מפעיל (מודם)"
+
+#: ui/SimPage.qml:165
+#, kde-format
+msgid "Operator Code (provided by SIM)"
+msgstr "קוד מפעיל (סופק על ידי ה־SIM)"
+
+#: ui/SimPage.qml:173
+#, kde-format
+msgid "Operator Name (provided by SIM)"
+msgstr "שם המפעיל (סופק על ידי ה־SIM)"
+
+#: ui/SimPage.qml:181
+#, kde-format
+msgid "SIM ID"
+msgstr "מזהה SIM"
+
+#: ui/SimPage.qml:197
+#, kde-format
+msgid "Emergency Numbers"
+msgstr "מספרי חירום"
+
+#~ msgid "Error resetting the modem: %1"
+#~ msgstr "איפוס המודם נכשל: %1"
+
+#~ msgid "Error updating connection settings for %1: %2."
+#~ msgstr "עדכון הגדרות החיבור %1 נכשל: %2."
+
+#~ msgid "Error activating connection: %1"
+#~ msgstr "שגיאה בהפעלת חיבור: %1"
+
+#~ msgid "Error adding connection: %1"
+#~ msgstr "שגיאה בהוספת חיבור: %1"
+
+#~ msgid "Error removing connection: %1"
+#~ msgstr "שגיאה בהסרת חיבור: %1"
+
+#~ msgid "Unknown"
+#~ msgstr "לא ידוע"
+
+#~ msgid "Unmanaged"
+#~ msgstr "לא מנוהל"
+
+#~ msgid "Unavailable"
+#~ msgstr "לא זמין"
+
+#~ msgid "Disconnected"
+#~ msgstr "מנותק"
+
+#~ msgid "Preparing"
+#~ msgstr "בהכנה"
+
+#~ msgid "ConfiguringHardware"
+#~ msgstr "חומרה מוגדרת"
+
+#~ msgid "NeedAuth"
+#~ msgstr "צריך אימות"
+
+#~ msgid "ConfiguringIp"
+#~ msgstr "IP מוגדר"
+
+#~ msgid "CheckingIp"
+#~ msgstr "IP נבדק"
+
+#~ msgid "WaitingForSecondaries"
+#~ msgstr "בהמתנה למשניים"
+
+#~ msgid "Activated"
+#~ msgstr "מופעל"
+
+#~ msgid "Deactivating"
+#~ msgstr "מושבת"
+
+#~ msgid "Failed"
+#~ msgstr "נכשל"
+
+#~ msgid "POTS"
+#~ msgstr "POTS"
+
+#~ msgid "GSM"
+#~ msgstr "GSM"
+
+#~ msgid "GSM Compact"
+#~ msgstr "GSM חסכוני"
+
+#~ msgid "GPRS"
+#~ msgstr "GPRS"
+
+#~ msgid "EDGE"
+#~ msgstr "EDGE"
+
+#~ msgid "UMTS"
+#~ msgstr "UMTS"
+
+#~ msgid "HSDPA"
+#~ msgstr "HSDPA"
+
+#~ msgid "HSUPA"
+#~ msgstr "HSUPA"
+
+#~ msgid "HSPA"
+#~ msgstr "HSPA"
+
+#~ msgid "HSPA+"
+#~ msgstr "HSPA+‎"
+
+#~ msgid "CDMA2000 1xRTT"
+#~ msgstr "CDMA2000 1xRTT"
+
+#~ msgid "CDMA2000 EVDO-0"
+#~ msgstr "CDMA2000 EVDO-0"
+
+#~ msgid "CDMA2000 EVDO-A"
+#~ msgstr "CDMA2000 EVDO-A"
+
+#~ msgid "CDMA2000 EVDO-B"
+#~ msgstr "CDMA2000 EVDO-B"
+
+#~ msgid "LTE"
+#~ msgstr "LTE"
+
+#~ msgid "5GNR"
+#~ msgstr "5GNR"
+
+#~ msgid "Off"
+#~ msgstr "כבוי"
+
+#~ msgid "Low-power mode"
+#~ msgstr "מצב חיסכון בחשמל"
+
+#~ msgid "Full power mode"
+#~ msgstr "מצב ניצול חשמל מלא"
+
+#~ msgid "Initializing"
+#~ msgstr "מאתחל"
+
+#~ msgid "Disabled"
+#~ msgstr "מושבת"
+
+#~ msgid "Disabling"
+#~ msgstr "משבית"
+
+#~ msgid "Enabling"
+#~ msgstr "מפעיל"
+
+#~ msgid "Searching for network provider"
+#~ msgstr "מתבצע חיפוש אחר ספק רשת"
+
+#~ msgid "Registered with network provider"
+#~ msgstr "בוצע רישום מול ספק הרשת"
+
+#~ msgid "Disconnecting"
+#~ msgstr "מתנתק"
+
+#~ msgid "Connecting"
+#~ msgstr "מתחבר"
+
+#~ msgid "Connected"
+#~ msgstr "מחובר"
+
+#~ msgid "No error."
+#~ msgstr "אין שגיאה."
+
+#~ msgid "Unknown error."
+#~ msgstr "שגיאה לא ידועה."
+
+#~ msgid "SIM is required but missing."
+#~ msgstr "דרוש SIM אבל אין."
+
+#~ msgid "SIM is available but unusable."
+#~ msgstr "יש SIM אבל הוא בלתי שמיש."
+
+#~ msgid "Unknown modem capabilities."
+#~ msgstr "יכולות המודם לא ידועות."
+
+#~ msgid "eSIM is not initialized."
+#~ msgstr "ה־eSIM לא מאותחל."
+
+#~ msgid "Not registered, not searching for new operator to register."
+#~ msgstr "לא רשום, לא מתבצע חיפוש אחר ספק חדש לרישום."
+
+#~ msgid "Registered on home network."
+#~ msgstr "רשום ברשת הבית."
+
+#~ msgid "Not registered, searching for new operator to register with."
+#~ msgstr "לא רשום, מתבצע חיפוש אחר ספק חדש לרישום מולו."
+
+#~ msgid "Registration denied."
+#~ msgstr "הרישום נדחה."
+
+#~ msgid "Unknown registration status."
+#~ msgstr "מצב הרישום לא ידוע."
+
+#~ msgid "Registered for \"SMS only\", on home network."
+#~ msgstr "רשום במסלול „מסרונים בלבד”, רשת הבית."
+
+#~ msgid "Registered for \"SMS only\", roaming network."
+#~ msgstr "רשום במסלול „מסרונים בלבד”, רשת נדידה."
+
+#~ msgid "Emergency services only."
+#~ msgstr "שירותי חירום בלבד."
+
+#~ msgid "Registered for \"CSFB not preferred\", home network."
+#~ msgstr "רשום במסלול „אין העדפת נסיגת תזרים שיחות (CSFB)”, רשת הבית."
+
+#~ msgid "Registered for \"CSFB not preferred\", roaming network."
+#~ msgstr "רשום במסלול „אין העדפת נסיגת תזרים שיחות (CSFB)”, רשת נדידה."
+
+#~ msgid "Attached for access to Restricted Local Operator Services."
+#~ msgstr "מצורף לגישה אל שירותי ספק מקומי מוגבלים."
+
+#~ msgid "Scanning networks failed: %1"
+#~ msgstr "סריקת הרשתות נכשלה: %1"
+
+#~ msgid "GuessYes"
+#~ msgstr "לנחש כן"
+
+#~ msgid "GuessNo"
+#~ msgstr "לנחש לא"
+
+#~ msgid "3G"
+#~ msgstr "דור 3"
+
+#~ msgid "4G"
+#~ msgstr "דור 4"
+
+#~ msgid "5G"
+#~ msgstr "דור 5"
+
+#~ msgid "Lock reason unknown."
+#~ msgstr "סיבת הנעילה לא ידועה."
+
+#~ msgid "Modem is unlocked."
+#~ msgstr "המודם משוחרר."
+
+#~ msgid "SIM requires the PIN code."
+#~ msgstr "ה־SIM דורש את קוד ה־PIN."
+
+#~ msgid "SIM requires the PIN2 code."
+#~ msgstr "ה־SIM דורש את קוד ה־PIN2."
+
+#~ msgid "SIM requires the PUK code."
+#~ msgstr "ה־SIM דורש את קוד ה־PUK."
+
+#~ msgid "SIM requires the PUK2 code."
+#~ msgstr "ה־SIM דורש את קוד ה־PUK2."
+
+#~ msgid "Modem requires the service provider PIN code."
+#~ msgstr "המודם דורש את קוד ה־PIN של ספק השירות."
+
+#~ msgid "Modem requires the service provider PUK code."
+#~ msgstr "המודם דורש את קוד ה־PUK של ספק השירות."
+
+#~ msgid "Modem requires the network PIN code."
+#~ msgstr "המודם דורש את קוד ה־PIN של הרשת."
+
+#~ msgid "Modem requires the network PUK code."
+#~ msgstr "המודם דורש את קוד ה־PUK של הרשת."
+
+#~ msgid "Modem requires the PIN code."
+#~ msgstr "המודם דורש את קוד ה־PIN."
+
+#~ msgid "Modem requires the corporate PIN code."
+#~ msgstr "המודם דורש את קוד ה־PIN של החברה."
+
+#~ msgid "Modem requires the corporate PUK code."
+#~ msgstr "המודם דורש את קוד ה־PUK של החברה."
+
+#~ msgid "Modem requires the PH-FSIM PIN code."
+#~ msgstr "המודם דורש את קוד ה־PIN מסוג PH-FSIM."
+
+#~ msgid "Modem requires the PH-FSIM PUK code."
+#~ msgstr "המודם דורש את קוד ה־PUK מסוג PH-FSIM."
+
+#~ msgid "Modem requires the network subset PIN code."
+#~ msgstr "המודם דורש את קוד ה־PIN של תת הרשת."
+
+#~ msgid "Modem requires the network subset PUK code."
+#~ msgstr "המודם דורש את קוד ה־PUK של תת הרשת."
+
+#~ msgid "(empty)"
+#~ msgstr "(ריק)"
+
+#~ msgid "Error toggling SIM lock: %1"
+#~ msgstr "שגיאה בהחלפת מצב נעילת SIM:‏ %1"
+
+#~ msgid "Error changing the PIN: %1"
+#~ msgstr "שגיאה בהחלפת ה־PIN:‏ %1"
+
+#~ msgid "Error sending the PIN: %1"
+#~ msgstr "שגיאה בשליחת ה־PIN:‏ %1"
+
+#~ msgid "Error sending the PUK: %1"
+#~ msgstr "שגיאה בשליחת ה־PUK:‏ %1"
+
+#~ msgid "Data Roaming"
+#~ msgstr "נדידת נתונים"
+
+#~ msgid "Allow your device to use networks other than your carrier."
+#~ msgstr "לאפשר למכשיר שלך להשתמש ברשתות שונות מזו של הספק שלך."

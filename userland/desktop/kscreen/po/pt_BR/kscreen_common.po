@@ -1,0 +1,90 @@
+# Translation of kscreen.po to Brazilian Portuguese
+# Copyright (C) 2015 This_file_is_part_of_KDE
+# This file is distributed under the same license as the PACKAGE package.
+#
+# André Marcelo Alvarenga <alvarenga@kde.org>, 2015.
+# Luiz Fernando Ranghetti <elchevive@opensuse.org>, 2016, 2018, 2023.
+# SPDX-FileCopyrightText: 2025 Guilherme Marçal Silva <guimarcalsilva@gmail.com>
+msgid ""
+msgstr ""
+"Project-Id-Version: kscreen\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2025-11-17 11:53+0000\n"
+"PO-Revision-Date: 2025-06-19 23:47-0300\n"
+"Last-Translator: Guilherme Marçal Silva <guimarcalsilva@gmail.com>\n"
+"Language-Team: Brazilian Portuguese <kde-i18n-pt_BR@kde.org>\n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Generator: Lokalize 25.04.2\n"
+
+#: osdaction.cpp:28
+#, kde-format
+msgid "Only use external screen"
+msgstr "Usar apenas tela externa"
+
+#: osdaction.cpp:29
+#, kde-format
+msgid "Only use built-in screen"
+msgstr "Usar apenas a tela integrada"
+
+#: osdaction.cpp:30
+#, kde-format
+msgid "Mirror screens"
+msgstr "Espelhar telas"
+
+#: osdaction.cpp:31
+#, kde-format
+msgid "Extend to left of built-in screen"
+msgstr "Estender para a esquerda da tela integrada"
+
+#: osdaction.cpp:32
+#, kde-format
+msgid "Extend to right of built-in screen"
+msgstr "Estender para a direita da tela integrada"
+
+#: osdaction.cpp:33
+#, kde-format
+msgid "Leave unchanged"
+msgstr "Deixar sem alteração"
+
+#: utils.cpp:22
+#, kde-format
+msgid "Built-in Screen"
+msgstr "Tela embutida"
+
+#~ msgid "Switch to laptop screen"
+#~ msgstr "Alternar para a tela do laptop"
+
+#~ msgid "Unify outputs"
+#~ msgstr "Unificar saídas"
+
+#~ msgid "Extend to left"
+#~ msgstr "Estender para a esquerda"
+
+#~ msgid "Switch Display"
+#~ msgstr "Alternar tela"
+
+#~ msgctxt "OSD text after XF86Display button press"
+#~ msgid "No External Display"
+#~ msgstr "Sem tela externa"
+
+#~ msgctxt "OSD text after XF86Display button press"
+#~ msgid "Changing Screen Layout"
+#~ msgstr "Alterando o layout da tela"
+
+#, fuzzy
+#~| msgctxt "OSD text after XF86Display button press"
+#~| msgid "No External Display"
+#~ msgctxt "osd when displaybutton is pressed"
+#~ msgid "Cloned Display"
+#~ msgstr "Sem tela externa"
+
+#, fuzzy
+#~| msgctxt "OSD text after XF86Display button press"
+#~| msgid "No External Display"
+#~ msgctxt "osd when displaybutton is pressed"
+#~ msgid "External Only"
+#~ msgstr "Sem tela externa"

@@ -1,0 +1,220 @@
+/*
+    SPDX-FileCopyrightText: 2019 Alexander Stippich <a.stippich@gmx.net>
+
+    SPDX-License-Identifier: LGPL-2.1-or-later
+*/
+
+#include "simpleextractionresult.h"
+#include "indexerextractortestsconfig.h"
+#include "extractors/ffmpegextractor.h"
+#include "mimeutils.h"
+
+#include <QMimeDatabase>
+#include <QObject>
+#include <QTest>
+
+using namespace KFileMetaData;
+using namespace Qt::StringLiterals;
+
+namespace KFileMetaData {
+class ffmpegExtractorTest : public QObject
+{
+    Q_OBJECT
+
+private Q_SLOTS:
+    void initTestCase();
+    void testNoExtraction();
+    void testVideoProperties();
+    void testVideoProperties_data();
+    void testMetaData();
+    void testMetaData_data();
+    void testCoverimage();
+    void testCoverimage_data();
+
+private:
+    QMimeDatabase mimeDb;
+    QByteArray m_coverImage;
+};
+} // namespace KFileMetaData
+
+namespace {
+
+QString testFilePath(const QString& baseName, const QString& extension)
+{
+    return QLatin1String(INDEXER_TESTS_SAMPLE_FILES_PATH)
+        + QLatin1Char('/') + baseName + QLatin1Char('.') + extension;
+}
+
+} // namespace
+
+void ffmpegExtractorTest::initTestCase()
+{
+    QFile imgFile(testFilePath(u"cover"_s, u"jpg"_s));
+    QVERIFY(imgFile.open(QIODevice::ReadOnly));
+    m_coverImage = imgFile.readAll();
+}
+
+void ffmpegExtractorTest::testNoExtraction()
+{
+    QString fileName = testFilePath(QStringLiteral("test"), QStringLiteral("webm"));
+    QMimeDatabase mimeDb;
+    QString mimeType = MimeUtils::strictMimeType(fileName, mimeDb).name();
+
+    FFmpegExtractor plugin{this};
+    QVERIFY(plugin.mimetypes().contains(plugin.getSupportedMimeType(mimeType)));
+
+    SimpleExtractionResult result(fileName, mimeType, ExtractionResult::ExtractNothing);
+    plugin.extract(&result);
+
+    QCOMPARE(result.types().size(), 1);
+    QCOMPARE(result.types().constFirst(), Type::Video);
+    QCOMPARE(result.properties().size(), 0);
+}
+
+
+void ffmpegExtractorTest::testVideoProperties_data()
+{
+    QTest::addColumn<QString>("fileType");
+    QTest::addColumn<QString>("codec");
+    QTest::addColumn<QString>("audioCodec");
+    QTest::addColumn<QVariant>("colorSpace");
+
+    QTest::addRow("WebM")
+        << QStringLiteral("webm")
+        << QStringLiteral("vp8")
+        << QStringLiteral("vorbis")
+        << QVariant::fromValue(QStringLiteral("bt709"));
+
+    QTest::addRow("Matroska Video")
+        << QStringLiteral("mkv")
+        << QStringLiteral("vp8")
+        << QStringLiteral("vorbis")
+        << QVariant::fromValue(QStringLiteral("bt709"));
+
+    QTest::addRow("Vorbis Video")
+        << QStringLiteral("ogv")
+        << QStringLiteral("theora")
+        << QStringLiteral("vorbis")
+        << QVariant();
+
+    QTest::addRow("MPEG Transport")
+        << QStringLiteral("ts")
+        << QStringLiteral("mpeg2video")
+        << QStringLiteral("mp2")
+        << QVariant();
+
+    QTest::addRow("MS AVI")
+        << QStringLiteral("avi")
+        << QStringLiteral("mpeg4")
+        << QStringLiteral("mp3")
+        << QVariant();
+}
+
+// only for testing of intrinsic video properties
+void ffmpegExtractorTest::testVideoProperties()
+{
+    QFETCH(QString, fileType);
+    QFETCH(QString, codec);
+    QFETCH(QString, audioCodec);
+    QFETCH(QVariant, colorSpace);
+
+    QString fileName = testFilePath(QStringLiteral("test"), fileType);
+    QString mimeType = MimeUtils::strictMimeType(fileName, mimeDb).name();
+
+    FFmpegExtractor plugin{this};
+
+    QVERIFY(plugin.mimetypes().contains(plugin.getSupportedMimeType(mimeType)));
+
+    SimpleExtractionResult result(fileName, mimeType);
+    plugin.extract(&result);
+
+    QCOMPARE(result.types().size(), 1);
+    QCOMPARE(result.types().constFirst(), Type::Video);
+
+    QCOMPARE(result.properties().value(Property::Width).toInt(), 1280);
+    QCOMPARE(result.properties().value(Property::Height).toInt(), 720);
+    QCOMPARE(result.properties().value(Property::FrameRate).toDouble(), 24.0/1.001);
+    QCOMPARE(result.properties().value(Property::AspectRatio).toDouble(), 16.0/9);
+    QCOMPARE(result.properties().value(Property::VideoCodec), codec);
+    QCOMPARE(result.properties().value(Property::AudioCodec), audioCodec);
+    QCOMPARE(result.properties().value(Property::PixelFormat), QStringLiteral("yuv420p"));
+    if (colorSpace.isNull()) {
+        QVERIFY(!result.properties().contains(Property::ColorSpace));
+    } else {
+        QCOMPARE(result.properties().value(Property::ColorSpace), colorSpace.toString());
+    }
+}
+
+void ffmpegExtractorTest::testMetaData_data()
+{
+    QTest::addColumn<QString>("fileType");
+
+    QTest::addRow("WebM")
+        << QStringLiteral("webm");
+
+    QTest::addRow("Matroska Video")
+        << QStringLiteral("mkv");
+
+    QTest::addRow("Vorbis Video")
+        << QStringLiteral("ogv");
+}
+
+void ffmpegExtractorTest::testMetaData()
+{
+    QFETCH(QString, fileType);
+
+    QString fileName = testFilePath(QStringLiteral("test"), fileType);
+    QString mimeType = MimeUtils::strictMimeType(fileName, mimeDb).name();
+
+    FFmpegExtractor plugin{this};
+
+    SimpleExtractionResult result(fileName, mimeType);
+    plugin.extract(&result);
+
+    QCOMPARE(result.properties().value(Property::Title).toString(), QStringLiteral("Title"));
+    QCOMPARE(result.properties().value(Property::Copyright).toString(), QStringLiteral("Copyright"));
+    QCOMPARE(result.properties().value(Property::Author).toString(), QStringLiteral("Author"));
+    QCOMPARE(result.properties().value(Property::Artist).toString(), QStringLiteral("Artist"));
+    QCOMPARE(result.properties().value(Property::ReleaseYear).toInt(), 2019);
+}
+
+void ffmpegExtractorTest::testCoverimage_data()
+{
+    using IT = EmbeddedImageData::ImageType;
+    QTest::addColumn<QString>("baseName");
+    QTest::addColumn<QString>("fileType");
+    QTest::addColumn<QList<IT>>("coverTypes");
+
+    // clang-format off
+    QTest::addRow("Matroska Video")            << u"test"_s       << u"mkv"_s << QList<IT>();
+    QTest::addRow("Matroska Video with cover") << u"test_cover"_s << u"mkv"_s << QList<IT>{IT::FrontCover};
+    // clang-format on
+}
+
+void ffmpegExtractorTest::testCoverimage()
+{
+    QFETCH(QString, baseName);
+    QFETCH(QString, fileType);
+    QFETCH(QList<EmbeddedImageData::ImageType>, coverTypes);
+
+    const QString fileName = testFilePath(baseName, fileType);
+    const QString mimeType = MimeUtils::strictMimeType(fileName, mimeDb).name();
+
+    FFmpegExtractor plugin{this};
+
+    SimpleExtractionResult result(fileName, mimeType, ExtractionResult::ExtractImageData);
+    plugin.extract(&result);
+
+    const auto imageMap = result.imageData();
+    QCOMPARE(imageMap.size(), coverTypes.size());
+    for (const auto type : coverTypes) {
+        QVERIFY(imageMap.contains(type));
+    }
+    for (const auto [type, imageData]: imageMap.asKeyValueRange()) {
+        QCOMPARE(imageData, m_coverImage);
+    }
+}
+
+QTEST_GUILESS_MAIN(ffmpegExtractorTest)
+
+#include "ffmpegextractortest.moc"

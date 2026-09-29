@@ -1,0 +1,148 @@
+# Copyright (C) YEAR This file is copyright:
+# This file is distributed under the same license as the kscreen package.
+#
+# Yuri Chornoivan <yurchor@ukr.net>, 2025, 2026.
+msgid ""
+msgstr ""
+"Project-Id-Version: kscreen\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-05-07 00:46+0000\n"
+"PO-Revision-Date: 2026-02-24 09:22+0200\n"
+"Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
+"Language-Team: Ukrainian <trans-uk@lists.fedoraproject.org>\n"
+"Language: uk\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=n==1 ? 3 : n%10==1 && n%100!=11 ? 0 : n"
+"%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
+"X-Generator: Lokalize 23.04.3\n"
+
+#, kde-format
+msgctxt "NAME OF TRANSLATORS"
+msgid "Your names"
+msgstr "Юрій Чорноіван"
+
+#, kde-format
+msgctxt "EMAIL OF TRANSLATORS"
+msgid "Your emails"
+msgstr "yurchor@ukr.net"
+
+#: hdrcalibrator.cpp:137 Main.qml:16
+#, kde-format
+msgctxt "@title:window"
+msgid "HDR Calibration"
+msgstr "Калібрування HDR"
+
+#: Main.qml:188 Main.qml:366
+#, kde-format
+msgctxt "@action:button"
+msgid "Next"
+msgstr "Далі"
+
+#: Main.qml:195 Main.qml:372
+#, kde-format
+msgctxt "@info accessible description of a push button"
+msgid "Switches to the next page"
+msgstr "Перемикає на наступну сторінку"
+
+#: Main.qml:199 Main.qml:376 Main.qml:476
+#, kde-format
+msgctxt "@action:button"
+msgid "Cancel"
+msgstr "Скасувати"
+
+#: Main.qml:202 Main.qml:379 Main.qml:479
+#, kde-format
+msgctxt "@info accessible description of a push button"
+msgid "Cancels the calibration process"
+msgstr "Скасовує процедуру калібрування"
+
+#: Main.qml:211
+#, kde-format
+msgid ""
+"To determine the maximum brightness of the screen, adjust the slider until "
+"the logo is barely visible"
+msgstr ""
+"Для визначення максимальної яскравості екрана пересуньте повзунок так, щоб "
+"логотип став ледве видимим"
+
+#: Main.qml:390
+#, kde-format
+msgid ""
+"Configure how bright “100%” on the normal brightness slider should be. Make "
+"it as bright as you'd ever use it, as long as the HDR image still looks good "
+"and the gradients are smooth.\n"
+"To avoid brightness fluctuations, it's recommended to not exceed the "
+"display's maximum average brightness of %1cd/m²"
+msgstr ""
+"Налаштувати, наскільки яскравим буде результат встановлення «100%» на "
+"повзунку яскравості. Зробіть усе яскравим настільки, наскільки ви можете "
+"користуватися цим при збереженні доброго вигляду зображення і плавних "
+"градієнтів.\n"
+"Щоб уникнути коливань яскравості, рекомендуємо не перевищувати максимальної "
+"середньої яскравості дисплея у %1 кд/м²"
+
+#: Main.qml:392
+#, kde-format
+msgid ""
+"Configure how bright “100%” on the normal brightness slider should be. Make "
+"it as bright as you'd ever use it, as long as the HDR image still looks good "
+"and the gradients are smooth."
+msgstr ""
+"Налаштувати, наскільки яскравим буде результат встановлення «100%» на "
+"повзунку яскравості. Зробіть усе яскравим настільки, наскільки ви можете "
+"користуватися цим при збереженні доброго вигляду зображення і плавних "
+"градієнтів."
+
+#: Main.qml:439
+#, kde-format
+msgid "Maximum luminance: %1cd/m²"
+msgstr "Максимальна освітленість: %1кд/м²"
+
+#: Main.qml:460
+#, kde-format
+msgid "Reference luminance / paper white: %1cd/m²"
+msgstr "Еталонна освітленість / білий папір: %1кд/м²"
+
+#: Main.qml:471
+#, kde-format
+msgctxt "@action:checkbox"
+msgid "Assume Windows HDR applications are calibrated for this screen"
+msgstr ""
+"Припускати щодо програми високого динамічного діапазону для Windows на цьому "
+"екрані калібровано"
+
+#: Main.qml:483
+#, kde-format
+msgctxt "@action:button"
+msgid "Done"
+msgstr "Виконано"
+
+#: Main.qml:492
+#, kde-format
+msgctxt "@info accessible description of a push button"
+msgid "Finish the calibration process"
+msgstr "Завершити процедуру калібрування"
+
+#: Main.qml:501
+#, kde-format
+msgid ""
+"Many Windows applications come with their own calibration settings, which "
+"this system wide configuration conflicts with. If this option is set, their "
+"calibration settings will work as expected on this specific display."
+msgstr ""
+"Багато програм Windows постачаються з власними параметрами калібрування, з "
+"якими конфліктують ці загальносистемні налаштування. Якщо позначено цей "
+"пункт, їхні налаштування калібрування працюватимуть належним чином на цьому "
+"конкретному дисплеї."
+
+#~ msgid ""
+#~ "To determine the maximum average brightness of the screen, adjust the "
+#~ "slider until the logo is barely visible"
+#~ msgstr ""
+#~ "Для визначення максимальної середньої яскравості екрана пересуньте "
+#~ "повзунок так, щоб логотип став ледве видимим"
+
+#~ msgid "Maximum fullscreen luminance: %1cd/m²"
+#~ msgstr "Максимальна освітленість у повноекранному режимі: %1кд/м²"

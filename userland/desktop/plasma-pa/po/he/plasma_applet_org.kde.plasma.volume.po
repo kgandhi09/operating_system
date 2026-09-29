@@ -1,0 +1,453 @@
+# Copyright (C) YEAR This_file_is_part_of_KDE
+# This file is distributed under the same license as the PACKAGE package.
+#
+# Elkana Bardugo <ttv200@gmail.com>, 2016.
+# Elkana Bardugo <ttv200@gmail.com>, 2017. #zanata
+# SPDX-FileCopyrightText: 2024, 2025, 2026 Yaron Shahrabani <sh.yaron@gmail.com>
+msgid ""
+msgstr ""
+"Project-Id-Version: plasma_applet_org.kde.plasma.volume\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-04-06 00:45+0000\n"
+"PO-Revision-Date: 2026-03-28 09:31+0300\n"
+"Last-Translator: Yaron Shahrabani <sh.yaron@gmail.com>\n"
+"Language-Team: צוות התרגום של KDE ישראל\n"
+"Language: he\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=(n == 1) ? 0 : ((n == 2) ? 1 : ((n > 10 && "
+"n % 10 == 0) ? 2 : 3));\n"
+"X-Generator: Lokalize 25.12.3\n"
+
+#: ListItemBase.qml:73
+#, kde-format
+msgid "Currently not recording"
+msgstr "לא מקליט כרגע"
+
+#: ListItemBase.qml:74
+#, kde-format
+msgid "Currently not playing"
+msgstr "לא מנגן כרגע"
+
+#: ListItemBase.qml:205
+#, kde-format
+msgctxt "@action:button"
+msgid "Additional Options"
+msgstr "אפשרויות נוספות"
+
+#: ListItemBase.qml:207
+#, kde-format
+msgid "Show additional options for %1"
+msgstr "הצגת אפשרויות נוספות עבור %1"
+
+#: ListItemBase.qml:229
+#, kde-format
+msgctxt "@action:button"
+msgid "Unmute"
+msgstr "ביטול השתקה"
+
+#: ListItemBase.qml:229
+#, kde-format
+msgctxt "@action:button"
+msgid "Mute"
+msgstr "השתקה"
+
+#: ListItemBase.qml:231
+#, kde-format
+msgid "Unmute %1"
+msgstr "ביטול השתקת %1"
+
+#: ListItemBase.qml:231
+#, kde-format
+msgid "Mute %1"
+msgstr "השתקת %1"
+
+#: ListItemBase.qml:254
+#, kde-format
+msgctxt "Accessibility data on volume slider"
+msgid "Adjust volume for %1"
+msgstr "כיוון עוצמת השמע עבור %1"
+
+#: ListItemBase.qml:318 MicrophoneTestView.qml:215
+#, kde-format
+msgctxt "volume percentage"
+msgid "%1%"
+msgstr "%1%"
+
+#: ListItemBase.qml:339 MicrophoneTestView.qml:228
+#, kde-format
+msgctxt "only used for sizing, should be widest possible string"
+msgid "100%"
+msgstr "100%"
+
+#: ListItemBase.qml:344
+#, kde-format
+msgctxt "Perform an audio test of the device"
+msgid "Test…"
+msgstr "בדיקה…"
+
+#: main.qml:36
+#, kde-format
+msgid "Audio Volume"
+msgstr "עוצמת שמע"
+
+#: main.qml:60 main.qml:62
+#, kde-format
+msgctxt "@label"
+msgid "Connection to the Sound Service Lost"
+msgstr "החיבור לשירות השמע נקטע"
+
+#: main.qml:64
+#, kde-format
+msgid "No output or input devices found"
+msgstr "לא נמצאו התקני פלט או קלט"
+
+#: main.qml:68
+#, kde-format
+msgctxt "@info reconnecting to pulseaudio"
+msgid "Trying to reconnect…"
+msgstr "מתבצע ניסיון להתחבר שוב…"
+
+#: main.qml:94
+#, kde-format
+msgid "Audio Muted"
+msgstr "השמע מושתק"
+
+#: main.qml:96
+#, kde-format
+msgid "Volume at %1%"
+msgstr "עוצמת השמע ב־%1%"
+
+#: main.qml:107
+#, kde-format
+msgid "Middle-click to unmute"
+msgstr "לחיצה אמצעית משתיקה"
+
+#: main.qml:108
+#, kde-format
+msgid "Middle-click to mute all audio"
+msgstr "לחיצה אמצעית משתיקה את כל השמע"
+
+#: main.qml:109
+#, kde-format
+msgid "Scroll to adjust volume"
+msgstr "גלילה משנה את עוצמת השמע"
+
+#: main.qml:125
+#, kde-format
+msgid "Device name not found"
+msgstr "שם ההתקן לא נמצא"
+
+#: main.qml:358
+#, kde-format
+msgid "Devices"
+msgstr "התקנים"
+
+#: main.qml:365
+#, kde-format
+msgid "Applications"
+msgstr "יישומים"
+
+#: main.qml:389
+#, kde-format
+msgctxt "@action:button"
+msgid "More actions"
+msgstr "פעולות נוספות"
+
+#: main.qml:431
+#, kde-format
+msgctxt ""
+"@action:button keep this widget's pop-up open until explicitly dismissed"
+msgid "Keep open"
+msgstr "להשאיר פתוח"
+
+#: main.qml:466
+#, kde-format
+msgctxt "@action retry connecting to pulseaudio"
+msgid "Retry"
+msgstr "לנסות שוב"
+
+#: main.qml:500
+#, kde-format
+msgid "No applications playing or recording audio"
+msgstr "אין יישומים שמשמיעים או מקליטים שמע"
+
+#: main.qml:596
+#, kde-format
+msgctxt "@title:group listview section header"
+msgid "Output Devices"
+msgstr "התקני פלט"
+
+#: main.qml:598
+#, kde-format
+msgctxt "@title:group listview section header"
+msgid "Output Streams"
+msgstr "תזרימי פלט"
+
+#: main.qml:656
+#, kde-format
+msgctxt "@title:group listview section header"
+msgid "Input Devices"
+msgstr "התקני קלט"
+
+#: main.qml:658
+#, kde-format
+msgctxt "@title:group listview section header"
+msgid "Input Streams"
+msgstr "תזרימי קלט"
+
+#: main.qml:723
+#, kde-kuit-format
+msgctxt "@info"
+msgid ""
+"Prolonged use of this feature will damage the device's speakers. Only use it "
+"temporarily to make quiet media audible."
+msgstr ""
+"שימוש ביכולת הזאת למשך זמן יפגום ברמקולים שלך. יש להשתמש בה באופן זמני כדי "
+"להפוך שמע חלש ליותר ברור."
+
+#: main.qml:739
+#, kde-format
+msgid "Raise maximum volume"
+msgstr "הגברת עוצמה מרבית"
+
+#: main.qml:757
+#, kde-format
+msgid "Force mute all playback devices"
+msgstr "אילוץ השתקת כל התקני הנגינה"
+
+#: main.qml:766
+#, kde-format
+msgid "Force mute all input devices"
+msgstr "אילוץ השתקת כל התקני הקלט"
+
+#: main.qml:775
+#, kde-format
+msgid "Show virtual devices"
+msgstr "הצגת התקנים וירטואליים"
+
+#: main.qml:785
+#, kde-format
+msgid "&Configure Audio Devices…"
+msgstr "ה&גדרת התקני שמע…"
+
+#: MicrophoneTestView.qml:104
+#, kde-format
+msgctxt "Button to stop microphone recording in test mode"
+msgid "Stop"
+msgstr "עצירה"
+
+#: MicrophoneTestView.qml:104
+#, kde-format
+msgctxt "Button to start microphone recording in test mode"
+msgid "Record"
+msgstr "הקלטה"
+
+#: MicrophoneTestView.qml:118
+#, kde-format
+msgctxt "Button to stop microphone playing in test mode"
+msgid "Stop"
+msgstr "עצירה"
+
+#: MicrophoneTestView.qml:118
+#, kde-format
+msgctxt "Button to start microphone playing in test mode"
+msgid "Play"
+msgstr "נגינה"
+
+#: MicrophoneTestView.qml:137
+#, kde-format
+msgctxt "Label above the microphone volume meter in test overlay"
+msgid "Volume level"
+msgstr "עוצמת שמע"
+
+#: MicrophoneTestView.qml:166
+#, kde-format
+msgctxt "Label showing current microphone input level percentage in test mode"
+msgid "%1 %"
+msgstr "%1 %"
+
+#: MicrophoneTestView.qml:181
+#, kde-format
+msgctxt "Label above the microphone sensitivity slider in test overlay"
+msgid "Sensitivity"
+msgstr "רגישות"
+
+#: MicrophoneTestView.qml:237
+#, kde-format
+msgctxt "Button in microphone test view to return to the device list"
+msgid "Back"
+msgstr "חזרה"
+
+#: MicrophoneTestView.qml:250
+#, kde-kuit-format
+msgctxt "@info"
+msgid "Microphone test error:<nl/><nl/>%1"
+msgstr "שגיאת בדיקת מיקרופון:<nl/><nl/>%1"
+
+#: StreamListItem.qml:36
+#, kde-format
+msgid "Stream name not found"
+msgstr "שם התזרים לא נמצא"
+
+#~ msgctxt "Device name (Battery percent)"
+#~ msgid "%1 (%2% Battery)"
+#~ msgstr "%1 (%2% סוללה)"
+
+#~ msgid "Increase Volume"
+#~ msgstr "הגברת עוצמה"
+
+#~ msgctxt "@action shortcut"
+#~ msgid "Increase Volume by 1%"
+#~ msgstr "הגברת עוצמה ב־1%"
+
+#~ msgid "Decrease Volume"
+#~ msgstr "הנמכת עוצמה"
+
+#~ msgctxt "@action shortcut"
+#~ msgid "Decrease Volume by 1%"
+#~ msgstr "הנמכת עוצמה ב־1%"
+
+#~ msgid "Mute"
+#~ msgstr "השתקה"
+
+#~ msgid "Increase Microphone Volume"
+#~ msgstr "הגברת עוצמת מיקרופון"
+
+#~ msgid "Decrease Microphone Volume"
+#~ msgstr "הנמכת עוצמת מיקרופון"
+
+#~ msgid "Mute Microphone"
+#~ msgstr "השתקת מיקרופון"
+
+#~ msgctxt "label of device items"
+#~ msgid "%1 (%2)"
+#~ msgstr "%1 (%2)"
+
+#~ msgid "General"
+#~ msgstr "כללי"
+
+#, fuzzy
+#~| msgid "Audio Volume"
+#~ msgid "Audio volume"
+#~ msgstr "עוצמת שמע"
+
+#, fuzzy
+#~| msgid "No output or input devices found"
+#~ msgid "Default output device"
+#~ msgstr "לא נמצאו יציאות או כניסות"
+
+#~ msgctxt ""
+#~ "Heading for a list of ports of a device (for example built-in laptop "
+#~ "speakers or a plug for headphones)"
+#~ msgid "Ports"
+#~ msgstr "יציאות"
+
+#, fuzzy
+#~| msgctxt "Port is unavailable"
+#~| msgid " (unavailable)"
+#~ msgctxt "Port is unavailable"
+#~ msgid "%1 (unavailable)"
+#~ msgstr "(לא זמין)"
+
+#, fuzzy
+#~| msgctxt "Port is unplugged"
+#~| msgid " (unplugged)"
+#~ msgctxt "Port is unplugged"
+#~ msgid "%1 (unplugged)"
+#~ msgstr "(לא מחובר)"
+
+#~ msgid "Maximum volume:"
+#~ msgstr "עוצמה מקסימלית:"
+
+#, fuzzy
+#~| msgctxt "Checkable switch to change the current default output."
+#~| msgid "Default"
+#~ msgid "Default Device"
+#~ msgstr "ברירת מחדל"
+
+#~ msgid "Playback Streams"
+#~ msgstr "הזרמת שמע"
+
+#~ msgid "Playback Devices"
+#~ msgstr "התקני השמעה"
+
+#, fuzzy
+#~| msgctxt "label of device items"
+#~| msgid "%1 (%2)"
+#~ msgctxt "label of stream items"
+#~ msgid "%1 (%2)"
+#~ msgstr "%1 (%2)"
+
+#~ msgctxt "Checkable switch for (un-)muting sound output."
+#~ msgid "Mute"
+#~ msgstr "השתק"
+
+#~ msgctxt "Checkable switch to change the current default output."
+#~ msgid "Default"
+#~ msgstr "ברירת מחדל"
+
+#~ msgid "Volume"
+#~ msgstr "עוצמה"
+
+#~ msgid "%"
+#~ msgstr "%"
+
+#~ msgid "Behavior"
+#~ msgstr "התנהגות"
+
+#~ msgid "Volume feedback"
+#~ msgstr "משוב עוצמה"
+
+#, fuzzy
+#~| msgid "Devices"
+#~ msgid "Device Profiles"
+#~ msgstr "התקנים"
+
+#, fuzzy
+#~| msgid "No applications playing or recording audio"
+#~ msgctxt "@label"
+#~ msgid "No Applications Playing Audio"
+#~ msgstr "אין ישומים המשמיעים או מקליטים שמע"
+
+#, fuzzy
+#~| msgid "Capture Streams"
+#~ msgid "Capture"
+#~ msgstr "הזרמת לכידה"
+
+#, fuzzy
+#~| msgid "No applications playing or recording audio"
+#~ msgctxt "@label"
+#~ msgid "No Applications Recording Audio"
+#~ msgstr "אין ישומים המשמיעים או מקליטים שמע"
+
+#, fuzzy
+#~| msgctxt ""
+#~| "Heading for a list of ports of a device (for example built-in laptop "
+#~| "speakers or a plug for headphones)"
+#~| msgid "Ports"
+#~ msgid "Port"
+#~ msgstr "יציאות"
+
+#, fuzzy
+#~| msgid "Devices"
+#~ msgctxt "@title:tab"
+#~ msgid "Devices"
+#~ msgstr "התקנים"
+
+#, fuzzy
+#~| msgid "Applications"
+#~ msgctxt "@title:tab"
+#~ msgid "Applications"
+#~ msgstr "יישומים"
+
+#~ msgctxt "label of stream items"
+#~ msgid "%1: %2"
+#~ msgstr "%1: %2"
+
+#, fuzzy
+#~| msgctxt "only used for sizing, should be widest possible string"
+#~| msgid "100%"
+#~ msgid "100%"
+#~ msgstr "100%"

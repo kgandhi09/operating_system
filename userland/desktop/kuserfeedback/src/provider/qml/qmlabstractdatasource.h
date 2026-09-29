@@ -1,0 +1,49 @@
+/*
+    SPDX-FileCopyrightText: 2017 Volker Krause <vkrause@kde.org>
+
+    SPDX-License-Identifier: MIT
+*/
+
+#ifndef KUSERFEEDBACK_QMLABSTRACTDATASOURCE_H
+#define KUSERFEEDBACK_QMLABSTRACTDATASOURCE_H
+
+#include <provider.h>
+
+namespace KUserFeedback {
+
+class AbstractDataSource;
+
+/*!
+ * \qmltype AbstractDataSource
+ * \inqmlmodule org.kde.userfeedback
+ */
+class QmlAbstractDataSource : public QObject
+{
+    Q_OBJECT
+
+    /*!
+     * \qmlproperty enumeration AbstractDataSource::mode
+     *
+     * \sa KUserFeedback::Provider::TelemetryMode
+     */
+    Q_PROPERTY(KUserFeedback::Provider::TelemetryMode mode READ telemetryMode
+               WRITE setTelemetryMode NOTIFY telemetryModeChanged)
+public:
+    explicit QmlAbstractDataSource(AbstractDataSource *source, QObject *parent);
+    ~QmlAbstractDataSource() override;
+
+    Provider::TelemetryMode telemetryMode() const;
+    void setTelemetryMode(Provider::TelemetryMode mode);
+
+    AbstractDataSource* source() const;
+
+Q_SIGNALS:
+    void telemetryModeChanged();
+
+private:
+    AbstractDataSource *const m_source;
+};
+
+}
+
+#endif // KUSERFEEDBACK_QMLABSTRACTDATASOURCE_H

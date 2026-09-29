@@ -1,0 +1,7 @@
+# jk-gui (jk-session): the desktop session on the console the user is
+# already logged in on. Nothing is authenticated here; the account must be
+# valid (not expired or locked), and pam_elogind registers the session.
+auth      required  pam_deny.so
+account   required  pam_unix.so
+password  required  pam_deny.so
+session   required  pam_elogind.so

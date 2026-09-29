@@ -1,0 +1,60 @@
+[[b2.reference.modules.sequence]]
+= sequence
+
+Various useful list functions. Note that algorithms in this module
+execute largely in the caller's module namespace, so that local rules
+can be used as function objects (predicates.) Also note that predicates can
+be multi-element lists, any further argument to be passed is simply appended
+before the call.
+
+1. `rule filter ( predicate + : sequence * )`
++
+Return the elements `e` of `sequence` for which `[ $(predicate) e ]`
+has a non-null value.
+
+2. `rule transform ( function + : sequence * )`
++
+Return a new sequence consisting of `[ $(function) e ]` for each
+element `e` of `sequence`.
+
+3. `rule reverse ( s * )`
++
+Returns the elements of `s` in reverse order.
+
+4. `rule insertion-sort ( s * : ordered * )`
++
+Insertion-sort `s` using the `ordered` predicate or
+lexicagraphically (i.e. using `<`) when no predicate is supplied.
+
+5. `rule merge ( s1 * : s2 * : ordered * )`
++
+Merge two ordered sequences using the `ordered` predicate or
+lexicagraphically (i.e. using `<`) when no predicate is supplied.
+
+6. `compare ( s1 * : s2 * : ordered * )`
++
+Compares two sequences using the 'ordered' predicate or
+lexicagraphically (i.e. using `<`) when no predicate is supplied.
+
+7. `rule join ( s * : joint ? )`
++
+Join the elements of `s` using `joint` as separator if supplied.
+
+8. `rule length ( s * )`
++
+Find the length of any sequence.
+
+9. `rule unique ( list * : stable ? )`
++
+Removes duplicates from `list`. If `stable` is passed, then the order of
+the elements will be unchanged.
+
+10. `rule max-element ( elements + : ordered ? )`
++
+Returns the maximum number in `elements`. Uses `ordered` for comparisons
+or `numbers.less` if none is provided.
+
+11. `rule select-highest-ranked ( elements * : ranks * )`
++
+Returns all of `elements` for which the corresponding element in the
+parallel list `rank` is equal to the maximum value in `rank`.

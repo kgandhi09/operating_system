@@ -1,0 +1,264 @@
+/*
+    SPDX-FileCopyrightText: 2008 Michael Jansen <kde@michael-jansen.biz>
+    SPDX-FileCopyrightText: 2026 Nicolas Fella <nicolas.fella@gmx.de>
+    SPDX-FileCopyrightText: 2026 Kristen McWilliam <kristen@kde.org>
+
+    SPDX-License-Identifier: LGPL-2.0-or-later
+*/
+
+#ifndef GLOBALSHORTCUTSREGISTRY_H
+#define GLOBALSHORTCUTSREGISTRY_H
+
+#include "kglobalaccel.h"
+
+#include "component.h"
+#include "kserviceactioncomponent.h"
+
+#include <KSharedConfig>
+
+#include <QDBusObjectPath>
+#include <QHash>
+#include <QKeySequence>
+#include <QObject>
+#include <QTimer>
+
+#include <chrono>
+
+#include "kglobalaccel_export.h"
+#include "shortcutkeystate.h"
+
+class Component;
+class GlobalShortcut;
+class KGlobalAccelInterface;
+
+/**
+ * Global Shortcut Registry.
+ *
+ * Shortcuts are registered by component. A component is for example kmail or
+ * amarok.
+ *
+ * A component can have contexts. Currently on plasma is planned to support
+ * that feature. A context enables plasma to keep track of global shortcut
+ * settings when switching containments.
+ *
+ * A shortcut (WIN+x) can be registered by one component only. The component
+ * is allowed to register it more than once in different contexts.
+ *
+ * @author Michael Jansen <kde@michael-jansen.biz>
+ */
+class KGLOBALACCEL_EXPORT GlobalShortcutsRegistry : public QObject
+{
+    Q_OBJECT
+
+    Q_CLASSINFO("D-Bus Interface", "org.kde.KdedGlobalAccel.GlobalShortcutsRegistry")
+
+public:
+    GlobalShortcutsRegistry();
+    ~GlobalShortcutsRegistry() override;
+
+    /**
+     * Activate all shortcuts having their application present.
+     */
+    void activateShortcuts();
+
+    /**
+     * Returns a list of D-Bus paths of registered Components.
+     *
+     * The returned paths are absolute (i.e. no need to prepend anything).
+     */
+    QList<QDBusObjectPath> componentsDbusPaths() const;
+
+    /**
+     * Returns a list of QStringLists (one string list per registered component,
+     * with each string list containing four strings, one for each enumerator in
+     * KGlobalAccel::actionIdFields).
+     */
+    QList<QStringList> allComponentNames() const;
+
+    /**
+     * Return the root dbus path for the registry.
+     */
+    QDBusObjectPath dbusPath() const;
+
+    /**
+     * Deactivate all currently active shortcuts.
+     */
+    void deactivateShortcuts(bool temporarily = false);
+
+    /**
+     * Returns a component with the specified id @a uniqueName. If no component with the given name
+     * exists, @c null will be returned.
+     */
+    Component *getComponent(const QString &uniqueName);
+
+    /**
+     * Returns a component with the specified @a uniqueName, if it exists. Otherwise, it will create
+     * a new component with the given @a uniqueName and @a friendlyName, and return the new component.
+     */
+    Component *getOrCreateComponent(const QString &uniqueName, const QString &friendlyName);
+
+    /**
+     * Get the shortcuts corresponding to key. Active and inactive shortcuts
+     * are considered.
+     *
+     * @see getShortcutsByKey(int key)
+     */
+    QList<GlobalShortcut *> getShortcutsByKey(const QKeySequence &keySequence, KGlobalAccel::MatchType type = KGlobalAccel::MatchType::Equal) const;
+
+    /**
+     * Returns an active shortcut for the specified @a keySequence. If there is no active global shortcut
+     * with the given key combination, @c null will be returned.
+     */
+    GlobalShortcut *activeShortcutByKey(const QKeySequence &keySequence) const;
+
+    /**
+     * Checks if @p shortcut is available for @p component.
+     *
+     * It is available if not used by another component in any context or used
+     * by @p component only in not active contexts.
+     */
+    bool isShortcutAvailable(const QKeySequence &shortcut, const QString &component, const QString &context) const;
+
+    bool registerKey(const QKeySequence &key, GlobalShortcut *shortcut);
+
+    void setDBusPath(const QDBusObjectPath &path);
+
+    bool unregisterKey(const QKeySequence &key, GlobalShortcut *shortcut);
+
+    KGlobalAccelInterface *interface() const;
+
+    /**
+     * Generates the next available global shortcut serial. Global shortcut serials increase
+     * monotonically, 1 is the first valid serial. The serial describes the time when the global
+     * shortcut has been registered.
+     */
+    uint64_t nextSerial();
+
+public Q_SLOTS:
+
+    void clear();
+
+    void loadSettings();
+
+    void writeSettings();
+
+    // Grab the keys
+    void grabKeys();
+
+    // Ungrab the keys
+    void ungrabKeys();
+
+Q_SIGNALS:
+    void needsSave();
+
+private:
+    friend struct KGlobalAccelDPrivate;
+    friend class Component;
+    friend class KGlobalAccelInterface;
+
+    Component *createComponent(const QString &uniqueName, const QString &friendlyName);
+    KServiceActionComponent *createServiceActionComponent(const QString &uniqueName);
+    KServiceActionComponent *createServiceActionComponent(KService::Ptr service);
+    void migrateConfig();
+    void migrateKHotkeys();
+    void scheduleRefreshServices();
+    void refreshServices();
+    void detectAppsWithShortcuts();
+
+    static void unregisterComponent(Component *component);
+    using ComponentPtr = std::unique_ptr<Component, decltype(&unregisterComponent)>;
+
+    Component *registerComponent(ComponentPtr component);
+
+    // called by the implementation to inform us about key presses
+    // returns true if the key was handled
+    bool keyEvent(int keyQt, ShortcutKeyState state);
+    bool pointerPressed(Qt::MouseButtons pointerButtons);
+    bool axisTriggered(int axis);
+
+    bool processKey(int keyQt, ShortcutKeyState state);
+
+    QMultiHash<QKeySequence, GlobalShortcut *> _active_keys;
+    QKeySequence _active_sequence;
+    QHash<int, int> _keys_count;
+
+    Qt::KeyboardModifiers m_currentModifiers;
+    // State machine:
+    // Any -> PressingModifierOnly when a modifier is pressed
+    // PressingModifierOnly -> ReleasingModifierOnly when modifier keys are released
+    // ReleasingModifierOnly -> Normal when other keys are pressed
+    // ReleasingModifierOnly -> Normal when all keys are released, and when a non-modifier key is pressed
+    // Modifier-only shortcuts are triggered in ReleasingModifierOnly state, if all keys are released
+    // and the time since the first release is less than some threshold
+    enum {
+        Normal,
+        PressingModifierOnly,
+        ReleasingModifierOnly
+    } m_state = Normal;
+    void resetModifierOnlyState()
+    {
+        m_state = Normal;
+    }
+
+    using ComponentVec = std::vector<ComponentPtr>;
+    ComponentVec m_components;
+    ComponentVec::const_iterator findByName(const QString &name) const
+    {
+        return std::find_if(m_components.cbegin(), m_components.cend(), [&name](const ComponentPtr &comp) {
+            return comp->uniqueName() == name;
+        });
+    }
+
+    KGlobalAccelInterface *_manager = nullptr;
+
+    mutable KConfig _config;
+    KConfig _state;
+
+    /**
+     * Flag that enables allow-list enforcement for shortcuts.
+     *
+     * When set to true, only shortcuts listed in m_allowedShortcuts will be
+     * activated.
+     */
+    bool m_useAllowList = false;
+
+    /**
+     * Representation of a single allow-list entry.
+     */
+    struct ShortcutName {
+        /**
+         *
+         * Name of the component that owns the shortcut, e.g. kwin, kaccess, etc.
+         */
+        QString componentName;
+
+        /**
+         * Name of the shortcut.
+         *
+         * For example, `view_zoom_in`, `Toggle Screen Reader On and Off`, etc.
+         */
+        QString shortcutName;
+    };
+
+    /**
+     * Allow-list entries loaded from configuration.
+     */
+    QList<ShortcutName> m_allowedShortcuts;
+
+    /**
+     * Read allow-list configuration and populate internal state.
+     */
+    void loadAllowListSettings();
+
+    /**
+     * Check whether a shortcut is permitted when the allow-list is active.
+     */
+    bool isShortcutAllowed(const GlobalShortcut *shortcut) const;
+
+    QDBusObjectPath _dbusPath;
+    GlobalShortcut *m_lastShortcut = nullptr;
+    QTimer m_refreshServicesTimer;
+    uint64_t m_serial = 0;
+};
+
+#endif /* #ifndef GLOBALSHORTCUTSREGISTRY_H */

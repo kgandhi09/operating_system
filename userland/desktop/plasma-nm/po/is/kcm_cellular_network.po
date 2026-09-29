@@ -1,0 +1,822 @@
+# Copyright (C) 2025 This file is copyright:
+# This file is distributed under the same license as the plasma-nm package.
+#
+# SPDX-FileCopyrightText: 2025 Sveinn í Felli <sv1@fellsnet.is>
+msgid ""
+msgstr ""
+"Project-Id-Version: plasma-nm\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-02-18 00:48+0000\n"
+"PO-Revision-Date: 2025-11-27 07:24+0000\n"
+"Last-Translator: Sveinn í Felli <sv1@fellsnet.is>\n"
+"Language-Team: Icelandic\n"
+"Language: is\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Lokalize 23.08.5\n"
+
+#: ui/AvailableNetworks.qml:18
+#, kde-format
+msgid "Available Networks"
+msgstr "Tiltæk netkerfi"
+
+#: ui/AvailableNetworks.qml:42
+#, kde-format
+msgid "none"
+msgstr "ekkert"
+
+#: ui/AvailableNetworks.qml:42
+#, kde-format
+msgid "Current operator: %1"
+msgstr "Fyrirliggjandi símafyrirtæki: %1"
+
+#: ui/AvailableNetworks.qml:45
+#, kde-format
+msgid "Scan For Networks"
+msgstr "Leita að netkerfum"
+
+#: ui/EditProfilePage.qml:15
+#, kde-format
+msgid "New APN"
+msgstr "Nýtt APN"
+
+#: ui/EditProfilePage.qml:15
+#, kde-format
+msgid "Edit APN"
+msgstr "Breyta APN"
+
+#: ui/EditProfilePage.qml:37
+#, kde-format
+msgid "Name"
+msgstr "Heiti"
+
+#: ui/EditProfilePage.qml:45
+#, kde-format
+msgid "APN"
+msgstr "APN"
+
+#: ui/EditProfilePage.qml:53
+#, kde-format
+msgid "Username"
+msgstr "Notandanafn"
+
+#: ui/EditProfilePage.qml:61
+#, kde-format
+msgid "Password"
+msgstr "Lykilorð"
+
+#: ui/EditProfilePage.qml:69
+#, kde-format
+msgid "Network type"
+msgstr "Tegund netkerfis"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "4G/3G/2G"
+msgstr "4G/3G/2G"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "3G/2G"
+msgstr "3G/3G/2G"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "2G"
+msgstr "2G"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "Only 4G"
+msgstr "Aðeins 4G"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "Only 3G"
+msgstr "Aðeins 3G"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "Only 2G"
+msgstr "Aðeins 2G"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "Any"
+msgstr "Hvað sem er"
+
+#: ui/EditProfilePage.qml:82
+#, kde-format
+msgid "Save profile"
+msgstr "Vista upplýsingar"
+
+#: ui/main.qml:68
+#, kde-format
+msgid "Modem not available"
+msgstr "Mótald ekki tiltækt"
+
+#: ui/main.qml:87
+#, kde-format
+msgid "Mobile data"
+msgstr "Farsímagögn"
+
+#: ui/main.qml:92
+#, kde-format
+msgid "No SIM is inserted."
+msgstr "SIM-kort ekki til staðar."
+
+#: ui/main.qml:94
+#, kde-format
+msgid "Mobile data is not available with this modem."
+msgstr "Farsímagögn eru ekki tiltæk með þessu mótaldi."
+
+#: ui/main.qml:96
+#, kde-format
+msgid "An APN needs to be configured to have mobile data."
+msgstr ""
+"Það þarf að grunnstilla APN í stillingunum til að geta notað farsímagögn."
+
+#: ui/main.qml:98
+#, kde-format
+msgid "Whether mobile data is enabled."
+msgstr "Hvort farsímagögn séu virkjuð."
+
+#: ui/main.qml:129
+#, kde-format
+msgid "Data Usage"
+msgstr "Gagnanotkun"
+
+#: ui/main.qml:130
+#, kde-format
+msgid "View data usage."
+msgstr "Skoða gagnanotkun."
+
+#: ui/main.qml:138
+#, kde-format
+msgid "SIM"
+msgid_plural "SIMs"
+msgstr[0] "SIM-kort"
+msgstr[1] "SIM-kort"
+
+#: ui/main.qml:159
+#, kde-format
+msgid "SIM %1"
+msgstr "SIM %1"
+
+#: ui/main.qml:160
+#, kde-format
+msgid "View SIM %1 details."
+msgstr "Skoða nánari upplýsingar um SIM %1."
+
+#: ui/ModemPage.qml:22
+#, kde-format
+msgid "Modem %1"
+msgstr "Mótald %1"
+
+#: ui/ModemPage.qml:32
+#, kde-format
+msgid "Modem Control"
+msgstr "Stýring mótalds"
+
+#: ui/ModemPage.qml:38
+#, kde-format
+msgid "Force Modem Restart"
+msgstr "Þvinga endurræsingu mótalds"
+
+#: ui/ModemPage.qml:44 ui/SimPage.qml:112
+#, kde-format
+msgid "Modem Details"
+msgstr "Nánar um mótald"
+
+#: ui/ModemPage.qml:57
+#, kde-format
+msgid "Access Technologies"
+msgstr "Aðgangstækni"
+
+#: ui/ModemPage.qml:79
+#, kde-format
+msgid "IMEI"
+msgstr "IMEI"
+
+#: ui/ModemPage.qml:87
+#, kde-format
+msgid "Enabled"
+msgstr "Virkt"
+
+#: ui/ModemPage.qml:95
+#, kde-format
+msgid "Manufacturer"
+msgstr "Framleiðandi"
+
+#: ui/ModemPage.qml:103
+#, kde-format
+msgid "Model"
+msgstr "Gerð"
+
+#: ui/ModemPage.qml:118
+#, kde-format
+msgid "Owned Numbers:"
+msgstr "Eignuð númer:"
+
+#: ui/ModemPage.qml:141
+#, kde-format
+msgid "Revision"
+msgstr "Útgáfa"
+
+#: ui/ModemPage.qml:149
+#, kde-format
+msgid "Signal Quality"
+msgstr "Gæði merkis"
+
+#: ui/ModemPage.qml:157
+#, kde-format
+msgid "State"
+msgstr "Staða"
+
+#: ui/ModemPage.qml:165
+#, kde-format
+msgid "Failure Reason"
+msgstr "Ástæða bilunar"
+
+#: ui/ModemPage.qml:173
+#, kde-format
+msgid "Registration State"
+msgstr "Staða skráningar"
+
+#: ui/ModemPage.qml:181
+#, kde-format
+msgid "Firmware Version"
+msgstr "Útgáfa grunnhugbúnaðar (firmware)"
+
+#: ui/ModemPage.qml:189
+#, kde-format
+msgid "Interface Name"
+msgstr "Heiti netkorts"
+
+#: ui/ModemPage.qml:197
+#, kde-format
+msgid "Metered"
+msgstr "Gjaldfært"
+
+#: ui/ModemPage.qml:205
+#, kde-format
+msgid "Active NetworkManager Connection"
+msgstr "Virk NetworkManager-tenging"
+
+#: ui/ModemPage.qml:213
+#, kde-format
+msgid "Device"
+msgstr "Tæki"
+
+#: ui/ModemPage.qml:221
+#, kde-format
+msgid "Device ID"
+msgstr "Auðkenni tækis"
+
+#: ui/ModemPage.qml:236
+#, kde-format
+msgid "Drivers:"
+msgstr "Reklar:"
+
+#: ui/ModemPage.qml:258
+#, kde-format
+msgid "Plugin"
+msgstr "Íforrit"
+
+#: ui/ModemPage.qml:266
+#, kde-format
+msgid "Power State"
+msgstr "Orkustaða"
+
+#: ui/ModemPage.qml:274
+#, kde-format
+msgid "SIM Path"
+msgstr "SIM-slóð"
+
+#: ui/ProfileList.qml:25
+#, kde-format
+msgid "APNs"
+msgstr "APN aðgangsstaðir"
+
+#: ui/ProfileList.qml:28 ui/ProfileList.qml:99
+#, kde-format
+msgid "Edit"
+msgstr "Breyta"
+
+#: ui/ProfileList.qml:55
+#, kde-format
+msgid ""
+"Unable to autodetect connection settings for your carrier. Please find your "
+"carrier's APN settings by either contacting support or searching online."
+msgstr ""
+"Tekst ekki að finna sjálfkrafa tengistillingar fyrir símaþjónustuna þína. "
+"Reyndu að finna APN-stillingar símaþjónustunnar með því að hafa samband við "
+"þjónustuver eða leita á netinu."
+
+#: ui/ProfileList.qml:66
+#, kde-format
+msgid "APN List"
+msgstr "Listi yfir APN"
+
+#: ui/ProfileList.qml:119
+#, kde-format
+msgid "Delete"
+msgstr "Eyða"
+
+#: ui/ProfileList.qml:128
+#, kde-format
+msgid "Add APN"
+msgstr "Bæta við APN"
+
+#: ui/ProfileList.qml:136
+#, kde-format
+msgid "Automatically detect APN"
+msgstr "Greina APN sjálfvirkt"
+
+#: ui/SimLockPage.qml:21 ui/SimPage.qml:101
+#, kde-format
+msgid "SIM Lock"
+msgstr "Læsing SIM-korts"
+
+#: ui/SimLockPage.qml:40
+#, kde-format
+msgid "SIM is locked"
+msgstr "SIM-kort er læst"
+
+#: ui/SimLockPage.qml:41
+#, kde-format
+msgid "In order to use this SIM, you must first unlock it."
+msgstr "Til að nota þetta SIM-kort þarftu fyrst að aflæsa því."
+
+#: ui/SimLockPage.qml:63
+#, kde-format
+msgid "SIM is not locked"
+msgstr "SIM-kort er ekki læst"
+
+#: ui/SimLockPage.qml:64
+#, kde-format
+msgid ""
+"You can lock your SIM to require a set PIN code for phone calls and mobile "
+"data."
+msgstr ""
+"Þú getur læst SIM-kortinu þínu þannig að krafist sé PIN-kóða fyrir símtöl og "
+"farsímagögn."
+
+#: ui/SimLockPage.qml:68
+#, kde-format
+msgid "Lock SIM"
+msgstr "Læsa SIM"
+
+#: ui/SimLockPage.qml:80
+#, kde-format
+msgid "Disable SIM Lock"
+msgstr "Gera læsingu SIM-korts óvirka"
+
+#: ui/SimLockPage.qml:81
+#, kde-format
+msgid "Disable the SIM lock feature and remove the passcode on the SIM."
+msgstr ""
+"Gera eiginleikann til að læsa SIM-korti óvirkan og fjarlægja lykilkóðann af "
+"SIM-kortinu."
+
+#: ui/SimLockPage.qml:93
+#, kde-format
+msgid "Change PIN"
+msgstr "Breyta PIN-kóða"
+
+#: ui/SimLockPage.qml:94
+#, kde-format
+msgid "Change the passcode set on the SIM."
+msgstr "Breyta lykilkóðanum á SIM-kortinu."
+
+#: ui/SimLockPage.qml:108
+#, kde-format
+msgid "Unlock SIM"
+msgstr "Aflæsa SIM"
+
+#: ui/SimLockPage.qml:116
+#, kde-format
+msgid "Attempts left: %1"
+msgstr "Tilraunir eftir: %1"
+
+#: ui/SimLockPage.qml:121
+#, kde-format
+msgid "Enter PIN"
+msgstr "Settu inn PIN-kóða"
+
+#: ui/SimLockPage.qml:129
+#, kde-format
+msgid "Change SIM PIN"
+msgstr "Breyta PIN-kóða SIM-korts"
+
+#: ui/SimLockPage.qml:148 ui/SimLockPage.qml:213
+#, kde-format
+msgid "PINs don't match!"
+msgstr "PIN-kóðar passa ekki saman!"
+
+#: ui/SimLockPage.qml:154 ui/SimLockPage.qml:219
+#, kde-format
+msgid "PINs must be between 4 and 8 digits!"
+msgstr "PIN-kóðar verða að vera á milli 4 og 8 stafa langir!"
+
+#: ui/SimLockPage.qml:159 ui/SimLockPage.qml:186
+#, kde-format
+msgid "Current PIN"
+msgstr "Núverandi PIN-kóði"
+
+#: ui/SimLockPage.qml:164 ui/SimLockPage.qml:224
+#, kde-format
+msgid "New PIN"
+msgstr "Nýr PIN-kóða"
+
+#: ui/SimLockPage.qml:169 ui/SimLockPage.qml:229
+#, kde-format
+msgid "Confirm PIN"
+msgstr "Staðfesta PIN-kóða"
+
+#: ui/SimLockPage.qml:177
+#, kde-format
+msgid "Remove SIM PIN"
+msgstr "Fjarlægja PIN-kóða á SIM-korti"
+
+#: ui/SimLockPage.qml:194
+#, kde-format
+msgid "Add SIM PIN"
+msgstr "Bæta við PIN-kóða SIM-korts"
+
+#: ui/SimPage.qml:34
+#, kde-format
+msgctxt "@title"
+msgid "SIM %1"
+msgstr "SIM %1"
+
+#: ui/SimPage.qml:44
+#, kde-format
+msgid ""
+"This SIM slot is empty, a SIM card needs to be inserted in order for it to "
+"be used."
+msgstr "Þetta SIM-hólf er tómt, setja þarf inn SIM-kort til að geta notað það."
+
+#: ui/SimPage.qml:59
+#, kde-format
+msgid "Roaming"
+msgstr "Reiki"
+
+#: ui/SimPage.qml:60
+#, fuzzy, kde-format
+#| msgid "Registered on a roaming network."
+msgid "Allow mobile data when on a roaming network."
+msgstr "Skráð á reikineti."
+
+#: ui/SimPage.qml:79
+#, kde-format
+msgid "Modify APNs"
+msgstr "Breyta APNum"
+
+#: ui/SimPage.qml:80
+#, kde-format
+msgid "Configure access point names for your carrier."
+msgstr "Stilltu heiti aðgangsstaða fyrir símaþjónustuna þína."
+
+#: ui/SimPage.qml:90
+#, kde-format
+msgid "Networks"
+msgstr "Netkerfi"
+
+#: ui/SimPage.qml:91
+#, kde-format
+msgid "Select a network operator."
+msgstr "Veldu netkerfisþjónustu."
+
+#: ui/SimPage.qml:102
+#, kde-format
+msgid "Modify SIM lock settings."
+msgstr "Breyta stillingum læsingar SIM-korts."
+
+#: ui/SimPage.qml:113
+#, kde-format
+msgid "View the details of the modem this SIM is connected to."
+msgstr "Skoða nánari upplýsingar um mótaldið sem þetta SIM-kort tengist."
+
+#: ui/SimPage.qml:119
+#, kde-format
+msgid "SIM Details"
+msgstr "Nánar um SIM"
+
+#: ui/SimPage.qml:125
+#, kde-format
+msgid "Locked"
+msgstr "Læst"
+
+#: ui/SimPage.qml:126
+#, kde-format
+msgid "Yes"
+msgstr "Já"
+
+#: ui/SimPage.qml:126
+#, kde-format
+msgid "No"
+msgstr "Nei"
+
+#: ui/SimPage.qml:133
+#, kde-format
+msgid "IMSI"
+msgstr "IMSI"
+
+#: ui/SimPage.qml:141
+#, kde-format
+msgid "EID"
+msgstr "EID"
+
+#: ui/SimPage.qml:149
+#, kde-format
+msgid "Operator Code (modem)"
+msgstr "Kóði símafyrirtækis (mótald)"
+
+#: ui/SimPage.qml:157
+#, kde-format
+msgid "Operator Name (modem)"
+msgstr "Heiti símafyrirtækis (mótald)"
+
+#: ui/SimPage.qml:165
+#, kde-format
+msgid "Operator Code (provided by SIM)"
+msgstr "Kóði símafyrirtækis (frá SIM-korti)"
+
+#: ui/SimPage.qml:173
+#, kde-format
+msgid "Operator Name (provided by SIM)"
+msgstr "Heiti símafyrirtækis (frá SIM-korti)"
+
+#: ui/SimPage.qml:181
+#, kde-format
+msgid "SIM ID"
+msgstr "SIM-auðkenni"
+
+#: ui/SimPage.qml:197
+#, kde-format
+msgid "Emergency Numbers"
+msgstr "Neyðarnúmer"
+
+#~ msgid "Error resetting the modem: %1"
+#~ msgstr "Villa við að endurstilla mótaldið: %1"
+
+#~ msgid "Error updating connection settings for %1: %2."
+#~ msgstr "Villa við að uppfæra tengistillingar fyrir %1: %2."
+
+#~ msgid "Error activating connection: %1"
+#~ msgstr "Villa við að virkja tengingu: %1"
+
+#~ msgid "Error adding connection: %1"
+#~ msgstr "Villa við að bæta við tengingu: %1"
+
+#~ msgid "Error removing connection: %1"
+#~ msgstr "Villa við að fjarlægja tengingu: %1"
+
+#~ msgid "Unknown"
+#~ msgstr "Óþekkt"
+
+#~ msgid "Unmanaged"
+#~ msgstr "Óstýrt"
+
+#~ msgid "Unavailable"
+#~ msgstr "Ófáanlegt"
+
+#~ msgid "Disconnected"
+#~ msgstr "Aftengt"
+
+#~ msgid "Preparing"
+#~ msgstr "Undirbý"
+
+#~ msgid "Activated"
+#~ msgstr "Virkjað"
+
+#~ msgid "Deactivating"
+#~ msgstr "Geri óvirkt"
+
+#~ msgid "Failed"
+#~ msgstr "Mistókst"
+
+#~ msgid "POTS"
+#~ msgstr "POTS"
+
+#~ msgid "GSM"
+#~ msgstr "GSM"
+
+#~ msgid "GSM Compact"
+#~ msgstr "GSM Compact"
+
+#~ msgid "GPRS"
+#~ msgstr "GPRS"
+
+#~ msgid "EDGE"
+#~ msgstr "EDGE"
+
+#~ msgid "UMTS"
+#~ msgstr "UMTS"
+
+#~ msgid "HSDPA"
+#~ msgstr "HSDPA"
+
+#~ msgid "HSUPA"
+#~ msgstr "HSUPA"
+
+#~ msgid "HSPA"
+#~ msgstr "HSPA"
+
+#~ msgid "HSPA+"
+#~ msgstr "HSPA+"
+
+#~ msgid "CDMA2000 1xRTT"
+#~ msgstr "CDMA2000 1xRTT"
+
+#~ msgid "CDMA2000 EVDO-0"
+#~ msgstr "CDMA2000 EVDO-0"
+
+#~ msgid "CDMA2000 EVDO-A"
+#~ msgstr "CDMA2000 EVDO-A"
+
+#~ msgid "CDMA2000 EVDO-B"
+#~ msgstr "CDMA2000 EVDO-B"
+
+#~ msgid "LTE"
+#~ msgstr "LTE"
+
+#~ msgid "5GNR"
+#~ msgstr "5GNR"
+
+#~ msgid "Off"
+#~ msgstr "Af"
+
+#~ msgid "Low-power mode"
+#~ msgstr "Orkusparnaðarhamur"
+
+#~ msgid "Full power mode"
+#~ msgstr "Fullorkuhamur"
+
+#~ msgid "Initializing"
+#~ msgstr "Frumstilli"
+
+#~ msgid "Disabled"
+#~ msgstr "Óvirkt"
+
+#~ msgid "Disabling"
+#~ msgstr "Geri óvirkt"
+
+#~ msgid "Enabling"
+#~ msgstr "Virkja"
+
+#~ msgid "Searching for network provider"
+#~ msgstr "Leita að netþjónustu"
+
+#~ msgid "Registered with network provider"
+#~ msgstr "Skráð hjá netþjónustu"
+
+#~ msgid "Disconnecting"
+#~ msgstr "Aftengist"
+
+#~ msgid "Connecting"
+#~ msgstr "Tengist"
+
+#~ msgid "Connected"
+#~ msgstr "Tengt"
+
+#~ msgid "No error."
+#~ msgstr "Engin villa."
+
+#~ msgid "Unknown error."
+#~ msgstr "Óþekkt villa."
+
+#~ msgid "SIM is required but missing."
+#~ msgstr "SIM-kort er nauðsynlegt en vantar."
+
+#~ msgid "SIM is available but unusable."
+#~ msgstr "SIM-kort er tiltækt en ónothæft."
+
+#~ msgid "Unknown modem capabilities."
+#~ msgstr "Óþekkt geta mótalds."
+
+#~ msgid "eSIM is not initialized."
+#~ msgstr "eSIM er ekki frumstillt."
+
+#~ msgid "Not registered, not searching for new operator to register."
+#~ msgstr "Ekki skráð, er ekki að leita að nýju símafyrirtæki til skráningar."
+
+#~ msgid "Registered on home network."
+#~ msgstr "Skráð á heimaneti."
+
+#~ msgid "Not registered, searching for new operator to register with."
+#~ msgstr "Ekki skráð, er að leita að nýju símafyrirtæki til skráningar."
+
+#~ msgid "Registration denied."
+#~ msgstr "Skráningu hafnað."
+
+#~ msgid "Unknown registration status."
+#~ msgstr "Óþekkt staða skráningar."
+
+#~ msgid "Registered for \"SMS only\", on home network."
+#~ msgstr "Skráð fyrir \"Aðeins SMS\", á heimaneti."
+
+#~ msgid "Registered for \"SMS only\", roaming network."
+#~ msgstr "Skráð fyrir \"Aðeins SMS\", á reikineti."
+
+#~ msgid "Emergency services only."
+#~ msgstr "Aðeins neyðarþjónustur."
+
+#~ msgid "Registered for \"CSFB not preferred\", home network."
+#~ msgstr "Skráð fyrir \"CSFB ekki ákjósanlegt\", á heimaneti."
+
+#~ msgid "Registered for \"CSFB not preferred\", roaming network."
+#~ msgstr "Skráð fyrir \"CSFB ekki ákjósanlegt\", á reikineti."
+
+#~ msgid "Attached for access to Restricted Local Operator Services."
+#~ msgstr ""
+#~ "Tengt fyrir aðgang að takmörkuðum staðarþjónustum (Restricted Local "
+#~ "Operator Services)."
+
+#~ msgid "Scanning networks failed: %1"
+#~ msgstr "Skönnun netkerfa mistókst: %1"
+
+#~ msgid "3G"
+#~ msgstr "3G"
+
+#~ msgid "4G"
+#~ msgstr "4G"
+
+#~ msgid "5G"
+#~ msgstr "5G"
+
+#~ msgid "Lock reason unknown."
+#~ msgstr "Óþekkt ástæða læsingar."
+
+#~ msgid "Modem is unlocked."
+#~ msgstr "Mótald er ólæst."
+
+#~ msgid "SIM requires the PIN code."
+#~ msgstr "SIM krefst PIN-kóða."
+
+#~ msgid "SIM requires the PIN2 code."
+#~ msgstr "SIM krefst PIN2-kóða."
+
+#~ msgid "SIM requires the PUK code."
+#~ msgstr "SIM krefst PUK-kóðans."
+
+#~ msgid "SIM requires the PUK2 code."
+#~ msgstr "SIM krefst PUK2-kóðans."
+
+#~ msgid "Modem requires the service provider PIN code."
+#~ msgstr "Mótald krefst PIN-kóða þjónustuveitu."
+
+#~ msgid "Modem requires the service provider PUK code."
+#~ msgstr "Mótald krefst PUK-kóða þjónustuveitu."
+
+#~ msgid "Modem requires the network PIN code."
+#~ msgstr "Mótald krefst PIN-kóða netkerfis."
+
+#~ msgid "Modem requires the network PUK code."
+#~ msgstr "Mótald krefst PUK-kóða netkerfis."
+
+#~ msgid "Modem requires the PIN code."
+#~ msgstr "Mótald krefst PIN-kóða."
+
+#~ msgid "Modem requires the corporate PIN code."
+#~ msgstr "Mótald krefst PIN-kóða fyrirtækis."
+
+#~ msgid "Modem requires the corporate PUK code."
+#~ msgstr "Mótald krefst PUK-kóða fyrirtækis."
+
+#~ msgid "Modem requires the PH-FSIM PIN code."
+#~ msgstr "Mótald krefst PH-FSIM PIN-kóða."
+
+#~ msgid "Modem requires the PH-FSIM PUK code."
+#~ msgstr "Mótald krefst PH-FSIM PUK-kóða."
+
+#~ msgid "Modem requires the network subset PIN code."
+#~ msgstr "Mótald krefst PIN-kóða undirnetkerfis."
+
+#~ msgid "Modem requires the network subset PUK code."
+#~ msgstr "Mótald krefst PUK-kóða undirnetkerfis."
+
+#~ msgid "(empty)"
+#~ msgstr "(tómt)"
+
+#~ msgid "Error toggling SIM lock: %1"
+#~ msgstr "Villa við að víxla af/á læsingu SIM-korts: %1"
+
+#~ msgid "Error changing the PIN: %1"
+#~ msgstr "Villa við að breyta PIN-kóða: %1"
+
+#~ msgid "Error sending the PIN: %1"
+#~ msgstr "Villa við að senda PIN-kóða: %1"
+
+#~ msgid "Error sending the PUK: %1"
+#~ msgstr "Villa við að senda PUK-kóða: %1"
+
+#~ msgid "Data Roaming"
+#~ msgstr "Gagnareiki"
+
+#~ msgid "Allow your device to use networks other than your carrier."
+#~ msgstr ""
+#~ "Leyfa tækinu þínu að nota önnur netkerfi en hjá símafyrirtækinu þínu."

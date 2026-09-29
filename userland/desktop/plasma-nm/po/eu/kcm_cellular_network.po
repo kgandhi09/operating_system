@@ -1,0 +1,915 @@
+# Translation for kcm_cellular_network.po to Euskera/Basque (eu).
+# Copyright (C) 2021-2026 This file is copyright:
+# This file is distributed under the same license as the plasma-settings package.
+# SPDX-FileCopyrightText: 2023, 2024, 2025, 2026 KDE euskaratzeko proiektuaren arduraduna <xalba@ni.eus>
+#
+# Translators:
+# Iñigo Salvador Azurmendi <xalba@ni.eus>, 2021, 2022, 2023, 2024, 2026.
+msgid ""
+msgstr ""
+"Project-Id-Version: plasma-mobile\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-02-18 00:48+0000\n"
+"PO-Revision-Date: 2026-02-18 20:21+0100\n"
+"Last-Translator: Iñigo Salvador Azurmendi <xalba@ni.eus>\n"
+"Language-Team: Basque <kde-i18n-eu@kde.org>\n"
+"Language: eu\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Lokalize 25.12.2\n"
+
+#: ui/AvailableNetworks.qml:18
+#, kde-format
+msgid "Available Networks"
+msgstr "Sare erabilgarriak"
+
+#: ui/AvailableNetworks.qml:42
+#, kde-format
+msgid "none"
+msgstr "bat ere ez"
+
+#: ui/AvailableNetworks.qml:42
+#, kde-format
+msgid "Current operator: %1"
+msgstr "Uneko operadorea: %1"
+
+#: ui/AvailableNetworks.qml:45
+#, kde-format
+msgid "Scan For Networks"
+msgstr "Eskaneatu sare bila"
+
+#: ui/EditProfilePage.qml:15
+#, kde-format
+msgid "New APN"
+msgstr "APN berria"
+
+#: ui/EditProfilePage.qml:15
+#, kde-format
+msgid "Edit APN"
+msgstr "Editatu APNa"
+
+#: ui/EditProfilePage.qml:37
+#, kde-format
+msgid "Name"
+msgstr "Izena"
+
+#: ui/EditProfilePage.qml:45
+#, kde-format
+msgid "APN"
+msgstr "APN"
+
+#: ui/EditProfilePage.qml:53
+#, kde-format
+msgid "Username"
+msgstr "Erabiltzaile-izena"
+
+#: ui/EditProfilePage.qml:61
+#, kde-format
+msgid "Password"
+msgstr "Pasahitza"
+
+#: ui/EditProfilePage.qml:69
+#, kde-format
+msgid "Network type"
+msgstr "Sare mota"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "4G/3G/2G"
+msgstr "4G/3G/2G"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "3G/2G"
+msgstr "3G/2G"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "2G"
+msgstr "2G"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "Only 4G"
+msgstr "Soilik 4G"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "Only 3G"
+msgstr "Soilik 3G"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "Only 2G"
+msgstr "Soilik 2G"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "Any"
+msgstr "Edozein"
+
+#: ui/EditProfilePage.qml:82
+#, kde-format
+msgid "Save profile"
+msgstr "Gorde profila"
+
+#: ui/main.qml:68
+#, kde-format
+msgid "Modem not available"
+msgstr "Modema ez dago erabilgarria"
+
+#: ui/main.qml:87
+#, kde-format
+msgid "Mobile data"
+msgstr "Mugikorreko datuak"
+
+#: ui/main.qml:92
+#, kde-format
+msgid "No SIM is inserted."
+msgstr "SIM sartu gabe dago."
+
+#: ui/main.qml:94
+#, kde-format
+msgid "Mobile data is not available with this modem."
+msgstr "Mugikorreko datuak ez daude erabilgarri modem honekin."
+
+#: ui/main.qml:96
+#, kde-format
+msgid "An APN needs to be configured to have mobile data."
+msgstr "APN bat konfiguratu egin behar da mugikorreko datuak izateko."
+
+#: ui/main.qml:98
+#, kde-format
+msgid "Whether mobile data is enabled."
+msgstr "Mugikorreko datuak gaituta dauden ala ez."
+
+#: ui/main.qml:129
+#, kde-format
+msgid "Data Usage"
+msgstr "Datuen erabilera"
+
+#: ui/main.qml:130
+#, kde-format
+msgid "View data usage."
+msgstr "Ikusi datuen erabilera."
+
+#: ui/main.qml:138
+#, kde-format
+msgid "SIM"
+msgid_plural "SIMs"
+msgstr[0] "SIM"
+msgstr[1] "SIM"
+
+#: ui/main.qml:159
+#, kde-format
+msgid "SIM %1"
+msgstr "%1 SIMa"
+
+#: ui/main.qml:160
+#, kde-format
+msgid "View SIM %1 details."
+msgstr "Ikusi SIM %1(r)en xehetasunak."
+
+#: ui/ModemPage.qml:22
+#, kde-format
+msgid "Modem %1"
+msgstr "%1 modema"
+
+#: ui/ModemPage.qml:32
+#, kde-format
+msgid "Modem Control"
+msgstr "Modemaren agintea"
+
+#: ui/ModemPage.qml:38
+#, kde-format
+msgid "Force Modem Restart"
+msgstr "Behartu modema berrekitea"
+
+#: ui/ModemPage.qml:44 ui/SimPage.qml:112
+#, kde-format
+msgid "Modem Details"
+msgstr "Modemaren xehetasunak"
+
+#: ui/ModemPage.qml:57
+#, kde-format
+msgid "Access Technologies"
+msgstr "Sarbide-teknologiak"
+
+#: ui/ModemPage.qml:79
+#, kde-format
+msgid "IMEI"
+msgstr "IMEI"
+
+#: ui/ModemPage.qml:87
+#, kde-format
+msgid "Enabled"
+msgstr "Gaituta"
+
+#: ui/ModemPage.qml:95
+#, kde-format
+msgid "Manufacturer"
+msgstr "Fabrikatzailea"
+
+#: ui/ModemPage.qml:103
+#, kde-format
+msgid "Model"
+msgstr "Eredua"
+
+#: ui/ModemPage.qml:118
+#, kde-format
+msgid "Owned Numbers:"
+msgstr "Norbere zenbakiak:"
+
+#: ui/ModemPage.qml:141
+#, kde-format
+msgid "Revision"
+msgstr "Berrikuspena"
+
+#: ui/ModemPage.qml:149
+#, kde-format
+msgid "Signal Quality"
+msgstr "Seinalearen kalitatea"
+
+#: ui/ModemPage.qml:157
+#, kde-format
+msgid "State"
+msgstr "Egoera"
+
+#: ui/ModemPage.qml:165
+#, kde-format
+msgid "Failure Reason"
+msgstr "Hutsegiteko arrazoia"
+
+#: ui/ModemPage.qml:173
+#, kde-format
+msgid "Registration State"
+msgstr "Erregistro egoera"
+
+#: ui/ModemPage.qml:181
+#, kde-format
+msgid "Firmware Version"
+msgstr "Firmwarearen bertsioa"
+
+#: ui/ModemPage.qml:189
+#, kde-format
+msgid "Interface Name"
+msgstr "Interfazearen izena"
+
+#: ui/ModemPage.qml:197
+#, kde-format
+msgid "Metered"
+msgstr "Tarifatua"
+
+#: ui/ModemPage.qml:205
+#, kde-format
+msgid "Active NetworkManager Connection"
+msgstr "Sare-kudeatzailearen konexio aktiboa"
+
+#: ui/ModemPage.qml:213
+#, kde-format
+msgid "Device"
+msgstr "Gailua"
+
+#: ui/ModemPage.qml:221
+#, kde-format
+msgid "Device ID"
+msgstr "Gailuaren IDa"
+
+#: ui/ModemPage.qml:236
+#, kde-format
+msgid "Drivers:"
+msgstr "Gidariak:"
+
+#: ui/ModemPage.qml:258
+#, kde-format
+msgid "Plugin"
+msgstr "Plugina"
+
+#: ui/ModemPage.qml:266
+#, kde-format
+msgid "Power State"
+msgstr "Energiaren egoera"
+
+#: ui/ModemPage.qml:274
+#, kde-format
+msgid "SIM Path"
+msgstr "SIMaren bidea-izena"
+
+#: ui/ProfileList.qml:25
+#, kde-format
+msgid "APNs"
+msgstr "APNak"
+
+#: ui/ProfileList.qml:28 ui/ProfileList.qml:99
+#, kde-format
+msgid "Edit"
+msgstr "Editatu"
+
+#: ui/ProfileList.qml:55
+#, kde-format
+msgid ""
+"Unable to autodetect connection settings for your carrier. Please find your "
+"carrier's APN settings by either contacting support or searching online."
+msgstr ""
+"Ez da zure operadorearen konexio-ezarpenak automatikoki hautemateko gai. "
+"Mesedez, aurkitu zure operadorearen APN ezarpenak, euskarriarekin "
+"harremanean jarrita, edo lerroan bilatuta."
+
+#: ui/ProfileList.qml:66
+#, kde-format
+msgid "APN List"
+msgstr "APN zerrenda"
+
+#: ui/ProfileList.qml:119
+#, kde-format
+msgid "Delete"
+msgstr "Ezabatu"
+
+#: ui/ProfileList.qml:128
+#, kde-format
+msgid "Add APN"
+msgstr "Gehitu APNa"
+
+#: ui/ProfileList.qml:136
+#, kde-format
+msgid "Automatically detect APN"
+msgstr "APNak automatikoki hautematea"
+
+#: ui/SimLockPage.qml:21 ui/SimPage.qml:101
+#, kde-format
+msgid "SIM Lock"
+msgstr "SIM giltzatzea"
+
+#: ui/SimLockPage.qml:40
+#, kde-format
+msgid "SIM is locked"
+msgstr "SIMa giltzatuta dago"
+
+#: ui/SimLockPage.qml:41
+#, kde-format
+msgid "In order to use this SIM, you must first unlock it."
+msgstr "SIM hau erabiltzeko, aurrena giltzapetik askatu behar duzu."
+
+#: ui/SimLockPage.qml:63
+#, kde-format
+msgid "SIM is not locked"
+msgstr "SIMa ez dago giltzatuta"
+
+#: ui/SimLockPage.qml:64
+#, kde-format
+msgid ""
+"You can lock your SIM to require a set PIN code for phone calls and mobile "
+"data."
+msgstr ""
+"Zure SIM giltzatu dezakezu, telefono dei eta mugikorreko datuetarako, "
+"ezarritako PIN kode bat eskatu dezan."
+
+#: ui/SimLockPage.qml:68
+#, kde-format
+msgid "Lock SIM"
+msgstr "Giltzatu SIMa"
+
+#: ui/SimLockPage.qml:80
+#, kde-format
+msgid "Disable SIM Lock"
+msgstr "Ezgaitu SIM giltzatzea"
+
+#: ui/SimLockPage.qml:81
+#, kde-format
+msgid "Disable the SIM lock feature and remove the passcode on the SIM."
+msgstr "Ezgaitu SIM giltzatze ezaugarria eta kendu SIMeko pasakodea."
+
+#: ui/SimLockPage.qml:93
+#, kde-format
+msgid "Change PIN"
+msgstr "Aldatu PINa:"
+
+#: ui/SimLockPage.qml:94
+#, kde-format
+msgid "Change the passcode set on the SIM."
+msgstr "Aldatu SIMean ezarritako pasakodea."
+
+#: ui/SimLockPage.qml:108
+#, kde-format
+msgid "Unlock SIM"
+msgstr "SIMa giltzapetik askatu"
+
+#: ui/SimLockPage.qml:116
+#, kde-format
+msgid "Attempts left: %1"
+msgstr "Gelditzen diren saiakerak: %1"
+
+#: ui/SimLockPage.qml:121
+#, kde-format
+msgid "Enter PIN"
+msgstr "Sartu PINa"
+
+#: ui/SimLockPage.qml:129
+#, kde-format
+msgid "Change SIM PIN"
+msgstr "Aldatu SIMaren PINa"
+
+#: ui/SimLockPage.qml:148 ui/SimLockPage.qml:213
+#, kde-format
+msgid "PINs don't match!"
+msgstr "PINak ez datoz bat!"
+
+#: ui/SimLockPage.qml:154 ui/SimLockPage.qml:219
+#, kde-format
+msgid "PINs must be between 4 and 8 digits!"
+msgstr "PINak 4 eta 8 digitu artekoak izan behar dira!"
+
+#: ui/SimLockPage.qml:159 ui/SimLockPage.qml:186
+#, kde-format
+msgid "Current PIN"
+msgstr "Uneko PINa"
+
+#: ui/SimLockPage.qml:164 ui/SimLockPage.qml:224
+#, kde-format
+msgid "New PIN"
+msgstr "PIN berria"
+
+#: ui/SimLockPage.qml:169 ui/SimLockPage.qml:229
+#, kde-format
+msgid "Confirm PIN"
+msgstr "Berretsi PINa"
+
+#: ui/SimLockPage.qml:177
+#, kde-format
+msgid "Remove SIM PIN"
+msgstr "Kendu SIMaren PINa"
+
+#: ui/SimLockPage.qml:194
+#, kde-format
+msgid "Add SIM PIN"
+msgstr "Gehitu PINa SIMari"
+
+#: ui/SimPage.qml:34
+#, kde-format
+msgctxt "@title"
+msgid "SIM %1"
+msgstr "%1 SIM"
+
+#: ui/SimPage.qml:44
+#, kde-format
+msgid ""
+"This SIM slot is empty, a SIM card needs to be inserted in order for it to "
+"be used."
+msgstr ""
+"SIM erreten hori hutsik dago, SIM txartel bat sartu behar zaio hura erabili "
+"ahal izateko."
+
+#: ui/SimPage.qml:59
+#, kde-format
+msgid "Roaming"
+msgstr "Ibiltaritza"
+
+#: ui/SimPage.qml:60
+#, kde-format
+msgid "Allow mobile data when on a roaming network."
+msgstr "Baimendu mugikorreko datuak ibiltaritza-sare batean zaudenean."
+
+#: ui/SimPage.qml:79
+#, kde-format
+msgid "Modify APNs"
+msgstr "APNak aldatu"
+
+#: ui/SimPage.qml:80
+#, kde-format
+msgid "Configure access point names for your carrier."
+msgstr "Konfiguratu zure operadorearen sarbide puntuen izenak."
+
+#: ui/SimPage.qml:90
+#, kde-format
+msgid "Networks"
+msgstr "Sareak"
+
+#: ui/SimPage.qml:91
+#, kde-format
+msgid "Select a network operator."
+msgstr "Sare-operadore bat hautatu."
+
+#: ui/SimPage.qml:102
+#, kde-format
+msgid "Modify SIM lock settings."
+msgstr "SIM giltzatze ezarpenak aldatu."
+
+#: ui/SimPage.qml:113
+#, kde-format
+msgid "View the details of the modem this SIM is connected to."
+msgstr "Ikusi SIM hau konektatuta dagoen modemaren xehetasunak."
+
+#: ui/SimPage.qml:119
+#, kde-format
+msgid "SIM Details"
+msgstr "SIMaren xehetasunak"
+
+#: ui/SimPage.qml:125
+#, kde-format
+msgid "Locked"
+msgstr "Giltzatuta"
+
+#: ui/SimPage.qml:126
+#, kde-format
+msgid "Yes"
+msgstr "Bai"
+
+#: ui/SimPage.qml:126
+#, kde-format
+msgid "No"
+msgstr "Ez"
+
+#: ui/SimPage.qml:133
+#, kde-format
+msgid "IMSI"
+msgstr "IMSI"
+
+#: ui/SimPage.qml:141
+#, kde-format
+msgid "EID"
+msgstr "EID"
+
+#: ui/SimPage.qml:149
+#, kde-format
+msgid "Operator Code (modem)"
+msgstr "Operadorearen kodea (modema)"
+
+#: ui/SimPage.qml:157
+#, kde-format
+msgid "Operator Name (modem)"
+msgstr "Operadorearen izena (modema)"
+
+#: ui/SimPage.qml:165
+#, kde-format
+msgid "Operator Code (provided by SIM)"
+msgstr "Operadorearen kodea (SIMak hornitua)"
+
+#: ui/SimPage.qml:173
+#, kde-format
+msgid "Operator Name (provided by SIM)"
+msgstr "Operadorearen izena (SIMak hornitua)"
+
+#: ui/SimPage.qml:181
+#, kde-format
+msgid "SIM ID"
+msgstr "SIM IDa"
+
+#: ui/SimPage.qml:197
+#, kde-format
+msgid "Emergency Numbers"
+msgstr "Larrialdiko zenbakiak"
+
+#~ msgid "Error resetting the modem: %1"
+#~ msgstr "Errorea modema berrezartzean: %1"
+
+#~ msgid "Error updating connection settings for %1: %2."
+#~ msgstr "Errorea %1(e)ren konexio ezarpenak eguneratzean: %2"
+
+#~ msgid "Error activating connection: %1"
+#~ msgstr "Errorea konexioa aktibatzean: %1"
+
+#~ msgid "Error adding connection: %1"
+#~ msgstr "Errorea konexioa gehitzean: %1"
+
+#~ msgid "Error removing connection: %1"
+#~ msgstr "Errorea konexioa kentzean: %1"
+
+#~ msgid "Unknown"
+#~ msgstr "Ezezaguna"
+
+#~ msgid "Unmanaged"
+#~ msgstr "Kudeatu gabe"
+
+#~ msgid "Unavailable"
+#~ msgstr "Ez dago erabilgarri"
+
+#~ msgid "Disconnected"
+#~ msgstr "Deskonektatuta"
+
+#~ msgid "Preparing"
+#~ msgstr "Prestatzen"
+
+#~ msgid "ConfiguringHardware"
+#~ msgstr "Hardwarea konfiguratzea"
+
+#~ msgid "NeedAuth"
+#~ msgstr "Autentikatze beharra"
+
+#~ msgid "ConfiguringIp"
+#~ msgstr "IPa konfiguratzea"
+
+#~ msgid "CheckingIp"
+#~ msgstr "IPa egiaztatzea"
+
+#~ msgid "WaitingForSecondaries"
+#~ msgstr "Bigarren mailakoen zain"
+
+#~ msgid "Activated"
+#~ msgstr "Aktibatuta"
+
+#~ msgid "Deactivating"
+#~ msgstr "Desaktibatzen"
+
+#~ msgid "Failed"
+#~ msgstr "Huts egin du"
+
+#~ msgid "POTS"
+#~ msgstr "POTS"
+
+#~ msgid "GSM"
+#~ msgstr "GSM"
+
+#~ msgid "GSM Compact"
+#~ msgstr "GSM Compact"
+
+#~ msgid "GPRS"
+#~ msgstr "GPRS"
+
+#~ msgid "EDGE"
+#~ msgstr "EDGE"
+
+#~ msgid "UMTS"
+#~ msgstr "UMTS"
+
+#~ msgid "HSDPA"
+#~ msgstr "HSDPA"
+
+#~ msgid "HSUPA"
+#~ msgstr "HSUPA"
+
+#~ msgid "HSPA"
+#~ msgstr "HSPA"
+
+#~ msgid "HSPA+"
+#~ msgstr "HSPA+"
+
+#~ msgid "CDMA2000 1xRTT"
+#~ msgstr "CDMA2000 1xRTT"
+
+#~ msgid "CDMA2000 EVDO-0"
+#~ msgstr "CDMA2000 EVDO-0"
+
+#~ msgid "CDMA2000 EVDO-A"
+#~ msgstr "CDMA2000 EVDO-A"
+
+#~ msgid "CDMA2000 EVDO-B"
+#~ msgstr "CDMA2000 EVDO-B"
+
+#~ msgid "LTE"
+#~ msgstr "LTE"
+
+#~ msgid "5GNR"
+#~ msgstr "5GNR"
+
+#~ msgid "Off"
+#~ msgstr "Itzalita"
+
+#~ msgid "Low-power mode"
+#~ msgstr "Energia-apaleko modua"
+
+#~ msgid "Full power mode"
+#~ msgstr "Energia osoko modua"
+
+#~ msgid "Initializing"
+#~ msgstr "Hasieratzen"
+
+#~ msgid "Disabled"
+#~ msgstr "Ezgaituta"
+
+#~ msgid "Disabling"
+#~ msgstr "Ezgaitzen"
+
+#~ msgid "Enabling"
+#~ msgstr "Gaitzen"
+
+#~ msgid "Searching for network provider"
+#~ msgstr "Sare hornitzailearen bila"
+
+#~ msgid "Registered with network provider"
+#~ msgstr "Sare hornitzailearekin erregistratuta"
+
+#~ msgid "Disconnecting"
+#~ msgstr "Deskonektatzen"
+
+#~ msgid "Connecting"
+#~ msgstr "Konektatzen"
+
+#~ msgid "Connected"
+#~ msgstr "Konektatuta"
+
+#~ msgid "No error."
+#~ msgstr "Errorerik ez"
+
+#~ msgid "Unknown error."
+#~ msgstr "Errore ezezaguna."
+
+#~ msgid "SIM is required but missing."
+#~ msgstr "SIMa behar da, falta da ordea."
+
+#~ msgid "SIM is available but unusable."
+#~ msgstr "SIMa erabilgarri dago, baina ezin da erabili."
+
+#~ msgid "Unknown modem capabilities."
+#~ msgstr "Modemaren gaitasun ezezagunak."
+
+#~ msgid "eSIM is not initialized."
+#~ msgstr "eSIM ez dago hasieratuta."
+
+#~ msgid "Not registered, not searching for new operator to register."
+#~ msgstr ""
+#~ "Ez dago erregistratuta, ez dago erregistratzeko operadore berri baten "
+#~ "bila."
+
+#~ msgid "Registered on home network."
+#~ msgstr "Etxeko sarean erregistratuta."
+
+#~ msgid "Not registered, searching for new operator to register with."
+#~ msgstr "Ez dago erregistratuta, erregistratzeko operadore berri bila."
+
+#~ msgid "Registration denied."
+#~ msgstr "Erregistratzea ukatu da."
+
+#~ msgid "Unknown registration status."
+#~ msgstr "Erregistratzeko egoera ezezaguna."
+
+#~ msgid "Registered for \"SMS only\", on home network."
+#~ msgstr "Etxeko sarean, «bakarrik SMS»rako erregistratuta."
+
+#~ msgid "Registered for \"SMS only\", roaming network."
+#~ msgstr "Ibiltaritza sarean, «bakarrik SMS»rako erregistratuta."
+
+#~ msgid "Emergency services only."
+#~ msgstr "Larrialdiko zerbitzuak bakarrik."
+
+#~ msgid "Registered for \"CSFB not preferred\", home network."
+#~ msgstr "Etxeko sarean, «CSFB ez du nahiago»rako erregistratuta."
+
+#~ msgid "Registered for \"CSFB not preferred\", roaming network."
+#~ msgstr "Ibiltaritza sarean, «CSFB ez du nahiago»rako erregistratuta."
+
+#~ msgid "Attached for access to Restricted Local Operator Services."
+#~ msgstr "Tokiko operadorearen zerbitzu murriztuetara sartzeko atxikita."
+
+#~ msgid "Scanning networks failed: %1"
+#~ msgstr "Sareak eskaneatzea huts egin du: %1"
+
+#~ msgid "GuessYes"
+#~ msgstr "Suposatu «Bai»"
+
+#~ msgid "GuessNo"
+#~ msgstr "Suposatu «Ez»"
+
+#~ msgid "3G"
+#~ msgstr "3G"
+
+#~ msgid "4G"
+#~ msgstr "4G"
+
+#~ msgid "5G"
+#~ msgstr "5G"
+
+#~ msgid "Lock reason unknown."
+#~ msgstr "Giltzatze-arrazoi ezezaguna."
+
+#~ msgid "Modem is unlocked."
+#~ msgstr "Modema giltzatu gabe dago."
+
+#~ msgid "SIM requires the PIN code."
+#~ msgstr "SIMak PIN kodea behar du."
+
+#~ msgid "SIM requires the PIN2 code."
+#~ msgstr "SIMak PIN2 kodea behar du."
+
+#~ msgid "SIM requires the PUK code."
+#~ msgstr "SIMak PUK kodea behar du."
+
+#~ msgid "SIM requires the PUK2 code."
+#~ msgstr "SIMak PUK2 kodea behar du."
+
+#~ msgid "Modem requires the service provider PIN code."
+#~ msgstr "Modemak zerbitzu hornitzailearen PIN kodea behar du."
+
+#~ msgid "Modem requires the service provider PUK code."
+#~ msgstr "Modemak zerbitzu hornitzailearen PUK kodea behar du."
+
+#~ msgid "Modem requires the network PIN code."
+#~ msgstr "Modemak sareko PIN kodea behar du."
+
+#~ msgid "Modem requires the network PUK code."
+#~ msgstr "Modemak sareko PUK kodea behar du."
+
+#~ msgid "Modem requires the PIN code."
+#~ msgstr "Modemak PIN kodea behar du."
+
+#~ msgid "Modem requires the corporate PIN code."
+#~ msgstr "Modemak PIN kode korporatiboa behar du."
+
+#~ msgid "Modem requires the corporate PUK code."
+#~ msgstr "Modemak PUK kode korporatiboa behar du."
+
+#~ msgid "Modem requires the PH-FSIM PIN code."
+#~ msgstr "Modemak PH-FSIM PIN kodea behar du."
+
+#~ msgid "Modem requires the PH-FSIM PUK code."
+#~ msgstr "Modemak PH-FSIM PUK kodea behar du."
+
+#~ msgid "Modem requires the network subset PIN code."
+#~ msgstr "Modemak sare-azpitaldeko PIN kodea behar du."
+
+#~ msgid "Modem requires the network subset PUK code."
+#~ msgstr "Modemak sare-azpitaldeko PUK kodea behar du."
+
+#~ msgid "(empty)"
+#~ msgstr "(hutsik)"
+
+#~ msgid "Error toggling SIM lock: %1"
+#~ msgstr "SIM giltzatzea txandakatzeko errorea: %1"
+
+#~ msgid "Error changing the PIN: %1"
+#~ msgstr "Errorea PINa aldatzean: %1"
+
+#~ msgid "Error sending the PIN: %1"
+#~ msgstr "Errorea PINa bidaltzean: %1"
+
+#~ msgid "Error sending the PUK: %1"
+#~ msgstr "Errorea PUKa bidaltzean: %1"
+
+#~ msgid "Data Roaming"
+#~ msgstr "Datuen ibiltaritza"
+
+#~ msgid "Allow your device to use networks other than your carrier."
+#~ msgstr ""
+#~ "Baimendu zure gailuak, zure operadorearenak ez diren beste sare batzuk "
+#~ "erabiltzea."
+
+#~ msgid "No APNs configured"
+#~ msgstr "Ez da APNrik konfiguratu"
+
+#~ msgid "Add Connection"
+#~ msgstr "Gehitu konexioa"
+
+#~ msgid "SIMs"
+#~ msgstr "SIMak"
+
+#~ msgid "Modem Restart"
+#~ msgstr "Modema berrekitea"
+
+#~ msgctxt "NAME OF TRANSLATORS"
+#~ msgid "Your names"
+#~ msgstr "Iñigo Salvador Azurmendi"
+
+#~ msgctxt "EMAIL OF TRANSLATORS"
+#~ msgid "Your emails"
+#~ msgstr "xalba@ni.eus"
+
+#~ msgid "Cellular Networks"
+#~ msgstr "Sare zelularrak"
+
+#~ msgid "Devin Lin"
+#~ msgstr "Devin Lin"
+
+#~ msgid "Martin Kacej"
+#~ msgstr "Martin Kacej"
+
+#, fuzzy
+#~| msgid "Power State:"
+#~ msgid "Modem State"
+#~ msgstr "Energia-egoera:"
+
+#~ msgid "Disable Modem"
+#~ msgstr "Ezgaitu modema"
+
+#~ msgid "Enable Modem"
+#~ msgstr "Gaitu modema"
+
+#~ msgid "On"
+#~ msgstr "Piztuta"
+
+#~ msgid "Enabled:"
+#~ msgstr "Gaituta:"
+
+#~ msgid "Hide Detailed Information"
+#~ msgstr "Ezkutatu informazio xehatua"
+
+#~ msgid "Show Detailed Information"
+#~ msgstr "Erakutsi informazio xehatua"
+
+#~ msgid "APNs:"
+#~ msgstr "APNak:"
+
+#~ msgid "Modify Access Point Names"
+#~ msgstr "Aldatu (APN) Sarbide puntuen izenak"
+
+#~ msgid "SIM Lock:"
+#~ msgstr "SIM giltzatzea:"
+
+#~ msgid "Modem:"
+#~ msgstr "Modema:"
+
+#~ msgid "Locked:"
+#~ msgstr "Giltzatuta:"
+
+#~ msgid "Change PIN:"
+#~ msgstr "Aldatu PINa:"

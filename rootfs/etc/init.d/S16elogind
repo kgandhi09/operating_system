@@ -1,0 +1,14 @@
+#!/bin/sh
+# elogind: sessions and seats (logind) without systemd. jk-gui's desktop
+# session gets the GPU and input devices through it.
+
+case "$1" in
+    start)
+        [ -x /usr/libexec/elogind ] || exit 0
+        mkdir -p /run/systemd
+        /usr/libexec/elogind --daemon
+        ;;
+    stop)
+        pid="$(pidof elogind)" && kill $pid 2>/dev/null
+        ;;
+esac

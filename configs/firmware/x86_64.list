@@ -31,3 +31,11 @@ driver mt7921e
 driver mt7925e
 driver brcmsmac
 driver mwifiex_pcie
+
+# GPUs (loaded while the kernel starts, so they are in the initramfs too).
+driver i915
+driver xe
+driver amdgpu
+driver nouveau
+# NVIDIA's GSP firmware (Turing and newer) is huge; nouveau stays basic there.
+skip nvidia/*/gsp/*

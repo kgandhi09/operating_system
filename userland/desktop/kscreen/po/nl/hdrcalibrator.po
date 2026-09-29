@@ -1,0 +1,144 @@
+# Copyright (C) 2025 This file is copyright:
+# This file is distributed under the same license as the kscreen package.
+#
+# SPDX-FileCopyrightText: 2025, 2026 Freek de Kruijf <freekdekruijf@kde.nl>
+msgid ""
+msgstr ""
+"Project-Id-Version: kscreen\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-05-07 00:46+0000\n"
+"PO-Revision-Date: 2026-02-24 11:49+0100\n"
+"Last-Translator: Freek de Kruijf <freekdekruijf@kde.nl>\n"
+"Language-Team: \n"
+"Language: nl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Lokalize 25.12.2\n"
+
+#, kde-format
+msgctxt "NAME OF TRANSLATORS"
+msgid "Your names"
+msgstr "Freek de Kruijf - 2025-2026"
+
+#, kde-format
+msgctxt "EMAIL OF TRANSLATORS"
+msgid "Your emails"
+msgstr "freekdekruijf@kde.nl"
+
+#: hdrcalibrator.cpp:137 Main.qml:16
+#, kde-format
+msgctxt "@title:window"
+msgid "HDR Calibration"
+msgstr "HDR-kalibratie"
+
+#: Main.qml:188 Main.qml:366
+#, kde-format
+msgctxt "@action:button"
+msgid "Next"
+msgstr "Volgende"
+
+#: Main.qml:195 Main.qml:372
+#, kde-format
+msgctxt "@info accessible description of a push button"
+msgid "Switches to the next page"
+msgstr "Schakelt over naar de volgende pagina"
+
+#: Main.qml:199 Main.qml:376 Main.qml:476
+#, kde-format
+msgctxt "@action:button"
+msgid "Cancel"
+msgstr "Annuleren"
+
+#: Main.qml:202 Main.qml:379 Main.qml:479
+#, kde-format
+msgctxt "@info accessible description of a push button"
+msgid "Cancels the calibration process"
+msgstr "Annuleert het kalibratieproces"
+
+#: Main.qml:211
+#, kde-format
+msgid ""
+"To determine the maximum brightness of the screen, adjust the slider until "
+"the logo is barely visible"
+msgstr ""
+"Om de maximale helderheid van het scherm te bepalen, pas de schuifregelaar "
+"aan totdat het logo nauwelijks zichtbaar is"
+
+#: Main.qml:390
+#, kde-format
+msgid ""
+"Configure how bright “100%” on the normal brightness slider should be. Make "
+"it as bright as you'd ever use it, as long as the HDR image still looks good "
+"and the gradients are smooth.\n"
+"To avoid brightness fluctuations, it's recommended to not exceed the "
+"display's maximum average brightness of %1cd/m²"
+msgstr ""
+"Configureer hoe helder “100%” op de schuifregelaar voor normale helderheid "
+"zou moeten zijn. Maak het zo helder als u het ooit zou gebruiken, zolang de "
+"HDR-afbeelding er nog steeds goed uitziet en het kleurverloop gladjes is.\n"
+"Om helderheidsfluctuaties te vermijden, wordt het aanbevolen niet de "
+"maximale gemiddelde helderheid van %1cd/m² van het scherm te overschrijden."
+
+#: Main.qml:392
+#, kde-format
+msgid ""
+"Configure how bright “100%” on the normal brightness slider should be. Make "
+"it as bright as you'd ever use it, as long as the HDR image still looks good "
+"and the gradients are smooth."
+msgstr ""
+"Configureer hoe helder “100%” op de schuifregelaar voor normale helderheid "
+"zou moeten zijn. Maak het zo helder als u het ooit zou gebruiken, zolang de "
+"HDR-afbeelding er nog steeds goed uitziet en het kleurverloop gladjes is."
+
+#: Main.qml:439
+#, kde-format
+msgid "Maximum luminance: %1cd/m²"
+msgstr "Maximale lichtkracht: %1cd/m²"
+
+#: Main.qml:460
+#, kde-format
+msgid "Reference luminance / paper white: %1cd/m²"
+msgstr "Referentie lichtkracht / papierwit: %1cd/m²"
+
+#: Main.qml:471
+#, kde-format
+msgctxt "@action:checkbox"
+msgid "Assume Windows HDR applications are calibrated for this screen"
+msgstr ""
+"Neem aan dat toepassingen voor Windows HDR gekalibreerd zijn voor dit scherm"
+
+#: Main.qml:483
+#, kde-format
+msgctxt "@action:button"
+msgid "Done"
+msgstr "Gereed"
+
+#: Main.qml:492
+#, kde-format
+msgctxt "@info accessible description of a push button"
+msgid "Finish the calibration process"
+msgstr "Beëindig het kalibratieproces"
+
+#: Main.qml:501
+#, kde-format
+msgid ""
+"Many Windows applications come with their own calibration settings, which "
+"this system wide configuration conflicts with. If this option is set, their "
+"calibration settings will work as expected on this specific display."
+msgstr ""
+"Veel toepassingen voor Windows komen met hun eigen instellingen voor "
+"kalibratie, waarmee deze configuratie systeembreed conflicteert. Als deze "
+"optie is geactiveerd, zullen hun kalibratie-instellingen werken zoals "
+"verwacht op dit specifieke scherm."
+
+#~ msgid ""
+#~ "To determine the maximum average brightness of the screen, adjust the "
+#~ "slider until the logo is barely visible"
+#~ msgstr ""
+#~ "Om de maximale gemiddelde helderheid van het scherm te bepalen, pas de "
+#~ "schuifregelaar aan totdat het logo nauwelijks zichtbaar is"
+
+#~ msgid "Maximum fullscreen luminance: %1cd/m²"
+#~ msgstr "Maximale lichtkracht van volledig scherm: %1cd/m²"

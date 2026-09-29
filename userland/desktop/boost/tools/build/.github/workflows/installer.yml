@@ -1,0 +1,94 @@
+# Copyright 2022-2023 René Ferdinand Rivera Morell
+# Use, modification, and distribution are subject to the
+# Boost Software License, Version 1.0. (See accompanying file LICENSE.txt)
+
+name: "Installer"
+
+on:
+  # Allow manual runs.
+  workflow_dispatch:
+  # Run on publishing of releases.
+  release: { types: [published] }
+  # And run on pushes, for main and release branches.
+  push:
+    branches: ["main", "release", "version/*"]
+    paths-ignore:
+      [
+        ".circleci/**",
+        ".cirrus.yml",
+        ".drone.star",
+        ".semaphore/**",
+        ".travis.yml",
+        "appveyor.yml",
+        "azure-pipelines.yml",
+        ".ci/azp-*.yml",
+      ]
+
+jobs:
+  portable:
+    strategy:
+      matrix:
+        include:
+          - { os: "linux", arch: "x86_64", runson: "ubuntu-latest" }
+          - { os: "linux", arch: "arm64", runson: "ubuntu-24.04-arm" }
+          - { os: "macos", arch: "x86_64", runson: "macos-26-intel" }
+          - { os: "macos", arch: "arm64", runson: "macos-26" }
+          - { os: "freebsd", arch: "x86_64", runson: "ubuntu-latest" }
+          - { os: "freebsd", arch: "aarch64", runson: "ubuntu-latest" }
+    name: ${{ matrix.os }}-${{ matrix.arch }}
+    runs-on: ${{ matrix.runson }}
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@main
+
+      - name: "Start VM"
+        if: ${{ matrix.os == 'freebsd' }}
+        uses: vmactions/freebsd-vm@v1
+        with:
+          arch: ${{ matrix.arch }}
+          usesh: true
+          custom-shell-name: vmsh
+          sync: nfs
+
+      - name: "Bootstrap"
+        if: ${{ matrix.os != 'freebsd' }}
+        run: |
+          uname -a
+          ./bootstrap.sh
+      - name: "Bootstrap (VM)"
+        if: ${{ matrix.os == 'freebsd' }}
+        shell: vmsh {0}
+        run: |
+          uname -a
+          ./bootstrap.sh
+
+      - name: "Build"
+        if: ${{ matrix.os != 'freebsd' }}
+        run: |
+          ./b2 --debug-configuration -d+2 b2-release
+      - name: "Build (VM)"
+        if: ${{ matrix.os == 'freebsd' }}
+        shell: vmsh {0}
+        run: |
+          ./b2 --debug-configuration -d+2 b2-release
+
+      - name: "Package"
+        run: |
+          cd "${{github.workspace}}/.build"
+          name=`ls -d1 b2-*`
+          archive_bz2="${{github.workspace}}/${name}-${{ matrix.os }}-${{ matrix.arch }}.bz2"
+          tar -cv -j -f "${archive_bz2}" "${name}"
+          sha256sum -b "${archive_bz2}" > "${archive_bz2}.sha256sum.txt"
+          ls -laF "${{github.workspace}}"
+
+      - name: "Upload"
+        uses: actions/upload-artifact@main
+        with:
+          name: portable-${{ matrix.os }}-${{ matrix.arch }}
+          path: "${{github.workspace}}/b2-*"
+
+      - name: "Publish"
+        uses: softprops/action-gh-release@master
+        if: ${{ github.event_name == 'release' && github.event.action == 'published' }}
+        with:
+          files: "${{github.workspace}}/b2-*"

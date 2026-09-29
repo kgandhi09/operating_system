@@ -1,0 +1,57 @@
+add_library(boost_redis_examples_main STATIC main.cpp)
+target_link_libraries(boost_redis_examples_main PRIVATE boost_redis_project_options boost_redis_src)
+
+function(boost_redis_make_example EXAMPLE_NAME)
+  set(EXE_NAME "boost_redis_${EXAMPLE_NAME}")
+  add_executable(${EXE_NAME} ${EXAMPLE_NAME}.cpp)
+  target_link_libraries(${EXE_NAME} PRIVATE boost_redis_src)
+  target_link_libraries(${EXE_NAME} PRIVATE boost_redis_project_options)
+  if (ARGN)
+    target_link_libraries(${EXE_NAME} PRIVATE ${ARGN})
+  endif()
+endfunction()
+
+function(boost_redis_make_testable_example EXAMPLE_NAME)
+  set(EXE_NAME "boost_redis_${EXAMPLE_NAME}")
+  boost_redis_make_example(${EXAMPLE_NAME} ${ARGN})
+  add_test(NAME ${EXE_NAME} COMMAND ${EXE_NAME} $ENV{BOOST_REDIS_TEST_SERVER} 6379)
+  add_dependencies(tests ${EXE_NAME})
+endfunction()
+
+boost_redis_make_testable_example(cpp17_intro)
+boost_redis_make_testable_example(cpp17_intro_sync)
+
+boost_redis_make_testable_example(cpp20_intro        boost_redis_examples_main)
+boost_redis_make_testable_example(cpp20_containers   boost_redis_examples_main)
+boost_redis_make_testable_example(cpp20_json         boost_redis_examples_main Boost::json Boost::container_hash)
+boost_redis_make_testable_example(cpp20_unix_sockets boost_redis_examples_main)
+boost_redis_make_testable_example(cpp20_timeouts     boost_redis_examples_main)
+boost_redis_make_testable_example(cpp20_sentinel     boost_redis_examples_main)
+
+boost_redis_make_example(cpp20_subscriber  boost_redis_examples_main)
+boost_redis_make_example(cpp20_streams     boost_redis_examples_main)
+boost_redis_make_example(cpp20_echo_server boost_redis_examples_main)
+boost_redis_make_example(cpp20_intro_tls   boost_redis_examples_main)
+
+# We test the protobuf example only on gcc.
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  find_package(Protobuf)
+  if (Protobuf_FOUND)
+    protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS person.proto)
+    boost_redis_make_testable_example(cpp20_protobuf boost_redis_examples_main ${Protobuf_LIBRARIES})
+    target_sources(cpp20_protobuf PUBLIC ${PROTO_SRCS} ${PROTO_HDRS})
+    target_include_directories(cpp20_protobuf PUBLIC ${Protobuf_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR})
+  endif()
+endif()
+
+if (NOT MSVC)
+  boost_redis_make_example(cpp20_chat_room boost_redis_examples_main)
+endif()
+
+# We build and test the spdlog integration example only if the library is found
+find_package(spdlog)
+if (spdlog_FOUND)
+  boost_redis_make_testable_example(cpp17_spdlog spdlog::spdlog)
+else()
+  message(STATUS "Skipping the spdlog example because the spdlog package couldn't be found")
+endif()

@@ -8,3 +8,9 @@ driver ath10k_pci
 driver ath11k_pci
 driver mwifiex_sdio
 driver mwifiex_pcie
+
+# GPUs: Qualcomm Adreno (msm), AMD, NVIDIA (nouveau, without GSP).
+driver msm
+driver amdgpu
+driver nouveau
+skip nvidia/*/gsp/*

@@ -1,0 +1,890 @@
+# translation of kcm_cellular_network.po to Slovak
+# Roman Paholík <wizzardsk@gmail.com>, 2021.
+# Ferdinand Galko <galko.ferdinand@gmail.com>, 2023.
+msgid ""
+msgstr ""
+"Project-Id-Version: kcm_cellular_network\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-02-18 00:48+0000\n"
+"PO-Revision-Date: 2023-08-14 17:25+0200\n"
+"Last-Translator: Ferdinand Galko <galko.ferdinand@gmail.com>\n"
+"Language-Team: Slovak <opensuse-translation@opensuse.org>\n"
+"Language: sk\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+"X-Generator: Lokalize 21.12.3\n"
+
+#: ui/AvailableNetworks.qml:18
+#, kde-format
+msgid "Available Networks"
+msgstr "Dostupné siete"
+
+#: ui/AvailableNetworks.qml:42
+#, kde-format
+msgid "none"
+msgstr "žiadne"
+
+#: ui/AvailableNetworks.qml:42
+#, kde-format
+msgid "Current operator: %1"
+msgstr "Aktuálny operátor: %1"
+
+#: ui/AvailableNetworks.qml:45
+#, kde-format
+msgid "Scan For Networks"
+msgstr "Vyhľadávanie sietí"
+
+#: ui/EditProfilePage.qml:15
+#, kde-format
+msgid "New APN"
+msgstr "Nové APN"
+
+#: ui/EditProfilePage.qml:15
+#, kde-format
+msgid "Edit APN"
+msgstr "Upraviť APN"
+
+#: ui/EditProfilePage.qml:37
+#, kde-format
+msgid "Name"
+msgstr "Názov"
+
+#: ui/EditProfilePage.qml:45
+#, kde-format
+msgid "APN"
+msgstr "APN"
+
+#: ui/EditProfilePage.qml:53
+#, kde-format
+msgid "Username"
+msgstr "Používateľské meno"
+
+#: ui/EditProfilePage.qml:61
+#, kde-format
+msgid "Password"
+msgstr "Heslo"
+
+#: ui/EditProfilePage.qml:69
+#, kde-format
+msgid "Network type"
+msgstr "Typ siete"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "4G/3G/2G"
+msgstr "4G/3G/2G"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "3G/2G"
+msgstr "3G/2G"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "2G"
+msgstr "2G"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "Only 4G"
+msgstr "Iba 4G"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "Only 3G"
+msgstr "Iba 3G"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "Only 2G"
+msgstr "Iba 2G"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "Any"
+msgstr "Čokoľvek"
+
+#: ui/EditProfilePage.qml:82
+#, kde-format
+msgid "Save profile"
+msgstr "Uložiť profil"
+
+#: ui/main.qml:68
+#, kde-format
+msgid "Modem not available"
+msgstr "Modem nie je dostupný"
+
+#: ui/main.qml:87
+#, kde-format
+msgid "Mobile data"
+msgstr "Mobilné dáta"
+
+#: ui/main.qml:92
+#, kde-format
+msgid "No SIM is inserted."
+msgstr "Nie je vložená žiadna SIM."
+
+#: ui/main.qml:94
+#, kde-format
+msgid "Mobile data is not available with this modem."
+msgstr "S týmto modemom nie sú k dispozícii mobilné dáta."
+
+#: ui/main.qml:96
+#, kde-format
+msgid "An APN needs to be configured to have mobile data."
+msgstr "Na využívanie mobilných dát je potrebné nakonfigurovať APN."
+
+#: ui/main.qml:98
+#, kde-format
+msgid "Whether mobile data is enabled."
+msgstr "Či sú mobilné dáta povolené."
+
+#: ui/main.qml:129
+#, kde-format
+msgid "Data Usage"
+msgstr "Využitie dát"
+
+#: ui/main.qml:130
+#, kde-format
+msgid "View data usage."
+msgstr "Zobraziť využívanie dát."
+
+#: ui/main.qml:138
+#, kde-format
+msgid "SIM"
+msgid_plural "SIMs"
+msgstr[0] "SIM"
+msgstr[1] "SIM"
+msgstr[2] "SIM"
+
+#: ui/main.qml:159
+#, kde-format
+msgid "SIM %1"
+msgstr "SIM %1"
+
+#: ui/main.qml:160
+#, kde-format
+msgid "View SIM %1 details."
+msgstr "Zobraziť podrobnosti SIM %1."
+
+#: ui/ModemPage.qml:22
+#, kde-format
+msgid "Modem %1"
+msgstr "Modem %1"
+
+#: ui/ModemPage.qml:32
+#, kde-format
+msgid "Modem Control"
+msgstr "Ovládanie modemu"
+
+#: ui/ModemPage.qml:38
+#, kde-format
+msgid "Force Modem Restart"
+msgstr "Vynútiť reštart modemu"
+
+#: ui/ModemPage.qml:44 ui/SimPage.qml:112
+#, kde-format
+msgid "Modem Details"
+msgstr "Podrobnosti modemu"
+
+#: ui/ModemPage.qml:57
+#, kde-format
+msgid "Access Technologies"
+msgstr "Prístupové technológie"
+
+#: ui/ModemPage.qml:79
+#, kde-format
+msgid "IMEI"
+msgstr "IMEI"
+
+#: ui/ModemPage.qml:87
+#, kde-format
+msgid "Enabled"
+msgstr "Povolené"
+
+#: ui/ModemPage.qml:95
+#, kde-format
+msgid "Manufacturer"
+msgstr "Výrobca"
+
+#: ui/ModemPage.qml:103
+#, kde-format
+msgid "Model"
+msgstr "Model"
+
+#: ui/ModemPage.qml:118
+#, kde-format
+msgid "Owned Numbers:"
+msgstr "Vlastnené čísla:"
+
+#: ui/ModemPage.qml:141
+#, kde-format
+msgid "Revision"
+msgstr "Revízia"
+
+#: ui/ModemPage.qml:149
+#, kde-format
+msgid "Signal Quality"
+msgstr "Kvalita signálu"
+
+#: ui/ModemPage.qml:157
+#, kde-format
+msgid "State"
+msgstr "Stav"
+
+#: ui/ModemPage.qml:165
+#, kde-format
+msgid "Failure Reason"
+msgstr "Dôvod zlyhania"
+
+#: ui/ModemPage.qml:173
+#, kde-format
+msgid "Registration State"
+msgstr "Stav registrácie"
+
+#: ui/ModemPage.qml:181
+#, kde-format
+msgid "Firmware Version"
+msgstr "Verzia firmvéru"
+
+#: ui/ModemPage.qml:189
+#, kde-format
+msgid "Interface Name"
+msgstr "Názov rozhrania"
+
+#: ui/ModemPage.qml:197
+#, kde-format
+msgid "Metered"
+msgstr "Merané"
+
+#: ui/ModemPage.qml:205
+#, kde-format
+msgid "Active NetworkManager Connection"
+msgstr "Aktívne pripojenie NetworkManager"
+
+#: ui/ModemPage.qml:213
+#, kde-format
+msgid "Device"
+msgstr "Zariadenie"
+
+#: ui/ModemPage.qml:221
+#, kde-format
+msgid "Device ID"
+msgstr "ID zariadenia"
+
+#: ui/ModemPage.qml:236
+#, kde-format
+msgid "Drivers:"
+msgstr "Ovládače:"
+
+#: ui/ModemPage.qml:258
+#, kde-format
+msgid "Plugin"
+msgstr "Zásuvný modul"
+
+#: ui/ModemPage.qml:266
+#, kde-format
+msgid "Power State"
+msgstr "Stav napájania"
+
+#: ui/ModemPage.qml:274
+#, kde-format
+msgid "SIM Path"
+msgstr "Cesta SIM"
+
+#: ui/ProfileList.qml:25
+#, kde-format
+msgid "APNs"
+msgstr "APN"
+
+#: ui/ProfileList.qml:28 ui/ProfileList.qml:99
+#, kde-format
+msgid "Edit"
+msgstr "Upraviť"
+
+#: ui/ProfileList.qml:55
+#, kde-format
+msgid ""
+"Unable to autodetect connection settings for your carrier. Please find your "
+"carrier's APN settings by either contacting support or searching online."
+msgstr ""
+"Nie je možné automaticky zistiť nastavenia pripojenia pre vášho operátora."
+"Nastavenia APN vášho operátora zistíte tak, že kontaktujete podporu alebo "
+"ich vyhľadáte na internete."
+
+#: ui/ProfileList.qml:66
+#, kde-format
+msgid "APN List"
+msgstr "Zoznam APN"
+
+#: ui/ProfileList.qml:119
+#, kde-format
+msgid "Delete"
+msgstr "Vymazať"
+
+#: ui/ProfileList.qml:128
+#, kde-format
+msgid "Add APN"
+msgstr "Pridať APN"
+
+#: ui/ProfileList.qml:136
+#, kde-format
+msgid "Automatically detect APN"
+msgstr "Automatické zisťovanie APN"
+
+#: ui/SimLockPage.qml:21 ui/SimPage.qml:101
+#, kde-format
+msgid "SIM Lock"
+msgstr "Zámok SIM"
+
+#: ui/SimLockPage.qml:40
+#, kde-format
+msgid "SIM is locked"
+msgstr "SIM je uzamknutá"
+
+#: ui/SimLockPage.qml:41
+#, kde-format
+msgid "In order to use this SIM, you must first unlock it."
+msgstr "Ak chcete túto SIM používať, musíte ju najprv odomknúť."
+
+#: ui/SimLockPage.qml:63
+#, kde-format
+msgid "SIM is not locked"
+msgstr "SIM nie je uzamknutá"
+
+#: ui/SimLockPage.qml:64
+#, kde-format
+msgid ""
+"You can lock your SIM to require a set PIN code for phone calls and mobile "
+"data."
+msgstr ""
+"SIM môžete uzamknúť tak, aby vyžadovala nastavený kód PIN pre telefónne "
+"hovory a mobilné dáta."
+
+#: ui/SimLockPage.qml:68
+#, kde-format
+msgid "Lock SIM"
+msgstr "Zamknúť SIM"
+
+#: ui/SimLockPage.qml:80
+#, kde-format
+msgid "Disable SIM Lock"
+msgstr "Zakázať zámok SIM"
+
+#: ui/SimLockPage.qml:81
+#, kde-format
+msgid "Disable the SIM lock feature and remove the passcode on the SIM."
+msgstr "Zakázať funkciu zámku SIM a odstrániť prístupový kód na SIM."
+
+#: ui/SimLockPage.qml:93
+#, kde-format
+msgid "Change PIN"
+msgstr "Zmeniť PIN"
+
+#: ui/SimLockPage.qml:94
+#, kde-format
+msgid "Change the passcode set on the SIM."
+msgstr "Zmeniť prístupový kód nastavený na SIM."
+
+#: ui/SimLockPage.qml:108
+#, kde-format
+msgid "Unlock SIM"
+msgstr "Odomknúť SIM"
+
+#: ui/SimLockPage.qml:116
+#, kde-format
+msgid "Attempts left: %1"
+msgstr "Zostávajúce pokusy: %1"
+
+#: ui/SimLockPage.qml:121
+#, kde-format
+msgid "Enter PIN"
+msgstr "Zadať PIN"
+
+#: ui/SimLockPage.qml:129
+#, kde-format
+msgid "Change SIM PIN"
+msgstr "Zmeniť PIN pre SIM"
+
+#: ui/SimLockPage.qml:148 ui/SimLockPage.qml:213
+#, kde-format
+msgid "PINs don't match!"
+msgstr "PIN kódy sa nezhodujú!"
+
+#: ui/SimLockPage.qml:154 ui/SimLockPage.qml:219
+#, kde-format
+msgid "PINs must be between 4 and 8 digits!"
+msgstr "PIN musí mať 4 až 8 číslic!"
+
+#: ui/SimLockPage.qml:159 ui/SimLockPage.qml:186
+#, kde-format
+msgid "Current PIN"
+msgstr "Aktuálny PIN"
+
+#: ui/SimLockPage.qml:164 ui/SimLockPage.qml:224
+#, kde-format
+msgid "New PIN"
+msgstr "Nový PIN"
+
+#: ui/SimLockPage.qml:169 ui/SimLockPage.qml:229
+#, kde-format
+msgid "Confirm PIN"
+msgstr "Potvrdiť PIN"
+
+#: ui/SimLockPage.qml:177
+#, kde-format
+msgid "Remove SIM PIN"
+msgstr "Odstrániť PIN pre SIM"
+
+#: ui/SimLockPage.qml:194
+#, kde-format
+msgid "Add SIM PIN"
+msgstr "Pridať PIN pre SIM"
+
+#: ui/SimPage.qml:34
+#, kde-format
+msgctxt "@title"
+msgid "SIM %1"
+msgstr "SIM %1"
+
+#: ui/SimPage.qml:44
+#, kde-format
+msgid ""
+"This SIM slot is empty, a SIM card needs to be inserted in order for it to "
+"be used."
+msgstr ""
+"Tento slot na SIM kartu je prázdny, na jeho použitie je potrebné vložiť "
+"kartu SIM."
+
+#: ui/SimPage.qml:59
+#, kde-format
+msgid "Roaming"
+msgstr "Roaming"
+
+#: ui/SimPage.qml:60
+#, kde-format
+msgid "Allow mobile data when on a roaming network."
+msgstr "Registrované v roamingovej sieti."
+
+#: ui/SimPage.qml:79
+#, kde-format
+msgid "Modify APNs"
+msgstr "Upraviť APN"
+
+#: ui/SimPage.qml:80
+#, kde-format
+msgid "Configure access point names for your carrier."
+msgstr "Konfigurácia názvov prístupových bodov pre vášho operátora."
+
+#: ui/SimPage.qml:90
+#, kde-format
+msgid "Networks"
+msgstr "Siete"
+
+#: ui/SimPage.qml:91
+#, kde-format
+msgid "Select a network operator."
+msgstr "Vybrať sieťového operátora."
+
+#: ui/SimPage.qml:102
+#, kde-format
+msgid "Modify SIM lock settings."
+msgstr "Upraviť nastavenia zámku SIM."
+
+#: ui/SimPage.qml:113
+#, kde-format
+msgid "View the details of the modem this SIM is connected to."
+msgstr "Zobraziť podrobnosti o modeme, ku ktorému je táto SIM pripojená."
+
+#: ui/SimPage.qml:119
+#, kde-format
+msgid "SIM Details"
+msgstr "Podrobnosti SIM"
+
+#: ui/SimPage.qml:125
+#, kde-format
+msgid "Locked"
+msgstr "Zamknuté"
+
+#: ui/SimPage.qml:126
+#, kde-format
+msgid "Yes"
+msgstr "Áno"
+
+#: ui/SimPage.qml:126
+#, kde-format
+msgid "No"
+msgstr "Nie"
+
+#: ui/SimPage.qml:133
+#, kde-format
+msgid "IMSI"
+msgstr "IMSI"
+
+#: ui/SimPage.qml:141
+#, kde-format
+msgid "EID"
+msgstr "EID"
+
+#: ui/SimPage.qml:149
+#, kde-format
+msgid "Operator Code (modem)"
+msgstr "Kód operátora (modem)"
+
+#: ui/SimPage.qml:157
+#, kde-format
+msgid "Operator Name (modem)"
+msgstr "Názvov operátora (modem)"
+
+#: ui/SimPage.qml:165
+#, kde-format
+msgid "Operator Code (provided by SIM)"
+msgstr "Kód operátora (poskytnutý SIM)"
+
+#: ui/SimPage.qml:173
+#, kde-format
+msgid "Operator Name (provided by SIM)"
+msgstr "Názvov operátora (poskytnutý SIM)"
+
+#: ui/SimPage.qml:181
+#, kde-format
+msgid "SIM ID"
+msgstr "SIM ID"
+
+#: ui/SimPage.qml:197
+#, kde-format
+msgid "Emergency Numbers"
+msgstr "Čísla tiesňového volania"
+
+#~ msgid "Error resetting the modem: %1"
+#~ msgstr "Chyba pri resetovaní modemu: %1"
+
+#~ msgid "Error updating connection settings for %1: %2."
+#~ msgstr "Chyba pri aktualizácii nastavení pripojenia pre %1: %2."
+
+#~ msgid "Error activating connection: %1"
+#~ msgstr "Chyba pri aktivácii pripojenia: %1"
+
+#~ msgid "Error adding connection: %1"
+#~ msgstr "Chyba pri pridávaní pripojenia: %1"
+
+#~ msgid "Error removing connection: %1"
+#~ msgstr "Chyba pri odstraňovaní pripojenia: %1"
+
+#~ msgid "Unknown"
+#~ msgstr "Neznáme"
+
+#~ msgid "Unmanaged"
+#~ msgstr "Nespravované"
+
+#~ msgid "Unavailable"
+#~ msgstr "Nedostupné"
+
+#~ msgid "Disconnected"
+#~ msgstr "Odpojené"
+
+#~ msgid "Preparing"
+#~ msgstr "Príprava"
+
+#~ msgid "ConfiguringHardware"
+#~ msgstr "KonfiguráciaHardvéru"
+
+#~ msgid "NeedAuth"
+#~ msgstr "PotrebaOverenia"
+
+#~ msgid "ConfiguringIp"
+#~ msgstr "KonfiguáciaIp"
+
+#~ msgid "CheckingIp"
+#~ msgstr "KontrolaIp"
+
+#~ msgid "WaitingForSecondaries"
+#~ msgstr "ČakanieNaSekundárne"
+
+#~ msgid "Activated"
+#~ msgstr "Aktivované"
+
+#~ msgid "Deactivating"
+#~ msgstr "Deaktivovanie"
+
+#~ msgid "Failed"
+#~ msgstr "Neúspešné"
+
+#~ msgid "POTS"
+#~ msgstr "POTS"
+
+#~ msgid "GSM"
+#~ msgstr "GSM"
+
+#~ msgid "GSM Compact"
+#~ msgstr "GSM Compact"
+
+#~ msgid "GPRS"
+#~ msgstr "GPRS"
+
+#~ msgid "EDGE"
+#~ msgstr "EDGE"
+
+#~ msgid "UMTS"
+#~ msgstr "UMTS"
+
+#~ msgid "HSDPA"
+#~ msgstr "HSDPA"
+
+#~ msgid "HSUPA"
+#~ msgstr "HSUPA"
+
+#~ msgid "HSPA"
+#~ msgstr "HSPA"
+
+#~ msgid "HSPA+"
+#~ msgstr "HSPA+"
+
+#~ msgid "CDMA2000 1xRTT"
+#~ msgstr "CDMA2000 1xRTT"
+
+#~ msgid "CDMA2000 EVDO-0"
+#~ msgstr "CDMA2000 EVDO-0"
+
+#~ msgid "CDMA2000 EVDO-A"
+#~ msgstr "CDMA2000 EVDO-A"
+
+#~ msgid "CDMA2000 EVDO-B"
+#~ msgstr "CDMA2000 EVDO-B"
+
+#~ msgid "LTE"
+#~ msgstr "LTE"
+
+#~ msgid "5GNR"
+#~ msgstr "5GNR"
+
+#~ msgid "Off"
+#~ msgstr "Vypnuté"
+
+#~ msgid "Low-power mode"
+#~ msgstr "Režim nízkej spotreby"
+
+#~ msgid "Full power mode"
+#~ msgstr "Režim plného výkonu"
+
+#~ msgid "Initializing"
+#~ msgstr "Inicializuje sa"
+
+#~ msgid "Disabled"
+#~ msgstr "Zakázané"
+
+#~ msgid "Disabling"
+#~ msgstr "Zakazuje sa"
+
+#~ msgid "Enabling"
+#~ msgstr "Povoľuje sa"
+
+#~ msgid "Searching for network provider"
+#~ msgstr "Vyhľadávanie poskytovateľa siete"
+
+#~ msgid "Registered with network provider"
+#~ msgstr "Registrované u poskytovateľa siete"
+
+#~ msgid "Disconnecting"
+#~ msgstr "Odpája sa"
+
+#~ msgid "Connecting"
+#~ msgstr "Pripájanie"
+
+#~ msgid "Connected"
+#~ msgstr "Pripojené"
+
+#~ msgid "No error."
+#~ msgstr "Žiadna chyba."
+
+#~ msgid "Unknown error."
+#~ msgstr "Neznáma chyba."
+
+#~ msgid "SIM is required but missing."
+#~ msgstr "Vyžaduje sa SIM, ale chýba."
+
+#~ msgid "SIM is available but unusable."
+#~ msgstr "SIM je dostupná, ale nepoužiteľná."
+
+#, fuzzy
+#~ msgid "eSIM is not initialized."
+#~ msgstr "SIM nie je uzamknutá"
+
+#~ msgid "Not registered, not searching for new operator to register."
+#~ msgstr "Nie je zaregistrované, nehľadá nového operátora na registráciu."
+
+#~ msgid "Registered on home network."
+#~ msgstr "Registrované v domácej sieti."
+
+#~ msgid "Not registered, searching for new operator to register with."
+#~ msgstr "Nie je zaregistrované, hľadá nového operátora na registráciu."
+
+#~ msgid "Registration denied."
+#~ msgstr "Registrácia zamietnutá."
+
+#~ msgid "Unknown registration status."
+#~ msgstr "Neznámy stav registrácie."
+
+#~ msgid "Registered for \"SMS only\", on home network."
+#~ msgstr "Registrované pre \"iba SMS\", v domácej sieti."
+
+#~ msgid "Registered for \"SMS only\", roaming network."
+#~ msgstr "Registrované pre \"iba SMS\", roamingová sieť."
+
+#~ msgid "Emergency services only."
+#~ msgstr "Len núdzové služby."
+
+#~ msgid "Registered for \"CSFB not preferred\", home network."
+#~ msgstr "Registrované pre \"CSFB sa nepreferuje\", v domácej sieti."
+
+#~ msgid "Registered for \"CSFB not preferred\", roaming network."
+#~ msgstr "Registrované pre \"CSFB sa nepreferuje\", roamingová sieť."
+
+#~ msgid "Attached for access to Restricted Local Operator Services."
+#~ msgstr "Pripojené pre prístup k službám obmedzeného lokálneho operátora."
+
+#~ msgid "Scanning networks failed: %1"
+#~ msgstr "Skenovanie sietí zlyhalo: %1"
+
+#~ msgid "GuessYes"
+#~ msgstr "Hádam áno"
+
+#~ msgid "GuessNo"
+#~ msgstr "Hádam nie"
+
+#~ msgid "3G"
+#~ msgstr "3G"
+
+#~ msgid "4G"
+#~ msgstr "4G"
+
+#~ msgid "5G"
+#~ msgstr "5G"
+
+#~ msgid "Lock reason unknown."
+#~ msgstr "Dôvod zamknutia neznámy."
+
+#~ msgid "Modem is unlocked."
+#~ msgstr "Modem je odomknutý."
+
+#~ msgid "SIM requires the PIN code."
+#~ msgstr "SIM vyžaduje PIN kód."
+
+#~ msgid "SIM requires the PIN2 code."
+#~ msgstr "SIM vyžaduje PIN2 kód."
+
+#~ msgid "SIM requires the PUK code."
+#~ msgstr "SIM vyžaduje PUK kód."
+
+#~ msgid "SIM requires the PUK2 code."
+#~ msgstr "SIM vyžaduje PUK2 kód."
+
+#~ msgid "Modem requires the service provider PIN code."
+#~ msgstr "Modem vyžaduje PIN kód poskytovateľa služby."
+
+#~ msgid "Modem requires the service provider PUK code."
+#~ msgstr "Modem vyžaduje PUK kód poskytovateľa služby."
+
+#~ msgid "Modem requires the network PIN code."
+#~ msgstr "Modem vyžaduje sieťový PIN kód."
+
+#~ msgid "Modem requires the network PUK code."
+#~ msgstr "Modem vyžaduje sieťový PUK kód."
+
+#~ msgid "Modem requires the PIN code."
+#~ msgstr "Modem vyžaduje PIN kód."
+
+#~ msgid "Modem requires the corporate PIN code."
+#~ msgstr "Modem vyžaduje korporátny PIN kód."
+
+#~ msgid "Modem requires the corporate PUK code."
+#~ msgstr "Modem vyžaduje korporátny PUK kód."
+
+#~ msgid "Modem requires the PH-FSIM PIN code."
+#~ msgstr "Modem vyžaduje PH-FSIM PIN kód."
+
+#~ msgid "Modem requires the PH-FSIM PUK code."
+#~ msgstr "Modem vyžaduje PH-FSIM PUK kód."
+
+#~ msgid "Modem requires the network subset PIN code."
+#~ msgstr "Modem vyžaduje PIN kód sieťovej podmnožiny."
+
+#~ msgid "Modem requires the network subset PUK code."
+#~ msgstr "Modem vyžaduje PUK kód sieťovej podmnožiny."
+
+#~ msgid "(empty)"
+#~ msgstr "(prázdne)"
+
+#~ msgid "Error toggling SIM lock: %1"
+#~ msgstr "Chyba pri prepínaní zámku SIM: %1"
+
+#~ msgid "Error changing the PIN: %1"
+#~ msgstr "Chyba pri zmene PIN: %1"
+
+#~ msgid "Error sending the PIN: %1"
+#~ msgstr "Chyba pri odosielaní PIN: %1"
+
+#~ msgid "Error sending the PUK: %1"
+#~ msgstr "Chyba pri odosielaní PUK: %1"
+
+#~ msgid "Data Roaming"
+#~ msgstr "Dátový roaming"
+
+#~ msgid "Allow your device to use networks other than your carrier."
+#~ msgstr ""
+#~ "Povoľte svojmu zariadeniu používať iné siete ako siete vášho operátora."
+
+#~ msgid "No APNs configured"
+#~ msgstr "Nie sú nastavené žiadne APN"
+
+#~ msgid "Add Connection"
+#~ msgstr "Pridať pripojenie"
+
+#~ msgid "SIMs"
+#~ msgstr "SIM"
+
+#~ msgid "Modem Restart"
+#~ msgstr "Reštart modemu"
+
+#, fuzzy
+#~ msgctxt "NAME OF TRANSLATORS"
+#~ msgid "Your names"
+#~ msgstr "Roman Paholík"
+
+#, fuzzy
+#~ msgctxt "EMAIL OF TRANSLATORS"
+#~ msgid "Your emails"
+#~ msgstr "wizzardsk@gmail.com"
+
+#~ msgid "Cellular Networks"
+#~ msgstr "Mobilné siete"
+
+#~ msgid "Devin Lin"
+#~ msgstr "Devin Lin"
+
+#~ msgid "Martin Kacej"
+#~ msgstr "Martin Kacej"
+
+#, fuzzy
+#~ msgid "Modem State"
+#~ msgstr "Výkonový stav"
+
+#, fuzzy
+#~ msgid "On"
+#~ msgstr "Zapnuté"
+
+#~ msgid "Enabled:"
+#~ msgstr "Povolené:"
+
+#~ msgid "Modem:"
+#~ msgstr "Modem:"
+
+#, fuzzy
+#~ msgid "Locked:"
+#~ msgstr "Zamknuté"
+
+#, fuzzy
+#~ msgid "Change PIN:"
+#~ msgstr "Zmeniť PIN"

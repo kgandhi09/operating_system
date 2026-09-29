@@ -1,0 +1,221 @@
+# Sources of the desktop stack (KDE Plasma and what it needs), fetched by
+# scripts/update-desktop-sources.sh into userland/desktop/<name>.
+#
+# <name>  <version>  <url, {v} = version; git+<repo>#<tag>>  <sha256 or commit>
+
+# ---- Build tools (run on the build host)
+meson               1.12.1    https://github.com/mesonbuild/meson/releases/download/{v}/meson-{v}.tar.gz  ab0a6ca09f8ef70c564c8241fb5a23957886a0b53fb58412b5e07eaf07dba743
+
+# ---- Phase A: graphics, input, fonts, X11 compatibility
+libpciaccess  0.19  https://xorg.freedesktop.org/releases/individual/lib/libpciaccess-{v}.tar.xz  3c55aa86c82e54a4e3109786f0463530d53b36b6d1cfd14616454f985dd2aa43
+libdrm  2.4.134  https://dri.freedesktop.org/libdrm/libdrm-{v}.tar.xz  ac5e74d157830eb8bee44c6a6bf3ad49774ef0dd2a72bdad74a8f20308b52a95
+zstd  1.5.7  https://github.com/facebook/zstd/releases/download/v{v}/zstd-{v}.tar.gz  eb33e51f49a15e023950cd7825ca74a4a2b43db8354825ac24fc1b7ee09e6fa3
+wayland  1.26.0  https://gitlab.freedesktop.org/-/project/121/uploads/5f5d2e19a230e8b8250d9a7c2f280846/wayland-{v}.tar.xz  64176eaa46e4969903e286f8e5ef8331affc17fdf03ac9b58381d2b23162b7a3
+wayland-protocols  1.49  https://gitlab.freedesktop.org/-/project/2891/uploads/7ed597f0cad076a17fe36f8860596f8c/wayland-protocols-{v}.tar.xz  ec4c8f74942d6dff7ace8b4ce4764f0ef9ff618a935d974ea77edee2ad240b14
+xorgproto  2025.1  https://xorg.freedesktop.org/releases/individual/proto/xorgproto-{v}.tar.xz  56898c716c0578df8a2d828c9c3e5c528277705c0484381a81960fe1a67668e8
+xcb-proto  1.17.0  https://xorg.freedesktop.org/releases/individual/proto/xcb-proto-{v}.tar.xz  2c1bacd2110f4799f74de6ebb714b94cf6f80fb112316b1219480fd22562148c
+libXau  1.0.12  https://xorg.freedesktop.org/releases/individual/lib/libXau-{v}.tar.xz  74d0e4dfa3d39ad8939e99bda37f5967aba528211076828464d2777d477fc0fb
+libXdmcp  1.1.5  https://xorg.freedesktop.org/releases/individual/lib/libXdmcp-{v}.tar.xz  d8a5222828c3adab70adf69a5583f1d32eb5ece04304f7f8392b6a353aa2228c
+libxcb  1.17.0  https://xorg.freedesktop.org/releases/individual/lib/libxcb-{v}.tar.xz  599ebf9996710fea71622e6e184f3a8ad5b43d0e5fa8c4e407123c88a59a6d55
+xtrans  1.6.0  https://xorg.freedesktop.org/releases/individual/lib/xtrans-{v}.tar.xz  faafea166bf2451a173d9d593352940ec6404145c5d1da5c213423ce4d359e92
+libX11  1.8.13  https://xorg.freedesktop.org/releases/individual/lib/libX11-{v}.tar.xz  69606f485c2c07c14ef64f75b7bb326d48587af33795d9ab3e607c0b5f94f11c
+libXext  1.3.7  https://xorg.freedesktop.org/releases/individual/lib/libXext-{v}.tar.xz  6c643c7035cdacf67afd68f25d01b90ef889d546c9fcd7c0adf7c2cf91e3a32d
+libXfixes  6.0.2  https://xorg.freedesktop.org/releases/individual/lib/libXfixes-{v}.tar.xz  39f115d72d9c5f8111e4684164d3d68cc1fd21f9b27ff2401b08fddfc0f409ba
+libXrender  0.9.12  https://xorg.freedesktop.org/releases/individual/lib/libXrender-{v}.tar.xz  b832128da48b39c8d608224481743403ad1691bf4e554e4be9c174df171d1b97
+libXrandr  1.5.5  https://xorg.freedesktop.org/releases/individual/lib/libXrandr-{v}.tar.xz  72b922c2e765434e9e9f0960148070bd4504b288263e2868a4ccce1b7cf2767a
+libXi  1.8.3  https://xorg.freedesktop.org/releases/individual/lib/libXi-{v}.tar.xz  7ad60056f01af4f786cfe93b3a7707447711626fc8da2637bec71a90409babe5
+libXcursor  1.2.3  https://xorg.freedesktop.org/releases/individual/lib/libXcursor-{v}.tar.xz  fde9402dd4cfe79da71e2d96bb980afc5e6ff4f8a7d74c159e1966afb2b2c2c0
+libXdamage  1.1.7  https://xorg.freedesktop.org/releases/individual/lib/libXdamage-{v}.tar.xz  127067f521d3ee467b97bcb145aeba1078e2454d448e8748eb984d5b397bde24
+libXcomposite  0.4.7  https://xorg.freedesktop.org/releases/individual/lib/libXcomposite-{v}.tar.xz  8bdf310967f484503fa51714cf97bff0723d9b673e0eecbf92b3f97c060c8ccb
+libXtst  1.2.5  https://xorg.freedesktop.org/releases/individual/lib/libXtst-{v}.tar.xz  b50d4c25b97009a744706c1039c598f4d8e64910c9fde381994e1cae235d9242
+libXinerama  1.1.6  https://xorg.freedesktop.org/releases/individual/lib/libXinerama-{v}.tar.xz  d00fc1599c303dc5cbc122b8068bdc7405d6fcb19060f4597fc51bd3a8be51d7
+libXxf86vm  1.1.7  https://xorg.freedesktop.org/releases/individual/lib/libXxf86vm-{v}.tar.xz  ae50c0f669e0af5a67cc4cd0f54f21d64a64d2660af883e80e95d3fe51b945d8
+libxkbfile  1.2.0  https://xorg.freedesktop.org/releases/individual/lib/libxkbfile-{v}.tar.xz  7f71884e5faf56fb0e823f3848599cf9b5a9afce51c90982baeb64f635233ebf
+libfontenc  1.1.9  https://xorg.freedesktop.org/releases/individual/lib/libfontenc-{v}.tar.xz  9d8392705cb10803d5fe1d27d236cbab3f664e26841ce01916bbbe430cf273e2
+libXfont2  2.0.9  https://xorg.freedesktop.org/releases/individual/lib/libXfont2-{v}.tar.xz  f042a370666815e7b941e9b7019024755bd1c6c2954afbfa515af378251799e2
+libxshmfence  1.3.3  https://xorg.freedesktop.org/releases/individual/lib/libxshmfence-{v}.tar.xz  d4a4df096aba96fea02c029ee3a44e11a47eb7f7213c1a729be83e85ec3fde10
+libxcvt  0.1.3  https://xorg.freedesktop.org/releases/individual/lib/libxcvt-{v}.tar.xz  a929998a8767de7dfa36d6da4751cdbeef34ed630714f2f4a767b351f2442e01
+libICE  1.1.2  https://xorg.freedesktop.org/releases/individual/lib/libICE-{v}.tar.xz  974e4ed414225eb3c716985df9709f4da8d22a67a2890066bc6dfc89ad298625
+libSM  1.2.6  https://xorg.freedesktop.org/releases/individual/lib/libSM-{v}.tar.xz  be7c0abdb15cbfd29ac62573c1c82e877f9d4047ad15321e7ea97d1e43d835be
+xcb-util  0.4.1  https://xcb.freedesktop.org/dist/xcb-util-{v}.tar.xz  5abe3bbbd8e54f0fa3ec945291b7e8fa8cfd3cccc43718f8758430f94126e512
+xcb-util-wm  0.4.2  https://xcb.freedesktop.org/dist/xcb-util-wm-{v}.tar.xz  62c34e21d06264687faea7edbf63632c9f04d55e72114aa4a57bb95e4f888a0b
+xcb-util-image  0.4.1  https://xcb.freedesktop.org/dist/xcb-util-image-{v}.tar.xz  ccad8ee5dadb1271fd4727ad14d9bd77a64e505608766c4e98267d9aede40d3d
+xcb-util-keysyms  0.4.1  https://xcb.freedesktop.org/dist/xcb-util-keysyms-{v}.tar.xz  7c260a5294412aed429df1da2f8afd3bd07b7cba3fec772fba15a613a6d5c638
+xcb-util-renderutil  0.3.10  https://xcb.freedesktop.org/dist/xcb-util-renderutil-{v}.tar.xz  3e15d4f0e22d8ddbfbb9f5d77db43eacd7a304029bf25a6166cc63caa96d04ba
+xcb-util-cursor  0.1.6  https://xcb.freedesktop.org/dist/xcb-util-cursor-{v}.tar.xz  fdeb8bd127873519be5cc70dcd0d3b5d33b667877200f9925a59fdcad8f7a933
+xkeyboard-config  2.48  https://xorg.freedesktop.org/releases/individual/data/xkeyboard-config/xkeyboard-config-{v}.tar.xz  b77041324f0109f77161ee43743fe04baa485866af8460d31e476ad3f7648fd5
+libxml2  2.15.4  https://download.gnome.org/sources/libxml2/2.15/libxml2-{v}.tar.xz  98087fd181d9070724f3fbc65c7377db03038eb92bd882374daff44940138821
+libxkbcommon  1.13.2  git+https://github.com/xkbcommon/libxkbcommon.git#xkbcommon-{v}  d1442aaa6b635551182e83c3b55037f4c118c962
+libevdev  1.13.7  https://www.freedesktop.org/software/libevdev/libevdev-{v}.tar.xz  0caf824971108f15bb2ad356433bae198d7d3bf1e82d43f63626e069e060bfa6
+mtdev  1.1.7  https://bitmath.org/code/mtdev/mtdev-{v}.tar.bz2  a107adad2101fecac54ac7f9f0e0a0dd155d954193da55c2340c97f2ff1d814e
+libinput  1.32.0  git+https://gitlab.freedesktop.org/libinput/libinput.git#{v}  5cf833b572f5a33663888da321dce0ba1abd82a2
+seatd  0.9.3  git+https://github.com/kennylevinsen/seatd.git#{v}  daa8196e10b180b8b0caeafa8e5f860eb1bd6706
+pixman  0.46.4  https://xorg.freedesktop.org/releases/individual/lib/pixman-{v}.tar.xz  a098c33924754ad43f981b740f6d576c70f9ed1006e12221b1845431ebce1239
+libepoxy  1.5.10  git+https://github.com/anholt/libepoxy.git#{v}  c84bc9459357a40e46e2fec0408d04fbdde2c973
+libpng  1.6.58  https://download.sourceforge.net/libpng/libpng-{v}.tar.xz  28eb403f51f0f7405249132cecfe82ea5c0ef97f1b32c5a65828814ae0d34775
+libjpeg-turbo  3.2.0  https://github.com/libjpeg-turbo/libjpeg-turbo/releases/download/{v}/libjpeg-turbo-{v}.tar.gz  6f30092cef9fb839779646608f4ee14ae3cbac989c47fa05e841b0841f09878e
+freetype  2.14.3  https://download.savannah.gnu.org/releases/freetype/freetype-{v}.tar.xz  36bc4f1cc413335368ee656c42afca65c5a3987e8768cc28cf11ba775e785a5f
+fontconfig  2.18.3  https://gitlab.freedesktop.org/api/v4/projects/890/packages/generic/fontconfig/{v}/fontconfig-{v}.tar.xz  4f7b554a38cdf78c033f666c8871f3749e14a094f65a07f630c91ed0b43d35e3
+harfbuzz  14.5.0  https://github.com/harfbuzz/harfbuzz/releases/download/{v}/harfbuzz-{v}.tar.xz  b7132e148358a45185c9feafd049dbaf243649d3c44414b3534d9c95d18592b9
+fribidi  1.0.17  https://github.com/fribidi/fribidi/releases/download/v{v}/fribidi-{v}.tar.xz  6949dcde27d41cebad1fd741fcafc36d55a1020d2d872d4a6eb3914caabbada2
+dejavu-fonts  2.37  https://github.com/dejavu-fonts/dejavu-fonts/releases/download/version_2_37/dejavu-fonts-ttf-{v}.tar.bz2  fa9ca4d13871dd122f61258a80d01751d603b4d3ee14095d65453b4e846e17d7
+vulkan-headers  1.4.357  git+https://github.com/KhronosGroup/Vulkan-Headers.git#vulkan-sdk-{v}.0  e3b1eec08173d6b825cd3ac88c885a63b621504a
+vulkan-loader  1.4.357  git+https://github.com/KhronosGroup/Vulkan-Loader.git#vulkan-sdk-{v}.0  5f157b62e333c63260d05d81bf66faa216ab0fb8
+# Mesa's Intel and Panfrost drivers precompile OpenCL kernels at build time,
+# with a compiler (mesa_clc) built for the build host from these.
+spirv-headers  1.4.357  git+https://github.com/KhronosGroup/SPIRV-Headers.git#vulkan-sdk-{v}.0  29981f65241605e08b0ede4cfeb999fe3b723c6a
+spirv-tools  1.4.357  git+https://github.com/KhronosGroup/SPIRV-Tools.git#vulkan-sdk-{v}.0  9a49b0883b9b635689a85b5647dbfcb223268151
+spirv-llvm-translator  23.1.1  git+https://github.com/KhronosGroup/SPIRV-LLVM-Translator.git#v{v}  c808623558686b7b285cabfa71542a93a5390f55
+elfutils  0.196  https://sourceware.org/elfutils/ftp/{v}/elfutils-{v}.tar.bz2  fd5cc6b77ad6773cac93cb3f415f9318ac3b3455eecf801f6b4a742c4f6c7209
+mesa  26.2.3  https://archive.mesa3d.org/mesa-{v}.tar.xz  1628058a8d2c0615975de5a15ab7bbb9638c50000b5bed9456ff423ea034a81f
+xwayland  24.1.13  https://xorg.freedesktop.org/releases/individual/xserver/xwayland-{v}.tar.xz  173aea3d6f79609164c04528e1c8e4c9b60fcd59391c3c9dad4667297d727fb6
+
+# ---- Phase B: Qt 6 (pins from download.qt.io's .sha256 files)
+qtbase  6.11.2  https://download.qt.io/official_releases/qt/6.11/{v}/submodules/qtbase-everywhere-src-{v}.tar.xz  5b2e00eccaf5a4d8c14134ffa0ea8dfd0a35ae1ffc7f8d87fa4305a1ed23cf22
+qtshadertools  6.11.2  https://download.qt.io/official_releases/qt/6.11/{v}/submodules/qtshadertools-everywhere-src-{v}.tar.xz  805046b8b7757665586890b375940047e874ae3ab00adb6d3f2b38fc6b200b1c
+qtdeclarative  6.11.2  https://download.qt.io/official_releases/qt/6.11/{v}/submodules/qtdeclarative-everywhere-src-{v}.tar.xz  215b7b70517e380123eabc6b92243f3c47b6f016a91d126057dbe53551c6b430
+qtsvg  6.11.2  https://download.qt.io/official_releases/qt/6.11/{v}/submodules/qtsvg-everywhere-src-{v}.tar.xz  d594337feca84c26fb67fe87b85e6a5c12fda404b611d905f9d138210c311876
+qtwayland  6.11.2  https://download.qt.io/official_releases/qt/6.11/{v}/submodules/qtwayland-everywhere-src-{v}.tar.xz  8eb7615e39332a10f506e8dd70f02d5954bb5949ff54f6dcbf8bd6168222f9df
+qt5compat  6.11.2  https://download.qt.io/official_releases/qt/6.11/{v}/submodules/qt5compat-everywhere-src-{v}.tar.xz  68c320fe3391096a9f2d870170edf1b67dac8af1d0e51c0c9e5343807f114287
+qttools  6.11.2  https://download.qt.io/official_releases/qt/6.11/{v}/submodules/qttools-everywhere-src-{v}.tar.xz  9ea75af35c512f7e09e61c8c3af3997f13b4d43bb099cf43fcec470126b4041e
+qtimageformats  6.11.2  https://download.qt.io/official_releases/qt/6.11/{v}/submodules/qtimageformats-everywhere-src-{v}.tar.xz  cecd8900f34b6550076309bc94f62f828008b633a4239e0a08c86788f41001f8
+qtmultimedia  6.11.2  https://download.qt.io/official_releases/qt/6.11/{v}/submodules/qtmultimedia-everywhere-src-{v}.tar.xz  967b5e02ec6b793cdb360622cd6e703132836af983208d678dae4b50f109cd9f
+qtpositioning  6.11.2  https://download.qt.io/official_releases/qt/6.11/{v}/submodules/qtpositioning-everywhere-src-{v}.tar.xz  d8cf15ad43a3b1520adac64cec5900028525cf75f01a4c82a0002e7ac1ae7499
+qtsensors  6.11.2  https://download.qt.io/official_releases/qt/6.11/{v}/submodules/qtsensors-everywhere-src-{v}.tar.xz  68c8e44dfb32e8e2182f63f5544c2f462089b1bb049574f1d504ee2648903119
+qtlocation  6.11.2  https://download.qt.io/official_releases/qt/6.11/{v}/submodules/qtlocation-everywhere-src-{v}.tar.xz  4d50a7ece01fbd76f6ec17c650236cb56ea60f987c52fc391dac72f13f65c23a
+qtspeech  6.11.2  https://download.qt.io/official_releases/qt/6.11/{v}/submodules/qtspeech-everywhere-src-{v}.tar.xz  9c1d05dc9d710049f20a67680fc6b4293c9b584a90f04f4cf6cc36e758c5cb98
+
+# ---- Phase C: KDE Frameworks (pins from download.kde.org's .sha256 files)
+# QR codes, for Prison (clipboard QR codes in Plasma)
+qrencode  4.1.1  git+https://github.com/fukuchi/libqrencode.git#v{v}  715e29fd4cd71b6e452ae0f4e36d917b43122ce8
+# xz (liblzma), for KArchive
+xz  5.8.4  https://github.com/tukaani-project/xz/releases/download/v{v}/xz-{v}.tar.xz  4ce24038fd4221e0d13bc1a2de7a4db56e90b92b3bf75321f6c14be73f65de4b
+extra-cmake-modules  6.30.0  https://download.kde.org/stable/frameworks/6.30/extra-cmake-modules-{v}.tar.xz  22c9f7ff930dae7329faebf2942d2424f4a298c43bb3f11e217be6b12f227f6e
+plasma-wayland-protocols  1.23.0  https://download.kde.org/stable/plasma-wayland-protocols/plasma-wayland-protocols-{v}.tar.xz  16c5ad917bde2ed795942dacba76654819ddc6a1566842325ef34e0b553ef138
+kconfig  6.30.0  https://download.kde.org/stable/frameworks/6.30/kconfig-{v}.tar.xz  0e98bac324cd716849202d4b246a948e363d6792a8eb09c78417cdde9559f56e
+kcoreaddons  6.30.0  https://download.kde.org/stable/frameworks/6.30/kcoreaddons-{v}.tar.xz  cc68fe15beb0fca2036cff8742f468c1345406bf99793fffacbf8f2a3f89bc4b
+ki18n  6.30.0  https://download.kde.org/stable/frameworks/6.30/ki18n-{v}.tar.xz  dfbfc8af89b3bc68810b094bf87746db87c3eeb35b75caeb1882681ebed563bd
+kwidgetsaddons  6.30.0  https://download.kde.org/stable/frameworks/6.30/kwidgetsaddons-{v}.tar.xz  ab1333c258678caa7562120a1c03bb71779f7232f1a0e75b9525d921dee3e0a3
+kguiaddons  6.30.0  https://download.kde.org/stable/frameworks/6.30/kguiaddons-{v}.tar.xz  e98864228d1c5e23f3428025eb9928697374fdc3eddebb3a9dec570de028a62d
+kitemmodels  6.30.0  https://download.kde.org/stable/frameworks/6.30/kitemmodels-{v}.tar.xz  f807e5b37aa913d2563ee1a21b2bce7d34495f32f38c7f35f16262d736bdfd55
+kitemviews  6.30.0  https://download.kde.org/stable/frameworks/6.30/kitemviews-{v}.tar.xz  9452f2b0cc5dd0214b88c4ce33297866be89af4177af14f5390cfb616e49c153
+kcodecs  6.30.0  https://download.kde.org/stable/frameworks/6.30/kcodecs-{v}.tar.xz  a42c79ff3237b73789d1c63cdfd848c0d59671ce5e93723a2efa128f00cb3450
+kdbusaddons  6.30.0  https://download.kde.org/stable/frameworks/6.30/kdbusaddons-{v}.tar.xz  063ef80460f76d86dc4b033ef04b65b69ba82ee0de410440fe609465e7f5a997
+kwindowsystem  6.30.0  https://download.kde.org/stable/frameworks/6.30/kwindowsystem-{v}.tar.xz  639a501b877446b19905399d27e2be2b6ebb0bb481abe3209dc4d535a12e12ca
+karchive  6.30.0  https://download.kde.org/stable/frameworks/6.30/karchive-{v}.tar.xz  4cf89d91e429d2ece3110e78f7ef7011952b0412cb15011329516b46f21e98e2
+solid  6.30.0  https://download.kde.org/stable/frameworks/6.30/solid-{v}.tar.xz  bdbfdc9f26b87e12b951097825af2956f2dee3f14c701d780277b69701f2c74e
+sonnet  6.30.0  https://download.kde.org/stable/frameworks/6.30/sonnet-{v}.tar.xz  1574ef5c17f38e315de104b94580ccc1b7ec1db2650cb4bace2e14159bf61e10
+threadweaver  6.30.0  https://download.kde.org/stable/frameworks/6.30/threadweaver-{v}.tar.xz  e5400968a41820393e76190ab5dbb276c09513263d1b185d64b40f82dcd9b457
+kidletime  6.30.0  https://download.kde.org/stable/frameworks/6.30/kidletime-{v}.tar.xz  22873204292ddb757e5a0a57004c57debe1285cd0fd4e796d07e9de2402e60c3
+kplotting  6.30.0  https://download.kde.org/stable/frameworks/6.30/kplotting-{v}.tar.xz  f5a67be85c21665e052371301889443196b9de5b3927aff353a3d3e27730dd11
+syntax-highlighting  6.30.0  https://download.kde.org/stable/frameworks/6.30/syntax-highlighting-{v}.tar.xz  fc429b093058bec4878306cbbfb3aa0560ff4a3f166c69504036c507fe72afcc
+kholidays  6.30.0  https://download.kde.org/stable/frameworks/6.30/kholidays-{v}.tar.xz  02bfbc33296fe86b364491f6d5cad9d83360bb4fdd2923386a325b309eac0b9b
+kcolorscheme  6.30.0  https://download.kde.org/stable/frameworks/6.30/kcolorscheme-{v}.tar.xz  a4128e82e47cd474c777754c4dd8af28a00a57ecf388da1a62f8173d898890d0
+breeze-icons  6.30.0  https://download.kde.org/stable/frameworks/6.30/breeze-icons-{v}.tar.xz  93866c19791838fc9757b305e010e23bb38cb5f201e4ecc96cc8ef5f1173ebe6
+kirigami  6.30.0  https://download.kde.org/stable/frameworks/6.30/kirigami-{v}.tar.xz  6de811e559c20dc1086c0cf2c34bb98712dbe4d45f960c62c3c3f887332c95f8
+kquickcharts  6.30.0  https://download.kde.org/stable/frameworks/6.30/kquickcharts-{v}.tar.xz  9fe8c0c78ffd23ccfb99cc36477550a229c114ad057def938f38cdec35f82ab1
+kunitconversion  6.30.0  https://download.kde.org/stable/frameworks/6.30/kunitconversion-{v}.tar.xz  3dcaa45875bab5a2dcadc34cf57cf06689b8d86ff40e20fee01ca2b18987175f
+attica  6.30.0  https://download.kde.org/stable/frameworks/6.30/attica-{v}.tar.xz  3eec8d2d9c77ad5f7cfd38e44e4b1492c5d0dec695b13f711c09f7d6187c276c
+kpackage  6.30.0  https://download.kde.org/stable/frameworks/6.30/kpackage-{v}.tar.xz  58939af0c553f24963652e10d248e2f8f2b2ca2b87dc26d3220675ed0cf33019
+kcrash  6.30.0  https://download.kde.org/stable/frameworks/6.30/kcrash-{v}.tar.xz  b17f8242309e1502119c48b1ef5059a396a3068596a84fb79fdef6d9e2cd4f49
+kauth  6.30.0  https://download.kde.org/stable/frameworks/6.30/kauth-{v}.tar.xz  60b75e02abc2bfbb247c586e3ab94def7ecd7b4e1ddb8260358951d84d9ea8c9
+kcompletion  6.30.0  https://download.kde.org/stable/frameworks/6.30/kcompletion-{v}.tar.xz  96ad9c429ca53b830359c45614ca4c32ed6b759f3023f1b3db1650ba1c19bd58
+kconfigwidgets  6.30.0  https://download.kde.org/stable/frameworks/6.30/kconfigwidgets-{v}.tar.xz  6efd9fc7786a7e979b32904aeadf1d2d8e69a5da110f8ebd45f95ec02de41f77
+kglobalaccel  6.30.0  https://download.kde.org/stable/frameworks/6.30/kglobalaccel-{v}.tar.xz  e532ebd4cbfc8d6d79c6c38c556f1871315fedae8db2b69b574b9c496f171473
+knotifications  6.30.0  https://download.kde.org/stable/frameworks/6.30/knotifications-{v}.tar.xz  09ad50570b26aada0408bb9ccfaabf629c56ec89a9972c8b0e155ab780f577cf
+kiconthemes  6.30.0  https://download.kde.org/stable/frameworks/6.30/kiconthemes-{v}.tar.xz  c0c684823d0e087f35168cd79f1053fd358bb8fb47b27996a11c7d7ee3da6f4d
+kjobwidgets  6.30.0  https://download.kde.org/stable/frameworks/6.30/kjobwidgets-{v}.tar.xz  bf36e3619df1c6ad3d900bd36433d97ab295be41c1cc401ff0e766380788bbae
+kservice  6.30.0  https://download.kde.org/stable/frameworks/6.30/kservice-{v}.tar.xz  e63062504ede4ebfda4c93e3484a63817731e1157cdcac6e33fb47fe6abc1657
+kxmlgui  6.30.0  https://download.kde.org/stable/frameworks/6.30/kxmlgui-{v}.tar.xz  10fb8a0f7b874248ff60d9a8ee4e1f06a0efcf01b0d34d7635dfff86e848c352
+kbookmarks  6.30.0  https://download.kde.org/stable/frameworks/6.30/kbookmarks-{v}.tar.xz  680120f09929d51da0a65e96a1f7d20ffbbdd2795a165719b0d07e00475e77c4
+kio  6.30.0  https://download.kde.org/stable/frameworks/6.30/kio-{v}.tar.xz  c19cbd4878347b67a9e05ee6541083f51dd90f9e58ee245b4d7634e09f9c04b2
+kded  6.30.0  https://download.kde.org/stable/frameworks/6.30/kded-{v}.tar.xz  0adf6e22300cee74d57e790b5db844f03a1366a4d6315edbaa49174b12bf1861
+kdeclarative  6.30.0  https://download.kde.org/stable/frameworks/6.30/kdeclarative-{v}.tar.xz  7ec3583a2cf2cd7143e39936ffb39e22d20563f4c87a8462e0e9d12c59ea89a6
+ksvg  6.30.0  https://download.kde.org/stable/frameworks/6.30/ksvg-{v}.tar.xz  7b7aba4e9baa88bfb303977e139e8a105b5cd243443029ee773954307b51eb91
+kcmutils  6.30.0  https://download.kde.org/stable/frameworks/6.30/kcmutils-{v}.tar.xz  0159f80d030ac250b0b353113a55c013ed7e38cb0b678df44d2f0d0b2aca944c
+knewstuff  6.30.0  https://download.kde.org/stable/frameworks/6.30/knewstuff-{v}.tar.xz  85408768b5c3f4b0b51ee6a14ae73fea263f451404e266e286c55e0c17e44037
+kparts  6.30.0  https://download.kde.org/stable/frameworks/6.30/kparts-{v}.tar.xz  99f5a0e3a4da10e1a0fbfb505ae966cd87627f887dd07929a920afe41c862ac0
+kpty  6.30.0  https://download.kde.org/stable/frameworks/6.30/kpty-{v}.tar.xz  ad66149c20470de29d483f0ccdcb057d42ccf778f3f8cc8e68aefca5380bace7
+kstatusnotifieritem  6.30.0  https://download.kde.org/stable/frameworks/6.30/kstatusnotifieritem-{v}.tar.xz  373fb23fe6a5c0c5c755c473e7cf272796ea59891c05157c3a7e9607a4c4af4f
+krunner  6.30.0  https://download.kde.org/stable/frameworks/6.30/krunner-{v}.tar.xz  0885d0936aec6dc8553c673f1c685013e345b933a52812a07c5bddd1eebdb551
+kwallet  6.30.0  https://download.kde.org/stable/frameworks/6.30/kwallet-{v}.tar.xz  93cb9c1df2630807c04bf8c30312e75ae3bb466c77dd9b29bb2c752e71d34a26
+ktextwidgets  6.30.0  https://download.kde.org/stable/frameworks/6.30/ktextwidgets-{v}.tar.xz  b06b11bb727bf9c3578797b1e40daad5f48e10433e456a337f1c40b4082879c8
+knotifyconfig  6.30.0  https://download.kde.org/stable/frameworks/6.30/knotifyconfig-{v}.tar.xz  4a133decdb0d3731dbaa1d3625b30f057089e5c59c8326ff88a047cef35b2efb
+frameworkintegration  6.30.0  https://download.kde.org/stable/frameworks/6.30/frameworkintegration-{v}.tar.xz  817c49b2f6abbfe624e32f9a21ffcac7edf6e0486a0883050a1441e2fef3c932
+qqc2-desktop-style  6.30.0  https://download.kde.org/stable/frameworks/6.30/qqc2-desktop-style-{v}.tar.xz  74c6402fa697a76254e1c68ebd86136be49e03fad86482e86a27e5478f662c41
+networkmanager-qt  6.30.0  https://download.kde.org/stable/frameworks/6.30/networkmanager-qt-{v}.tar.xz  f6ba5f54d413ea0b2642207a6ebd0803e7cb8392b91fcf8a1679fd0c21062865
+modemmanager-qt  6.30.0  https://download.kde.org/stable/frameworks/6.30/modemmanager-qt-{v}.tar.xz  d7c4106dc130729fdfd435abaeaf85039a874fc18563a41755e14f7ea174ae21
+kdesu  6.30.0  https://download.kde.org/stable/frameworks/6.30/kdesu-{v}.tar.xz  9bf244884b09ce38ad84d00e5879e798b02e1610ec8f3d9ee6c93e7502b356e2
+kuserfeedback  6.30.0  https://download.kde.org/stable/frameworks/6.30/kuserfeedback-{v}.tar.xz  c8a463c8e570f6d532cbe150732220575c6385df97c91399b6c84450691771ca
+prison  6.30.0  https://download.kde.org/stable/frameworks/6.30/prison-{v}.tar.xz  2cdb0a2689ab45b907c76c9a01c1dc14855b8e5329ad0a9cf65c1ad64e5fed1b
+kimageformats  6.30.0  https://download.kde.org/stable/frameworks/6.30/kimageformats-{v}.tar.xz  f74ea9ede7877afb66f4d7dea567f074bf63d806a824c87a9d9067d05848a316
+ktexteditor  6.30.0  https://download.kde.org/stable/frameworks/6.30/ktexteditor-{v}.tar.xz  d90f24e33a7aa0e6a179af253dfdeca0977992adb62bf1b6f7ad11537ab6e3e7
+kirigami-addons  1.14.2  https://download.kde.org/stable/kirigami-addons/kirigami-addons-{v}.tar.xz  1e4b3402d7f8744c903b0c0b907fa379379b848deda413b5a940dbaf4714cb32
+
+# ---- Phase D: KDE Plasma (pins from download.kde.org's .sha256 files)
+kdecoration  6.7.5  https://download.kde.org/stable/plasma/{v}/kdecoration-{v}.tar.xz  7ff1fe2854ca08a21a1ba47f1b0c97d12ea24f1db618631319cba4023ca53d86
+layer-shell-qt  6.7.5  https://download.kde.org/stable/plasma/{v}/layer-shell-qt-{v}.tar.xz  ccdcfec7081ca956f7a52c9113a4df3a226575bfbe98b56a2a9a4d7d7e19e8f0
+libkscreen  6.7.5  https://download.kde.org/stable/plasma/{v}/libkscreen-{v}.tar.xz  df317e03acfadfcbc68981b78131750103fadf4d5c5df6368c9e91e698677219
+libksysguard  6.7.5  https://download.kde.org/stable/plasma/{v}/libksysguard-{v}.tar.xz  9069bcf3fe4e491ea774d0d70eb17f99b567299871045a38543fcabcdb56dfc4
+plasma-activities  6.7.5  https://download.kde.org/stable/plasma/{v}/plasma-activities-{v}.tar.xz  d93f31b6f33733ad3803098f4f622e55e3ef52cb5cd97e621a7b803e6f0e3f7c
+plasma-activities-stats  6.7.5  https://download.kde.org/stable/plasma/{v}/plasma-activities-stats-{v}.tar.xz  9896396e29d5841c7a0f42814ced01ab58fcad406a552ddee2c950f205549acf
+kactivitymanagerd  6.7.5  https://download.kde.org/stable/plasma/{v}/kactivitymanagerd-{v}.tar.xz  6e549b0dacd28797153696e4ee27f8e19aee6f3711f94ee379b8fae8ecfd937a
+libplasma  6.7.5  https://download.kde.org/stable/plasma/{v}/libplasma-{v}.tar.xz  27b28823254aa489c094c40a314ce1575fd7906eeb521e636bb8fd2dc2981f2f
+plasma5support  6.7.5  https://download.kde.org/stable/plasma/{v}/plasma5support-{v}.tar.xz  dcd58d280b9c3f9570b1790134f692374ecae633cd15c60b1ee76947d5543e80
+kglobalacceld  6.7.5  https://download.kde.org/stable/plasma/{v}/kglobalacceld-{v}.tar.xz  83e9a4e226e695fe1544cfa19a9659c5f1000be46c669fe3a9e299029c6c2abf
+kwayland  6.7.5  https://download.kde.org/stable/plasma/{v}/kwayland-{v}.tar.xz  8d4c83524919dc87b5dec546d0fb14c591c03957888cb7b240a4a9d1bbdc8269
+knighttime  6.7.5  https://download.kde.org/stable/plasma/{v}/knighttime-{v}.tar.xz  5cb23e736e4be4952e63c855cfb45850e1085d650e67b7cae3cbf9721921cb9f
+kscreenlocker  6.7.5  https://download.kde.org/stable/plasma/{v}/kscreenlocker-{v}.tar.xz  6c41ce2cb79d2b85d4fbe5a3a61c09e40c70e5a869ae6f0352c7e1cb3b44606b
+kwin  6.7.5  https://download.kde.org/stable/plasma/{v}/kwin-{v}.tar.xz  6baa910b732d93c48c90f9c1cc685cc93d0b8de0cdf138c24192c045bc3a48e2
+breeze  6.7.5  https://download.kde.org/stable/plasma/{v}/breeze-{v}.tar.xz  aa05c0c31c852ed5b137327e7798fd763a54c643875d5d8070625475e0af6976
+plasma-integration  6.7.5  https://download.kde.org/stable/plasma/{v}/plasma-integration-{v}.tar.xz  0786c49f2f357744e0f4cfda49f55284faa1a97da85a667ca6cf1d8ab07aff89
+plasma-workspace  6.7.5  https://download.kde.org/stable/plasma/{v}/plasma-workspace-{v}.tar.xz  94ab21e2243b7876f65c315f1e545081c6437f5bd0a041ca4fb6c2533ae874c9
+plasma-desktop  6.7.5  https://download.kde.org/stable/plasma/{v}/plasma-desktop-{v}.tar.xz  079fcf6b87d7bf65e3f2a4670d605fac9469344c279a285a98ad549332d7b53e
+systemsettings  6.7.5  https://download.kde.org/stable/plasma/{v}/systemsettings-{v}.tar.xz  317a21165709d61796fba19f5454397577ffd8aa96655b29dd286a1df252cddb
+kscreen  6.7.5  https://download.kde.org/stable/plasma/{v}/kscreen-{v}.tar.xz  a1742210a0cf4ea76959f708c55180b2573648e9cd35cb4e38f349fe5694c9df
+powerdevil  6.7.5  https://download.kde.org/stable/plasma/{v}/powerdevil-{v}.tar.xz  6a738fccf01e4d1b10fea68ff8b404a406f95bc36fcb593bcc70fafb1c53258b
+plasma-nm  6.7.5  https://download.kde.org/stable/plasma/{v}/plasma-nm-{v}.tar.xz  6469ff89e26d44565292c968df595b3a68f353707255ba48725c1bae2a67f3be
+kde-cli-tools  6.7.5  https://download.kde.org/stable/plasma/{v}/kde-cli-tools-{v}.tar.xz  18f3c421b305003caf73f9e9fbec09fbf30f472dbe81fec328046cca7883a31d
+milou  6.7.5  https://download.kde.org/stable/plasma/{v}/milou-{v}.tar.xz  b43c7cb765109a91ad9ef7d5856c4584b380349837baf63ccca4b45a67925ab5
+qqc2-breeze-style  6.7.5  https://download.kde.org/stable/plasma/{v}/qqc2-breeze-style-{v}.tar.xz  788f0698c904112cc33bf6f8fb446b2e4fd7231d38c0955cbc3baa50d375d1ee
+ocean-sound-theme  6.7.5  https://download.kde.org/stable/plasma/{v}/ocean-sound-theme-{v}.tar.xz  452e5ab04f5e2d7cbf9357e4e12badf8493aefda437ba130eb38c9e511313b72
+plasma-pa  6.7.5  https://download.kde.org/stable/plasma/{v}/plasma-pa-{v}.tar.xz  4fe28579693858cdaf34d5b7e25b441d3e653058ff18579c8596eb8a57221a25
+kpipewire  6.7.5  https://download.kde.org/stable/plasma/{v}/kpipewire-{v}.tar.xz  20af39d9450d495468c56a50930810d82137f7ccd3a710592e02b6f620758f55
+xdg-desktop-portal-kde  6.7.5  https://download.kde.org/stable/plasma/{v}/xdg-desktop-portal-kde-{v}.tar.xz  5ebedc3dcf508e85f2f7bbddffa2cca6805650ffe1dce350c4a1dfc5d2f07c50
+# Plasma's other dependencies
+lm-sensors  3.6.2  git+https://github.com/hramrach/lm-sensors.git#V3-6-2  5c3ba50f806dea27c3b1e368966191c735459111
+# Unicode data (Plasma: time zones, text handling); pin from the GitHub release digest
+icu  78.3  https://github.com/unicode-org/icu/releases/download/release-{v}/icu4c-{v}-sources.tgz  3a2e7a47604ba702f345878308e6fefeca612ee895cf4a5f222e7955fabfe0c0
+libXft  2.3.9  https://xorg.freedesktop.org/releases/individual/lib/libXft-{v}.tar.xz  60a25b78945ed6932635b3bb1899a517d31df7456e69867ffba27f89ff3976f5
+# X keymap compiler (Xwayland runs it) and the MIME type database
+xkbcomp  1.5.0  https://xorg.freedesktop.org/releases/individual/app/xkbcomp-{v}.tar.xz  2ac31f26600776db6d9cd79b3fcd272263faebac7eb85fb2f33c7141b8486060
+shared-mime-info  2.5.1  git+https://gitlab.freedesktop.org/xdg/shared-mime-info.git#{v}  fd8ab89c20093f1bfba8fa9e302ba584fffd0fd7
+boost  1.92.0  https://github.com/boostorg/boost/releases/download/boost-{v}/boost-{v}-b2-nodocs.tar.xz  ea7b982002cc9dfbe59b0b217b206f470dc75f3de0bb2973d844118934d82411
+qcoro  0.13.0  git+https://github.com/qcoro/qcoro.git#v{v}  98f23d8d8d67e9e24217d268927faec97c713fb0
+qtkeychain  0.17.0  git+https://github.com/frankosterfeld/qtkeychain.git#{v}  875f77d9f61bd97fd84cca47ce3bc71186dfbd09
+lcms2  2.19.1  https://github.com/mm2/Little-CMS/releases/download/lcms{v}/lcms2-{v}.tar.gz  bfc54f7bab59fbc921012014a8032e4cba4abd46db47d46b76416a8c0b2815c8
+hwdata  0.411  git+https://github.com/vcrhonek/hwdata.git#v{v}  7fc63d411377e40aab66bfbf77dce6a439c3fe87
+libdisplay-info  0.4.0  https://gitlab.freedesktop.org/-/project/14497/uploads/289d58230e2981b51f23d31faf25bef9/libdisplay-info-{v}.tar.xz  43b180baa143e2035654759d84e2b2f5ee77d5fe817c423838c7fe59c0d68459
+libei  1.6.0  git+https://gitlab.freedesktop.org/libinput/libei.git#{v}  8a46bf3d4b6af7f25a61be53386cf618218114ef
+# libltdl, for libcanberra (pin checked against the GNU signature)
+libtool  2.6.2  https://ftp.gnu.org/gnu/libtool/libtool-{v}.tar.xz  2ef1067c16c97db930fd740cc9bc3d3ba9a583804ae5ac42cc3e8719e49e191e
+libogg  1.3.6  https://github.com/xiph/ogg/releases/download/v{v}/libogg-{v}.tar.xz  5c8253428e181840cd20d41f3ca16557a9cc04bad4a3d04cce84808677fa1061
+libvorbis  1.3.7  https://github.com/xiph/vorbis/releases/download/v{v}/libvorbis-{v}.tar.xz  b33cc4934322bcbf6efcbacf49e3ca01aadbea4114ec9589d1b1e9d20f72954b
+libcanberra  0.30  https://0pointer.de/lennart/projects/libcanberra/libcanberra-{v}.tar.xz  c2b671e67e0c288a69fc33dc1b6f1b534d07882c2aceed37004bf48c601afa72
+# Sessions (elogind, for KWin's access to the GPU and input devices, and
+# PAM, which registers the session with it), battery and power state.
+linux-pam  1.7.3  https://github.com/linux-pam/linux-pam/releases/download/v{v}/Linux-PAM-{v}.tar.xz  2ce4765fd49df6693771ef2941f81e33d8ee14b94a81a5c7b369aa3b137b85a5
+# extended attributes and ACLs: elogind gives the user at the console access
+# to its devices (GPU, input, sound) with ACLs; KFileMetaData uses xattrs
+attr  2.6.0  https://download.savannah.nongnu.org/releases/attr/attr-{v}.tar.xz  6c8a2148a7b85043b68492bce43316b0e2e214fc4e628c7ede078e76e216330b
+acl  2.4.0  https://download.savannah.nongnu.org/releases/acl/acl-{v}.tar.xz  e661131456d2708a01c614a0f400e11d7d1bfaeb6f3e74b75bb980b72f0161a3
+elogind  257.16  git+https://github.com/elogind/elogind.git#v{v}  1b62c6de143abafee70ab66b0470b4b6cbe3f798
+libgudev  238  https://download.gnome.org/sources/libgudev/{v}/libgudev-{v}.tar.xz  61266ab1afc9d73dbc60a8b2af73e99d2fdff47d99544d085760e4fa667b5dd1
+upower  1.91.4  git+https://gitlab.freedesktop.org/upower/upower.git#v{v}  af22b0bb6a97fff89b0e11101de9fc4937832864
+# Mobile broadband modems (plasma-nm needs its API; NetworkManager uses it for WWAN)
+ModemManager  1.24.2  git+https://gitlab.freedesktop.org/mobile-broadband/ModemManager.git#{v}  f2b9ab1ad78d322f32134a444b5b54c6e8160e19
+
+# ---- Phase E: applications (KDE Gear; pins from download.kde.org's .sha256 files)
+kfilemetadata  6.30.0  https://download.kde.org/stable/frameworks/6.30/kfilemetadata-{v}.tar.xz  5e14cd8e395e927042cb3eb7cff47e0effda5e8bf2520cf18d1082a9403b2e62
+konsole  26.08.1  https://download.kde.org/stable/release-service/{v}/src/konsole-{v}.tar.xz  64d8aaba741f4412ede26ffbbbe3824523e941b725d3046ec27f510fd42d82e6
+dolphin  26.08.1  https://download.kde.org/stable/release-service/{v}/src/dolphin-{v}.tar.xz  f5635feff84e7070d35342d6defb46e9b42ff1c44e3896635f4bd9f43da947c1

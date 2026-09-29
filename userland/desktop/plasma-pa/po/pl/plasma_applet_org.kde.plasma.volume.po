@@ -1,0 +1,484 @@
+# Copyright (C) YEAR This_file_is_part_of_KDE
+# This file is distributed under the same license as the PACKAGE package.
+# SPDX-FileCopyrightText: 2015-2026 Łukasz Wojniłowicz <lukasz.wojnilowicz@gmail.com>
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-04-06 00:45+0000\n"
+"PO-Revision-Date: 2026-05-16 12:16+0200\n"
+"Last-Translator: Łukasz Wojniłowicz <lukasz.wojnilowicz@gmail.com>\n"
+"Language-Team: pl\n"
+"Language: pl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
+"|| n%100>=20) ? 1 : 2);\n"
+"X-Generator: Lokalize 26.04.0\n"
+
+#: ListItemBase.qml:73
+#, kde-format
+msgid "Currently not recording"
+msgstr "Obecnie nic nie jest nagrywane"
+
+#: ListItemBase.qml:74
+#, kde-format
+msgid "Currently not playing"
+msgstr "Obecnie nic nie jest odtwarzane"
+
+#: ListItemBase.qml:205
+#, kde-format
+msgctxt "@action:button"
+msgid "Additional Options"
+msgstr "Dodatkowe ustawienia"
+
+#: ListItemBase.qml:207
+#, kde-format
+msgid "Show additional options for %1"
+msgstr "Pokaż dodatkowe ustawienia dla %1"
+
+#: ListItemBase.qml:229
+#, kde-format
+msgctxt "@action:button"
+msgid "Unmute"
+msgstr "Wyłącz wyciszenie"
+
+#: ListItemBase.qml:229
+#, kde-format
+msgctxt "@action:button"
+msgid "Mute"
+msgstr "Wycisz"
+
+#: ListItemBase.qml:231
+#, kde-format
+msgid "Unmute %1"
+msgstr "Usuń wyciszenie %1"
+
+#: ListItemBase.qml:231
+#, kde-format
+msgid "Mute %1"
+msgstr "Wycisz %1"
+
+#: ListItemBase.qml:254
+#, kde-format
+msgctxt "Accessibility data on volume slider"
+msgid "Adjust volume for %1"
+msgstr "Dostosuj głośność dla %1"
+
+#: ListItemBase.qml:318 MicrophoneTestView.qml:215
+#, kde-format
+msgctxt "volume percentage"
+msgid "%1%"
+msgstr "%1%"
+
+#: ListItemBase.qml:339 MicrophoneTestView.qml:228
+#, kde-format
+msgctxt "only used for sizing, should be widest possible string"
+msgid "100%"
+msgstr "100%"
+
+#: ListItemBase.qml:344
+#, kde-format
+msgctxt "Perform an audio test of the device"
+msgid "Test…"
+msgstr "Próba…"
+
+#: main.qml:36
+#, kde-format
+msgid "Audio Volume"
+msgstr "Głośność dźwięku"
+
+#: main.qml:60 main.qml:62
+#, kde-format
+msgctxt "@label"
+msgid "Connection to the Sound Service Lost"
+msgstr "Utracono połączenie do usługi dźwiękowej"
+
+#: main.qml:64
+#, kde-format
+msgid "No output or input devices found"
+msgstr "Nie znaleziono żadnych urządzeń wejściowych, ani wyjściowych"
+
+#: main.qml:68
+#, kde-format
+msgctxt "@info reconnecting to pulseaudio"
+msgid "Trying to reconnect…"
+msgstr "Próba ponownego połączenia się…"
+
+#: main.qml:94
+#, kde-format
+msgid "Audio Muted"
+msgstr "Dźwięk wyciszony"
+
+#: main.qml:96
+#, kde-format
+msgid "Volume at %1%"
+msgstr "Głośność na %1%"
+
+#: main.qml:107
+#, kde-format
+msgid "Middle-click to unmute"
+msgstr "Kliknij środkowym, aby przywrócić głośność"
+
+#: main.qml:108
+#, kde-format
+msgid "Middle-click to mute all audio"
+msgstr "Kliknij środkowym, aby wyciszyć dźwięk"
+
+#: main.qml:109
+#, kde-format
+msgid "Scroll to adjust volume"
+msgstr "Przewiń myszą, aby dostosować głośność"
+
+#: main.qml:125
+#, kde-format
+msgid "Device name not found"
+msgstr "Nie znaleziono nazwy urządzenia"
+
+#: main.qml:358
+#, kde-format
+msgid "Devices"
+msgstr "Urządzenia"
+
+#: main.qml:365
+#, kde-format
+msgid "Applications"
+msgstr "Programy"
+
+#: main.qml:389
+#, kde-format
+msgctxt "@action:button"
+msgid "More actions"
+msgstr "Więcej działań"
+
+#: main.qml:431
+#, kde-format
+msgctxt ""
+"@action:button keep this widget's pop-up open until explicitly dismissed"
+msgid "Keep open"
+msgstr "Pozostaw otwartym"
+
+#: main.qml:466
+#, kde-format
+msgctxt "@action retry connecting to pulseaudio"
+msgid "Retry"
+msgstr "Ponów"
+
+#: main.qml:500
+#, kde-format
+msgid "No applications playing or recording audio"
+msgstr "Żadna aplikacja nie odtwarza, ani nie nagrywa teraz dźwięku"
+
+#: main.qml:596
+#, kde-format
+msgctxt "@title:group listview section header"
+msgid "Output Devices"
+msgstr "Urządzenia wyjściowe"
+
+#: main.qml:598
+#, kde-format
+msgctxt "@title:group listview section header"
+msgid "Output Streams"
+msgstr "Strumienie wyjściowe"
+
+#: main.qml:656
+#, kde-format
+msgctxt "@title:group listview section header"
+msgid "Input Devices"
+msgstr "Urządzenie wejściowe"
+
+#: main.qml:658
+#, kde-format
+msgctxt "@title:group listview section header"
+msgid "Input Streams"
+msgstr "Strumienie wejściowe"
+
+#: main.qml:723
+#, kde-kuit-format
+msgctxt "@info"
+msgid ""
+"Prolonged use of this feature will damage the device's speakers. Only use it "
+"temporarily to make quiet media audible."
+msgstr ""
+"Dłuższe korzystanie z tej funkcji uszkodzi głośniki urządzenia. Używaj tego "
+"tylko tymczasowo, aby móc usłyszeć ciche dźwięki."
+
+#: main.qml:739
+#, kde-format
+msgid "Raise maximum volume"
+msgstr "Zwiększ graniczną głośność"
+
+#: main.qml:757
+#, kde-format
+msgid "Force mute all playback devices"
+msgstr "Wycisz wszystkie urządzenia odtwarzające"
+
+#: main.qml:766
+#, kde-format
+msgid "Force mute all input devices"
+msgstr "Wymuś wyciszenie na wszystkich urządzeniach wejściowych"
+
+#: main.qml:775
+#, kde-format
+msgid "Show virtual devices"
+msgstr "Pokaż urządzenia wirtualne"
+
+#: main.qml:785
+#, kde-format
+msgid "&Configure Audio Devices…"
+msgstr "&Ustawienia urządzeń dźwiękowych..."
+
+#: MicrophoneTestView.qml:104
+#, kde-format
+msgctxt "Button to stop microphone recording in test mode"
+msgid "Stop"
+msgstr "Zatrzymaj"
+
+#: MicrophoneTestView.qml:104
+#, kde-format
+msgctxt "Button to start microphone recording in test mode"
+msgid "Record"
+msgstr "Nagraj"
+
+#: MicrophoneTestView.qml:118
+#, kde-format
+msgctxt "Button to stop microphone playing in test mode"
+msgid "Stop"
+msgstr "Zatrzymaj"
+
+#: MicrophoneTestView.qml:118
+#, kde-format
+msgctxt "Button to start microphone playing in test mode"
+msgid "Play"
+msgstr "Odtwórz"
+
+#: MicrophoneTestView.qml:137
+#, kde-format
+msgctxt "Label above the microphone volume meter in test overlay"
+msgid "Volume level"
+msgstr "Poziom głośności"
+
+#: MicrophoneTestView.qml:166
+#, kde-format
+msgctxt "Label showing current microphone input level percentage in test mode"
+msgid "%1 %"
+msgstr "%1 %"
+
+#: MicrophoneTestView.qml:181
+#, kde-format
+msgctxt "Label above the microphone sensitivity slider in test overlay"
+msgid "Sensitivity"
+msgstr "Czułość"
+
+#: MicrophoneTestView.qml:237
+#, kde-format
+msgctxt "Button in microphone test view to return to the device list"
+msgid "Back"
+msgstr "Wstecz"
+
+#: MicrophoneTestView.qml:250
+#, kde-kuit-format
+msgctxt "@info"
+msgid "Microphone test error:<nl/><nl/>%1"
+msgstr "Błąd próby mikrofonu:<nl/><nl/>%1"
+
+#: StreamListItem.qml:36
+#, kde-format
+msgid "Stream name not found"
+msgstr "Nie znaleziono nazwy strumienia"
+
+#~ msgctxt "Device name (Battery percent)"
+#~ msgid "%1 (%2% Battery)"
+#~ msgstr "%1 (%2% Bateria)"
+
+#~ msgid "Increase Volume"
+#~ msgstr "Zwiększ głośność"
+
+#~ msgctxt "@action shortcut"
+#~ msgid "Increase Volume by 1%"
+#~ msgstr "Zwiększ głośność o 1%"
+
+#~ msgid "Decrease Volume"
+#~ msgstr "Zmniejsz głośność"
+
+#~ msgctxt "@action shortcut"
+#~ msgid "Decrease Volume by 1%"
+#~ msgstr "Zmniejsz głośność o 1%"
+
+#~ msgid "Mute"
+#~ msgstr "Wycisz"
+
+#~ msgid "Increase Microphone Volume"
+#~ msgstr "Zwiększ głośność mikrofonu"
+
+#~ msgid "Decrease Microphone Volume"
+#~ msgstr "Zmniejsz głośność mikrofonu"
+
+#~ msgid "Mute Microphone"
+#~ msgstr "Wycisz mikrofon"
+
+#~ msgctxt "label of device items"
+#~ msgid "%1 (%2)"
+#~ msgstr "%1 (%2)"
+
+#~ msgid "General"
+#~ msgstr "Ogólne"
+
+#~ msgid "Play audio feedback for changes to:"
+#~ msgstr "Odgrywaj dźwięk zwrotny dla zmian w:"
+
+#~ msgid "Audio volume"
+#~ msgstr "Głośność dźwięku"
+
+#~ msgid "Show visual feedback for changes to:"
+#~ msgstr "Pokazuj informację zwrotną dla zmian w:"
+
+#~ msgid "Mute state"
+#~ msgstr "Stan wyciszenia"
+
+#~ msgid "Default output device"
+#~ msgstr "Domyślne urządzenie wyjściowe"
+
+#~ msgctxt "@title"
+#~ msgid "Display:"
+#~ msgstr "Wyświetlacz:"
+
+#~ msgid "Record all audio via this device"
+#~ msgstr "Nagrywaj każdy dźwięk tym urządzeniem"
+
+#~ msgid "Play all audio via this device"
+#~ msgstr "Odtwarzaj każdy dźwięk tym urządzeniem"
+
+#~ msgctxt ""
+#~ "Heading for a list of ports of a device (for example built-in laptop "
+#~ "speakers or a plug for headphones)"
+#~ msgid "Ports"
+#~ msgstr "Porty"
+
+#~ msgctxt "Port is unavailable"
+#~ msgid "%1 (unavailable)"
+#~ msgstr "%1 (niedostępne)"
+
+#~ msgctxt "Port is unplugged"
+#~ msgid "%1 (unplugged)"
+#~ msgstr "%1 (niepodłączone)"
+
+#~ msgctxt ""
+#~ "Heading for a list of possible output devices (speakers, headphones, ...) "
+#~ "to choose"
+#~ msgid "Play audio using"
+#~ msgstr "Odtwarzaj dźwięk przy użyciu"
+
+#~ msgctxt ""
+#~ "Heading for a list of possible input devices (built-in microphone, "
+#~ "headset, ...) to choose"
+#~ msgid "Record audio using"
+#~ msgstr "Nagrywaj dźwięk przy użyciu"
+
+#~ msgid "show hidden devices"
+#~ msgstr "pokaż ukryte urządzenia"
+
+#~ msgid "Feedback:"
+#~ msgstr "Informacja zwrotna:"
+
+#~ msgid "Play sound when volume changes"
+#~ msgstr "Odtwórz dźwięk przy zmianie głośności"
+
+#~ msgid "Display notification when default output device changes"
+#~ msgstr "Powiadom przy zmianie urządzenia wyjściowego"
+
+#~ msgid "Maximum volume:"
+#~ msgstr "Graniczna głośność:"
+
+#~ msgid "Default Device"
+#~ msgstr "Urządzenie domyślne"
+
+#~ msgid "Playback Streams"
+#~ msgstr "Odtwarzane strumienie"
+
+#~ msgid "Recording Streams"
+#~ msgstr "Nagrywane strumienie"
+
+#~ msgid "Playback Devices"
+#~ msgstr "Urządzenia do odtwarzania"
+
+#~ msgid "Recording Devices"
+#~ msgstr "Urządzenia do nagrywania"
+
+#~ msgctxt "label of stream items"
+#~ msgid "%1 (%2)"
+#~ msgstr "%1 (%2)"
+
+#~ msgctxt "Checkable switch for (un-)muting sound output."
+#~ msgid "Mute"
+#~ msgstr "Wycisz"
+
+#~ msgctxt "Checkable switch to change the current default output."
+#~ msgid "Default"
+#~ msgstr "Domyślnie"
+
+#~ msgid "Volume"
+#~ msgstr "Głośność"
+
+#~ msgid "%"
+#~ msgstr "%"
+
+#~ msgid "Behavior"
+#~ msgstr "Zachowanie"
+
+#~ msgid "Volume feedback"
+#~ msgstr "Informacja zwrotna głośności"
+
+#, fuzzy
+#~| msgid "Devices"
+#~ msgid "Device Profiles"
+#~ msgstr "Urządzenia"
+
+#, fuzzy
+#~| msgid "No applications playing or recording audio"
+#~ msgctxt "@label"
+#~ msgid "No Applications Playing Audio"
+#~ msgstr "Brak aplikacji odtwarzających lub nagrywających dźwięk"
+
+#, fuzzy
+#~| msgid "Capture Streams"
+#~ msgid "Capture"
+#~ msgstr "Przechwytywane strumienie"
+
+#, fuzzy
+#~| msgid "No applications playing or recording audio"
+#~ msgctxt "@label"
+#~ msgid "No Applications Recording Audio"
+#~ msgstr "Brak aplikacji odtwarzających lub nagrywających dźwięk"
+
+#, fuzzy
+#~| msgctxt ""
+#~| "Heading for a list of ports of a device (for example built-in laptop "
+#~| "speakers or a plug for headphones)"
+#~| msgid "Ports"
+#~ msgid "Port"
+#~ msgstr "Porty"
+
+#, fuzzy
+#~| msgid "Devices"
+#~ msgctxt "@title:tab"
+#~ msgid "Devices"
+#~ msgstr "Urządzenia"
+
+#, fuzzy
+#~| msgid "Applications"
+#~ msgctxt "@title:tab"
+#~ msgid "Applications"
+#~ msgstr "Programy"
+
+#~ msgctxt "label of stream items"
+#~ msgid "%1: %2"
+#~ msgstr "%1: %2"
+
+#, fuzzy
+#~| msgctxt "only used for sizing, should be widest possible string"
+#~| msgid "100%"
+#~ msgid "100%"
+#~ msgstr "100%"

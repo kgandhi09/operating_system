@@ -1,0 +1,82 @@
+# translation of kscreen.po Slovak
+# Roman Paholik <wizzardsk@gmail.com>, 2015, 2016, 2018.
+# SPDX-FileCopyrightText: 2023 Matej Mrenica <matejm98mthw@gmail.com>
+msgid ""
+msgstr ""
+"Project-Id-Version: kscreen\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2025-11-17 11:53+0000\n"
+"PO-Revision-Date: 2023-11-11 15:55+0100\n"
+"Last-Translator: Matej Mrenica <matejm98mthw@gmail.com>\n"
+"Language-Team: Slovak <kde-i18n-doc@kde.org>\n"
+"Language: sk\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+"X-Generator: Lokalize 23.08.3\n"
+
+#: osdaction.cpp:28
+#, kde-format
+msgid "Only use external screen"
+msgstr "Používať iba externý displej"
+
+#: osdaction.cpp:29
+#, kde-format
+msgid "Only use built-in screen"
+msgstr "Používať iba zabudovanú obrazovku"
+
+#: osdaction.cpp:30
+#, kde-format
+msgid "Mirror screens"
+msgstr "Zrkadliť obrazovky"
+
+#: osdaction.cpp:31
+#, kde-format
+msgid "Extend to left of built-in screen"
+msgstr "Rozšíriť naľavo od vstavanej obrazovky"
+
+#: osdaction.cpp:32
+#, kde-format
+msgid "Extend to right of built-in screen"
+msgstr "Rozšíriť napravo od vstavanej obrazovky"
+
+#: osdaction.cpp:33
+#, kde-format
+msgid "Leave unchanged"
+msgstr "Ponechať nezmenené"
+
+#: utils.cpp:22
+#, kde-format
+msgid "Built-in Screen"
+msgstr "Zabudovaná obrazovka"
+
+#~ msgid "Switch to laptop screen"
+#~ msgstr "Prepnúť na obrazovku laptopu"
+
+#~ msgid "Unify outputs"
+#~ msgstr "Zjednotiť výstupy"
+
+#~ msgid "Extend to left"
+#~ msgstr "Rozšíriť doľava"
+
+#~ msgid "Switch Display"
+#~ msgstr "Prepnúť obrazovku"
+
+#~ msgctxt "OSD text after XF86Display button press"
+#~ msgid "No External Display"
+#~ msgstr "Žiadny externý displej"
+
+#~ msgctxt "OSD text after XF86Display button press"
+#~ msgid "Changing Screen Layout"
+#~ msgstr "Mením rozloženie obrazovky"
+
+#, fuzzy
+#~ msgctxt "osd when displaybutton is pressed"
+#~ msgid "Cloned Display"
+#~ msgstr "Žiadny externý displej"
+
+#, fuzzy
+#~ msgctxt "osd when displaybutton is pressed"
+#~ msgid "External Only"
+#~ msgstr "Žiadny externý displej"

@@ -1,0 +1,12 @@
+#!/bin/sh
+# The MIME type database (file types for the desktop's programs). Normally
+# compiled when the image is built; an image cross-built for another arch
+# gets it on its first boot.
+
+case "$1" in
+    start)
+        if [ -d /usr/share/mime/packages ] && [ ! -f /usr/share/mime/mime.cache ]; then
+            update-mime-database /usr/share/mime
+        fi
+        ;;
+esac

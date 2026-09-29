@@ -214,7 +214,10 @@ cmake_target_args() {
 }
 
 b_llvm() {
-    local targets="X86;AArch64;ARM;RISCV"
+    # AMDGPU: Mesa's AMD drivers (radeonsi, radv) compile shaders with it.
+    # (No SPIRV backend: it clashes with the SPIR-V translator Mesa's build
+    # uses, both registering the same options in libLLVM.)
+    local targets="X86;AArch64;ARM;RISCV;AMDGPU"
     # LLVM_APPEND_VC_REV=OFF: the source sits inside this repo, and LLVM would
     # otherwise put the repo's git URL and commit into "clang --version".
     # shellcheck disable=SC2046 # word-split the option list

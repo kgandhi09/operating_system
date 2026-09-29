@@ -1,0 +1,125 @@
+{
+    "format" : "jxl",
+    "metadata" : [
+        {
+            "key" : "CreationDate",
+            "value" : "2025-01-14T13:53:32+01:00"
+        },
+        {
+            "key" : "Direction",
+            "value" : "123.7"
+        },
+        {
+            "key" : "ModificationDate",
+            "value" : "2025-02-14T15:58:44+01:00"
+        },
+        {
+            "key" : "Altitude",
+            "value" : "34"
+        },
+        {
+            "key" : "Title",
+            "value" : "A test"
+        },
+        {
+            "key" : "Software",
+            "value" : "KImageFormats write test"
+        },
+        {
+            "key" : "Author",
+            "value" : "KDE Project"
+        },
+        {
+            "key" : "Copyright",
+            "value" : "@2025 KDE Project"
+        },
+        {
+            "key" : "Description",
+            "value" : "テレビ放送テスト映像。(TV broadcast test image.)"
+        },
+        {
+            "key" : "Keywords",
+            "value" : "kde;test"
+        },
+        {
+            "key" : "Rating",
+            "value" : "5"
+        },
+        {
+            "key" : "Latitude",
+            "value" : "44.6478"
+        },
+        {
+            "key" : "LensManufacturer",
+            "value" : "KDE Glasses"
+        },
+        {
+            "key" : "LensModel",
+            "value" : "A1234"
+        },
+        {
+            "key" : "LensSerialNumber",
+            "value" : "S/N:1234567"
+        },
+        {
+            "key" : "Longitude",
+            "value" : "10.9254"
+        },
+        {
+            "key" : "Manufacturer",
+            "value" : "KFramework"
+        },
+        {
+            "key" : "Model",
+            "value" : "KImageFormats"
+        },
+        {
+            "key" : "SerialNumber",
+            "value" : "S/N:7654321"
+        },
+        {
+            "key" : "Speed",
+            "value" : "13.2"
+        },
+        {
+            "key" : "DigitalZoomRatio",
+            "value" : "3.4"
+        },
+        {
+            "key" : "ExposureMode",
+            "value" : "2"
+        },
+        {
+            "key" : "ExposureProgram",
+            "value" : "6"
+        },
+        {
+            "key" : "ExposureTime",
+            "value" : "0.004"
+        },
+        {
+            "key" : "Flash",
+            "value" : "16"
+        },
+        {
+            "key" : "FNumber",
+            "value" : "1.6"
+        },
+        {
+            "key" : "FocalLength",
+            "value" : "5.96"
+        },
+        {
+            "key" : "ISOSpeedRatings",
+            "value" : "50"
+        },
+        {
+            "key" : "WhiteBalance",
+            "value" : "1"
+        }
+    ],
+    "resolution" : {
+        "dotsPerMeterX" : 11811,
+        "dotsPerMeterY" : 11812
+    }
+}

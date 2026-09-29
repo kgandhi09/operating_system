@@ -1,0 +1,63 @@
+/*  -*- C++ -*-
+    SPDX-FileCopyrightText: 1998 Netscape Communications Corporation <developer@mozilla.org>
+
+    SPDX-License-Identifier: MIT
+*/
+
+#ifndef nsCodingStateMachine_h__
+#define nsCodingStateMachine_h__
+
+#include "kcodecs_export.h"
+
+#include <array>
+#include <cstdint>
+#include <span>
+
+namespace kencodingprober
+{
+enum {
+    eStart = 0,
+    eError = 1,
+    eItsMe = 2,
+};
+using nsSMState = int;
+
+using nsClassTable = const std::array<const uint8_t, 256> &;
+using nsStateTable = std::span<const uint8_t>;
+
+// state machine model
+struct SMModel {
+    nsClassTable classTable = {};
+    unsigned int classFactor = {};
+    nsStateTable stateTable = {};
+    const char *name = nullptr;
+};
+
+class KCODECS_NO_EXPORT nsCodingStateMachine
+{
+public:
+    explicit nsCodingStateMachine(const SMModel &sm)
+        : mModel(sm)
+    {
+    }
+    nsSMState NextState(char c)
+    {
+        // for each byte we get its class, if it is first byte, we also get byte length
+        const uint8_t index = static_cast<uint8_t>(c);
+        unsigned int byteCls = mModel.classTable[index];
+        // from byte's class and stateTable, we get its next state
+        mCurrentState = mModel.stateTable[mCurrentState * mModel.classFactor + byteCls];
+        return mCurrentState;
+    }
+    const char *GetCodingStateMachine()
+    {
+        return mModel.name;
+    }
+
+protected:
+    int mCurrentState = eStart;
+
+    const SMModel &mModel;
+};
+}
+#endif /* nsCodingStateMachine_h__ */

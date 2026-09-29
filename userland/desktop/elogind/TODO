@@ -1,0 +1,11 @@
+Bugfixes:
+
+Regularly:
+* Update documentation
+
+Janitorial Clean-ups:
+
+Deprecations and removals:
+
+Features:
+* When build with nss-elogind=false and userdb=false, then the userdb/nss stuff from libshared must also be excluded.

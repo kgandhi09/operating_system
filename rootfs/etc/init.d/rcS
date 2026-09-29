@@ -12,7 +12,13 @@ mnt devpts   devpts   /dev/pts
 mnt tmpfs    tmpfs    /dev/shm
 mnt tmpfs    tmpfs    /run
 mnt tmpfs    tmpfs    /tmp
-chmod 1777 /tmp
+chmod 1777 /tmp /dev/shm
+# Xwayland's sockets (X11 programs in the desktop).
+mkdir -p /tmp/.X11-unix /tmp/.ICE-unix
+chmod 1777 /tmp/.X11-unix /tmp/.ICE-unix
+# cgroup v2: elogind tracks each session's processes in it.
+mkdir -p /sys/fs/cgroup
+mnt cgroup2  cgroup2  /sys/fs/cgroup
 
 hostname -F /etc/hostname
 ip link set lo up

@@ -1,0 +1,821 @@
+# Copyright (C) 2025 This file is copyright:
+# This file is distributed under the same license as the plasma-nm package.
+# SPDX-FileCopyrightText: 2025, 2026 Sergiu Bivol <sergiu@cip.md>
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: plasma-nm\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-02-18 00:48+0000\n"
+"PO-Revision-Date: 2026-01-28 21:36+0000\n"
+"Last-Translator: Sergiu Bivol <sergiu@cip.md>\n"
+"Language-Team: Romanian <kde-i18n-ro@kde.org>\n"
+"Language: ro\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=n==1 ? 0 : (n==0 || (n%100 > 0 && n%100 < "
+"20)) ? 1 : 2;\n"
+"X-Generator: Lokalize 25.08.1\n"
+
+#: ui/AvailableNetworks.qml:18
+#, kde-format
+msgid "Available Networks"
+msgstr "Rețele disponibile"
+
+#: ui/AvailableNetworks.qml:42
+#, kde-format
+msgid "none"
+msgstr "niciunul"
+
+#: ui/AvailableNetworks.qml:42
+#, kde-format
+msgid "Current operator: %1"
+msgstr "Operator actual: %1"
+
+#: ui/AvailableNetworks.qml:45
+#, kde-format
+msgid "Scan For Networks"
+msgstr "Caută rețele"
+
+#: ui/EditProfilePage.qml:15
+#, kde-format
+msgid "New APN"
+msgstr "APN nou"
+
+#: ui/EditProfilePage.qml:15
+#, kde-format
+msgid "Edit APN"
+msgstr "Modifică APN"
+
+#: ui/EditProfilePage.qml:37
+#, kde-format
+msgid "Name"
+msgstr "Denumire"
+
+#: ui/EditProfilePage.qml:45
+#, kde-format
+msgid "APN"
+msgstr "APN"
+
+#: ui/EditProfilePage.qml:53
+#, kde-format
+msgid "Username"
+msgstr "Utilizator"
+
+#: ui/EditProfilePage.qml:61
+#, kde-format
+msgid "Password"
+msgstr "Parolă"
+
+#: ui/EditProfilePage.qml:69
+#, kde-format
+msgid "Network type"
+msgstr "Tip rețea"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "4G/3G/2G"
+msgstr "4G/3G/2G"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "3G/2G"
+msgstr "3G/2G"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "2G"
+msgstr "2G"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "Only 4G"
+msgstr "Doar 4G"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "Only 3G"
+msgstr "Doar 3G"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "Only 2G"
+msgstr "Doar 2G"
+
+#: ui/EditProfilePage.qml:70
+#, kde-format
+msgid "Any"
+msgstr "Oricare"
+
+#: ui/EditProfilePage.qml:82
+#, kde-format
+msgid "Save profile"
+msgstr "Salvează profilul"
+
+#: ui/main.qml:68
+#, kde-format
+msgid "Modem not available"
+msgstr "Modemul nu e disponibil"
+
+#: ui/main.qml:87
+#, kde-format
+msgid "Mobile data"
+msgstr "Date mobile"
+
+#: ui/main.qml:92
+#, kde-format
+msgid "No SIM is inserted."
+msgstr "Niciun SIM introdus."
+
+#: ui/main.qml:94
+#, kde-format
+msgid "Mobile data is not available with this modem."
+msgstr "Datele mobile nu sunt disponibile cu acest modem."
+
+#: ui/main.qml:96
+#, kde-format
+msgid "An APN needs to be configured to have mobile data."
+msgstr ""
+
+#: ui/main.qml:98
+#, kde-format
+msgid "Whether mobile data is enabled."
+msgstr "Dacă datele mobile sunt activate."
+
+#: ui/main.qml:129
+#, kde-format
+msgid "Data Usage"
+msgstr "Utilizare date"
+
+#: ui/main.qml:130
+#, kde-format
+msgid "View data usage."
+msgstr "Vedeți utilizarea datelor."
+
+#: ui/main.qml:138
+#, kde-format
+msgid "SIM"
+msgid_plural "SIMs"
+msgstr[0] "SIM"
+msgstr[1] "SIM-uri"
+msgstr[2] "SIM-uri"
+
+#: ui/main.qml:159
+#, kde-format
+msgid "SIM %1"
+msgstr "SIM %1"
+
+#: ui/main.qml:160
+#, kde-format
+msgid "View SIM %1 details."
+msgstr "Vezi detalii pentru SIM %1."
+
+#: ui/ModemPage.qml:22
+#, kde-format
+msgid "Modem %1"
+msgstr "Modem %1"
+
+#: ui/ModemPage.qml:32
+#, kde-format
+msgid "Modem Control"
+msgstr "Control modem"
+
+#: ui/ModemPage.qml:38
+#, kde-format
+msgid "Force Modem Restart"
+msgstr "Forțează repornirea modemului"
+
+#: ui/ModemPage.qml:44 ui/SimPage.qml:112
+#, kde-format
+msgid "Modem Details"
+msgstr "Detalii modem"
+
+#: ui/ModemPage.qml:57
+#, kde-format
+msgid "Access Technologies"
+msgstr "Tehnologii de acces"
+
+#: ui/ModemPage.qml:79
+#, kde-format
+msgid "IMEI"
+msgstr "IMEI"
+
+#: ui/ModemPage.qml:87
+#, kde-format
+msgid "Enabled"
+msgstr "Activat"
+
+#: ui/ModemPage.qml:95
+#, kde-format
+msgid "Manufacturer"
+msgstr "Producător"
+
+#: ui/ModemPage.qml:103
+#, kde-format
+msgid "Model"
+msgstr "Model"
+
+#: ui/ModemPage.qml:118
+#, kde-format
+msgid "Owned Numbers:"
+msgstr "Numere deținute:"
+
+#: ui/ModemPage.qml:141
+#, kde-format
+msgid "Revision"
+msgstr "Revizie"
+
+#: ui/ModemPage.qml:149
+#, kde-format
+msgid "Signal Quality"
+msgstr "Calitate semnal"
+
+#: ui/ModemPage.qml:157
+#, kde-format
+msgid "State"
+msgstr "Stare"
+
+#: ui/ModemPage.qml:165
+#, kde-format
+msgid "Failure Reason"
+msgstr "Motivul eșecului"
+
+#: ui/ModemPage.qml:173
+#, kde-format
+msgid "Registration State"
+msgstr "Starea înregistrării"
+
+#: ui/ModemPage.qml:181
+#, kde-format
+msgid "Firmware Version"
+msgstr "Versiune microcod"
+
+#: ui/ModemPage.qml:189
+#, kde-format
+msgid "Interface Name"
+msgstr "Denumire interfață"
+
+#: ui/ModemPage.qml:197
+#, kde-format
+msgid "Metered"
+msgstr "Contorizată"
+
+#: ui/ModemPage.qml:205
+#, kde-format
+msgid "Active NetworkManager Connection"
+msgstr "Conexiune NetworkManager activă"
+
+#: ui/ModemPage.qml:213
+#, kde-format
+msgid "Device"
+msgstr "Dispozitiv"
+
+#: ui/ModemPage.qml:221
+#, kde-format
+msgid "Device ID"
+msgstr "ID dispozitiv"
+
+#: ui/ModemPage.qml:236
+#, kde-format
+msgid "Drivers:"
+msgstr "Driver-e:"
+
+#: ui/ModemPage.qml:258
+#, kde-format
+msgid "Plugin"
+msgstr "Extensie"
+
+#: ui/ModemPage.qml:266
+#, kde-format
+msgid "Power State"
+msgstr "Starea alimentării"
+
+#: ui/ModemPage.qml:274
+#, kde-format
+msgid "SIM Path"
+msgstr "Cale SIM"
+
+#: ui/ProfileList.qml:25
+#, kde-format
+msgid "APNs"
+msgstr "APN-uri"
+
+#: ui/ProfileList.qml:28 ui/ProfileList.qml:99
+#, kde-format
+msgid "Edit"
+msgstr "Modifică"
+
+#: ui/ProfileList.qml:55
+#, kde-format
+msgid ""
+"Unable to autodetect connection settings for your carrier. Please find your "
+"carrier's APN settings by either contacting support or searching online."
+msgstr ""
+
+#: ui/ProfileList.qml:66
+#, kde-format
+msgid "APN List"
+msgstr "Listă APN"
+
+#: ui/ProfileList.qml:119
+#, kde-format
+msgid "Delete"
+msgstr "Șterge"
+
+#: ui/ProfileList.qml:128
+#, kde-format
+msgid "Add APN"
+msgstr "Adaugă APN"
+
+#: ui/ProfileList.qml:136
+#, kde-format
+msgid "Automatically detect APN"
+msgstr "Detectează APN-ul automat"
+
+#: ui/SimLockPage.qml:21 ui/SimPage.qml:101
+#, kde-format
+msgid "SIM Lock"
+msgstr "Blocare SIM"
+
+#: ui/SimLockPage.qml:40
+#, kde-format
+msgid "SIM is locked"
+msgstr "SIM-ul e blocat"
+
+#: ui/SimLockPage.qml:41
+#, kde-format
+msgid "In order to use this SIM, you must first unlock it."
+msgstr "Acest SIM trebuie deblocat înainte de a putea fi folosit."
+
+#: ui/SimLockPage.qml:63
+#, kde-format
+msgid "SIM is not locked"
+msgstr "SIM-ul nu e blocat"
+
+#: ui/SimLockPage.qml:64
+#, kde-format
+msgid ""
+"You can lock your SIM to require a set PIN code for phone calls and mobile "
+"data."
+msgstr ""
+
+#: ui/SimLockPage.qml:68
+#, kde-format
+msgid "Lock SIM"
+msgstr "Blochează SIM-ul"
+
+#: ui/SimLockPage.qml:80
+#, kde-format
+msgid "Disable SIM Lock"
+msgstr "Dezactivează blocarea SIM-ului"
+
+#: ui/SimLockPage.qml:81
+#, kde-format
+msgid "Disable the SIM lock feature and remove the passcode on the SIM."
+msgstr ""
+
+#: ui/SimLockPage.qml:93
+#, kde-format
+msgid "Change PIN"
+msgstr "Schimbă PIN-ul"
+
+#: ui/SimLockPage.qml:94
+#, kde-format
+msgid "Change the passcode set on the SIM."
+msgstr ""
+
+#: ui/SimLockPage.qml:108
+#, kde-format
+msgid "Unlock SIM"
+msgstr "Deblochează SIM"
+
+#: ui/SimLockPage.qml:116
+#, kde-format
+msgid "Attempts left: %1"
+msgstr "Încercări rămase: %1"
+
+#: ui/SimLockPage.qml:121
+#, kde-format
+msgid "Enter PIN"
+msgstr "Introduceți PIN-ul"
+
+#: ui/SimLockPage.qml:129
+#, kde-format
+msgid "Change SIM PIN"
+msgstr "Schimbă PIN-ul SIM-ului"
+
+#: ui/SimLockPage.qml:148 ui/SimLockPage.qml:213
+#, kde-format
+msgid "PINs don't match!"
+msgstr "PIN-urile nu se potrivesc!"
+
+#: ui/SimLockPage.qml:154 ui/SimLockPage.qml:219
+#, kde-format
+msgid "PINs must be between 4 and 8 digits!"
+msgstr "PIN-ul trebuie să aibă între 4 și 8 cifre!"
+
+#: ui/SimLockPage.qml:159 ui/SimLockPage.qml:186
+#, kde-format
+msgid "Current PIN"
+msgstr "PIN actual"
+
+#: ui/SimLockPage.qml:164 ui/SimLockPage.qml:224
+#, kde-format
+msgid "New PIN"
+msgstr "PIN nou"
+
+#: ui/SimLockPage.qml:169 ui/SimLockPage.qml:229
+#, kde-format
+msgid "Confirm PIN"
+msgstr "Confirmare PIN"
+
+#: ui/SimLockPage.qml:177
+#, kde-format
+msgid "Remove SIM PIN"
+msgstr "Elimină PIN SIM"
+
+#: ui/SimLockPage.qml:194
+#, kde-format
+msgid "Add SIM PIN"
+msgstr "Adaugă PIN SIM"
+
+#: ui/SimPage.qml:34
+#, kde-format
+msgctxt "@title"
+msgid "SIM %1"
+msgstr "SIM %1"
+
+#: ui/SimPage.qml:44
+#, kde-format
+msgid ""
+"This SIM slot is empty, a SIM card needs to be inserted in order for it to "
+"be used."
+msgstr ""
+
+#: ui/SimPage.qml:59
+#, kde-format
+msgid "Roaming"
+msgstr "Roaming"
+
+#: ui/SimPage.qml:60
+#, fuzzy, kde-format
+#| msgid "Registered on a roaming network."
+msgid "Allow mobile data when on a roaming network."
+msgstr "Înregistrat în rețeaua de roaming."
+
+#: ui/SimPage.qml:79
+#, kde-format
+msgid "Modify APNs"
+msgstr "Modifică APN-uri"
+
+#: ui/SimPage.qml:80
+#, kde-format
+msgid "Configure access point names for your carrier."
+msgstr "Configurați numele punctelor de acces pentru operator."
+
+#: ui/SimPage.qml:90
+#, kde-format
+msgid "Networks"
+msgstr "Rețele"
+
+#: ui/SimPage.qml:91
+#, kde-format
+msgid "Select a network operator."
+msgstr "Alege un operator de rețea."
+
+#: ui/SimPage.qml:102
+#, kde-format
+msgid "Modify SIM lock settings."
+msgstr "Modifică configurările de blocare a SIM-ului."
+
+#: ui/SimPage.qml:113
+#, kde-format
+msgid "View the details of the modem this SIM is connected to."
+msgstr "Vedeți detaliile modemului în care e conectat acest SIM."
+
+#: ui/SimPage.qml:119
+#, kde-format
+msgid "SIM Details"
+msgstr "Detalii SIM"
+
+#: ui/SimPage.qml:125
+#, kde-format
+msgid "Locked"
+msgstr "Blocat"
+
+#: ui/SimPage.qml:126
+#, kde-format
+msgid "Yes"
+msgstr "Da"
+
+#: ui/SimPage.qml:126
+#, kde-format
+msgid "No"
+msgstr "Nu"
+
+#: ui/SimPage.qml:133
+#, kde-format
+msgid "IMSI"
+msgstr "IMSI"
+
+#: ui/SimPage.qml:141
+#, kde-format
+msgid "EID"
+msgstr "EID"
+
+#: ui/SimPage.qml:149
+#, kde-format
+msgid "Operator Code (modem)"
+msgstr "Cod operator (modem)"
+
+#: ui/SimPage.qml:157
+#, kde-format
+msgid "Operator Name (modem)"
+msgstr "Denumire operator (modem)"
+
+#: ui/SimPage.qml:165
+#, kde-format
+msgid "Operator Code (provided by SIM)"
+msgstr "Cod operator (furnizat de SIM)"
+
+#: ui/SimPage.qml:173
+#, kde-format
+msgid "Operator Name (provided by SIM)"
+msgstr "Denumire operator (furnizată de SIM)"
+
+#: ui/SimPage.qml:181
+#, kde-format
+msgid "SIM ID"
+msgstr "Identificator SIM"
+
+#: ui/SimPage.qml:197
+#, kde-format
+msgid "Emergency Numbers"
+msgstr "Numere de urgență"
+
+#~ msgid "Error resetting the modem: %1"
+#~ msgstr "Eroare la reinițializarea modemului: %1"
+
+#~ msgid "Error updating connection settings for %1: %2."
+#~ msgstr "Eroare la actualizarea configurărilor conexiunii pentru %1: %2."
+
+#~ msgid "Error activating connection: %1"
+#~ msgstr "Eroare la activarea conexiunii: %1"
+
+#~ msgid "Error adding connection: %1"
+#~ msgstr "Eroare la adăugarea conexiunii: %1"
+
+#~ msgid "Error removing connection: %1"
+#~ msgstr "Eroare la eliminarea conexiunii: %1"
+
+#~ msgid "Unknown"
+#~ msgstr "Necunoscut"
+
+#~ msgid "Unmanaged"
+#~ msgstr "Neadministrat"
+
+#~ msgid "Unavailable"
+#~ msgstr "Indisponibil"
+
+#~ msgid "Disconnected"
+#~ msgstr "Deconectat"
+
+#~ msgid "Preparing"
+#~ msgstr "Se pregătește"
+
+#~ msgid "ConfiguringHardware"
+#~ msgstr "ConfigurareEchipament"
+
+#~ msgid "NeedAuth"
+#~ msgstr "TrebuieAutentificare"
+
+#~ msgid "ConfiguringIp"
+#~ msgstr "ConfigurareIp"
+
+#~ msgid "CheckingIp"
+#~ msgstr "VerificareIp"
+
+#~ msgid "WaitingForSecondaries"
+#~ msgstr "SeAșteaptăSecundarele"
+
+#~ msgid "Activated"
+#~ msgstr "Activat"
+
+#~ msgid "Deactivating"
+#~ msgstr "Se dezactivează"
+
+#~ msgid "Failed"
+#~ msgstr "Eșuat"
+
+#~ msgid "POTS"
+#~ msgstr "POTS"
+
+#~ msgid "GSM"
+#~ msgstr "GSM"
+
+#~ msgid "GSM Compact"
+#~ msgstr "GSM Compact"
+
+#~ msgid "GPRS"
+#~ msgstr "GPRS"
+
+#~ msgid "EDGE"
+#~ msgstr "EDGE"
+
+#~ msgid "UMTS"
+#~ msgstr "UMTS"
+
+#~ msgid "HSDPA"
+#~ msgstr "HSDPA"
+
+#~ msgid "HSUPA"
+#~ msgstr "HSUPA"
+
+#~ msgid "HSPA"
+#~ msgstr "HSPA"
+
+#~ msgid "HSPA+"
+#~ msgstr "HSPA+"
+
+#~ msgid "CDMA2000 1xRTT"
+#~ msgstr "CDMA2000 1xRTT"
+
+#~ msgid "CDMA2000 EVDO-0"
+#~ msgstr "CDMA2000 EVDO-0"
+
+#~ msgid "CDMA2000 EVDO-A"
+#~ msgstr "CDMA2000 EVDO-A"
+
+#~ msgid "CDMA2000 EVDO-B"
+#~ msgstr "CDMA2000 EVDO-B"
+
+#~ msgid "LTE"
+#~ msgstr "LTE"
+
+#~ msgid "5GNR"
+#~ msgstr "5GNR"
+
+#~ msgid "Off"
+#~ msgstr "Dezactivat"
+
+#~ msgid "Low-power mode"
+#~ msgstr "Regim de putere redusă"
+
+#~ msgid "Full power mode"
+#~ msgstr "Regim de putere deplină"
+
+#~ msgid "Initializing"
+#~ msgstr "Se inițializează"
+
+#~ msgid "Disabled"
+#~ msgstr "Dezactivat"
+
+#~ msgid "Disabling"
+#~ msgstr "Se dezactivează"
+
+#~ msgid "Enabling"
+#~ msgstr "Se activează"
+
+#~ msgid "Searching for network provider"
+#~ msgstr "Se caută furnizor de rețea"
+
+#~ msgid "Registered with network provider"
+#~ msgstr "Înregistrat cu furnizorul de rețea"
+
+#~ msgid "Disconnecting"
+#~ msgstr "Se deconectează"
+
+#~ msgid "Connecting"
+#~ msgstr "Se conectează"
+
+#~ msgid "Connected"
+#~ msgstr "Conectat"
+
+#~ msgid "No error."
+#~ msgstr "Fără erori."
+
+#~ msgid "Unknown error."
+#~ msgstr "Eroare necunoscută."
+
+#~ msgid "SIM is required but missing."
+#~ msgstr "SIM-ul e necesar dar lipsește."
+
+#~ msgid "SIM is available but unusable."
+#~ msgstr "SIM-ul e disponibil dar inutilizabil."
+
+#~ msgid "Unknown modem capabilities."
+#~ msgstr "Capacități ale modemului necunoscute."
+
+#~ msgid "eSIM is not initialized."
+#~ msgstr "eSIM nu e inițializat."
+
+#~ msgid "Not registered, not searching for new operator to register."
+#~ msgstr "Neînregistrat, nu se caută operator nou pentru înregistrare."
+
+#~ msgid "Registered on home network."
+#~ msgstr "Înregistrat în rețeaua de domiciliu."
+
+#~ msgid "Not registered, searching for new operator to register with."
+#~ msgstr "Neînregistrat, se caută operator nou pentru înregistrare."
+
+#~ msgid "Registration denied."
+#~ msgstr "Înregistrare refuzată."
+
+#~ msgid "Unknown registration status."
+#~ msgstr "Stare necunoscută a înregistrării."
+
+#~ msgid "Registered for \"SMS only\", on home network."
+#~ msgstr "Înregistrat pentru „Doar SMS” în rețeaua de domiciliu."
+
+#~ msgid "Registered for \"SMS only\", roaming network."
+#~ msgstr "Înregistrat pentru „Doar SMS” în rețeaua de roaming."
+
+#~ msgid "Emergency services only."
+#~ msgstr "Doar servicii de urgență."
+
+#~ msgid "Scanning networks failed: %1"
+#~ msgstr "Căutarea rețelelor a eșuat: %1"
+
+#~ msgid "GuessYes"
+#~ msgstr "GhiceșteDa"
+
+#~ msgid "GuessNo"
+#~ msgstr "GhiceșteNu"
+
+#~ msgid "3G"
+#~ msgstr "3G"
+
+#~ msgid "4G"
+#~ msgstr "4G"
+
+#~ msgid "5G"
+#~ msgstr "5G"
+
+#~ msgid "Lock reason unknown."
+#~ msgstr "Motiv de blocare necunoscut."
+
+#~ msgid "Modem is unlocked."
+#~ msgstr "Modemul e deblocat."
+
+#~ msgid "SIM requires the PIN code."
+#~ msgstr "Cartela SIM cere codul PIN."
+
+#~ msgid "SIM requires the PIN2 code."
+#~ msgstr "Cartela SIM cere codul PIN2."
+
+#~ msgid "SIM requires the PUK code."
+#~ msgstr "Cartela SIM cere codul PUK."
+
+#~ msgid "SIM requires the PUK2 code."
+#~ msgstr "Cartela SIM cere codul PUK2."
+
+#~ msgid "Modem requires the service provider PIN code."
+#~ msgstr "Modemul cere codul PIN al furnizorului de servicii."
+
+#~ msgid "Modem requires the service provider PUK code."
+#~ msgstr "Modemul cere codul PUK al furnizorului de servicii."
+
+#~ msgid "Modem requires the network PIN code."
+#~ msgstr "Modemul cere codul PIN al rețelei."
+
+#~ msgid "Modem requires the network PUK code."
+#~ msgstr "Modemul cere codul PUK al rețelei."
+
+#~ msgid "Modem requires the PIN code."
+#~ msgstr "Modemul cere codul PIN."
+
+#~ msgid "Modem requires the corporate PIN code."
+#~ msgstr "Modemul cere codul PIN corporativ."
+
+#~ msgid "Modem requires the corporate PUK code."
+#~ msgstr "Modemul cere codul PUK corporativ."
+
+#~ msgid "Modem requires the PH-FSIM PIN code."
+#~ msgstr "Modemul cere codul PIN PH-FSIM."
+
+#~ msgid "Modem requires the PH-FSIM PUK code."
+#~ msgstr "Modemul cere codul PUK PH-FSIM."
+
+#~ msgid "(empty)"
+#~ msgstr "(gol)"
+
+#~ msgid "Error toggling SIM lock: %1"
+#~ msgstr "Eroare la comutarea blocajului cartelei SIM: %1"
+
+#~ msgid "Error changing the PIN: %1"
+#~ msgstr "Eroare la schimbarea PIN-ului: %1"
+
+#~ msgid "Error sending the PIN: %1"
+#~ msgstr "Eroare la trimiterea PIN-ului: %1"
+
+#~ msgid "Error sending the PUK: %1"
+#~ msgstr "Eroare la trimiterea PUK-ului: %1"
+
+#~ msgid "Data Roaming"
+#~ msgstr "Roaming de date"
+
+#~ msgid "Allow your device to use networks other than your carrier."
+#~ msgstr ""
+#~ "Permiteți dispozitivului să folosească alte rețele decât cele ale "
+#~ "operatorului dumneavoastră."

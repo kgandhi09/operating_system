@@ -1,0 +1,981 @@
+# Copyright (C) YEAR This_file_is_part_of_KDE
+# This file is distributed under the same license as the PACKAGE package.
+#
+# Kiszel Kristóf <kiszel.kristof@gmail.com>, 2017, 2018.
+# Kristóf Kiszel <ulysses@kubuntu.org>, 2019, 2020.
+# SPDX-FileCopyrightText: 2024-2026 Kristof Kiszel <ulysses@fsf.hu>
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-06-07 02:48+0000\n"
+"PO-Revision-Date: 2026-06-22 22:04+0200\n"
+"Last-Translator: Kristof Kiszel <ulysses@fsf.hu>\n"
+"Language-Team: Hungarian <kde-l10n-hu@kde.org>\n"
+"Language: hu\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Lokalize 26.04.2\n"
+
+#: kcm.cpp:149 kcm.cpp:171
+#, kde-format
+msgid "Implementation error"
+msgstr "Implementációs hiba"
+
+#: kcm.cpp:199
+#, kde-format
+msgid "Outputs changed while trying to apply settings"
+msgstr "A kimenet megváltozott a beállítások alkalmazására tett kísérlet során"
+
+#: output_model.cpp:101
+#, kde-format
+msgid "%1 Hz"
+msgstr "%1 Hz"
+
+#: output_model.cpp:764
+#, kde-format
+msgctxt "Width x height"
+msgid "%1 × %2"
+msgstr "%1 × %2"
+
+#: output_model.cpp:783
+#, kde-format
+msgctxt "Width x height (aspect ratio)"
+msgid "%1 × %2 (%3:%4)"
+msgstr "%1 × %2 (%3:%4)"
+
+#: output_model.cpp:892
+#, kde-format
+msgid "Replicated by other output"
+msgstr "Replikálva másik kimeneten"
+
+#: output_model.cpp:896
+#, kde-format
+msgid "None"
+msgstr "Nincs"
+
+#: ui/ColorProfileSelector.qml:28
+#, kde-format
+msgctxt "@label:listbox"
+msgid "Color profile:"
+msgstr "Színprofil:"
+
+#: ui/ColorProfileSelector.qml:37
+#, kde-format
+msgctxt "@item:inlistbox color profile"
+msgid "None"
+msgstr "Nincs"
+
+#: ui/ColorProfileSelector.qml:42
+#, kde-format
+msgctxt "@item:inlistbox color profile"
+msgid "ICC profile"
+msgstr "ICC-profil"
+
+#: ui/ColorProfileSelector.qml:47
+#, kde-format
+msgctxt "@item:inlistbox color profile"
+msgid "Built-in"
+msgstr "Beépített"
+
+#: ui/ColorProfileSelector.qml:68
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Use the color profile built into the screen itself, if present. Note that "
+"built-in color profiles are sometimes wrong, and often inaccurate. For "
+"optimal color fidelity, calibration using a colorimeter is recommended."
+msgstr ""
+"Használja a képernyőbe beépített színprofilt, ha van ilyen. Vegye "
+"figyelembe, hogy a beépített színprofilok néha tévesek és gyakran "
+"pontatlanok. Az optimális színhűség érdekében ajánlott a kalibrálás "
+"koloriméterrel."
+
+#: ui/IccSelector.qml:33
+#, kde-format
+msgctxt "@info:placeholder"
+msgid "Enter ICC profile path…"
+msgstr "Adja meg az ICC-profil elérési útját…"
+
+#: ui/IccSelector.qml:48
+#, kde-format
+msgctxt "@action:button"
+msgid "Select ICC profile…"
+msgstr "ICC-profil kiválasztása…"
+
+#: ui/IccSelector.qml:58
+#, kde-format
+msgid "Opens a file picker for the ICC profile"
+msgstr "Megnyit egy fájlválasztót az ICC-profilhoz"
+
+#: ui/IccSelector.qml:67
+#, kde-format
+msgctxt "@title:window"
+msgid "Select ICC Profile"
+msgstr "ICC-profil kiválasztása"
+
+#: ui/main.qml:43
+#, kde-format
+msgctxt ""
+"@action:button Briefly show the display name in a popup label on each screen"
+msgid "Identify Screens"
+msgstr "Képernyők azonosítása"
+
+#: ui/main.qml:56
+#, kde-format
+msgid "Keep display configuration?"
+msgstr "Megtartja a kijelzőbeállításokat?"
+
+#: ui/main.qml:67
+#, kde-format
+msgid "Will revert to previous configuration in %1 second."
+msgid_plural "Will revert to previous configuration in %1 seconds."
+msgstr[0] "Visszaállítás a korábbi beállításokra %1 másodperc múlva."
+msgstr[1] "Visszaállítás a korábbi beállításokra %1 másodperc múlva."
+
+#: ui/main.qml:84
+#, kde-format
+msgid "&Keep"
+msgstr "&Megtartás"
+
+#: ui/main.qml:97
+#, kde-format
+msgid "&Revert"
+msgstr "&Visszaállítás"
+
+#: ui/main.qml:117
+#, kde-format
+msgctxt "@info"
+msgid "All displays are disabled. Enable at least one."
+msgstr "Minden kijelző le van tiltva. Engedélyezzen legalább egyet."
+
+#: ui/main.qml:119
+#, kde-format
+msgctxt "@info"
+msgid ""
+"Gaps between displays are not supported. Make sure all displays are touching."
+msgstr ""
+"A kijelzők közötti hézagok nem támogatottak. Győződjön meg róla, hogy minden "
+"kijelző érintkezik."
+
+#: ui/main.qml:124
+#, kde-format
+msgctxt "The argument contains the reason for the failure"
+msgid "Couldn’t apply display configuration: %1"
+msgstr "Nem sikerült alkalmazni a kijelzőbeállításokat: %1"
+
+#: ui/main.qml:133
+#, kde-format
+msgid "A new output has been added. Settings have been reloaded."
+msgstr "Új kimenet lett felvéve.A beállítások újratöltődtek."
+
+#: ui/main.qml:135
+#, kde-format
+msgid "An output has been removed. Settings have been reloaded."
+msgstr "Egy kimenet eltávolításra került. A beállítások újratöltődtek."
+
+#: ui/main.qml:189
+#, kde-format
+msgid "No KScreen backend found. Please check your KScreen installation."
+msgstr ""
+"Nem található a KScreen modul. Ellenőrizze, hogy rendesen telepítve van-e."
+
+#: ui/main.qml:198
+#, kde-format
+msgid "Outputs could not be saved due to error."
+msgstr "Hiba történt, a kimenetek nem menthetőek."
+
+#: ui/main.qml:207
+#, kde-format
+msgid ""
+"Global scale changes will come into effect after the system is restarted."
+msgstr ""
+"A globális skálázás módosításai a rendszer újraindítása után lépnek életbe."
+
+#: ui/main.qml:213
+#, kde-format
+msgid "Restart"
+msgstr "Újraindítás"
+
+#: ui/main.qml:231
+#, kde-format
+msgid "Display configuration reverted."
+msgstr "Kijelzőbeállítások visszaállítva."
+
+#: ui/main.qml:245
+#, kde-format
+msgctxt "@title:window"
+msgid "Change Priorities"
+msgstr "Prioritások módosítása"
+
+#: ui/main.qml:275 ui/OutputPanel.qml:50
+#, kde-format
+msgid "Primary"
+msgstr "Elsődleges"
+
+#: ui/main.qml:280
+#, kde-format
+msgid "Raise priority"
+msgstr "Prioritás emelése"
+
+#: ui/main.qml:290
+#, kde-format
+msgid "Lower priority"
+msgstr "Prioritás csökkentése"
+
+#: ui/main.qml:402
+#, kde-format
+msgctxt "@action:button Shrink the height of a view"
+msgid "Collapse"
+msgstr "Összecsukás"
+
+#: ui/main.qml:403
+#, kde-format
+msgctxt "@action:button Edit the arrangement of display outputs"
+msgid "Edit Arrangement"
+msgstr "Elrendezés szerkesztése"
+
+#: ui/Orientation.qml:14
+#, kde-format
+msgid "Orientation:"
+msgstr "Tájolás:"
+
+#: ui/Orientation.qml:27 ui/OutputPanel.qml:172 ui/OutputPanel.qml:217
+#, kde-format
+msgid "Automatic"
+msgstr "Automatikus"
+
+#: ui/Orientation.qml:42
+#, kde-format
+msgid "Only when in tablet mode"
+msgstr "Csak tablet módban"
+
+#: ui/Orientation.qml:58
+#, kde-format
+msgid "Manual"
+msgstr "Kézi"
+
+#: ui/Output.qml:21
+#, kde-format
+msgctxt "Width, height, scale; separated with no-break space"
+msgid "(%1 × %2, %3%)"
+msgstr "(%1 × %2, %3%)"
+
+#: ui/Output.qml:23
+#, kde-format
+msgctxt "Width, height; separated with no-break space"
+msgid "(%1 × %2)"
+msgstr "(%1 × %2)"
+
+#: ui/Output.qml:226
+#, kde-format
+msgid "%1, %2"
+msgstr "%1, %2"
+
+#: ui/Output.qml:252
+#, kde-format
+msgid "Replicas"
+msgstr "Replikák"
+
+#: ui/OutputPanel.qml:31
+#, kde-format
+msgctxt "@label for a checkbox that says 'Enabled'"
+msgid "Device:"
+msgstr "Eszköz:"
+
+#: ui/OutputPanel.qml:32
+#, kde-format
+msgid "Enabled"
+msgstr "Engedélyezve"
+
+#: ui/OutputPanel.qml:43
+#, kde-format
+msgid "Change Screen Priorities…"
+msgstr "Kijelzőprioritás módosítása…"
+
+#: ui/OutputPanel.qml:56
+#, kde-kuit-format
+msgctxt "@info"
+msgid ""
+"This determines which screen your main desktop appears on, along with any "
+"Plasma Panels in it. Some older games also use this setting to decide which "
+"screen to appear on.<nl/><nl/>It has no effect on what screen notifications "
+"or other windows appear on."
+msgstr ""
+"Ez határozza meg, hogy melyik képernyőn jelenik meg a fő asztal, valamint a "
+"Plasma panelek. Néhány régebbi játék is ezt a beállítást használja annak "
+"eldöntésére, melyik képernyőn jelenjen meg.<nl/><nl/>Ez nincs hatással arra, "
+"hogy az értesítések vagy más ablakok melyik képernyőn jelennek meg."
+
+#: ui/OutputPanel.qml:61
+#, kde-format
+msgid "Resolution:"
+msgstr "Felbontás:"
+
+#: ui/OutputPanel.qml:82
+#, kde-format
+msgctxt "@info"
+msgid "“%1” is the only resolution supported by this display."
+msgstr "A(z) „%1” a kijelző által támogatott egyetlen felbontás."
+
+#: ui/OutputPanel.qml:92
+#, kde-format
+msgid "Scale:"
+msgstr "Skálázás:"
+
+#: ui/OutputPanel.qml:98 ui/Panel.qml:62
+#, kde-format
+msgctxt "@info accessible description of slider value"
+msgid "in percent of regular scale"
+msgstr "a normál skála százalékában"
+
+#: ui/OutputPanel.qml:129 ui/Panel.qml:94
+#, kde-format
+msgctxt "Global scale factor expressed in percentage form"
+msgid "%1%"
+msgstr "%1%"
+
+#: ui/OutputPanel.qml:141
+#, kde-format
+msgid "Refresh rate:"
+msgstr "Frissítési gyakoriság:"
+
+#: ui/OutputPanel.qml:162
+#, kde-format
+msgctxt "@info"
+msgid "“%1” is the only refresh rate supported by this display."
+msgstr "„%1” a kijelző által támogatott egyetlen frissítési frekvencia."
+
+#: ui/OutputPanel.qml:163
+#, kde-format
+msgctxt "@info"
+msgid ""
+"“%1” is the only refresh rate supported by this display at the current "
+"resolution."
+msgstr ""
+"„%1” a kijelző által támogatott egyetlen frissítési frekvencia a jelenlegi "
+"felbontáson."
+
+#: ui/OutputPanel.qml:168
+#, kde-format
+msgid "Adaptive sync:"
+msgstr "Adaptív szinkron:"
+
+#: ui/OutputPanel.qml:171
+#, kde-format
+msgid "Never"
+msgstr "Soha"
+
+#: ui/OutputPanel.qml:173
+#, kde-format
+msgid "Always"
+msgstr "Mindig"
+
+#: ui/OutputPanel.qml:184
+#, kde-format
+msgid "Overscan:"
+msgstr "Túlpásztázás"
+
+#: ui/OutputPanel.qml:198
+#, kde-format
+msgctxt "Overscan expressed in percentage form"
+msgid "%1%"
+msgstr "%1%"
+
+#: ui/OutputPanel.qml:204
+#, kde-kuit-format
+msgctxt "@info"
+msgid ""
+"Determines how much padding is put around the image sent to the display to "
+"compensate for part of the content being cut off around the edges.<nl/><nl/"
+">This is sometimes needed when using a TV as a screen."
+msgstr ""
+"Meghatározza, hogy a kijelzőre küldött kép köré mekkora kitöltés kerüljön, "
+"hogy kompenzálja a tartalom egy részének a széleken történő levágását.<nl/"
+"><nl/>Ez néha szükséges, ha a TV-t képernyőként használják."
+
+#: ui/OutputPanel.qml:209
+#, kde-format
+msgid "RGB range:"
+msgstr "RGB tartomány:"
+
+#: ui/OutputPanel.qml:218
+#, kde-format
+msgid "Full"
+msgstr "Teljes"
+
+#: ui/OutputPanel.qml:219
+#, kde-format
+msgid "Limited"
+msgstr "Korlátozott"
+
+#: ui/OutputPanel.qml:229
+#, kde-kuit-format
+msgctxt "@info"
+msgid ""
+"Determines whether the range of possible color values needs to be limited "
+"for the display. This should only be changed if the colors on the screen "
+"look washed out."
+msgstr ""
+"Meghatározza, hogy a lehetséges színértékek tartományát korlátozni kell-e a "
+"megjelenítéshez. Ezt csak akkor kell megváltoztatni, ha a színek a képernyőn "
+"elmosódottnak tűnnek."
+
+#: ui/OutputPanel.qml:280
+#, kde-format
+msgctxt "@label"
+msgid "High Dynamic Range:"
+msgstr "HDR:"
+
+#: ui/OutputPanel.qml:287
+#, kde-format
+msgctxt "@option:check"
+msgid "Enable &HDR"
+msgstr "&HDR bekapcsolása"
+
+#: ui/OutputPanel.qml:293
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"HDR allows compatible applications to show brighter and more vivid colors."
+msgstr ""
+"A HDR lehetővé teszi a kompatibilis alkalmazásoknak fényesebb és élénkebb "
+"színek megjelenítését."
+
+#: ui/OutputPanel.qml:302
+#, kde-format
+msgctxt "@action:button"
+msgid "Calibrate HDR Brightness…"
+msgstr "HDR-fényerő kalibrálása…"
+
+#: ui/OutputPanel.qml:316
+#, kde-format
+msgid "Opens a window to calibrate HDR brightness"
+msgstr "Megnyit egy ablakot a HDR-fényerő kalibrálásához"
+
+#: ui/OutputPanel.qml:321
+#, kde-kuit-format
+msgctxt "@info:tooltip"
+msgid "HDR calibration can only be started if all settings are applied."
+msgstr ""
+"A HDR kalibráció csak az összes beállítás alkalmazása után indítható el."
+
+#: ui/OutputPanel.qml:328
+#, kde-format
+msgctxt "@label:listbox"
+msgid "Color accuracy:"
+msgstr "Színhűség:"
+
+#: ui/OutputPanel.qml:337
+#, kde-format
+msgctxt "@item:inlistbox tradeoff between efficiency and color accuracy"
+msgid "Prefer efficiency"
+msgstr "Hatékonyság preferálása"
+
+#: ui/OutputPanel.qml:338
+#, kde-format
+msgctxt "@item:inlistbox tradeoff between efficiency and color accuracy"
+msgid "Prefer color accuracy"
+msgstr "Színhűség preferálása"
+
+#: ui/OutputPanel.qml:348
+#, kde-kuit-format
+msgctxt "@info:tooltip"
+msgid ""
+"Preferring color accuracy limits potentially inaccurate offloading of color "
+"operations to the display driver and increases the maximum color resolution."
+"<nl/><nl/>Note that this setting can have a large impact on performance."
+msgstr ""
+"A színpontosság előnyben részesítése korlátozza a színes műveleteknek a "
+"kijelző illesztőprogramjára történő, potenciálisan pontatlan áthelyezését, "
+"és növeli a maximális színfelbontást.<nl/><nl/>Ne feledje, hogy ez a "
+"beállítás jelentősen befolyásolhatja a teljesítményt."
+
+#: ui/OutputPanel.qml:354
+#, kde-kuit-format
+msgctxt "@info:tooltip"
+msgid ""
+"Preferring efficiency simplifies the ICC profile to matrix+shaper, improving "
+"performance at the cost of color accuracy.<nl/><nl/>Note that changing this "
+"setting can have a large impact on performance."
+msgstr ""
+"A hatékonyság előnyben részesítése leegyszerűsíti az ICC-profilt mátrix"
+"+formázóra, javítva a teljesítményt a színhelyesség rovására.<nl/><nl/>Ne "
+"feledje, hogy ez a beállítás jelentősen befolyásolhatja a teljesítményt."
+
+#: ui/OutputPanel.qml:362
+#, kde-format
+msgctxt "@label:listbox"
+msgid "Limit color resolution to:"
+msgstr "Színfelbontás korlátozása:"
+
+#: ui/OutputPanel.qml:383
+#, kde-format
+msgctxt "@item:inlistbox color resolution"
+msgid "Automatic  (%1 bits per color)"
+msgstr "Automatikus (%1 bit/szín)"
+
+#: ui/OutputPanel.qml:385 ui/OutputPanel.qml:398
+#, kde-format
+msgctxt "@item:inlistbox color resolution"
+msgid "%1 bits per color"
+msgstr "%1 bit/szín"
+
+#: ui/OutputPanel.qml:396
+#, kde-format
+msgctxt "@item:inlistbox color resolution"
+msgid "Automatic (%1 bits per color)"
+msgstr "Automatikus (%1 bit/szín)"
+
+#: ui/OutputPanel.qml:408
+#, kde-kuit-format
+msgctxt "@info:tooltip"
+msgid ""
+"Limits the color resolution of the image that is sent to the display. This "
+"does not affect screenshots or recordings.<nl/><nl/>Because the display is "
+"currently connected through a dock, automatic color resolution has been "
+"temporarily reduced to 8 bits to avoid common dock issues.<nl/><nl/>Due to "
+"graphics driver limitations, the actually used resolution cannot be known."
+msgstr ""
+"Korlátozza a kijelzőre küldött kép színmélységét. Ez nem befolyásolja a "
+"képernyőképeket vagy felvételeket.<nl/><nl/>Mivel a kijelző jelenleg egy "
+"dokkolón keresztül csatlakozik, az automatikus színmélység ideiglenesen 8 "
+"bitre csökkentett a gyakori dokkolóproblémák elkerülése érdekében.<nl/><nl/"
+">A grafikus illesztőprogram korlátai miatt a ténylegesen használt felbontás "
+"nem ismert."
+
+#: ui/OutputPanel.qml:412
+#, kde-kuit-format
+msgctxt "@info:tooltip"
+msgid ""
+"Limits the color resolution of the image that is sent to the display. This "
+"does not affect screenshots or recordings.<nl/><nl/>Limiting color "
+"resolution can be useful to work around display or graphics driver issues."
+"<nl/><nl/>Due to graphics driver limitations, the actually used resolution "
+"cannot be known."
+msgstr ""
+"Korlátozza a kijelzőre küldött kép színmélységét. Ez nem befolyásolja a "
+"képernyőképeket vagy felvételeket.<nl/><nl/>A színmélység korlátozása "
+"hasznos lehet a kijelző- vagy grafikus-illesztőprogram-problémák "
+"megkerülésére.<nl/><nl/>A grafikus illesztőprogram korlátai miatt a "
+"ténylegesen használt felbontás nem ismert."
+
+#: ui/OutputPanel.qml:427
+#, kde-format
+msgctxt "@label"
+msgid "sRGB color intensity:"
+msgstr "sRGB színintenzitás:"
+
+#: ui/OutputPanel.qml:459
+#, kde-format
+msgctxt "Color intensity factor expressed in percentage form"
+msgid "%1%"
+msgstr "%1%"
+
+#: ui/OutputPanel.qml:467
+#, kde-format
+msgctxt "@info:tooltip"
+msgid "Increases the intensity of sRGB content on the screen."
+msgstr "Növeli a képernyőn megjelenő sRGB tartalom intenzitását."
+
+#: ui/OutputPanel.qml:479
+#, kde-format
+msgctxt "@label"
+msgid "Adaptive Backlight Modulation:"
+msgstr "Adaptív háttérvilágítás-szabályozás:"
+
+#: ui/OutputPanel.qml:502
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Adaptive backlight modulation reduces power use at the cost of color accuracy"
+msgstr ""
+"Az adaptív háttérvilágítás-szabályozás csökkenti az energiafogyasztást a "
+"színpontosság rovására"
+
+#: ui/OutputPanel.qml:511
+#, kde-format
+msgctxt "@label"
+msgid "Brightness:"
+msgstr "Fényerő:"
+
+#: ui/OutputPanel.qml:517
+#, kde-format
+msgctxt "@option:check"
+msgid "Control hardware brightness with DDC/CI"
+msgstr "Hardveres fényerő-szabályozás DDC/CI-vel"
+
+#: ui/OutputPanel.qml:523
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"DDC/CI is a feature supported by many monitors. Plasma can use it to adjust "
+"screen brightness with desktop controls, as if using the monitor's own "
+"hardware buttons and OSD menu."
+msgstr ""
+"A DDC/CI számos monitor által támogatott funkció. A Plasma képes ezt "
+"használni a képernyő fényerejének asztali vezérlőkkel történő beállítására, "
+"mintha a monitor saját hardvergombjait és képernyőmenüjét használná."
+
+#: ui/OutputPanel.qml:558
+#, kde-format
+msgctxt "Brightness expressed in percentage form"
+msgid "%1%"
+msgstr "%1%"
+
+#: ui/OutputPanel.qml:572
+#, kde-format
+msgid "Automatically adapt to environment"
+msgstr "Automatikus alkalmazkodás a környezethez"
+
+#: ui/OutputPanel.qml:577
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Automatically adjust the screen’s brightness based on the lighting level of "
+"the environment, as detected by the device’s ambient light sensor. If you "
+"adjust the brightness manually, those adjustments will be remembered and "
+"taken into account."
+msgstr ""
+"A képernyő fényerejét automatikusan a környezeti fényerősséghez igazítja, "
+"amelyet a készülék környezeti fényérzékelője érzékel. Ha a fényerőt saját "
+"kezűleg állítja be, a rendszer megjegyzi ezeket a beállításokat, és "
+"figyelembe veszi azokat."
+
+#: ui/OutputPanel.qml:589
+#, kde-format
+msgctxt "@label"
+msgid "Sharpness:"
+msgstr "Élesség:"
+
+#: ui/OutputPanel.qml:619
+#, kde-format
+msgctxt "@label"
+msgid "Extended Dynamic Range:"
+msgstr "Kiterjesztett dinamikatartomány:"
+
+#: ui/OutputPanel.qml:624
+#, kde-format
+msgctxt "@option:check"
+msgid "Enable EDR"
+msgstr "EDR bekapcsolása"
+
+#: ui/OutputPanel.qml:630
+#, kde-kuit-format
+msgctxt "@info:tooltip"
+msgid ""
+"EDR allows viewing HDR content on SDR displays by dynamically adjusting the "
+"backlight.<nl/><nl/>Note that this increases battery usage while viewing HDR "
+"content."
+msgstr ""
+"Az EDR lehetővé teszi a HDR-tartalmak SDR-kijelzőkön történő megtekintését a "
+"háttérvilágítás dinamikus beállításával.<nl/><nl/>Vegye figyelembe, hogy ez "
+"növeli az akkumulátor-használatot HDR tartalmak megtekintése közben."
+
+#: ui/OutputPanel.qml:635
+#, kde-format
+msgid "Replica of:"
+msgstr "Replikája ennek:"
+
+#: ui/Panel.qml:55
+#, kde-format
+msgid "Global scale:"
+msgstr "Globális skálázás:"
+
+#: ui/Panel.qml:118 ui/Panel.qml:138
+#, kde-format
+msgid "Legacy applications (X11):"
+msgstr "Örökölt alkalmazások (X11):"
+
+#: ui/Panel.qml:123
+#, kde-format
+msgctxt "The apps themselves should scale to fit the displays"
+msgid "Apply scaling themselves"
+msgstr "Méretezzék saját magukat"
+
+#: ui/Panel.qml:128
+#, kde-format
+msgid ""
+"Legacy applications that support scaling will use it and look crisp, however "
+"those that don’t will not be scaled at all."
+msgstr ""
+"A méretezést támogató örökölt alkalmazások használni fogják azt, és élesnek "
+"látszódnak, azonban az azt nem támogatók egyáltalán nem méreteződnek."
+
+#: ui/Panel.qml:139
+#, kde-format
+msgctxt "The system will perform the x11 apps scaling"
+msgid "Scaled by the system"
+msgstr "Méretezés a rendszer által"
+
+#: ui/Panel.qml:144
+#, kde-format
+msgid ""
+"All legacy applications will be scaled by the system to the correct size, "
+"however they will always look slightly blurry."
+msgstr ""
+"Az összes örökölt alkalmazást a rendszer méretezi a megfelelő méretre, habár "
+"ekkor mindig kissé homályosnak fognak tűnni."
+
+#: ui/Panel.qml:149
+#, kde-format
+msgctxt "@label"
+msgid "Screen tearing:"
+msgstr "Képtörés:"
+
+#: ui/Panel.qml:152
+#, kde-format
+msgctxt ""
+"@option:check The thing being allowed in fullscreen windows is screen tearing"
+msgid "Allow in fullscreen windows"
+msgstr "Engedélyezés teljes képernyős ablakokban"
+
+#: ui/Panel.qml:157
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Screen tearing reduces latency with most displays. Note that not all "
+"graphics drivers support this setting."
+msgstr ""
+"A képtörés a legtöbb kijelzőnél csökkenti a késleltetést. Ne feledje, hogy "
+"nem minden videókártya illesztőprogramja támogatja ezt a beállítást."
+
+#: ui/Panel.qml:171
+#, kde-format
+msgid ""
+"The global scale factor is limited to multiples of 6.25% to minimize visual "
+"glitches in applications using the X11 windowing system."
+msgstr ""
+"A globális skálázási faktor csak a 6,25% többszöröse lehet, hogy ne legyenek "
+"grafikai hibák az X11-et használó alkalmazásokban."
+
+#: ui/RotationButton.qml:54
+#, kde-format
+msgid "90° Clockwise"
+msgstr "90°-kal óramutató szerint"
+
+#: ui/RotationButton.qml:58
+#, kde-format
+msgid "Upside Down"
+msgstr "Fejjel lefelé"
+
+#: ui/RotationButton.qml:62
+#, kde-format
+msgid "90° Counterclockwise"
+msgstr "90°-kal óramutató járásával ellentétesen"
+
+#: ui/RotationButton.qml:67
+#, kde-format
+msgid "No Rotation"
+msgstr "Nincs elforgatás"
+
+#: ui/ScreenView.qml:53
+#, kde-format
+msgid "Drag screens to re-arrange them"
+msgstr "Fogja meg és húzza a képernyőket az átrendezéshez"
+
+#~ msgctxt "@info:tooltip"
+#~ msgid "ICC profiles aren’t compatible with HDR yet."
+#~ msgstr "Az ICC-profilok még nem kompatibilisek a HDR-rel."
+
+#~ msgctxt "@info:tooltip"
+#~ msgid ""
+#~ "Limits the color resolution of the image that is sent to the display. "
+#~ "This does not affect screenshots or recordings.<nl/><nl/>"
+#~ msgstr ""
+#~ "Korlátozza a kijelzőre küldött kép színfelbontását. Ez nem befolyásolja a "
+#~ "képernyőképeket vagy -felvételeket.<nl/><nl/>"
+
+#~| msgctxt "@info:tooltip"
+#~| msgid "The built-in color profile is always used with HDR."
+#~ msgctxt "@info:tooltip"
+#~ msgid "The screen's built-in color profile is always used with HDR."
+#~ msgstr "HDR esetén mindig a képernyő beépített színprofilja használatos."
+
+#, fuzzy
+#~| msgctxt "@label"
+#~| msgid "Maximum SDR Brightness:"
+#~ msgctxt "@label"
+#~ msgid "Maximum SDR brightness:"
+#~ msgstr "Maximális SDR fényerő:"
+
+#, fuzzy
+#~| msgctxt "@info:tooltip"
+#~| msgid "Sets the maximum brightness for the normal brightness slider"
+#~ msgctxt "@info:tooltip"
+#~ msgid "Sets the maximum brightness for the normal brightness slider."
+#~ msgstr "A maximális fényerő beállítása a normál fényerőcsúszka számára"
+
+#, fuzzy
+#~| msgctxt "@info:tooltip"
+#~| msgid "This setting can have a large impact on performance"
+#~ msgctxt "@info:tooltip"
+#~ msgid "This setting can have a large impact on performance."
+#~ msgstr "Ez a beállítás nagy hatással lehet a teljesítményre"
+
+#~ msgctxt "Width x height"
+#~ msgid "%1x%2"
+#~ msgstr "%1x%2"
+
+#~ msgctxt "@info:tooltip"
+#~ msgid "Sets the brightness of non-HDR content on the screen, in nits"
+#~ msgstr ""
+#~ "Beállítja a képernyőn megjelenő nem HDR tartalmak fényerejét nitben."
+
+#~ msgid "Save displays' properties:"
+#~ msgstr "A kijelző tulajdonságainak mentése:"
+
+#~ msgid "For any display arrangement"
+#~ msgstr "Bármely kijelzőelrendezéshez"
+
+#~ msgid "For only this specific display arrangement"
+#~ msgstr "Csak ehhez az adott kijelzőelrendezéshez"
+
+#~ msgid ""
+#~ "Are you sure you want to disable all outputs? This might render the "
+#~ "device unusable."
+#~ msgstr ""
+#~ "Biztosan letiltja az összes kimenetet? Ez használhatatlanná teheti az "
+#~ "eszközt."
+
+#~ msgid "Disable All Outputs"
+#~ msgstr "Összes kimenet letiltása"
+
+#~ msgctxt "NAME OF TRANSLATORS"
+#~ msgid "Your names"
+#~ msgstr "Kiszel Kristóf"
+
+#~ msgctxt "EMAIL OF TRANSLATORS"
+#~ msgid "Your emails"
+#~ msgstr "kiszel.kristof@gmail.com"
+
+#~ msgid "Display Configuration"
+#~ msgstr "Kijelzőbeállítás"
+
+#~ msgid "Manage and configure monitors and displays"
+#~ msgstr "Monitorok és kijelzők kezelése és beállítása"
+
+#~ msgid "Copyright © 2019 Roman Gilg"
+#~ msgstr "© Roman Gilq, 2019."
+
+#~ msgid "Roman Gilg"
+#~ msgstr "Roman Gilg"
+
+#~ msgid "Developer"
+#~ msgstr "Fejlesztő"
+
+#~ msgid "Maintainer"
+#~ msgstr "Karbantartó"
+
+#~ msgid "Settings for %1"
+#~ msgstr "A(z) %1 beállításai"
+
+#, fuzzy
+#~| msgctxt "@title:window"
+#~| msgid "Disable All Outputs"
+#~ msgid "Disable all outputs"
+#~ msgstr "Összes kimenet letiltása"
+
+#~ msgid "Configuration for displays"
+#~ msgstr "Beállítómodul kijelzőkhöz"
+
+#~ msgid "Tip: Hold Ctrl while dragging a display to disable snapping"
+#~ msgstr "Tipp: tarta lenyomta a CTRL-t a kijelző húzásakor, hogy ne vágja le"
+
+#~ msgid "Warning: There are no active outputs!"
+#~ msgstr "Figyelmeztetés: nincsenek aktív kimenetek!"
+
+#~ msgid "Your system only supports up to %1 active screen"
+#~ msgid_plural "Your system only supports up to %1 active screens"
+#~ msgstr[0] "A rendszere csak %1 aktív képernyőt támogat"
+#~ msgstr[1] "A rendszere csak %1 aktív képernyőt támogat"
+
+#~ msgid "Unified Outputs"
+#~ msgstr "Egyesített kimenetek"
+
+#~ msgid "Laptop Screen"
+#~ msgstr "Laptop képernyő"
+
+#~ msgid "(c), 2012-2013 Daniel Vrátil"
+#~ msgstr "© Daniel Vrátil, 2012-2013."
+
+#~ msgid "Daniel Vrátil"
+#~ msgstr "Daniel Vrátil"
+
+#~ msgid "&Reconfigure"
+#~ msgstr "Új&rakonfigurálás"
+
+#~ msgid ""
+#~ "Sorry, your configuration could not be applied.\n"
+#~ "\n"
+#~ "Common reasons are that the overall screen size is too big, or you "
+#~ "enabled more displays than supported by your GPU."
+#~ msgstr ""
+#~ "A beállításai nem alkalmazhatók.\n"
+#~ "\n"
+#~ "Ennek oka többek között az is lehet, hogy a teljes képernyőméret túl "
+#~ "nagy, vagy több kijelzőt engedélyezett, mint amennyit a GPU támogat."
+
+#~ msgctxt "@title:window"
+#~ msgid "Unsupported Configuration"
+#~ msgstr "Nem támogatott konfiguráció"
+
+#~ msgid "KCM Test App"
+#~ msgstr "KCM tesztalkalmazás"
+
+#~ msgid "Unify Outputs"
+#~ msgstr "Kimenetek egyesítése"
+
+#~ msgid "Scale Display"
+#~ msgstr "Kijelzőskálázás"
+
+#~ msgid "Display:"
+#~ msgstr "Kijelző:"
+
+#~ msgctxt "Scale multiplier, show everything at 2 times normal scale"
+#~ msgid "2x"
+#~ msgstr "2x"
+
+#~ msgid "No available resolutions"
+#~ msgstr "Nincsenek elérhető felbontások"
+
+#~ msgid "Tab 1"
+#~ msgstr "1. lap"
+
+#~ msgid "Group Box"
+#~ msgstr "Csoportkeret"
+
+#~ msgid "Radio button"
+#~ msgstr "Választógomb"
+
+#~ msgid "Checkbox"
+#~ msgstr "Jelölőnégyzet"
+
+#~ msgid "Button"
+#~ msgstr "Nyomógomb"
+
+#~ msgid "Combobox"
+#~ msgstr "Kombinált lista"
+
+#~ msgid "Tab 2"
+#~ msgstr "2. lap"
+
+#~ msgid "Normal"
+#~ msgstr "Normál"
+
+#~ msgid "No Primary Output"
+#~ msgstr "Nincs elsődleges kimenet"
+
+#~ msgid "Break Unified Outputs"
+#~ msgstr "Egyesített kimenetek szétbontása"
+
+#~ msgid "Active profile"
+#~ msgstr "Aktív profil"
+
+#~ msgid "Dialog"
+#~ msgstr "Párbeszédablak"
+
+#~ msgid "TextLabel"
+#~ msgstr "TextLabel"

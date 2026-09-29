@@ -1,0 +1,119 @@
+# (C) Copyright 2008: Joachim Faulhaber
+# Distributed under the Boost Software License, Version 1.0.
+# (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+
+project : requirements <library>/boost/icl//boost_icl ;
+
+# Examples that do not use boost_date_time
+exe interval
+    :
+        interval_/interval.cpp
+    :
+    ;
+
+exe interval_container
+    :
+        interval_container_/interval_container.cpp
+    :
+    ;
+
+exe overlap_counter
+    :
+        overlap_counter_/overlap_counter.cpp
+    :
+    ;
+
+exe party
+    :
+        party_/party.cpp
+    :
+    ;
+
+exe std_copy
+    :
+        std_copy_/std_copy.cpp
+    :
+    ;
+
+exe std_transform
+    :
+        std_transform_/std_transform.cpp
+    :
+    ;
+
+exe custom_interval
+    :
+        custom_interval_/custom_interval.cpp
+    :
+    ;
+
+exe dynamic_interval
+    :
+        dynamic_interval_/dynamic_interval.cpp
+    :
+    ;
+
+exe static_interval
+    :
+        static_interval_/static_interval.cpp
+    :
+    ;
+
+# Examples using boost_date_time
+exe boost_party
+    :
+        boost_party_/boost_party.cpp
+    :
+    ;
+
+exe partys_height_average
+    :
+        partys_height_average_/partys_height_average.cpp
+    :
+    ;
+
+exe partys_tallest_guests
+    :
+        partys_tallest_guests_/partys_tallest_guests.cpp
+    :
+    ;
+
+exe man_power
+    :
+        man_power_/man_power.cpp
+    :
+    ;
+
+exe month_and_week_grid
+    :
+        month_and_week_grid_/month_and_week_grid.cpp
+    :
+    ;
+
+exe user_groups
+    :
+        user_groups_/user_groups.cpp
+    :
+    ;
+
+# Projects
+exe large_bitset
+    :
+        large_bitset_/large_bitset.cpp
+    :
+    ;
+
+
+
+exe itvset_shell
+    :
+        itvset_shell_/itvset_shell.cpp
+    :
+    ;
+
+exe splititvmap_shell
+    :
+        splititvmap_shell_/splititvmap_shell.cpp
+    :
+    ;
+

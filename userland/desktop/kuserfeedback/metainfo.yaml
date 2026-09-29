@@ -1,0 +1,16 @@
+description: User feedback framework
+public_lib: true
+platforms:
+ - name: All
+tier: 1
+type: solution
+portingAid: false
+deprecated: false
+release: false
+libraries:
+ - cmake: "KF6::UserFeedbackCore"
+ - cmake: "KF6UserFeedbackWidgets"
+cmakename: KF6UserFeedback
+
+group: Frameworks
+subgroup: Tier 1

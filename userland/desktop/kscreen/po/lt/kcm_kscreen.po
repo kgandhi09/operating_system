@@ -1,0 +1,1027 @@
+# Copyright (C) YEAR This_file_is_part_of_KDE
+# This file is distributed under the same license as the PACKAGE package.
+#
+# Liudas Ališauskas <liudas@akmc.lt>, 2015.
+# Mindaugas Baranauskas <opensuse.lietuviu.kalba@gmail.com>, 2017.
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-06-07 02:48+0000\n"
+"PO-Revision-Date: 2026-05-17 23:03+0300\n"
+"Last-Translator: Moo\n"
+"Language-Team: Lithuanian <kde-i18n-lt@kde.org>\n"
+"Language: lt\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=(n==1 ? 0 : n%10>=2 && (n%100<10 || n"
+"%100>=20) ? 1 : n%10==0 || (n%100>10 && n%100<20) ? 2 : 3);\n"
+"X-Generator: Poedit 3.8\n"
+
+#: kcm.cpp:149 kcm.cpp:171
+#, kde-format
+msgid "Implementation error"
+msgstr "Įgyvendinimo klaida"
+
+#: kcm.cpp:199
+#, kde-format
+msgid "Outputs changed while trying to apply settings"
+msgstr "Išvedimai pasikeitė bandant taikyti nuostatas"
+
+#: output_model.cpp:101
+#, kde-format
+msgid "%1 Hz"
+msgstr "%1 Hz"
+
+#: output_model.cpp:764
+#, kde-format
+msgctxt "Width x height"
+msgid "%1 × %2"
+msgstr "%1 × %2"
+
+#: output_model.cpp:783
+#, kde-format
+msgctxt "Width x height (aspect ratio)"
+msgid "%1 × %2 (%3:%4)"
+msgstr "%1 × %2 (%3:%4)"
+
+#: output_model.cpp:892
+#, kde-format
+msgid "Replicated by other output"
+msgstr "Atkartojamas kito išvedimo"
+
+#: output_model.cpp:896
+#, kde-format
+msgid "None"
+msgstr "Nėra"
+
+#: ui/ColorProfileSelector.qml:28
+#, kde-format
+msgctxt "@label:listbox"
+msgid "Color profile:"
+msgstr "Spalvų profilis:"
+
+#: ui/ColorProfileSelector.qml:37
+#, kde-format
+msgctxt "@item:inlistbox color profile"
+msgid "None"
+msgstr "Nėra"
+
+#: ui/ColorProfileSelector.qml:42
+#, kde-format
+msgctxt "@item:inlistbox color profile"
+msgid "ICC profile"
+msgstr "ICC profilis"
+
+#: ui/ColorProfileSelector.qml:47
+#, kde-format
+msgctxt "@item:inlistbox color profile"
+msgid "Built-in"
+msgstr "Įtaisytas"
+
+#: ui/ColorProfileSelector.qml:68
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Use the color profile built into the screen itself, if present. Note that "
+"built-in color profiles are sometimes wrong, and often inaccurate. For "
+"optimal color fidelity, calibration using a colorimeter is recommended."
+msgstr ""
+"Naudoti ekrane įtaisytą spalvų profilį, jei toks yra. Turėkite omenyje, kad "
+"įtaisyti spalvų profiliai yra, kartais, neteisingi, o dažnu atveju "
+"netikslūs. Optimaliam spalvų tikslumui yra rekomenduojamas kalibravimas "
+"naudojant spalvos intensyvumo matuoklį (kolorimetrą)."
+
+#: ui/IccSelector.qml:33
+#, kde-format
+msgctxt "@info:placeholder"
+msgid "Enter ICC profile path…"
+msgstr "Įveskite ICC profilio kelią…"
+
+#: ui/IccSelector.qml:48
+#, kde-format
+msgctxt "@action:button"
+msgid "Select ICC profile…"
+msgstr "Pasirinkti ICC profilį…"
+
+#: ui/IccSelector.qml:58
+#, kde-format
+msgid "Opens a file picker for the ICC profile"
+msgstr "Atveria ICC profilio failo parinkiklį"
+
+#: ui/IccSelector.qml:67
+#, kde-format
+msgctxt "@title:window"
+msgid "Select ICC Profile"
+msgstr "Pasirinkti ICC profilį"
+
+#: ui/main.qml:43
+#, kde-format
+msgctxt ""
+"@action:button Briefly show the display name in a popup label on each screen"
+msgid "Identify Screens"
+msgstr "Identifikuoti ekranus"
+
+#: ui/main.qml:56
+#, kde-format
+msgid "Keep display configuration?"
+msgstr "Palikti ekrano konfigūraciją?"
+
+#: ui/main.qml:67
+#, kde-format
+msgid "Will revert to previous configuration in %1 second."
+msgid_plural "Will revert to previous configuration in %1 seconds."
+msgstr[0] "Prie ankstesnės konfigūracijos bus sugrąžinta po %1 sekundės."
+msgstr[1] "Prie ankstesnės konfigūracijos bus sugrąžinta po %1 sekundžių."
+msgstr[2] "Prie ankstesnės konfigūracijos bus sugrąžinta po %1 sekundžių."
+msgstr[3] "Prie ankstesnės konfigūracijos bus sugrąžinta po %1 sekundės."
+
+#: ui/main.qml:84
+#, kde-format
+msgid "&Keep"
+msgstr "&Palikti"
+
+#: ui/main.qml:97
+#, kde-format
+msgid "&Revert"
+msgstr "S&ugrąžinti"
+
+#: ui/main.qml:117
+#, kde-format
+msgctxt "@info"
+msgid "All displays are disabled. Enable at least one."
+msgstr "Visi ekranai yra išjungti. Įjunkite bent vieną."
+
+#: ui/main.qml:119
+#, kde-format
+msgctxt "@info"
+msgid ""
+"Gaps between displays are not supported. Make sure all displays are touching."
+msgstr "Tarpai tarp ekranų nėra palaikomi. Įsitikinkite, kad ekranai liečiasi."
+
+#: ui/main.qml:124
+#, kde-format
+msgctxt "The argument contains the reason for the failure"
+msgid "Couldn’t apply display configuration: %1"
+msgstr "Nepavyko pritaikyti ekrano konfigūracijos: %1"
+
+#: ui/main.qml:133
+#, kde-format
+msgid "A new output has been added. Settings have been reloaded."
+msgstr "Pridėtas naujas išvedimas. Nuostatos įkeltos iš naujo."
+
+#: ui/main.qml:135
+#, kde-format
+msgid "An output has been removed. Settings have been reloaded."
+msgstr "Išvedimas pašalintas. Nuostatos įkeltos iš naujo."
+
+#: ui/main.qml:189
+#, kde-format
+msgid "No KScreen backend found. Please check your KScreen installation."
+msgstr "Nerasta KScreen vidinė pusė. Patikrinkite savo KScreen diegimą."
+
+#: ui/main.qml:198
+#, kde-format
+msgid "Outputs could not be saved due to error."
+msgstr "Išvedimų nepavyko įrašyti dėl klaidos."
+
+#: ui/main.qml:207
+#, kde-format
+msgid ""
+"Global scale changes will come into effect after the system is restarted."
+msgstr ""
+"Visuotinio mastelio pakeitimai įsigalios po to, kai paleisite sistemą iš "
+"naujo."
+
+#: ui/main.qml:213
+#, kde-format
+msgid "Restart"
+msgstr "Paleisti iš naujo"
+
+#: ui/main.qml:231
+#, kde-format
+msgid "Display configuration reverted."
+msgstr "Ekrano konfigūracija sugrąžinta."
+
+#: ui/main.qml:245
+#, kde-format
+msgctxt "@title:window"
+msgid "Change Priorities"
+msgstr "Keisti pirmenybes"
+
+#: ui/main.qml:275 ui/OutputPanel.qml:50
+#, kde-format
+msgid "Primary"
+msgstr "Pirminis"
+
+#: ui/main.qml:280
+#, kde-format
+msgid "Raise priority"
+msgstr "Teikti didesnę pirmenybę"
+
+#: ui/main.qml:290
+#, kde-format
+msgid "Lower priority"
+msgstr "Teikti mažesnę pirmenybę"
+
+#: ui/main.qml:402
+#, kde-format
+msgctxt "@action:button Shrink the height of a view"
+msgid "Collapse"
+msgstr "Suskleisti"
+
+#: ui/main.qml:403
+#, kde-format
+msgctxt "@action:button Edit the arrangement of display outputs"
+msgid "Edit Arrangement"
+msgstr "Taisyti išdėstymą"
+
+#: ui/Orientation.qml:14
+#, kde-format
+msgid "Orientation:"
+msgstr "Padėtis:"
+
+#: ui/Orientation.qml:27 ui/OutputPanel.qml:172 ui/OutputPanel.qml:217
+#, kde-format
+msgid "Automatic"
+msgstr "Automatinis"
+
+#: ui/Orientation.qml:42
+#, kde-format
+msgid "Only when in tablet mode"
+msgstr "Tik tada, kai planšetės veiksenoje"
+
+#: ui/Orientation.qml:58
+#, kde-format
+msgid "Manual"
+msgstr "Rankinis"
+
+#: ui/Output.qml:21
+#, kde-format
+msgctxt "Width, height, scale; separated with no-break space"
+msgid "(%1 × %2, %3%)"
+msgstr "(%1 × %2, %3%)"
+
+#: ui/Output.qml:23
+#, kde-format
+msgctxt "Width, height; separated with no-break space"
+msgid "(%1 × %2)"
+msgstr "(%1 × %2)"
+
+#: ui/Output.qml:226
+#, kde-format
+msgid "%1, %2"
+msgstr "%1, %2"
+
+#: ui/Output.qml:252
+#, kde-format
+msgid "Replicas"
+msgstr "Atkartojimai"
+
+#: ui/OutputPanel.qml:31
+#, kde-format
+msgctxt "@label for a checkbox that says 'Enabled'"
+msgid "Device:"
+msgstr "Įrenginys:"
+
+#: ui/OutputPanel.qml:32
+#, kde-format
+msgid "Enabled"
+msgstr "Įjungtas"
+
+#: ui/OutputPanel.qml:43
+#, kde-format
+msgid "Change Screen Priorities…"
+msgstr "Keisti ekrano pirmenybes…"
+
+#: ui/OutputPanel.qml:56
+#, kde-kuit-format
+msgctxt "@info"
+msgid ""
+"This determines which screen your main desktop appears on, along with any "
+"Plasma Panels in it. Some older games also use this setting to decide which "
+"screen to appear on.<nl/><nl/>It has no effect on what screen notifications "
+"or other windows appear on."
+msgstr ""
+"Tai nustato, kuriame ekrane bus rodomas jūsų pagrindinis darbalaukis, kartu "
+"su bet kokiais jame esančiais Plasma skydeliais. Kai kurie senesni žaidimai "
+"taip pat naudoja šią nuostatą, kad nuspręstų, kuriame ekrane būti rodomiems."
+"<nl/><nl/>Ši nuostata nedaro įtakos tam, kuriame ekrane bus rodomi "
+"pranešimai ar kiti langai."
+
+#: ui/OutputPanel.qml:61
+#, kde-format
+msgid "Resolution:"
+msgstr "Skiriamoji geba:"
+
+#: ui/OutputPanel.qml:82
+#, kde-format
+msgctxt "@info"
+msgid "“%1” is the only resolution supported by this display."
+msgstr "„%1“ yra vienintelė skiriamoji geba, kurią palaiko šis ekranas."
+
+#: ui/OutputPanel.qml:92
+#, kde-format
+msgid "Scale:"
+msgstr "Mastelis:"
+
+#: ui/OutputPanel.qml:98 ui/Panel.qml:62
+#, kde-format
+msgctxt "@info accessible description of slider value"
+msgid "in percent of regular scale"
+msgstr "procentais nuo įprasto mastelio"
+
+#: ui/OutputPanel.qml:129 ui/Panel.qml:94
+#, kde-format
+msgctxt "Global scale factor expressed in percentage form"
+msgid "%1%"
+msgstr "%1%"
+
+#: ui/OutputPanel.qml:141
+#, kde-format
+msgid "Refresh rate:"
+msgstr "Atnaujinimo dažnis:"
+
+#: ui/OutputPanel.qml:162
+#, kde-format
+msgctxt "@info"
+msgid "“%1” is the only refresh rate supported by this display."
+msgstr "„%1“ yra vienintelis atnaujinimo dažnis, kurį palaiko šis ekranas."
+
+#: ui/OutputPanel.qml:163
+#, kde-format
+msgctxt "@info"
+msgid ""
+"“%1” is the only refresh rate supported by this display at the current "
+"resolution."
+msgstr ""
+"„%1“ yra vienintelis atnaujinimo dažnis, kurį šia skirimąja geba palaiko šis "
+"ekranas."
+
+#: ui/OutputPanel.qml:168
+#, kde-format
+msgid "Adaptive sync:"
+msgstr "Adaptyvus sinchronizavimas:"
+
+#: ui/OutputPanel.qml:171
+#, kde-format
+msgid "Never"
+msgstr "Niekada"
+
+#: ui/OutputPanel.qml:173
+#, kde-format
+msgid "Always"
+msgstr "Visada"
+
+#: ui/OutputPanel.qml:184
+#, kde-format
+msgid "Overscan:"
+msgstr "Užribis:"
+
+#: ui/OutputPanel.qml:198
+#, kde-format
+msgctxt "Overscan expressed in percentage form"
+msgid "%1%"
+msgstr "%1%"
+
+#: ui/OutputPanel.qml:204
+#, kde-kuit-format
+msgctxt "@info"
+msgid ""
+"Determines how much padding is put around the image sent to the display to "
+"compensate for part of the content being cut off around the edges.<nl/><nl/"
+">This is sometimes needed when using a TV as a screen."
+msgstr ""
+"Nustato, kiek užpildo bus aplink paveikslą, kuris yra siunčiamas į ekraną ir "
+"naudojamas aplink kraštus nukarpomoms turinio dalims kompensuoti.<nl/><nl/"
+">Kartais, to prireikia, kai televizorius yra naudojamas kaip ekranas."
+
+#: ui/OutputPanel.qml:209
+#, kde-format
+msgid "RGB range:"
+msgstr "RGB rėžis:"
+
+#: ui/OutputPanel.qml:218
+#, kde-format
+msgid "Full"
+msgstr "Visas"
+
+#: ui/OutputPanel.qml:219
+#, kde-format
+msgid "Limited"
+msgstr "Ribotas"
+
+#: ui/OutputPanel.qml:229
+#, kde-kuit-format
+msgctxt "@info"
+msgid ""
+"Determines whether the range of possible color values needs to be limited "
+"for the display. This should only be changed if the colors on the screen "
+"look washed out."
+msgstr ""
+"Nustato, ar ekranui turi būti apribotas įmanomų spalvų reikšmių rėžis. Tai "
+"turėtų būti keičiama tik tuo atveju, jei spalvos ekrane atrodo išblukusios."
+
+#: ui/OutputPanel.qml:280
+#, kde-format
+msgctxt "@label"
+msgid "High Dynamic Range:"
+msgstr "Didelis dinaminis rėžis (HDR):"
+
+#: ui/OutputPanel.qml:287
+#, kde-format
+msgctxt "@option:check"
+msgid "Enable &HDR"
+msgstr "Įjungti &HDR"
+
+#: ui/OutputPanel.qml:293
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"HDR allows compatible applications to show brighter and more vivid colors."
+msgstr ""
+"HDR leidžia suderinamoms programoms atvaizduoti ryškesnes ir labiau "
+"vaizdingas spalvas."
+
+#: ui/OutputPanel.qml:302
+#, kde-format
+msgctxt "@action:button"
+msgid "Calibrate HDR Brightness…"
+msgstr "Kalibruoti HDR ryškumą…"
+
+#: ui/OutputPanel.qml:316
+#, kde-format
+msgid "Opens a window to calibrate HDR brightness"
+msgstr "Atveria langą, skirtą kalibruoti HDR ryškumą"
+
+#: ui/OutputPanel.qml:321
+#, kde-kuit-format
+msgctxt "@info:tooltip"
+msgid "HDR calibration can only be started if all settings are applied."
+msgstr ""
+"HDR kalibravimas gali būti pradėtas tik tuo atveju, jei yra pritaikytos "
+"visos nuostatos."
+
+#: ui/OutputPanel.qml:328
+#, kde-format
+msgctxt "@label:listbox"
+msgid "Color accuracy:"
+msgstr "Spalvų tikslumas:"
+
+#: ui/OutputPanel.qml:337
+#, kde-format
+msgctxt "@item:inlistbox tradeoff between efficiency and color accuracy"
+msgid "Prefer efficiency"
+msgstr "Teikti pirmenybę efektyvumui"
+
+#: ui/OutputPanel.qml:338
+#, kde-format
+msgctxt "@item:inlistbox tradeoff between efficiency and color accuracy"
+msgid "Prefer color accuracy"
+msgstr "Teikti pirmenybę spalvų tikslumui"
+
+#: ui/OutputPanel.qml:348
+#, kde-kuit-format
+msgctxt "@info:tooltip"
+msgid ""
+"Preferring color accuracy limits potentially inaccurate offloading of color "
+"operations to the display driver and increases the maximum color resolution."
+"<nl/><nl/>Note that this setting can have a large impact on performance."
+msgstr ""
+"Teikiant pirmenybę spalvų tikslumui, yra apribojamas galimai netikslus "
+"spalvų operacijų iškrovimas į ekrano tvarkytuvę ir padidinama didžiausia "
+"spalvų skiriamoji geba.<nl/><nl/>Turėkite omenyje, kad ši nuostata gali "
+"daryti didelę įtaką našumui."
+
+#: ui/OutputPanel.qml:354
+#, kde-kuit-format
+msgctxt "@info:tooltip"
+msgid ""
+"Preferring efficiency simplifies the ICC profile to matrix+shaper, improving "
+"performance at the cost of color accuracy.<nl/><nl/>Note that changing this "
+"setting can have a large impact on performance."
+msgstr ""
+"Teikiant pirmenybę efektyvumui, ICC profilis yra supaprastinamas iki matricos"
+"+formuotuvo, pagerinant našumą spalvų tikslumo sąskaita.<nl/><nl/>Turėkite "
+"omenyje, kad ši nuostata gali daryti didelę įtaką našumui."
+
+#: ui/OutputPanel.qml:362
+#, kde-format
+msgctxt "@label:listbox"
+msgid "Limit color resolution to:"
+msgstr "Apriboti skiriamąją gebą iki:"
+
+#: ui/OutputPanel.qml:383
+#, kde-format
+msgctxt "@item:inlistbox color resolution"
+msgid "Automatic  (%1 bits per color)"
+msgstr "Automatinė  (%1 bitų spalvai)"
+
+#: ui/OutputPanel.qml:385 ui/OutputPanel.qml:398
+#, kde-format
+msgctxt "@item:inlistbox color resolution"
+msgid "%1 bits per color"
+msgstr "%1 bitų spalvai"
+
+#: ui/OutputPanel.qml:396
+#, kde-format
+msgctxt "@item:inlistbox color resolution"
+msgid "Automatic (%1 bits per color)"
+msgstr "Automatinė (%1 bitų spalvai)"
+
+#: ui/OutputPanel.qml:408
+#, kde-kuit-format
+msgctxt "@info:tooltip"
+msgid ""
+"Limits the color resolution of the image that is sent to the display. This "
+"does not affect screenshots or recordings.<nl/><nl/>Because the display is "
+"currently connected through a dock, automatic color resolution has been "
+"temporarily reduced to 8 bits to avoid common dock issues.<nl/><nl/>Due to "
+"graphics driver limitations, the actually used resolution cannot be known."
+msgstr ""
+"Apriboja į ekraną siunčiamo paveikslo spalvų skiriamąją gebą. Tai neturi "
+"jokios įtakos ekrano kopijoms ar ekrano įrašams.<nl/><nl/>Kadangi ekranas "
+"šiuo metu yra prijungtas per doką, automatinė spalvų skiriamoji geba "
+"laikinai sumažinta iki 8 bitų, kad būtų išvengta dokams įprastų problemų.<nl/"
+"><nl/>Dėl grafikos tvarkyklės apribojimų nėra galimybės sužinoti, kokia yra "
+"iš tikrųjų naudojama skiriamoji geba."
+
+#: ui/OutputPanel.qml:412
+#, kde-kuit-format
+msgctxt "@info:tooltip"
+msgid ""
+"Limits the color resolution of the image that is sent to the display. This "
+"does not affect screenshots or recordings.<nl/><nl/>Limiting color "
+"resolution can be useful to work around display or graphics driver issues."
+"<nl/><nl/>Due to graphics driver limitations, the actually used resolution "
+"cannot be known."
+msgstr ""
+"Apriboja į ekraną siunčiamo paveikslo spalvų skiriamąją gebą. Tai neturi "
+"jokios įtakos ekrano kopijoms ar ekrano įrašams.<nl/><nl/>Spalvų "
+"skiriamosios gebos apribojimas gali būti naudingas siekiant apeiti ekrano ar "
+"grafikos tvarkyklės problemas.<nl/><nl/>Dėl grafikos tvarkyklės apribojimų "
+"nėra galimybės sužinoti, kokia yra iš tikrųjų naudojama skiriamoji geba."
+
+#: ui/OutputPanel.qml:427
+#, kde-format
+msgctxt "@label"
+msgid "sRGB color intensity:"
+msgstr "sRGB spalvų intensyvumas:"
+
+#: ui/OutputPanel.qml:459
+#, kde-format
+msgctxt "Color intensity factor expressed in percentage form"
+msgid "%1%"
+msgstr "%1%"
+
+#: ui/OutputPanel.qml:467
+#, kde-format
+msgctxt "@info:tooltip"
+msgid "Increases the intensity of sRGB content on the screen."
+msgstr "Padidina sRGB turinio ekrane intensyvumą."
+
+#: ui/OutputPanel.qml:479
+#, kde-format
+msgctxt "@label"
+msgid "Adaptive Backlight Modulation:"
+msgstr "Prisitaikantis foninio apšvietimo moduliavimas:"
+
+#: ui/OutputPanel.qml:502
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Adaptive backlight modulation reduces power use at the cost of color accuracy"
+msgstr ""
+"Prisitaikantis foninio apšvietimo moduliavimas sumažina elektros energijos "
+"sąnaudas spalvų tikslumo sąskaita"
+
+#: ui/OutputPanel.qml:511
+#, kde-format
+msgctxt "@label"
+msgid "Brightness:"
+msgstr "Ryškumas:"
+
+#: ui/OutputPanel.qml:517
+#, kde-format
+msgctxt "@option:check"
+msgid "Control hardware brightness with DDC/CI"
+msgstr "Valdyti aparatinės įrangos ryškumą naudojant DDC/CI"
+
+#: ui/OutputPanel.qml:523
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"DDC/CI is a feature supported by many monitors. Plasma can use it to adjust "
+"screen brightness with desktop controls, as if using the monitor's own "
+"hardware buttons and OSD menu."
+msgstr ""
+"DDC/CI yra daugelio monitorių palaikoma ypatybė. Plasma gali ją naudoti, kad "
+"pasitelkdama darbalaukio valdiklius reguliuotų ekrano ryškumą taip, tarsi "
+"naudotų monitoriaus mygtukus ir ekrane iškylantįjį meniu."
+
+#: ui/OutputPanel.qml:558
+#, kde-format
+msgctxt "Brightness expressed in percentage form"
+msgid "%1%"
+msgstr "%1%"
+
+#: ui/OutputPanel.qml:572
+#, kde-format
+msgid "Automatically adapt to environment"
+msgstr "Automatiškai pritaikyti prie aplinkos"
+
+#: ui/OutputPanel.qml:577
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Automatically adjust the screen’s brightness based on the lighting level of "
+"the environment, as detected by the device’s ambient light sensor. If you "
+"adjust the brightness manually, those adjustments will be remembered and "
+"taken into account."
+msgstr ""
+"Automatiškai reguliuoti ekrano ryškumą remiantis aplinkos apšvietimo lygiu, "
+"kurį aptinka įrenginio aplinkos šviesos jutiklis. Jei reguliuosite ryškumą "
+"rankiniu būdu, tie derinimai bus įsiminti ir į juos bus atsižvelgta."
+
+#: ui/OutputPanel.qml:589
+#, kde-format
+msgctxt "@label"
+msgid "Sharpness:"
+msgstr "Vaizdo ryškumas:"
+
+#: ui/OutputPanel.qml:619
+#, kde-format
+msgctxt "@label"
+msgid "Extended Dynamic Range:"
+msgstr "Išplėstas dinaminis rėžis (EDR):"
+
+#: ui/OutputPanel.qml:624
+#, kde-format
+msgctxt "@option:check"
+msgid "Enable EDR"
+msgstr "Įjungti EDR"
+
+#: ui/OutputPanel.qml:630
+#, kde-kuit-format
+msgctxt "@info:tooltip"
+msgid ""
+"EDR allows viewing HDR content on SDR displays by dynamically adjusting the "
+"backlight.<nl/><nl/>Note that this increases battery usage while viewing HDR "
+"content."
+msgstr ""
+"EDR leidžia žiūrėti HDR turinį SDR ekranuose dinamiškai reguliuodamas foninį "
+"apšvietimą.<nl/><nl/>Turėkite omenyje, kad tai padidina akumuliatoriaus "
+"energijos naudojimą, kol peržiūrimas HDR turinys."
+
+#: ui/OutputPanel.qml:635
+#, kde-format
+msgid "Replica of:"
+msgstr "Atkartojimas išvedimo:"
+
+#: ui/Panel.qml:55
+#, kde-format
+msgid "Global scale:"
+msgstr "Visuotinis mastelis:"
+
+#: ui/Panel.qml:118 ui/Panel.qml:138
+#, kde-format
+msgid "Legacy applications (X11):"
+msgstr "Pasenusios programos (X11):"
+
+#: ui/Panel.qml:123
+#, kde-format
+msgctxt "The apps themselves should scale to fit the displays"
+msgid "Apply scaling themselves"
+msgstr "Pačios taikys mastelio keitimą"
+
+#: ui/Panel.qml:128
+#, kde-format
+msgid ""
+"Legacy applications that support scaling will use it and look crisp, however "
+"those that don’t will not be scaled at all."
+msgstr ""
+"Pasenusios programos, kurios palaiko mastelio keitimą, jį naudos ir atrodys "
+"ryškiai, o tos, kurios nepalaiko – jų mastelis iš viso nebus keičiamas."
+
+#: ui/Panel.qml:139
+#, kde-format
+msgctxt "The system will perform the x11 apps scaling"
+msgid "Scaled by the system"
+msgstr "Sistema joms taikys mastelio keitimą"
+
+#: ui/Panel.qml:144
+#, kde-format
+msgid ""
+"All legacy applications will be scaled by the system to the correct size, "
+"however they will always look slightly blurry."
+msgstr ""
+"Sistema keis visų pasenusių programų mastelį taip, kad jis būtų tinkamo "
+"dydžio, tačiau jos atrodys šiek tiek neryškios."
+
+#: ui/Panel.qml:149
+#, kde-format
+msgctxt "@label"
+msgid "Screen tearing:"
+msgstr "Ekrano plėšymas:"
+
+#: ui/Panel.qml:152
+#, kde-format
+msgctxt ""
+"@option:check The thing being allowed in fullscreen windows is screen tearing"
+msgid "Allow in fullscreen windows"
+msgstr "Leisti viso ekrano languose"
+
+#: ui/Panel.qml:157
+#, kde-format
+msgctxt "@info:tooltip"
+msgid ""
+"Screen tearing reduces latency with most displays. Note that not all "
+"graphics drivers support this setting."
+msgstr ""
+"Ekrano plėšymas sumažina daugelio ekranų delsą. Turėkite omenyje, kad ne "
+"visos grafikos tvarkyklės palaiko šią nuostatą."
+
+#: ui/Panel.qml:171
+#, kde-format
+msgid ""
+"The global scale factor is limited to multiples of 6.25% to minimize visual "
+"glitches in applications using the X11 windowing system."
+msgstr ""
+"Visuotinio mastelio faktorius yra apribotas iki 6.25% skaičiaus kartotinio, "
+"kad būtų sumažintos vaizdinės triktys programose, kurios naudoja X11 langų "
+"sistemą."
+
+#: ui/RotationButton.qml:54
+#, kde-format
+msgid "90° Clockwise"
+msgstr "90° pagal laikrodžio rodyklę"
+
+#: ui/RotationButton.qml:58
+#, kde-format
+msgid "Upside Down"
+msgstr "Aukštyn kojomis"
+
+#: ui/RotationButton.qml:62
+#, kde-format
+msgid "90° Counterclockwise"
+msgstr "90° prieš laikrodžio rodyklę"
+
+#: ui/RotationButton.qml:67
+#, kde-format
+msgid "No Rotation"
+msgstr "Jokio pasukimo"
+
+#: ui/ScreenView.qml:53
+#, kde-format
+msgid "Drag screens to re-arrange them"
+msgstr "Tempkite ekranus norėdami juos pertvarkyti"
+
+#~ msgctxt "@info:tooltip"
+#~ msgid "ICC profiles aren’t compatible with HDR yet."
+#~ msgstr "Kol kas ICC profiliai nėra suderinami su HDR."
+
+#~ msgctxt "@info:tooltip"
+#~ msgid "The screen's built-in color profile is always used with HDR."
+#~ msgstr "Ekrano įtaisytas spalvų profilis yra visada naudojamas su HDR."
+
+#, fuzzy
+#~| msgctxt "@label"
+#~| msgid "Maximum SDR Brightness:"
+#~ msgctxt "@label"
+#~ msgid "Maximum SDR brightness:"
+#~ msgstr "Didžiausias SDR ryškumas:"
+
+#, fuzzy
+#~| msgctxt "@info:tooltip"
+#~| msgid "Sets the maximum brightness for the normal brightness slider"
+#~ msgctxt "@info:tooltip"
+#~ msgid "Sets the maximum brightness for the normal brightness slider."
+#~ msgstr "Nustato didžiausią įprasto ryškumo slankiklio ryškumą"
+
+#, fuzzy
+#~| msgctxt "@info:tooltip"
+#~| msgid "This setting can have a large impact on performance"
+#~ msgctxt "@info:tooltip"
+#~ msgid "This setting can have a large impact on performance."
+#~ msgstr "Ši nuostata gali turėti didelės įtakos našumui"
+
+#~ msgctxt "Width x height"
+#~ msgid "%1x%2"
+#~ msgstr "%1x%2"
+
+#~ msgctxt "@info:tooltip"
+#~ msgid "Sets the brightness of non-HDR content on the screen, in nits"
+#~ msgstr "Nustato ne HDR turinio ekrane ryškumą, nitais"
+
+#, fuzzy
+#~| msgctxt "@info"
+#~| msgid ""
+#~| "\"%1\" is the only resolution supported by this display.<nl/><nl/>Using "
+#~| "unsupported resolutions was possible in the Plasma X11 session, but they "
+#~| "were never guaranteed to work and are not available in this Plasma "
+#~| "Wayland session."
+#~ msgctxt "@info"
+#~ msgid ""
+#~ "&quot;%1&quot; is the only resolution supported by this display.<nl/><nl/"
+#~ ">Using unsupported resolutions was possible in the Plasma X11 session, "
+#~ "but they were never guaranteed to work and are not available in this "
+#~ "Plasma Wayland session."
+#~ msgstr ""
+#~ "„%1“ yra vienintelė skiriamoji geba, kurią šis ekranas palaiko.<nl/><nl/"
+#~ ">Nepalaikomų skiriamųjų gebų naudojimas buvo įmanomas Plasma X11 seanse, "
+#~ "bet jų veikimas nebuvo garantuotas ir jos nėra prieinamos šiame Plasma "
+#~ "Wayland seanse."
+
+#~ msgid "Save displays' properties:"
+#~ msgstr "Įrašyti ekranų savybes:"
+
+#~ msgid "For any display arrangement"
+#~ msgstr "Bet kokio ekrano išdėstymui"
+
+#~ msgid "For only this specific display arrangement"
+#~ msgstr "Tik šio konkretaus ekrano išdėstymui"
+
+#~ msgid ""
+#~ "Are you sure you want to disable all outputs? This might render the "
+#~ "device unusable."
+#~ msgstr ""
+#~ "Ar tikrai norite išjungti visus išvedimus? Tai gali paversti įrenginį "
+#~ "netinkamu naudoti."
+
+#~ msgid "Disable All Outputs"
+#~ msgstr "Išjungti visus išvedimus"
+
+#~ msgctxt "NAME OF TRANSLATORS"
+#~ msgid "Your names"
+#~ msgstr "Liudas Ališauskas, Mindaugas Baranauskas, Moo"
+
+#~ msgctxt "EMAIL OF TRANSLATORS"
+#~ msgid "Your emails"
+#~ msgstr "liudas@akmc.lt, opensuse.lietuviu.kalba@gmail.com, <>"
+
+#~ msgid "Display Configuration"
+#~ msgstr "Ekrano konfigūracija"
+
+#~ msgid "Manage and configure monitors and displays"
+#~ msgstr "Tvarkyti ir konfigūruoti monitorius ir ekranus"
+
+#~ msgid "Copyright © 2019 Roman Gilg"
+#~ msgstr "Autorių teisės © 2019 Roman Gilg"
+
+#~ msgid "Roman Gilg"
+#~ msgstr "Roman Gilg"
+
+#~ msgid "Developer"
+#~ msgstr "Programuotojas"
+
+#~ msgid "Maintainer"
+#~ msgstr "Prižiūrėtojas"
+
+#~ msgid "Settings for %1"
+#~ msgstr "%1 nuostatos"
+
+#~ msgid "Center View"
+#~ msgstr "Centrinis rodinys"
+
+#~ msgid ""
+#~ "Scale factors that are not a multiple of 0.25 may cause visual glitches "
+#~ "in applications. Consider setting the scale factor to a multiple of 0.25 "
+#~ "and adjusting the font size instead."
+#~ msgstr ""
+#~ "Mastelio faktoriai, kurie nėra 0,25 skaičiaus kartotiniai, gali sukelti "
+#~ "programose vaizdines triktis. Apsvarstykite galimybę nustatyti mastelio "
+#~ "faktorių į 0,25 skaičiaus kartotinį ir vietoj to, reguliuoti šrifto dydį."
+
+#~ msgid "Disable all outputs"
+#~ msgstr "Išjungti visus išvedimus"
+
+#~ msgid "New global scale applied. "
+#~ msgstr "Naujas visuotinis mastelis pritaikytas. "
+
+#~ msgid "Configuration for displays"
+#~ msgstr "Ekranų konfigūracija"
+
+#~ msgid "Output settings"
+#~ msgstr "Išvedimo nuostatos"
+
+#~ msgid "Save values of an output:"
+#~ msgstr "Įrašyti išvedimo reikšmes:"
+
+#~ msgid "For this and other combination of outputs"
+#~ msgstr "Šiai ir kitai išvedimų kombinacijai"
+
+#~ msgid "For this specific setup independently of others"
+#~ msgstr "Šiai specifinei sąrankai nepriklausomai nuo kitų"
+
+#~ msgid "Tip: Hold Ctrl while dragging a display to disable snapping"
+#~ msgstr ""
+#~ "Patarimas: Vilkdami ekraną, laikykite nuspaudę Vald klavišą, kad "
+#~ "išjungtumėte pritraukimą"
+
+#~ msgid "Warning: There are no active outputs!"
+#~ msgstr "Įspėjimas: nėra veikiamojo išvedimo!"
+
+#~ msgid "Your system only supports up to %1 active screen"
+#~ msgid_plural "Your system only supports up to %1 active screens"
+#~ msgstr[0] "Jūsų sistema palaiko ne daugiau kaip %1 veikiamąjį ekraną"
+#~ msgstr[1] "Jūsų sistema palaiko ne daugiau kaip %1 veikiamuosius ekranus"
+#~ msgstr[2] "Jūsų sistema palaiko ne daugiau kaip %1 veikiamųjų ekranų"
+#~ msgstr[3] "Jūsų sistema palaiko ne daugiau kaip %1 veikiamąjį ekraną"
+
+#~ msgid "Unified Outputs"
+#~ msgstr "Suvienyti išvedimai"
+
+#~ msgid "Laptop Screen"
+#~ msgstr "Nešiojamojo kompiuterio ekranas"
+
+#~ msgid "(c), 2012-2013 Daniel Vrátil"
+#~ msgstr "(c), 2012-2013 Daniel Vrátil"
+
+#~ msgid "Daniel Vrátil"
+#~ msgstr "Daniel Vrátil"
+
+#~ msgid "&Reconfigure"
+#~ msgstr "Konfigū&ruoti iš naujo"
+
+#~ msgid ""
+#~ "Sorry, your configuration could not be applied.\n"
+#~ "\n"
+#~ "Common reasons are that the overall screen size is too big, or you "
+#~ "enabled more displays than supported by your GPU."
+#~ msgstr ""
+#~ "Atleiskite, nepavyko pritaikyti jūsų konfigūracijos.\n"
+#~ "\n"
+#~ "Galbūt, parinkote per didelę ekrano skiriamąją gebą arba įjungėte daugiau "
+#~ "ekranų negu kad palaiko jūsų vaizdo plokštė."
+
+#~ msgctxt "@title:window"
+#~ msgid "Unsupported Configuration"
+#~ msgstr "Nepalaikoma konfigūracija"
+
+#~ msgid "KCM Test App"
+#~ msgstr "KCM bandymas"
+
+#~ msgid "Unify Outputs"
+#~ msgstr "Suvienyti išvedimus"
+
+#~ msgid "Scale Display"
+#~ msgstr "Keisti vaizdo ekrane mastelį"
+
+#~ msgid "Display:"
+#~ msgstr "Rodymas:"
+
+#~ msgctxt "Scale multiplier, show everything at 2 times normal scale"
+#~ msgid "2x"
+#~ msgstr "2x"
+
+#~ msgid "Retention of values"
+#~ msgstr "Reikšmių išsaugojimas"
+
+#~ msgid "Save as new global values for this display."
+#~ msgstr "Įrašyti kaip naujas visuotines reikšmes šiam ekranui."
+
+#~ msgid "Save values only for display in this specific configuration."
+#~ msgstr "Įrašyti reiškmes tik ekranui šioje specifinėje konfigūracijoje."
+
+#~ msgid "No available resolutions"
+#~ msgstr "Nėra prieinamų skiriamųjų gebų"
+
+#~ msgid "Tab 1"
+#~ msgstr "1 kortelė"
+
+#~ msgid "Group Box"
+#~ msgstr "Grupė"
+
+#~ msgid "Radio button"
+#~ msgstr "Akutė"
+
+#~ msgid "Checkbox"
+#~ msgstr "Žymimas langelis"
+
+#~ msgid "Button"
+#~ msgstr "Mygtukas"
+
+#~ msgid "Combobox"
+#~ msgstr "Išskleidžiamasis sąrašas"
+
+#~ msgid "Tab 2"
+#~ msgstr "2 kortelė"
+
+#~ msgid "Normal"
+#~ msgstr "Normali"
+
+#~ msgid "No Primary Output"
+#~ msgstr "Jokio pirminio išvedimo"
+
+#~ msgid "Break Unified Outputs"
+#~ msgstr "Atsieti suvienytus išvedimus"
+
+#~ msgid "Active profile"
+#~ msgstr "Veikiamasis profilis"
+
+#~ msgid "Dialog"
+#~ msgstr "Dialogo langas"
+
+#~ msgid "TextLabel"
+#~ msgstr "Tekstas"

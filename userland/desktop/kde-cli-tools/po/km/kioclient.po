@@ -1,0 +1,516 @@
+# translation of kioclient.po to Khmer
+# Khoem Sokhem <khoemsokhem@khmeros.info>, 2008, 2009, 2010, 2012.
+# Auk Piseth <piseth_dv@khmeros.info>, 2008.
+# Copyright (C) YEAR This_file_is_part_of_KDE
+# This file is distributed under the same license as the PACKAGE package.
+msgid ""
+msgstr ""
+"Project-Id-Version: kioclient\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-01-24 00:44+0000\n"
+"PO-Revision-Date: 2012-07-11 09:42+0700\n"
+"Last-Translator: Khoem Sokhem <khoemsokhem@khmeros.info>\n"
+"Language-Team: Khmer <support@khmeros.info>\n"
+"Language: km\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: KBabel 1.11.4\n"
+"X-Language: km-CM\n"
+
+#, kde-format
+msgctxt "NAME OF TRANSLATORS"
+msgid "Your names"
+msgstr ""
+
+#, kde-format
+msgctxt "EMAIL OF TRANSLATORS"
+msgid "Your emails"
+msgstr ""
+
+#: kioclient.cpp:56
+#, kde-format
+msgid ""
+"\n"
+"Syntax:\n"
+msgstr ""
+"\n"
+"វាក្យ​សម្ពន្ធ ៖\n"
+
+#: kioclient.cpp:58
+#, fuzzy, kde-format
+#| msgid ""
+#| "  kioclient openProperties 'url'\n"
+#| "            # Opens a properties menu\n"
+#| "\n"
+msgctxt "The argument is the command \"kioclient openProperties\""
+msgid ""
+"  %1 'url'\n"
+"            # Opens a properties dialog of 'url'\n"
+"\n"
+msgstr ""
+"  kioclient openProperties 'url'\n"
+"            # បើក​ម៉ឺនុយ​លក្ខណៈសម្បត្តិ\n"
+"\n"
+
+#: kioclient.cpp:65
+#, fuzzy, kde-format
+#| msgid ""
+#| "  kioclient exec 'url' ['mimetype']\n"
+#| "            # Tries to open the document pointed to by 'url', in the "
+#| "application\n"
+#| "            #   associated with it in KDE. You may omit 'mimetype'.\n"
+#| "            #   In this case the mimetype is determined\n"
+#| "            #   automatically. Of course URL may be the URL of a\n"
+#| "            #   document, or it may be a *.desktop file.\n"
+#| "            #   'url' can be an executable, too.\n"
+msgctxt "The argument is the command \"kioclient exec\""
+msgid ""
+"  %1 'url' ['mimetype']\n"
+"            # Tries to open the document pointed to by 'url', in the "
+"application\n"
+"            # associated with it in KDE. You may omit 'mimetype'.\n"
+"            # In that case the mimetype is determined automatically.\n"
+"            # 'url' can be the URL of a document, a *.desktop file,\n"
+"            # or an executable.\n"
+msgstr ""
+"  kioclient exec 'url' ['mimetype']\n"
+"            # ព្យាយាម​បើក​ឯកសារ​ដែលបាន​ចង្អុលបង្ហាញ​ដោយ 'url' ក្នុង​កម្មវិធី\n"
+"            #   ដែល​ទាក់ទង​នឹង​វា​នៅក្នុង KDE ។ អ្នក​អាច​លុប 'ប្រភេទ mime' បាន ។\n"
+"            #   ក្នុង​ករណីនេះ ប្រភេទ mime គឺ​ត្រូវបានកំណត់\n"
+"            #   ដោយ​ស្វ័យប្រវត្តិ ។ URL គឺ​ជា URL របស់\n"
+"            #   ឯកសារ ឬ​វា​អាច​ជា​ឯកសារ *.desktop ។\n"
+
+#: kioclient.cpp:76
+#, kde-format
+msgctxt "The argument is the command \"kioclient move\""
+msgid ""
+"  %1 'src' 'dest'\n"
+"            # Moves the URL 'src' to 'dest'.\n"
+"            #   'src' may be a list of URLs.\n"
+"            #   'dest' may be \"trash:/\" to move the files to the trash.\n"
+"            #   The short version 'kioclient mv' is also available.\n"
+"\n"
+msgstr ""
+
+#: kioclient.cpp:86
+#, fuzzy, kde-format
+#| msgid ""
+#| "  kioclient download ['src']\n"
+#| "            # Copies the URL 'src' to a user-specified location'.\n"
+#| "            #   'src' may be a list of URLs, if not present then\n"
+#| "            #   a URL will be requested.\n"
+#| "\n"
+msgctxt "The argument is the command \"kioclient download\""
+msgid ""
+"  %1 ['src']\n"
+"            # Copies the URL 'src' to a user-specified location.\n"
+"            #   'src' may be a list of URLs, if not present then\n"
+"            #   a URL will be requested.\n"
+"\n"
+msgstr ""
+"  kioclient download ['src']\n"
+"            # ចម្លង URL 'src' ទៅ​ទីតាំង​ដែលបាន​បញ្ជាក់​ដោយ​អ្នកប្រើ' ។\n"
+"            #   'src' អាច​ជា​បញ្ជី URL ប្រសិន​បើ​មិនមាន បន្ទាប់មក\n"
+"            #   URL នឹង​ត្រូវបាន​ស្នើ ។\n"
+"\n"
+
+#: kioclient.cpp:95
+#, fuzzy, kde-format
+#| msgid ""
+#| "  kioclient copy 'src' 'dest'\n"
+#| "            # Copies the URL 'src' to 'dest'.\n"
+#| "            #   'src' may be a list of URLs.\n"
+msgctxt "The argument is the command \"kioclient copy\""
+msgid ""
+"  %1 'src' 'dest'\n"
+"            # Copies the URL 'src' to 'dest'.\n"
+"            #   'src' may be a list of URLs.\n"
+"            #   The short version 'kioclient cp' is also available.\n"
+"\n"
+msgstr ""
+"  kioclient copy 'src' 'dest'\n"
+"            # ចម្លង​ URL 'src' ទៅ 'dest'.\n"
+"            #   'src' អាច​ជា​បញ្ជី​របស់ URL ។\n"
+
+#: kioclient.cpp:104
+#, fuzzy, kde-format
+#| msgid ""
+#| "  kioclient ls 'url'\n"
+#| "            # Lists the contents of the directory 'url' to stdout\n"
+#| "\n"
+msgctxt "The argument is the command \"kioclient cat\""
+msgid ""
+"  %1 'url'\n"
+"            # Prints the contents of the file 'url' to the standard output\n"
+"\n"
+msgstr ""
+"  kioclient ls 'url'\n"
+"            # រាយ​មាតិកា​​របស់​ថត​ 'url' ថត​ទៅ stdout\n"
+"\n"
+
+#: kioclient.cpp:111
+#, fuzzy, kde-format
+#| msgid ""
+#| "  kioclient ls 'url'\n"
+#| "            # Lists the contents of the directory 'url' to stdout\n"
+#| "\n"
+msgctxt "The argument is the command \"kioclient ls\""
+msgid ""
+"  %1 'url'\n"
+"            # Lists the contents of the directory 'url' to stdout\n"
+"\n"
+msgstr ""
+"  kioclient ls 'url'\n"
+"            # រាយ​មាតិកា​​របស់​ថត​ 'url' ថត​ទៅ stdout\n"
+"\n"
+
+#: kioclient.cpp:118
+#, fuzzy, kde-format
+#| msgid ""
+#| "  kioclient remove 'url'\n"
+#| "            # Removes the URL\n"
+#| "            #   'url' may be a list of URLs.\n"
+msgctxt "The argument is the command \"kioclient remove\""
+msgid ""
+"  %1 'url'\n"
+"            # Removes the URL\n"
+"            #   'url' may be a list of URLs.\n"
+"            #   The short version 'kioclient rm' is also available.\n"
+"\n"
+msgstr ""
+"  kioclient remove 'url'\n"
+"            # យក​ URL ចេញ\n"
+"            #   'url' អាចជា​បញ្ជី URL ។\n"
+
+#: kioclient.cpp:127
+#, fuzzy, kde-format
+#| msgid ""
+#| "  kioclient openProperties 'url'\n"
+#| "            # Opens a properties menu\n"
+#| "\n"
+msgctxt "The argument is the command \"kioclient mkdir\""
+msgid ""
+"  %1 'url'\n"
+"            # Creates a directory at 'url'\n"
+msgstr ""
+"  kioclient openProperties 'url'\n"
+"            # បើក​ម៉ឺនុយ​លក្ខណៈសម្បត្តិ\n"
+"\n"
+
+#: kioclient.cpp:134
+#, fuzzy, kde-format
+#| msgid ""
+#| "  kioclient cat 'url'\n"
+#| "            # Writes out the contents of 'url' to stdout\n"
+#| "\n"
+msgctxt "The argument is the command \"kioclient stat\""
+msgid ""
+"  %1 'url'\n"
+"            # Shows all of the available information for 'url'\n"
+"\n"
+msgstr ""
+"  kioclient cat 'url'\n"
+"            # សរសេរ​មាតិកា​របស់ 'url' to stdout\n"
+"\n"
+
+#: kioclient.cpp:141
+#, fuzzy, kde-format
+#| msgid ""
+#| "  kioclient openProperties 'url'\n"
+#| "            # Opens a properties menu\n"
+#| "\n"
+msgctxt "The argument is the command \"kioclient appmenu\""
+msgid ""
+"  %1\n"
+"            # Opens a basic application launcher\n"
+"\n"
+msgstr ""
+"  kioclient openProperties 'url'\n"
+"            # បើក​ម៉ឺនុយ​លក្ខណៈសម្បត្តិ\n"
+"\n"
+
+#: kioclient.cpp:147
+#, kde-format
+msgid "*** Examples:\n"
+msgstr ""
+
+#: kioclient.cpp:148
+#, fuzzy, kde-format
+#| msgid ""
+#| "  kioclient exec file:/home/weis/data/test.html\n"
+#| "             // Opens the file with default binding\n"
+#| "\n"
+msgid ""
+"  kioclient exec file:/home/weis/data/test.html\n"
+"             // Opens the file with the default application associated\n"
+"             // with this MimeType\n"
+"\n"
+msgstr ""
+"  kioclient ប្រតិបត្តិ file:/home/weis/data/test.html\n"
+"             // បើក​ឯកសារ​ដែលមាន​ការ​ចង​លំនាំដើម\n"
+"\n"
+
+#: kioclient.cpp:153
+#, fuzzy, kde-format
+#| msgid ""
+#| "  kioclient exec ftp://localhost/\n"
+#| "             // Opens new window with URL\n"
+#| "\n"
+msgid ""
+"  kioclient exec ftp://localhost/\n"
+"             // Opens URL with the default handler for ftp:// scheme\n"
+"\n"
+msgstr ""
+"  kioclient ប្រតិបត្តិ ftp://localhost/\n"
+"             // បើក​បង្អួចថ្មី​ដែលមាន URL\n"
+"\n"
+
+#: kioclient.cpp:157
+#, fuzzy, kde-format
+#| msgid ""
+#| "  kioclient exec file:/root/Desktop/emacs.desktop\n"
+#| "             // Starts emacs\n"
+#| "\n"
+msgid ""
+"  kioclient exec file:/root/Desktop/emacs.desktop\n"
+"             // Starts emacs\n"
+"\n"
+msgstr ""
+"  kioclient ប្រតិបត្តិ file:/root/Desktop/emacs.desktop\n"
+"             // ចាប់ផ្ដើម emacs\n"
+"\n"
+
+#: kioclient.cpp:161
+#, fuzzy, kde-format
+#| msgid ""
+#| "  kioclient exec .\n"
+#| "             // Opens the current directory. Very convenient.\n"
+#| "\n"
+msgid ""
+"  kioclient exec .\n"
+"             // Opens the current directory in the default\n"
+"             // file manager. Very convenient.\n"
+"\n"
+msgstr ""
+"  kioclient ប្រតិបត្តិ ។\n"
+"             // បើក​ថត​បច្ចុប្បន្ន ។ ងាយស្រួល​ណាស់ ។\n"
+"\n"
+
+#: kioclient.cpp:179
+#, kde-format
+msgid "KIO Client"
+msgstr "ម៉ាស៊ីន​ភ្ញៀវ KIO"
+
+#: kioclient.cpp:180
+#, kde-format
+msgid "Command-line tool for network-transparent operations"
+msgstr "ឧបករណ៍​បន្ទាត់​ពាក្យ​បញ្ជា សម្រាប់​ប្រតិបត្តិការ​បណ្ដាញ"
+
+#: kioclient.cpp:188
+#, kde-format
+msgid "Use message boxes and other native notifications"
+msgstr ""
+
+#: kioclient.cpp:191
+#, kde-format
+msgid ""
+"Non-interactive use: no message boxes. If you don't want a graphical "
+"connection, use --platform offscreen"
+msgstr ""
+
+#: kioclient.cpp:195
+#, kde-format
+msgid "Overwrite destination if it exists (for copy and move)"
+msgstr "សរសេរ​ជាន់លើ​ទិសដៅ ប្រសិនបើ​វា​មាន (សម្រាប់​ការ​ចម្លង និង​ផ្លាស់ទី)"
+
+#: kioclient.cpp:199
+#, fuzzy, kde-format
+#| msgid "URL or URLs"
+msgid "file or URL"
+msgstr "URL មួយ ឬ​ច្រើន"
+
+#: kioclient.cpp:199 kioclient.cpp:201 kioclient.cpp:204 kioclient.cpp:209
+#, kde-format
+msgid "urls..."
+msgstr ""
+
+#: kioclient.cpp:201 kioclient.cpp:204
+#, kde-format
+msgid "Source URL or URLs"
+msgstr "URL ប្រភព"
+
+#: kioclient.cpp:202 kioclient.cpp:205
+#, kde-format
+msgid "Destination URL"
+msgstr "URL ទិសដៅ"
+
+#: kioclient.cpp:202 kioclient.cpp:205
+#, kde-format
+msgid "url"
+msgstr ""
+
+#: kioclient.cpp:207
+#, kde-format
+msgid "Show available commands"
+msgstr "បង្ហាញ​ពាក្យ​បញ្ជា​ដែល​មាន"
+
+#: kioclient.cpp:208
+#, kde-format
+msgid "Command (see --commands)"
+msgstr "ពាក្យ​បញ្ជា (មើល --commands)"
+
+#: kioclient.cpp:208
+#, kde-format
+msgid "command"
+msgstr ""
+
+#: kioclient.cpp:209
+#, kde-format
+msgid "Arguments for command"
+msgstr "អាគុយម៉ង់​សម្រាប់​ពាក្យ​បញ្ជា"
+
+#: kioclient.cpp:233
+#, fuzzy, kde-format
+#| msgid "Syntax Error: Not enough arguments\n"
+msgctxt "@info:shell"
+msgid "%1: Syntax error, not enough arguments\n"
+msgstr "កំហុស​វាក្យសម្ពន្ធ ៖ អាគុយម៉ង់​មិន​គ្រប់​គ្រាន់\n"
+
+#: kioclient.cpp:237
+#, fuzzy, kde-format
+#| msgid "Syntax Error: Too many arguments\n"
+msgctxt "@info:shell"
+msgid "%1: Syntax error, too many arguments\n"
+msgstr "កំហុស​វាក្យ​សម្ពន្ធ ៖ អាគុយម៉ង់​ច្រើន​ពេក\n"
+
+#: kioclient.cpp:465
+#, kde-format
+msgid "Destination where to download the files"
+msgstr ""
+
+#: kioclient.cpp:512
+#, fuzzy, kde-format
+#| msgid "Syntax Error: Unknown command '%1'\n"
+msgctxt "@info:shell"
+msgid "%1: Syntax error, unknown command '%2'\n"
+msgstr "កំហុស​វាក្យ​សម្ពន្ធ ៖ មិន​ស្គាល់​ពាក្យ​បញ្ជា '%1'\n"
+
+#: kioclient.cpp:528
+#, kde-format
+msgctxt "@info:shell"
+msgid "%1: %2\n"
+msgstr ""
+
+#, fuzzy
+#~| msgid ""
+#~| "  kioclient move 'src' 'dest'\n"
+#~| "            # Moves the URL 'src' to 'dest'.\n"
+#~| "            #   'src' may be a list of URLs.\n"
+#~ msgid ""
+#~ "  kioclient move 'src' 'dest'\n"
+#~ "            # Moves the URL 'src' to 'dest'.\n"
+#~ "            #   'src' may be a list of URLs.\n"
+#~ msgstr ""
+#~ "  kioclient move 'src' 'dest'\n"
+#~ "            # ផ្លាស់ទី URL 'src' ទៅ 'dest' ។\n"
+#~ "            #   'src' អាច​ជា​បញ្ជី URL ។\n"
+
+#~ msgid ""
+#~ "            #   'dest' may be \"trash:/\" to move the files\n"
+#~ "            #   to the trash.\n"
+#~ msgstr ""
+#~ "            #   'dest' អាច​ជា \"trash:/\" ដើម្បី​ផ្លាស់ទី​ឯកសារ\n"
+#~ "            #   ទៅ​ធុង​សំរាម ។\n"
+
+#, fuzzy
+#~| msgid ""
+#~| "            #   the short version kioclient mv\n"
+#~| "            #   is also available.\n"
+#~| "\n"
+#~ msgid ""
+#~ "            #   the short version kioclient mv\n"
+#~ "            #   is also available.\n"
+#~ "\n"
+#~ msgstr ""
+#~ "            #   កំណែ​ខ្លី​របស់ kioclient mv\n"
+#~ "            #   អាច​ប្រើ​បាន​ដែរ ។\n"
+#~ "\n"
+
+#, fuzzy
+#~| msgid ""
+#~| "            #   the short version kioclient cp\n"
+#~| "            #   is also available.\n"
+#~| "\n"
+#~ msgid ""
+#~ "            #   the short version kioclient cp\n"
+#~ "            #   is also available.\n"
+#~ "\n"
+#~ msgstr ""
+#~ "            #   កំណែ​ខ្លី​របស់ kioclient cp\n"
+#~ "            #   អាច​ប្រើ​បាន​ដែរ ។\n"
+#~ "\n"
+
+#, fuzzy
+#~| msgid ""
+#~| "  kioclient cat 'url'\n"
+#~| "            # Writes out the contents of 'url' to stdout\n"
+#~| "\n"
+#~ msgid ""
+#~ "  kioclient cat 'url'\n"
+#~ "            # Writes out the contents of 'url' to stdout\n"
+#~ "\n"
+#~ msgstr ""
+#~ "  kioclient cat 'url'\n"
+#~ "            # សរសេរ​មាតិកា​របស់ 'url' to stdout\n"
+#~ "\n"
+
+#, fuzzy
+#~| msgid ""
+#~| "            #   the short version kioclient rm\n"
+#~| "            #   is also available.\n"
+#~| "\n"
+#~ msgid ""
+#~ "            #   the short version kioclient rm\n"
+#~ "            #   is also available.\n"
+#~ "\n"
+#~ msgstr ""
+#~ "            #   កំណែ​ខ្លី​របស់ kioclient rm\n"
+#~ "            #   ក៏​អាច​ប្រើបានដែរ ។\n"
+#~ "\n"
+
+#~ msgid ""
+#~ "*** Examples:\n"
+#~ "  kioclient exec file:/root/Desktop/cdrom.desktop \"Mount default\"\n"
+#~ "             // Mounts the CDROM\n"
+#~ "\n"
+#~ msgstr ""
+#~ "*** ឧទាហរណ៍ ៖\n"
+#~ "  kioclient ប្រតិបត្តិ file:/root/Desktop/cdrom.desktop \"ម៉ោន​លំនាំដើម\"\n"
+#~ "             // ម៉ោន​ស៊ីឌីរ៉ូម\n"
+#~ "\n"
+
+#~ msgid ""
+#~ "  kioclient exec file:/home/weis/data/test.html Netscape\n"
+#~ "             // Opens the file with netscape\n"
+#~ "\n"
+#~ msgstr ""
+#~ "  kioclient ប្រតិបត្តិ file:/home/weis/data/test.html Netscape\n"
+#~ "             // បើក​ឯកសារ​ជាមួយ netscape\n"
+#~ "\n"
+
+#~ msgid ""
+#~ "  kioclient exec file:/root/Desktop/cdrom.desktop\n"
+#~ "             // Opens the CDROM's mount directory\n"
+#~ "\n"
+#~ msgstr ""
+#~ "  kioclient ប្រតិបត្តិ file:/root/Desktop/cdrom.desktop\n"
+#~ "             // បើក​ថត​ម៉ោន​របស់​ស៊ីឌីរ៉ូម\n"
+#~ "\n"
+
+#~ msgid "Non-interactive use: no message boxes"
+#~ msgstr "គ្មាន​ការ​ប្រើ​អន្តរកម្ម ៖ គ្មាន​ប្រអប់​សារ"
+
+#~ msgid "Unable to download from an invalid URL."
+#~ msgstr "មិន​អាច​ទាញ​យក​ពី URL មិន​ត្រឹម​ត្រូវ ។"

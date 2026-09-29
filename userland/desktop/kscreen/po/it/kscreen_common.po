@@ -1,0 +1,87 @@
+# Copyright (C) YEAR This_file_is_part_of_KDE
+# This file is distributed under the same license as the PACKAGE package.
+# SPDX-FileCopyrightText: 2013, 2018, 2023, 2025 Vincenzo Reale <smart2128vr@gmail.com>
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: kscreen\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2025-11-17 11:53+0000\n"
+"PO-Revision-Date: 2025-06-14 15:32+0200\n"
+"Last-Translator: Vincenzo Reale <smart2128vr@gmail.com>\n"
+"Language-Team: Italian <kde-i18n-it@kde.org>\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Lokalize 25.04.2\n"
+
+#: osdaction.cpp:28
+#, kde-format
+msgid "Only use external screen"
+msgstr "Utilizza solo lo schermo esterno"
+
+#: osdaction.cpp:29
+#, kde-format
+msgid "Only use built-in screen"
+msgstr "Utilizza solo lo schermo integrato"
+
+#: osdaction.cpp:30
+#, kde-format
+msgid "Mirror screens"
+msgstr "Schermi specchiati"
+
+#: osdaction.cpp:31
+#, kde-format
+msgid "Extend to left of built-in screen"
+msgstr "Estendi a sinistra dello schermo integrato"
+
+#: osdaction.cpp:32
+#, kde-format
+msgid "Extend to right of built-in screen"
+msgstr "Estendi a destra dello schermo integrato"
+
+#: osdaction.cpp:33
+#, kde-format
+msgid "Leave unchanged"
+msgstr "Lascia invariato"
+
+#: utils.cpp:22
+#, kde-format
+msgid "Built-in Screen"
+msgstr "Schermo integrato"
+
+#~ msgid "Switch to laptop screen"
+#~ msgstr "Passa allo schermo del portatile"
+
+#~ msgid "Unify outputs"
+#~ msgstr "Unifica le uscite"
+
+#~ msgid "Extend to left"
+#~ msgstr "Estendi a sinistra"
+
+#~ msgid "Switch Display"
+#~ msgstr "Cambia schermo"
+
+#~ msgctxt "OSD text after XF86Display button press"
+#~ msgid "No External Display"
+#~ msgstr "Nessuno schermo esterno"
+
+#~ msgctxt "OSD text after XF86Display button press"
+#~ msgid "Changing Screen Layout"
+#~ msgstr "Cambiare la disposizione degli schermi"
+
+#, fuzzy
+#~| msgctxt "OSD text after XF86Display button press"
+#~| msgid "No External Display"
+#~ msgctxt "osd when displaybutton is pressed"
+#~ msgid "Cloned Display"
+#~ msgstr "Nessuno schermo esterno"
+
+#, fuzzy
+#~| msgctxt "OSD text after XF86Display button press"
+#~| msgid "No External Display"
+#~ msgctxt "osd when displaybutton is pressed"
+#~ msgid "External Only"
+#~ msgstr "Nessuno schermo esterno"

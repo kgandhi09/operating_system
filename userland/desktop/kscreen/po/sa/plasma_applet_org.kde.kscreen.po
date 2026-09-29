@@ -1,0 +1,79 @@
+# Sanskrit translations for kscreen package.
+# Copyright (C) 2024 This file is copyright:
+# This file is distributed under the same license as the kscreen package.
+# Kali <EMAIL@ADDRESS>, 2024.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: kscreen\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-05-04 00:45+0000\n"
+"PO-Revision-Date: 2024-12-13 19:10+0530\n"
+"Last-Translator: Kali <EMAIL@ADDRESS>\n"
+"Language-Team: Sanskrit <kde-i18n-doc@kde.org>\n"
+"Language: sa\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n>2);\n"
+
+#: main.qml:26
+#, kde-format
+msgid "Presentation mode is enabled"
+msgstr "प्रस्तुतिविधिः सक्षमः अस्ति"
+
+#: main.qml:66
+#, kde-format
+msgid "Configure Display Settings…"
+msgstr "प्रदर्शनसेटिंग्स् विन्यस्तं कुर्वन्तु..."
+
+#: PresentationModeItem.qml:29
+#, kde-format
+msgid "Enable Presentation Mode"
+msgstr "प्रस्तुतिविधिं सक्षमं कुर्वन्तु"
+
+#: PresentationModeItem.qml:39
+#, kde-format
+msgid "User enabled presentation mode"
+msgstr "उपयोक्ता सक्षमः प्रस्तुतिविधिः"
+
+#: PresentationModeItem.qml:60
+#, kde-format
+msgid ""
+"This will prevent your screen and computer from turning off automatically."
+msgstr "एतेन भवतः स्क्रीनः सङ्गणकः च स्वयमेव निष्क्रियः न भविष्यति ।"
+
+#: PresentationModeItem.qml:74
+#, kde-format
+msgctxt "Some Application and n others enforce presentation mode"
+msgid "%2 and %1 other application are enforcing presentation mode."
+msgid_plural "%2 and %1 other applications are enforcing presentation mode."
+msgstr[0] "%2 तथा %1 अन्यः अनुप्रयोगः प्रस्तुतिविधिं प्रवर्तयति ।"
+msgstr[1] "%2 तथा %1 अन्ये अनुप्रयोगाः प्रस्तुतिविधिं प्रवर्तयन्ति ।"
+
+#: PresentationModeItem.qml:80
+#, kde-format
+msgctxt "Some Application enforce presentation mode"
+msgid "%1 is enforcing presentation mode."
+msgstr "%1 प्रस्तुतिविधिं प्रवर्तयति ।"
+
+#: PresentationModeItem.qml:83
+#, kde-format
+msgctxt ""
+"Some Application enforce presentation mode: Reason provided by the app"
+msgid "%1 is enforcing presentation mode: %2"
+msgstr "%1 प्रस्तुतिविधिं प्रवर्तयति: %2"
+
+#: ScreenLayoutSelection.qml:50
+#, kde-format
+msgid "Screen Layout"
+msgstr "स्क्रीन लेआउट"
+
+#: ScreenLayoutSelection.qml:91
+#, kde-format
+msgid ""
+"You can only apply a different screen layout when there is more than one "
+"display device plugged in."
+msgstr ""
+"यदा एकादशाधिकं प्रदर्शनयन्त्रं प्लग्-इन् भवति तदा एव भवान् भिन्नं स्क्रीन-विन्यासं प्रयोक्तुं "
+"शक्नोति ।"

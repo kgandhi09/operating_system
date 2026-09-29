@@ -1,0 +1,16 @@
+# Devices the user at the console may use while their session is the active
+# one: elogind grants and revokes access with ACLs when the console
+# changes (73-seat-late.rules runs elogind-uaccess-command for these tags).
+# systemd ships this file; eudev doesn't.
+ACTION=="remove", GOTO="uaccess_end"
+ENV{MAJOR}=="", GOTO="uaccess_end"
+
+# Graphics (KWin opens the card itself besides the logind handle)
+SUBSYSTEM=="drm", KERNEL=="card*", TAG+="uaccess"
+# Sound, cameras, joysticks
+SUBSYSTEM=="sound", TAG+="uaccess"
+SUBSYSTEM=="video4linux", TAG+="uaccess"
+SUBSYSTEM=="input", ENV{ID_INPUT_JOYSTICK}=="?*", TAG+="uaccess"
+SUBSYSTEM=="misc", KERNEL=="rfkill", TAG+="uaccess"
+
+LABEL="uaccess_end"

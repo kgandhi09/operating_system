@@ -1,0 +1,47 @@
+/*
+    SPDX-FileCopyrightText: 2016 Volker Krause <vkrause@kde.org>
+
+    SPDX-License-Identifier: MIT
+*/
+
+#include "screeninfosource.h"
+
+#include <QGuiApplication>
+#include <QScreen>
+#include <QVariant>
+
+using namespace KUserFeedback;
+
+ScreenInfoSource::ScreenInfoSource() :
+    AbstractDataSource(QStringLiteral("screens"), Provider::DetailedSystemInformation)
+{
+}
+
+QString ScreenInfoSource::description() const
+{
+    return tr("Size and resolution of all connected screens.");
+}
+
+QVariant ScreenInfoSource::data()
+{
+    QVariantList l;
+    for (auto screen : QGuiApplication::screens()) {
+        // if this is Qt's placeholder screen or the size is otherwise nonsensical, don't report it
+        if (screen->size().isEmpty()) {
+            continue;
+        }
+
+        QVariantMap m;
+        m.insert(QStringLiteral("width"), screen->size().width());
+        m.insert(QStringLiteral("height"), screen->size().height());
+        m.insert(QStringLiteral("dpi"), qRound(screen->physicalDotsPerInch()));
+        m.insert(QStringLiteral("devicePixelRatio"), screen->devicePixelRatio());
+        l.push_back(m);
+    }
+    return l;
+}
+
+QString ScreenInfoSource::name() const
+{
+    return tr("Screen parameters");
+}

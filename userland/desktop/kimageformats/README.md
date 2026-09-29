@@ -1,0 +1,565 @@
+# KImageFormats
+
+Plugins to allow [`QImage`](https://doc.qt.io/qt-6/qimage.html) to support
+extra file formats.
+
+## Introduction
+
+This framework provides additional image format plugins for QtGui.  As
+such it is not required for the compilation of any other software, but
+may be a runtime requirement for Qt-based software to support certain
+image formats.
+
+## Formats
+
+The following image formats have read-only support:
+
+- Animated Windows cursors (ani)
+- Camera RAW images (arw, cr2, cr3, dcs, dng, ...)
+- Farbfeld (ff)
+- Gimp (xcf)
+- Interchange Format Files (iff, ilbm, lbm)
+- Krita (kra)
+- OpenRaster (ora)
+- Pixar raster (pxr)
+- PlayStation graphics (tim)
+- Portable FloatMap/HalfMap (pfm, phm)
+- Photoshop documents (psd, psb, pdd, psdt)
+- Radiance HDR (hdr)
+- Scitex CT (sct)
+- Sun Raster (im1, im8, im24, im32, ras, sun)
+
+The following image formats have read and write support:
+
+- AV1 Image File Format (avif, avifs<sup>1</sup>)
+- DirectDraw Surface (dds)
+- Encapsulated PostScript (eps)
+- High Efficiency Image File Format (avci<sup>2</sup>, heic<sup>2</sup>, heif<sup>2</sup>, hej2<sup>2</sup>, hif<sup>2</sup>)
+- JPEG 2000 (jp2, j2k, jpf<sup>1</sup>)
+- JPEG XL (jxl)
+- JPEG XR (jxr, hdp<sup>1</sup>, wdp<sup>1</sup>)
+- OpenEXR (exr)
+- Personal Computer Exchange (pcx)
+- Quite OK Image format (qoi)
+- SGI images (rgb, rgba, sgi, bw)
+- Softimage PIC (pic)
+- Targa (tga): supports more formats than Qt's version
+
+Footnotes:
+1. Read only support.
+2. It depends on the HEIF plugins installed. 
+
+
+## Contributing
+
+See the [`QImageIOPlugin`](https://doc.qt.io/qt-6/qimageioplugin.html)
+documentation for information on how to write a new plugin.
+
+The main difference between this framework and the image formats of Qt is
+the license. As such, if you write an image format plugin and you are
+willing to sign the Qt Project contributor agreement, it may be better to
+submit the plugin directly to the Qt Project.
+
+To be accepted, contributions must:
+- Contain the test images needed to verify that the changes work correctly.
+- Pass the tests successfully.
+- Use Qt logging categories for Debug messages.
+
+For more info about tests, see also [Autotests README](autotests/README.md).
+
+## Duplicated Plugins
+
+> [!important]
+> To ensure you are using the correct plugin, the unwanted one should be 
+renamed or deleted. If several plugins support the same capability, Qt will 
+select one arbitrarily.
+
+### The TGA plugin
+
+The TGA plugin supports more formats than Qt's own TGA plugin;
+specifically, the one provided here supports indexed, greyscale and RLE
+images (types 1-3 and 9-11), while Qt's plugin only supports type 2
+(RGB) files.
+
+The code for this cannot be contributed upstream directly because of
+licensing.  If anyone were willing to write fresh code to improve Qt's
+TGA plugin, it would allow the TGA plugin in this framework to be
+removed.
+
+### The DDS plugin
+
+The DDS plugin is a fork from Qt 5.6 with bug fixes and improvements.
+
+The plugin was forked because Qt Project no longer supports its DDS plugin.
+
+### The JP2 plugin
+
+The JP2 plugin is based on the popular and wide used OpenJPEG library.
+
+The Qt project has a no longer supported JPEG 2000 plugin based on Jasper.
+
+## License
+
+This framework is licensed under the
+[LGPLv2.1](http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html#SEC1).
+
+The CMake code in this framework is licensed under the
+[BSD license](http://opensource.org/licenses/BSD-3-Clause).
+
+## Plugin status
+
+The current implementation of a plugin may not be complete or may have
+limitations of various kinds. Typically the limitations are on maximum size
+and color depth.
+
+The various plugins are also limited by the formats natively supported by Qt.
+For example, native support for CMYK images is only available since Qt 6.8.
+
+### HDR images
+
+HDR images are supported via floating point image formats from DDS, EXR, HDR,
+JXL, JXR, PFM and PSD plugins.
+It is important to note that in the past these plugins stripped away HDR
+information, returning SDR images.
+
+HDR images return R, G and B values ​​outside the range 0.0 - 1.0.
+While Qt painters handles HDR data correctly, some older programs may display
+strange artifacts if they do not use a tone mapping operator (or at least a
+clamp). This is not a plugin issue.
+
+### Metadata
+
+Metadata support is available in formats that include it via 
+`QImage::setText()` and `QImage::text()`. To ensure consistent metadata 
+functionality, the following keys have been adopted.
+
+About the image:
+- `Altitude`: Floating-point number indicating the GPS altitude in meters 
+  above sea level (e.g. 35.4).
+- `Author`: Person who created the image.
+- `Comment`: Additional image information in human-readable form, for 
+  example a verbal description of the image.
+- `Copyright`: Copyright notice of the person or organization that claims 
+  the copyright to the image.
+- `CreationDate`: When the image was created or captured. Date and time in 
+  ISO 8601 format without milliseconds (e.g. 2024-03-23T15:30:43). This value
+  should be kept unchanged when present.
+- `Description`: A string that describes the subject of the image.
+- `Direction`: Floating-point number indicating the direction of the image
+  when it was captured in degrees (e.g. 123.3).
+- `DocumentName`: The name of the document from which this image was 
+  scanned.
+- `HostComputer`: The computer and/or operating system in use at the time 
+  of image creation.
+- `Keywords`: Keywords, separated by semicolons, that represent the image.
+- `Latitude`: Floating-point number indicating the latitude in degrees 
+  north of the equator (e.g. 27.717).
+- `Longitude`: Floating-point number indicating the longitude in degrees 
+  east of Greenwich (e.g. 85.317).
+- `ModificationDate`: Last modification date and time in ISO 8601 format 
+  without milliseconds (e.g. 2024-03-23T15:30:43). This value should be 
+  updated every time the image is saved.
+- `Owner`: Name of the owner of the image.
+- `Rating`: Integer number indicating the image rating (usually between 1 
+  and 5).
+- `Software`: Name and version number of the software package(s) used to 
+  create the image.
+- `Speed`: Floating-point number indicating the speed of GPS receiver 
+  movement in Km/h (e.g. 30.2).
+- `Title`: The title of the image.
+
+About the shot:
+- `DigitalZoomRatio`: Floating-point number indicating the digital zoom ratio
+  when the image was shot.
+- `ExposureMode`: Integer number indicating the exposure mode set when the 
+  image was shot as reported in the EXIF ​​specifications.
+- `ExposureProgram`: Integer number indicating the class of the program used 
+  by the camera to set exposure when the picture is taken as reported in the 
+  EXIF ​​specifications.
+- `ExposureTime`: Floating-point number indicating the exposure time, 
+  given in seconds (s).
+- `Flash`: Integer number indicating the status of flash when the image 
+  was shot as reported in the EXIF ​​specifications.
+- `FNumber`: Floating-point number indicating the F number.
+- `FocalLength`: Floating-point number indicating the actual focal length 
+  of the lens, in millimeters (mm).
+- `ISOSpeedRatings`: Integer number indicating the sensitivity of the camera 
+  or input device when the image was shot as reported in the EXIF 
+  ​​specifications.
+- `WhiteBalance`: Integer number indicating the white balance mode set when 
+  the image was shot as reported in the EXIF ​​specifications.
+
+About the camera:
+- `Manufacturer`: The manufacturer of the recording equipment.
+- `Model`: The model name or model number of the recording equipment.
+- `SerialNumber`: The serial number of the recording equipment.
+
+About the lens:
+- `LensManufacturer`: The manufacturer of the interchangeable lens that was 
+  used.
+- `LensModel`: The model name or model number of the lens that was used.
+- `LensSerialNumber`: The serial number of the interchangeable lens that was 
+  used.
+
+Complex metadata (requires a parser):
+- `XML:org.gimp.xml`: XML metadata generated by GIMP and present only in XCF 
+  files.
+- `XML:com.adobe.xmp`: [Extensible Metadata Platform (XMP)](https://developer.adobe.com/xmp/docs/)
+  is the metadata standard used by Adobe applications and is supported by all 
+  common image formats. **Note that XMP metadata is read and written by 
+  plugins as is.** Since it may contain information present in other metadata 
+  (e.g. `Description`), it is the user's responsibility to ensure consistency 
+  between all metadata and XMP metadata when writing an image.
+
+Supported metadata may vary from one plugin to another. Please note that only
+the most common metadata are supported and some plugins may return keys not 
+listed here.
+
+### EXIF Metadata
+
+[EXIF (Exchangeable Image File Format)](https://en.wikipedia.org/wiki/Exif) 
+metadata is a standard for embedding information within the image file itself.
+
+Unlike the metadata described above, EXIF ​​metadata is used internally by some 
+plugins to standardize image handling. For example, the JXL plugin uses them 
+to **set/get the image resolution and metadata**. They are also needed to 
+make the image properties appear in the file details of some file managers 
+(e.g. Dolphin).
+
+When reading, EXIF meta​​data is converted into simple metadata (e.g. 
+`Description`) and inserted into the image if and only if it is not already 
+present.
+
+On writing, the image metadata is converted to EXIF ​​and saved appropriately.
+Note that, if not present in the image to be saved, the following metadata 
+are created automatically:
+
+- `Software`: Created using `applicationName` and `applicationVersion` methods
+  of [`QCoreApplication`](https://doc.qt.io/qt-6/qcoreapplication.html).
+- `CreationDate`: Set to current time and date.
+- `ModificationDate`: Set to current time and date.
+
+### ICC profile support
+
+ICC profile support is implemented in all formats that handle them using
+[`QColorSpace`](https://doc.qt.io/qt-6/qcolorspace.html). When saving, some 
+plugins convert the image using color profiles according to format 
+specifications. In particular, HDR formats almost always convert to linear 
+RGB.
+
+### Maximum image size
+
+Where possible, plugins support large images. By convention, many of the
+large image plugins are limited to a maximum of 300,000 x 300,000 pixels.
+Anyway, all plugins are also limited by the
+`QImageReader::allocationLimit()`.
+
+> [!note]
+> You can change the maximum limit of 300000 pixels by setting the constant
+> `KIF_LARGE_IMAGE_PIXEL_LIMIT` to the desired value in the cmake file. It 
+> cannot be less than 65536.
+
+Below are the maximum sizes for each plugin ('n/a' means no limit, i.e. the 
+limit depends on the format encoding).
+- ANI: same size as Qt's ICO plugin
+- AVIF: 32,768 x 32,768 pixels, in any case no larger than 256 megapixels
+- DDS: 300,000 x 300,000 pixels
+- EXR: 300,000 x 300,000 pixels
+- EPS: same size as Qt's JPG plugin
+- FF: 300,000 x 300,000 pixels
+- HDR: 300,000 x 300,000 pixels
+- HEIF: 65,535 x 65,535 pixels
+- IFF: 65,535 x 65,535 pixels
+- JP2: 300,000 x 300,000 pixels, in any case no larger than 2 gigapixels
+- JXL: 262,144 x 262,144 pixels, in any case no larger than 256 megapixels
+- JXR: 300,000 x 300,000 pixels, in any case no larger than 4 GB
+- KRA: same size as Qt's PNG plugin
+- ORA: same size as Qt's PNG plugin
+- PCX: 65,535 x 65,535 pixels
+- PFM: 300,000 x 300,000 pixels
+- PIC: 65,535 x 65,535 pixels
+- PSD: 300,000 x 300,000 pixels
+- PXR: 65,535 x 65,535 pixels
+- QOI: 300,000 x 300,000 pixels
+- RAS: 300,000 x 300,000 pixels
+- RAW: 65,535 x 65,535 pixels
+- RGB: 65,535 x 65,535 pixels
+- SCT: 300,000 x 300,000 pixels
+- TIM: 65,535 x 65,535 pixels
+- TGA: 65,535 x 65,535 pixels
+- XCF: 300,000 x 300,000 pixels
+
+### Sequential and random access devices
+
+All plugins work fine on random access devices while only some work on
+sequential access devices.
+Some plugins, such as PSD, allow reading RGB images on sequential access 
+devices, but cannot do the same for Lab files.
+
+**Important: some plugins use `QIODevice` transactions and/or 
+`QIODevice::ungetChar()`. Therefore, the device used to read the image must not
+have any active transactions.**
+
+### Memory usage
+
+Qt has added many image formats over time. In older plugins, to support new
+formats, `QImage` conversion functions have been used, causing memory
+consumption proportional to the size of the image to be saved.
+Normally this is not a source of problems because the affected plugins
+are limited to maximum images of 2GiB or less.
+
+Note that the value of `QImageReader::allocationLimit()` is only used when 
+allocating a new `QImage`. Since this parameter was created to limit damage 
+caused by corrupted files, any conversion of `QImage` (for example, with 
+`QImage::convertTo()`) is not subject to this limit.
+
+On plugins for formats that support large images, progressive conversion has
+been used or the maximum size of the image that can be saved has been limited.
+Plugins that use external libraries don't always allow progressive decoding 
+(e.g., the JPEG series). In these cases, the memory required for reading 
+may be much larger than the entire decoded image. When the external library has 
+a maximum memory limit function, the value of `QImageReader::allocationLimit()` 
+is set.
+
+### Non-RGB formats
+
+PSD plugin loads CMYK, Lab and Multichannel images and converts them to RGB 
+without using the ICC profile.
+
+JP2, JXL, JXR, PSD and SCT plugins natively support 4-channel CMYK images when
+compiled with Qt 6.8+.
+
+### The DDS plugin
+
+**This plugin can be disabled by setting `KIMAGEFORMATS_DDS` to `OFF` 
+in your cmake options.**
+
+The following defines can be defined in cmake to modify the behavior of the 
+plugin:
+- `DDS_DISABLE_STRIDE_ALIGNMENT`: disable the stride alignment based on DDS 
+  pitch: it is known that some writers do not set it correctly.
+
+When writing, it is possible to set which pixel format to use by setting the
+subtypes. The default is `Automatic` which chooses the most appropriate format
+based on the image. For a complete list of subformats, please use the
+appropriate [`QImageWriter`](https://doc.qt.io/qt-6/qimagewriter.html) APIs.
+
+### The HEIF plugin
+
+**This plugin is disabled by default. It can be enabled by settings
+`KIMAGEFORMATS_HEIF` to `ON` in your cmake options.**
+
+The plugin is disabled due to issues with the heif library on certain
+distributions. In particular, it is necessary that the HEIF library has
+support for HEVC codec. If HEVC codec is not available the plugin
+will compile but will fail the tests.
+
+The following defines can be defined in cmake to modify the behavior of the 
+plugin:
+- `HEIF_DISABLE_QT_TRANSFORMATION`: HEIF transformations, in addition to 
+  rotations and reflections, also support image cropping. Consequently, the 
+  Qt plugin, must also honor the crop. This define is useful in case 
+  of problems: activating it disables Qt's support for transformations, 
+  delegating them to the HEIF libraries (which will therefore always apply 
+  them regardless of what is requested from Qt).
+
+**If you are interested in compiling the plugin without running the tests, 
+also use the following string options:**
+- `KIMAGEFORMATS_HEIC_TEST` to change the behaviour of HEIC tests. Set to
+`"OFF"` (no test at all) or `"READ_ONLY"` (run read tests only).
+Required codecs: HEVC / H.265.
+- `KIMAGEFORMATS_HEIF_TEST` to change the behaviour of HEIF tests. Set to
+`"OFF"` (no test at all).
+Required codecs: uncompressed, deflate, zlib, brotli, jpeg.
+- `KIMAGEFORMATS_HEJ2_TEST` to change the behaviour of HEJ2 tests. Set to 
+`"OFF"` (no test at all) or `"READ_ONLY"` (run read tests only).
+Required codecs: JPEG 2000.
+- `KIMAGEFORMATS_AVCI_TEST` to change the behaviour of AVCI tests. Set to 
+`"OFF"` (no test at all).
+Required codecs: Advanced Video Coding / H.264.
+
+### The EXR plugin
+
+The following defines can be defined in cmake to modify the behavior of the 
+plugin:
+- `EXR_CONVERT_TO_SRGB`: the linear data is converted to sRGB on read to 
+  accommodate programs that do not support color profiles.
+- `EXR_DISABLE_XMP_ATTRIBUTE`: disables the stores XMP values in a non-standard 
+  attribute named "xmp". Note that Gimp reads the "xmp" attribute and Darktable 
+  writes it as well.
+
+The plugin can set the following additional metadata:
+- `EXRLayerName`: A string containing the name of the EXR layer used to decode 
+   the image.
+
+### The EPS plugin
+
+The plugin uses `Ghostscript` to convert the raster image. When reading it
+converts the EPS to PPM and uses the Qt PPM plugin to read the image.
+When writing it uses [`QPrinter`](https://doc.qt.io/qt-6/qprinter.html) to
+create a temporary PDF file which is then converted to EPS. Therefore, if
+`Ghostscript` is not installed, the plugin will not work.
+
+### The HDR plugin
+
+The following defines can be defined in cmake to modify the behavior of the 
+plugin:
+- `HDR_HALF_QUALITY`: on read, a 16-bit float image is returned instead of a 
+  32-bit float one.
+
+
+### The IFF plugin
+
+Interchange File Format is a chunk-based format. Since the original 1985
+version, various extensions have been created over time.
+
+The plugin supports the following image data:
+- FORM ILBM (Interleaved Bitmap): Electronic Arts’ IFF standard for
+  Interchange File Format (EA IFF 1985). ILBM is a format to handle raster
+  images, specifically an InterLeaved bitplane BitMap image with color map.
+  It supports from 1 to 8-bit indexed images with HAM, Halfbride, and normal
+  encoding. It also supports interleaved 24-bit RGB and 32-bit RGBA 
+  extension without color map.
+- FORM ILBM 64: ILBM extension to support 48-bit RGB and 64-bit RGBA encoding.
+- FORM ACBM (Amiga Contiguous BitMap): It supports uncompressed ACBMs by 
+  converting them to ILBMs at runtime.
+- FORM RGBN / RGB8: It supports 13-bit and 25-bit RGB images with compression 
+  type 4.
+- FORM PBM: PBM is a chunky version of IFF pictures. It supports 8-bit images 
+  with color map only.
+- FORM IMAG (Compact Disc-Interactive): It supports CLut4, CLut7, CLut8, Rle7
+  and DYuv formats.
+- FORM RGFX: It supports uncompressed and ZIP compressed images.
+- FORM DEEP: It supports uncompressed, RLE and TVDC images.
+- FOR4 CIMG (Maya Image File Format): It supports 24/48-bit RGB and 32/64-bit 
+  RGBA images.
+
+> [!note]
+> The plugin only supports the IFF, ILBM, and LBM file extensions. You'll 
+> need to rename files with different extensions to open them.
+
+### The JP2 plugin
+
+**This plugin can be disabled by setting `KIMAGEFORMATS_JP2` to `OFF` 
+in your cmake options.**
+
+JP2 plugin has the following limitations due to the lack of support by OpenJPEG:
+- Metadata are not supported.
+- Image resolution is not supported.
+- To write ICC profiles you need OpenJPEG V2.5.4 or higher
+
+When writing, it is possible to set which format to use by setting the 
+following subtypes:
+- `JP2` (default): Save data using the JP2 container.
+- `J2K`: Save only the compressed codestream.
+
+### The JXL plugin
+
+**The current version of the plugin limits the image size to 256 megapixels
+according to feature level 5 of the JXL stream encoding.**
+
+The following defines can be defined in cmake to modify the behavior of the
+plugin:
+- `JXL_HDR_PRESERVATION_DISABLED`: disable floating point images (both read 
+  and write) by converting them to UINT16 images. Any HDR data is lost. Note 
+  that FP images are always disabled when compiling with libJXL less than v0.9.
+- `JXL_DECODE_BOXES_DISABLED`: disable reading of metadata (e.g. XMP).
+
+### The JXR plugin
+
+**This plugin is disabled by default. It can be enabled by settings
+`KIMAGEFORMATS_WITH_KNOWN_CRASHES_JXR` to `ON` in your cmake options.**
+
+> [!caution]
+> The plugin disabled by default due to security issues in [jxrlib](https://github.com/4creators/jxrlib): 
+> the upstream jxrlib is dead and there is no "hope" they will fix the issues.
+>
+> **You should not enable it unless you know what you are doing.**
+
+> [!note]
+> Security issues in the jxrlib discovered by the [KImageFormats OSS-Fuzz project](https://github.com/google/oss-fuzz/tree/master/projects/kimageformats) 
+> should be fixed in this [jxrlib fork](https://github.com/mircomir/jxrlib).
+
+The following defines can be defined in cmake to modify the behavior of the 
+plugin:
+- `JXR_DENY_FLOAT_IMAGE`: disables the use of float images and consequently 
+  any HDR data will be lost.
+- `JXR_DISABLE_DEPTH_CONVERSION`: remove the needs of additional memory by 
+  disabling the conversion between different color depths (e.g. RGBA64bpp to 
+  RGBA32bpp) at the cost of reduced compatibility.
+- `JXR_DISABLE_BGRA_HACK`: Windows displays and opens JXR files correctly out 
+  of the box. Unfortunately it doesn't seem to open (P)RGBA @32bpp files as 
+  it only wants (P)BGRA32bpp files (a format not supported by Qt). Only for 
+  this format an hack is activated to guarantee total compatibility of the 
+  plugin with Windows.
+
+### The KRA and ORA plugin
+
+Both KRA and ORA formats are ZIP archives containing image data. Specifically,
+the rendered PNG image is saved in the root directory: the plugin reads this
+image.
+
+### The PSD plugin
+
+PSD support has the following limitations:
+- Only images saved by Photoshop using compatibility mode enabled (Photoshop 
+  default) can be decoded.
+- Multichannel images are treated as CMYK if they have 2 or more channels.
+- Multichannel images are treated as Grayscale if they have 1 channel.
+- Duotone images are treated as grayscale images.
+- Grayscale images with alpha channel or at 32 bit depth are converted to 
+  RGBA due to the lack of the appropriate Qt grayscale container.
+- Extra channels other than alpha are discarded.
+
+The following defines can be defined in cmake to modify the behavior of the 
+plugin:
+- `PSD_FAST_LAB_CONVERSION`: the LAB image is converted to linear sRGB instead
+  of sRGB which significantly increases performance.
+- `PSD_NATIVE_CMYK_SUPPORT_DISABLED`: disable native support for CMYK images 
+  when compiled with Qt 6.8+
+
+The plugin can set the following additional metadata:
+  - `PSDDuotoneOptions`: Byte array in hexadecimal format of color data of the 
+     duotone specification (the format of which is not documented). From the PSD 
+     specification: *"Other applications that read Photoshop files can treat a 
+     duotone image as a gray image, and just preserve the contents of the duotone 
+     information when reading and writing the file."*
+
+### The RAW plugin
+
+Loading RAW images always requires a conversion. To allow the user to
+choose how to convert the image, it was chosen to use the quality parameter
+to act on the converter. The quality parameter can be used with values ​​from 
+0 to 100 (0 = fast, 100 = maximum quality) or by setting flags to 
+selectively change the conversion (see also [raw_p.h](./src/imageformats/raw_p.h)).
+
+The default setting tries to balance quality and conversion speed.
+
+### The TGA plugin
+
+TGA plugin supports both version 1 and version 2 of TGA files. When writing,
+it is possible to force which version to use by setting the following subtypes:
+- `TGAv1`: force TGA v1.0. No metadata.
+- `TGAv2` (default): force TGA v2.0 (strict). Adds the TGA Extension Area.
+- `TGAv2E`: force TGA v2.0 (enhanced). Same as TGA v2.0 (strict) but with the 
+  addition of the TGA v2.0 Developer Area with info like, for e.g., Exif data, 
+  XMP packet and the ICC profile.
+
+They are all TGA specs compliant. While for versions 1 and 2 (strict) it is 
+possible to decode all the information with the TGA specification alone, for 
+version 2 (enhanced) it is necessary to know how the additional data is
+encoded.
+
+The following defines can be defined in cmake to modify the behavior of the 
+plugin:
+- `TGA_V2E_AS_DEFAULT`: change the default version of the plugin to `TGAv2E`.
+
+### The XCF plugin
+
+XCF support has the following limitations:
+- XCF format up to [version 12](https://testing.developer.gimp.org/core/standards/xcf/#version-history) 
+  (no support for GIMP 3).
+- The returned image is always 8-bit.
+- Cannot read zlib compressed files.
+- The rendered image may be slightly different (colors/transparencies) than 
+  in GIMP.

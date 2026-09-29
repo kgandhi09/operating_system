@@ -1,0 +1,550 @@
+# Copyright (C) YEAR This_file_is_part_of_KDE
+# This file is distributed under the same license as the PACKAGE package.
+# Adrián Chaves Fernández (Gallaecio) <adriyetichaves@gmail.com>, 2015, 2016.
+# SPDX-FileCopyrightText: 2024, 2025 Adrián Chaves (Gallaecio)
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-04-06 00:45+0000\n"
+"PO-Revision-Date: 2025-06-19 10:00+0200\n"
+"Last-Translator: Adrián Chaves (Gallaecio) <adrian@chaves.gal>\n"
+"Language-Team: Proxecto Trasno (proxecto@trasno.gal)\n"
+"Language: gl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Lokalize 25.04.2\n"
+
+#: ListItemBase.qml:73
+#, kde-format
+msgid "Currently not recording"
+msgstr "Non gravando neste momento"
+
+#: ListItemBase.qml:74
+#, kde-format
+msgid "Currently not playing"
+msgstr "Non reproducindo neste momento"
+
+#: ListItemBase.qml:205
+#, kde-format
+msgctxt "@action:button"
+msgid "Additional Options"
+msgstr "Opcións adicionais"
+
+#: ListItemBase.qml:207
+#, kde-format
+msgid "Show additional options for %1"
+msgstr "Amosar opcións adicionais para %1."
+
+#: ListItemBase.qml:229
+#, kde-format
+msgctxt "@action:button"
+msgid "Unmute"
+msgstr "Activar o son"
+
+#: ListItemBase.qml:229
+#, kde-format
+msgctxt "@action:button"
+msgid "Mute"
+msgstr "Silenciar"
+
+#: ListItemBase.qml:231
+#, kde-format
+msgid "Unmute %1"
+msgstr "Activar o son de %1"
+
+#: ListItemBase.qml:231
+#, kde-format
+msgid "Mute %1"
+msgstr "Silenciar %1."
+
+#: ListItemBase.qml:254
+#, kde-format
+msgctxt "Accessibility data on volume slider"
+msgid "Adjust volume for %1"
+msgstr "Axustar o volume de %1."
+
+#: ListItemBase.qml:318 MicrophoneTestView.qml:215
+#, kde-format
+msgctxt "volume percentage"
+msgid "%1%"
+msgstr "%1%"
+
+#: ListItemBase.qml:339 MicrophoneTestView.qml:228
+#, kde-format
+msgctxt "only used for sizing, should be widest possible string"
+msgid "100%"
+msgstr "100%"
+
+#: ListItemBase.qml:344
+#, kde-format
+msgctxt "Perform an audio test of the device"
+msgid "Test…"
+msgstr ""
+
+#: main.qml:36
+#, kde-format
+msgid "Audio Volume"
+msgstr "Volume do son"
+
+#: main.qml:60 main.qml:62
+#, kde-format
+msgctxt "@label"
+msgid "Connection to the Sound Service Lost"
+msgstr "Perdeuse a conexión co servizo de son"
+
+#: main.qml:64
+#, kde-format
+msgid "No output or input devices found"
+msgstr "Non se atoparon dispositivos de saída ou entrada."
+
+#: main.qml:68
+#, kde-format
+msgctxt "@info reconnecting to pulseaudio"
+msgid "Trying to reconnect…"
+msgstr "Intentando conectar…"
+
+#: main.qml:94
+#, kde-format
+msgid "Audio Muted"
+msgstr "Son silenciado"
+
+#: main.qml:96
+#, kde-format
+msgid "Volume at %1%"
+msgstr "Volume ao %1%"
+
+#: main.qml:107
+#, kde-format
+msgid "Middle-click to unmute"
+msgstr "Clic central para activar o son"
+
+#: main.qml:108
+#, kde-format
+msgid "Middle-click to mute all audio"
+msgstr "Clic central para silenciar todo o son"
+
+#: main.qml:109
+#, kde-format
+msgid "Scroll to adjust volume"
+msgstr "Desprazar para axustar o volume"
+
+#: main.qml:125
+#, kde-format
+msgid "Device name not found"
+msgstr "Non se atopou o nome do dispositivo"
+
+#: main.qml:358
+#, kde-format
+msgid "Devices"
+msgstr "Dispositivos"
+
+#: main.qml:365
+#, kde-format
+msgid "Applications"
+msgstr "Aplicacións"
+
+#: main.qml:389
+#, kde-format
+msgctxt "@action:button"
+msgid "More actions"
+msgstr "Máis accións"
+
+#: main.qml:431
+#, kde-format
+msgctxt ""
+"@action:button keep this widget's pop-up open until explicitly dismissed"
+msgid "Keep open"
+msgstr ""
+
+#: main.qml:466
+#, kde-format
+msgctxt "@action retry connecting to pulseaudio"
+msgid "Retry"
+msgstr "Intentar de novo"
+
+#: main.qml:500
+#, kde-format
+msgid "No applications playing or recording audio"
+msgstr "Non hai ningunha aplicación reproducindo ou gravando son"
+
+#: main.qml:596
+#, kde-format
+msgctxt "@title:group listview section header"
+msgid "Output Devices"
+msgstr "Dispositivos de saída"
+
+#: main.qml:598
+#, kde-format
+msgctxt "@title:group listview section header"
+msgid "Output Streams"
+msgstr "Fluxos de saída"
+
+#: main.qml:656
+#, kde-format
+msgctxt "@title:group listview section header"
+msgid "Input Devices"
+msgstr "Dispositivos de entrada"
+
+#: main.qml:658
+#, kde-format
+msgctxt "@title:group listview section header"
+msgid "Input Streams"
+msgstr "Fluxos de entrada"
+
+#: main.qml:723
+#, kde-kuit-format
+msgctxt "@info"
+msgid ""
+"Prolonged use of this feature will damage the device's speakers. Only use it "
+"temporarily to make quiet media audible."
+msgstr ""
+"O uso prolongado desta funcionalidade danará os altofalantes. Úsea só "
+"temporalmente para poder oír son moi baixo."
+
+#: main.qml:739
+#, kde-format
+msgid "Raise maximum volume"
+msgstr "Aumentar o volume máximo"
+
+#: main.qml:757
+#, kde-format
+msgid "Force mute all playback devices"
+msgstr "Silenciar forzosamente todos os dispositivos de reprodución"
+
+#: main.qml:766
+#, fuzzy, kde-format
+#| msgid "Force mute all playback devices"
+msgid "Force mute all input devices"
+msgstr "Silenciar forzosamente todos os dispositivos de reprodución"
+
+#: main.qml:775
+#, kde-format
+msgid "Show virtual devices"
+msgstr "Amosar os dispositivos virtuais"
+
+#: main.qml:785
+#, kde-format
+msgid "&Configure Audio Devices…"
+msgstr "&Configurar os dispositivos de son…"
+
+#: MicrophoneTestView.qml:104
+#, kde-format
+msgctxt "Button to stop microphone recording in test mode"
+msgid "Stop"
+msgstr ""
+
+#: MicrophoneTestView.qml:104
+#, kde-format
+msgctxt "Button to start microphone recording in test mode"
+msgid "Record"
+msgstr ""
+
+#: MicrophoneTestView.qml:118
+#, kde-format
+msgctxt "Button to stop microphone playing in test mode"
+msgid "Stop"
+msgstr ""
+
+#: MicrophoneTestView.qml:118
+#, fuzzy, kde-format
+#| msgid "Playback"
+msgctxt "Button to start microphone playing in test mode"
+msgid "Play"
+msgstr "Reprodución"
+
+#: MicrophoneTestView.qml:137
+#, fuzzy, kde-format
+#| msgid "Volume step:"
+msgctxt "Label above the microphone volume meter in test overlay"
+msgid "Volume level"
+msgstr "Volume por nivel:"
+
+#: MicrophoneTestView.qml:166
+#, kde-format
+msgctxt "Label showing current microphone input level percentage in test mode"
+msgid "%1 %"
+msgstr ""
+
+#: MicrophoneTestView.qml:181
+#, kde-format
+msgctxt "Label above the microphone sensitivity slider in test overlay"
+msgid "Sensitivity"
+msgstr ""
+
+#: MicrophoneTestView.qml:237
+#, kde-format
+msgctxt "Button in microphone test view to return to the device list"
+msgid "Back"
+msgstr ""
+
+#: MicrophoneTestView.qml:250
+#, kde-kuit-format
+msgctxt "@info"
+msgid "Microphone test error:<nl/><nl/>%1"
+msgstr ""
+
+#: StreamListItem.qml:36
+#, kde-format
+msgid "Stream name not found"
+msgstr "Non se atopou o nome do fluxo"
+
+#~ msgctxt "Device name (Battery percent)"
+#~ msgid "%1 (%2% Battery)"
+#~ msgstr "%1 (%2% de batería)"
+
+#~ msgid "Increase Volume"
+#~ msgstr "Subir o volume"
+
+#~ msgctxt "@action shortcut"
+#~ msgid "Increase Volume by 1%"
+#~ msgstr "Subir o volume un 1%"
+
+#~ msgid "Decrease Volume"
+#~ msgstr "Baixar o volume"
+
+#~ msgctxt "@action shortcut"
+#~ msgid "Decrease Volume by 1%"
+#~ msgstr "Baixar o volume un 1%"
+
+#~ msgid "Mute"
+#~ msgstr "Silenciar"
+
+#~ msgid "Increase Microphone Volume"
+#~ msgstr "Subir o volume do micrófono"
+
+#~ msgid "Decrease Microphone Volume"
+#~ msgstr "Baixar o volume do micrófono"
+
+#~ msgid "Mute Microphone"
+#~ msgstr "Silenciar o micrófono"
+
+#~ msgctxt "label of device items"
+#~ msgid "%1 (%2)"
+#~ msgstr "%1 (%2)"
+
+#~ msgid "General"
+#~ msgstr "Xeral"
+
+#, fuzzy
+#~| msgid "Audio Volume"
+#~ msgid "Audio volume"
+#~ msgstr "Volume do son"
+
+#, fuzzy
+#~| msgid "Mute audio"
+#~ msgid "Mute state"
+#~ msgstr "Silenciar o son"
+
+#, fuzzy
+#~| msgid "No output device"
+#~ msgid "Default output device"
+#~ msgstr "Non hai ningún dispositivo de saída"
+
+#~ msgid "Record all audio via this device"
+#~ msgstr "Gravar todo o son mediante este dispositivo"
+
+#~ msgid "Play all audio via this device"
+#~ msgstr "Reproducir todo o son mediante este dispositivo"
+
+#~ msgctxt ""
+#~ "Heading for a list of ports of a device (for example built-in laptop "
+#~ "speakers or a plug for headphones)"
+#~ msgid "Ports"
+#~ msgstr "Portos"
+
+#, fuzzy
+#~| msgctxt "Port is unavailable"
+#~| msgid " (unavailable)"
+#~ msgctxt "Port is unavailable"
+#~ msgid "%1 (unavailable)"
+#~ msgstr " (non dispoñíbel)"
+
+#, fuzzy
+#~| msgctxt "Port is unplugged"
+#~| msgid " (unplugged)"
+#~ msgctxt "Port is unplugged"
+#~ msgid "%1 (unplugged)"
+#~ msgstr "(desenchufado)"
+
+#~ msgctxt ""
+#~ "Heading for a list of possible output devices (speakers, headphones, ...) "
+#~ "to choose"
+#~ msgid "Play audio using"
+#~ msgstr "Reproducir son mediante:"
+
+#~ msgctxt ""
+#~ "Heading for a list of possible input devices (built-in microphone, "
+#~ "headset, ...) to choose"
+#~ msgid "Record audio using"
+#~ msgstr "Gravar son mediante:"
+
+#~ msgid "Feedback:"
+#~ msgstr "Retroalimentación:"
+
+#~ msgid "Play sound when volume changes"
+#~ msgstr "Reproducir un son ao cambiar o volume"
+
+#~ msgid "Display notification when default output device changes"
+#~ msgstr ""
+#~ "Mostrar unha notificación cando o dispositivo de saída predeterminado "
+#~ "cambia"
+
+#~ msgid "Maximum volume:"
+#~ msgstr "Volume máximo:"
+
+#~ msgid "Default Device"
+#~ msgstr "Dispositivo predeterminado"
+
+#~ msgid "Playback Streams"
+#~ msgstr "Secuencias de reprodución"
+
+#~ msgid "Recording Streams"
+#~ msgstr "Fluxos de gravación"
+
+#~ msgid "Playback Devices"
+#~ msgstr "Dispositivos de reprodución"
+
+#~ msgid "Recording Devices"
+#~ msgstr "Dispositivos de gravación"
+
+#~ msgctxt "label of stream items"
+#~ msgid "%1 (%2)"
+#~ msgstr "%1 (%2)"
+
+#~ msgctxt "Checkable switch for (un-)muting sound output."
+#~ msgid "Mute"
+#~ msgstr "Silenciar"
+
+#~ msgctxt "Checkable switch to change the current default output."
+#~ msgid "Default"
+#~ msgstr "Predeterminada"
+
+#~ msgid "Volume"
+#~ msgstr "Volume"
+
+#~ msgid "%"
+#~ msgstr "%"
+
+#~ msgid "Behavior"
+#~ msgstr "Comportamento"
+
+#~ msgid "Volume feedback"
+#~ msgstr "Información do volume"
+
+#~ msgid "Device Profiles"
+#~ msgstr "Perfís de dispositivos"
+
+#~ msgctxt "@label"
+#~ msgid "No Device Profiles Available"
+#~ msgstr "Non hai perfís de dispositivos dispoñíbeis."
+
+#~ msgid "Advanced Output Configuration"
+#~ msgstr "Configuración avanzada da saída"
+
+#~ msgid ""
+#~ "Add virtual output device for simultaneous output on all local sound cards"
+#~ msgstr ""
+#~ "Engadir un dispositivo de saída virtual para saída simultánea por todas "
+#~ "as tarxetas de son locais."
+
+#~ msgid ""
+#~ "Automatically switch all running streams when a new output becomes "
+#~ "available"
+#~ msgstr ""
+#~ "Cambiar automaticamente todas as emisións en marcha cando haxa unha nova "
+#~ "saída dispoñíbel."
+
+#~ msgid "Requires 'module-gconf' PulseAudio module"
+#~ msgstr "Necesita o módulo «module-gconf» de PulseAudio."
+
+#~ msgid "Speaker Placement and Testing"
+#~ msgstr "Situación e probas do altofalante"
+
+#~ msgctxt "@label"
+#~ msgid "Output:"
+#~ msgstr "Saída:"
+
+#~ msgid "Front Left"
+#~ msgstr "Dianteiro esquerdo"
+
+#~ msgid "Front Center"
+#~ msgstr "Dianteiro central"
+
+#~ msgid "Front Right"
+#~ msgstr "Dianteiro dereito"
+
+#~ msgid "Side Left"
+#~ msgstr "Lateral esquerdo"
+
+#~ msgid "Side Right"
+#~ msgstr "Lateral dereito"
+
+#~ msgid "Rear Left"
+#~ msgstr "Traseiro esquerdo"
+
+#~ msgid "Subwoofer"
+#~ msgstr "Subwoofer"
+
+#~ msgid "Rear Right"
+#~ msgstr "Traseiro dereito"
+
+#~ msgctxt "@label"
+#~ msgid "No Applications Playing Audio"
+#~ msgstr "Ningún aplicativo emitindo son"
+
+#~ msgid "Capture"
+#~ msgstr "Capturar"
+
+#~ msgctxt "@label"
+#~ msgid "No Applications Recording Audio"
+#~ msgstr "Ningún aplicativo gravando son"
+
+#~ msgctxt "@label"
+#~ msgid "Profile:"
+#~ msgstr "Perfil:"
+
+#~ msgid "Port"
+#~ msgstr "Porto"
+
+#~ msgid "Outputs"
+#~ msgstr "Saídas"
+
+#~ msgctxt "@label"
+#~ msgid "No Output Devices Available"
+#~ msgstr "Non hai dispositivos de saída dispoñíbeis"
+
+#~ msgid "Inputs"
+#~ msgstr "Entradas"
+
+#~ msgctxt "@label"
+#~ msgid "No Input Devices Available"
+#~ msgstr "Non hai dispositivos de entrada dispoñíbeis"
+
+#~ msgid "This module allows configuring the Pulseaudio sound subsystem."
+#~ msgstr "Este módulo permite configurar o subsistema de son PulseAudio."
+
+#~ msgctxt "@title:tab"
+#~ msgid "Devices"
+#~ msgstr "Dispositivos"
+
+#~ msgctxt "@title:tab"
+#~ msgid "Applications"
+#~ msgstr "Aplicativos"
+
+#~ msgctxt "@title:tab"
+#~ msgid "Advanced"
+#~ msgstr "Avanzado"
+
+#~ msgid "Notification Sounds"
+#~ msgstr "Sons de notificacións"
+
+#~ msgctxt "label of stream items"
+#~ msgid "%1: %2"
+#~ msgstr "%1: %2"
+
+#~ msgid "100%"
+#~ msgstr "100%"

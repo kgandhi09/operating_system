@@ -1,0 +1,1039 @@
+# SPDX-FileCopyrightText: 2024, 2025, 2026 Sergiu Bivol <sergiu@cip.md>
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"PO-Revision-Date: 2026-01-28 18:45+0000\n"
+"Last-Translator: Sergiu Bivol <sergiu@cip.md>\n"
+"Language-Team: Romanian <kde-i18n-ro@kde.org>\n"
+"Language: ro\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=n==1 ? 0 : (n==0 || (n%100 > 0 && n%100 < "
+"20)) ? 1 : 2;\n"
+"X-Generator: Lokalize 25.08.1\n"
+"X-Qt-Contexts: true\n"
+
+#: analytics/analyticsview.cpp:77
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "&Time Interval"
+msgstr "Interval de &timp"
+
+#: analytics/analyticsview.cpp:88
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "&Chart Mode"
+msgstr "Regim &diagramă"
+
+#: analytics/analyticsview.cpp:126
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "Copy"
+msgstr "Copiază"
+
+#: analytics/analyticsview.cpp:258
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "Export Data"
+msgstr "Exportă datele"
+
+#: analytics/analyticsview.cpp:264
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "Export Failed"
+msgstr "Exportul a eșuat"
+
+#: analytics/analyticsview.cpp:264 analytics/analyticsview.cpp:281
+#, qt-format
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "Could not open file: %1"
+msgstr "Fișierul nu poate fi deschis: %1"
+
+#: analytics/analyticsview.cpp:270
+#, qt-format
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "Data samples of %1 exported to %2."
+msgstr "Mostrele de date ale %1 au fost exportate la %2."
+
+#: analytics/analyticsview.cpp:275
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "Import Data"
+msgstr "Importă date"
+
+#: analytics/analyticsview.cpp:281 analytics/analyticsview.cpp:286
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "Import Failed"
+msgstr "Importul a eșuat"
+
+#: analytics/analyticsview.cpp:286
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "Selected file contains no valid data."
+msgstr "Fișierul ales nu conține date valide."
+
+#: analytics/analyticsview.cpp:293
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "Data samples imported."
+msgstr "Mostre de date importate."
+
+#: analytics/analyticsview.ui:33
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "Charts"
+msgstr "Diagrame"
+
+#: analytics/analyticsview.ui:41
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "&Aggregation:"
+msgstr "&Agregare:"
+
+#: analytics/analyticsview.ui:108
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "Aggregated Data"
+msgstr "Date agregate"
+
+#: analytics/analyticsview.ui:118
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "Raw Data"
+msgstr "Date brute"
+
+#: analytics/analyticsview.ui:138
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "&Year"
+msgstr "&An"
+
+#: analytics/analyticsview.ui:141
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "Aggregate data by year."
+msgstr "Agreghează datele după an."
+
+#: analytics/analyticsview.ui:149
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "&Month"
+msgstr "&Lună"
+
+#: analytics/analyticsview.ui:152
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "Aggregate data by month."
+msgstr "Agreghează datele după lună."
+
+#: analytics/analyticsview.ui:160
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "&Week"
+msgstr "&Săptămână"
+
+#: analytics/analyticsview.ui:163
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "Aggregate data by week."
+msgstr "Agreghează datele după săptămână."
+
+#: analytics/analyticsview.ui:171
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "&Day"
+msgstr "&Ziuă"
+
+#: analytics/analyticsview.ui:174
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "Aggregate data by day."
+msgstr "Agreghează datele după zi."
+
+#: analytics/analyticsview.ui:182
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "&Export Data..."
+msgstr "&Exportă datele…"
+
+#: analytics/analyticsview.ui:185
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "Export all recorded data."
+msgstr "Exportă toate datele înregistrate."
+
+#: analytics/analyticsview.ui:193
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "&Import Data..."
+msgstr "&Importă date…"
+
+#: analytics/analyticsview.ui:196
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "Import data samples."
+msgstr "Importă mostre de date."
+
+#: analytics/analyticsview.ui:204
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "&Reload Data"
+msgstr "&Reîncarcă datele"
+
+#: analytics/analyticsview.ui:207
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "Refresh data from the server."
+msgstr "Împrospătează datele de pe server."
+
+#: analytics/analyticsview.ui:218
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "&Timeline Chart"
+msgstr "Diagramă &cronologică"
+
+#: analytics/analyticsview.ui:221
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "Show development over time."
+msgstr "Arată evoluția în timp."
+
+#: analytics/analyticsview.ui:232
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "&Singular Chart"
+msgstr "Diagramă &singulară"
+
+#: analytics/analyticsview.ui:235
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "Show chart for a single time interval."
+msgstr "Arată diagrama pentru un singur interval de timp."
+
+#: analytics/analyticsview.ui:243
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "Export &Chart..."
+msgstr "Exportă &diagrama…"
+
+#: analytics/analyticsview.ui:246
+msgctxt "KUserFeedback::Console::AnalyticsView|"
+msgid "Export the current chart as image, SVG or PDF."
+msgstr "Exportă diagrama actuală ca imagine, SVG sau PDF."
+
+#: analytics/chartexportdialog.cpp:50
+msgctxt "KUserFeedback::Console::ChartExportDialog|"
+msgid "Export Chart"
+msgstr "Exportă diagrama"
+
+#: analytics/chartexportdialog.ui:14
+msgctxt "KUserFeedback::Console::ChartExportDialog|"
+msgid "Dialog"
+msgstr "Dialog"
+
+#: analytics/chartexportdialog.ui:22
+msgctxt "KUserFeedback::Console::ChartExportDialog|"
+msgid "F&ile name:"
+msgstr "Denumire f&ișier:"
+
+#: analytics/chartexportdialog.ui:35
+msgctxt "KUserFeedback::Console::ChartExportDialog|"
+msgid "..."
+msgstr "…"
+
+#: analytics/chartexportdialog.ui:44
+msgctxt "KUserFeedback::Console::ChartExportDialog|"
+msgid "I&mage"
+msgstr "I&magine"
+
+#: analytics/chartexportdialog.ui:56
+msgctxt "KUserFeedback::Console::ChartExportDialog|"
+msgid "W&idth:"
+msgstr "Lăț&ime:"
+
+#: analytics/chartexportdialog.ui:66 analytics/chartexportdialog.ui:92
+msgctxt "KUserFeedback::Console::ChartExportDialog|"
+msgid "px"
+msgstr "px"
+
+#: analytics/chartexportdialog.ui:82
+msgctxt "KUserFeedback::Console::ChartExportDialog|"
+msgid "Height:"
+msgstr "Înălțime:"
+
+#: analytics/chartexportdialog.ui:110
+msgctxt "KUserFeedback::Console::ChartExportDialog|"
+msgid "SV&G"
+msgstr "SV&G"
+
+#: analytics/chartexportdialog.ui:117
+msgctxt "KUserFeedback::Console::ChartExportDialog|"
+msgid "P&DF"
+msgstr "P&DF"
+
+#: analytics/totalaggregator.cpp:34
+msgctxt "KUserFeedback::Console::TotalAggregator|"
+msgid "Samples"
+msgstr "Mostre"
+
+#: connectdialog.cpp:25
+msgctxt "KUserFeedback::Console::ConnectDialog|"
+msgid "Connect"
+msgstr "Conectează"
+
+#: connectdialog.ui:14
+msgctxt "KUserFeedback::Console::ConnectDialog|"
+msgid "Connect To Analytics Server"
+msgstr "Conectează la serverul analitic"
+
+#: connectdialog.ui:22
+msgctxt "KUserFeedback::Console::ConnectDialog|"
+msgid "Server &name:"
+msgstr "De&numire server:"
+
+#: connectdialog.ui:32
+msgctxt "KUserFeedback::Console::ConnectDialog|"
+msgid "&User name:"
+msgstr "Nume &utilizator:"
+
+#: connectdialog.ui:45
+msgctxt "KUserFeedback::Console::ConnectDialog|"
+msgid "P&assword:"
+msgstr "P&arolă:"
+
+#: connectdialog.ui:78
+msgctxt "KUserFeedback::Console::ConnectDialog|"
+msgid "Server UR&L:"
+msgstr "UR&L server:"
+
+#: jobs/handshakejob.cpp:26
+#, qt-format
+msgctxt "KUserFeedback::Console::HandshakeJob|"
+msgid "Connected to %1."
+msgstr "Conectat la %1."
+
+#: jobs/handshakejob.cpp:55
+#, qt-format
+msgctxt "KUserFeedback::Console::HandshakeJob|"
+msgid "Incompatible protocol: %1."
+msgstr "Protocol incompatibil: %1."
+
+#: jobs/handshakejob.cpp:62
+#, qt-format
+msgctxt "KUserFeedback::Console::HandshakeJob|"
+msgid "Updated database schema from version %1 to %2."
+msgstr "Schema bazei de date a fost actualizată de la versiunea %1 la %2."
+
+#: jobs/productexportjob.cpp:36
+msgctxt "KUserFeedback::Console::ProductExportJob|"
+msgid "Product not found."
+msgstr "Produsul nu a fost găsit."
+
+#: jobs/productexportjob.cpp:63 jobs/productexportjob.cpp:83
+#: jobs/productexportjob.cpp:103
+#, qt-format
+msgctxt "KUserFeedback::Console::ProductExportJob|"
+msgid "Could not open file: %1"
+msgstr "Fișierul nu poate fi deschis: %1"
+
+#: jobs/productimportjob.cpp:37
+#, qt-format
+msgctxt "KUserFeedback::Console::ProductImportJob|"
+msgid "Unable to open file: %1"
+msgstr "Nu s-a putut deschide fișierul: %1"
+
+#: jobs/productimportjob.cpp:43
+msgctxt "KUserFeedback::Console::ProductImportJob|"
+msgid "Invalid product schema file."
+msgstr "Fișier eronat cu schema produsului."
+
+#: jobs/securityscanjob.cpp:54
+msgctxt "KUserFeedback::Console::SecurityScanJob|"
+msgid "No issues found."
+msgstr "Nicio problemă identificată."
+
+#: jobs/securityscanjob.cpp:75
+#, qt-format
+msgctxt "KUserFeedback::Console::SecurityScanJob|"
+msgid "Access to %1 is not protected!"
+msgstr "Accesul la %1 nu e protejat!"
+
+#: jobs/securityscanjob.cpp:78
+#, qt-format
+msgctxt "KUserFeedback::Console::SecurityScanJob|"
+msgid "Access to %1 is protected (%2)."
+msgstr "Accesul la %1 e protejat (%2)."
+
+#: mainwindow.cpp:80 mainwindow.cpp:142
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Unsaved Schema Changes"
+msgstr "Modificări nesalvate ale schemei"
+
+#: mainwindow.cpp:81
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid ""
+"You have unsaved changes in the schema editor. Do you really want to close "
+"it and discard your changes?"
+msgstr ""
+"Aveți modificări nesalvate în redactorul de scheme. Sigur doriți să-l "
+"închideți și să aruncați modificările?"
+
+#: mainwindow.cpp:130
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "About User Feedback Console"
+msgstr "Despre consola de reacții ale utilizatorului"
+
+#: mainwindow.cpp:130
+#, qt-format
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid ""
+"Version: %1\n"
+"License: MIT\n"
+"Copyright ⓒ 2017 Volker Krause <vkrause@kde.org>"
+msgstr ""
+"Versiune: %1\n"
+"Licență: MIT\n"
+"Copyright ⓒ 2017 Volker Krause <vkrause@kde.org>"
+
+#: mainwindow.cpp:143
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid ""
+"You have unsaved changes in the schema editor, do you really want to open "
+"another product and discard your changes?"
+msgstr ""
+"Aveți modificări nesalvate în redactorul de scheme. Sigur doriți să-l "
+"deschideți alt produs și să aruncați modificările?"
+
+#: mainwindow.cpp:172
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Usage ratio of the analytics view, survey editor and schema editor."
+msgstr ""
+"Rata de utilizare a vizualizării de analitice, redactorului de sondaje și "
+"redactorului de scheme."
+
+#: mainwindow.cpp:219
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Connection Failure"
+msgstr "Eșec la conectare"
+
+#: mainwindow.cpp:219
+#, qt-format
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Failed to connect to server: %1"
+msgstr "Nu se poate conecta la server: %1"
+
+#: mainwindow.cpp:226
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Add New Product"
+msgstr "Adaugă produs nou"
+
+#: mainwindow.cpp:226
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Product Identifier:"
+msgstr "Identificator produs:"
+
+#: mainwindow.cpp:248
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Delete Product"
+msgstr "Șterge produsul"
+
+#: mainwindow.cpp:249
+#, qt-format
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Do you really want to delete product %1 with all its data?"
+msgstr "Sigur doriți să ștergeți produsul %1 cu toate datele acestuia?"
+
+#: mainwindow.cpp:266
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Import Product"
+msgstr "Importă produs"
+
+#: mainwindow.cpp:272 mainwindow.cpp:278 mainwindow.cpp:297
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Import Failed"
+msgstr "Importul a eșuat"
+
+#: mainwindow.cpp:272 mainwindow.cpp:297
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Could not open file."
+msgstr "Fișierul nu poate fi deschis."
+
+#: mainwindow.cpp:278
+#, qt-format
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Import error: %1"
+msgstr "Eroare la import: %1"
+
+#: mainwindow.cpp:281
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Product imported successfully."
+msgstr "Produsul a fost importat cu succes."
+
+#: mainwindow.cpp:291
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Export Product"
+msgstr "Exportă produsul"
+
+#: mainwindow.cpp:303
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Export Failed"
+msgstr "Exportul a eșuat"
+
+#: mainwindow.cpp:303
+#, qt-format
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Export error: %1"
+msgstr "Eroare la export: %1"
+
+#: mainwindow.cpp:306
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Product exported successfully."
+msgstr "Produsul a fost exportat cu succes."
+
+#: mainwindow.cpp:355
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Unsaved Changes"
+msgstr "Modificări nesalvate"
+
+#: mainwindow.cpp:356
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid ""
+"There are unsaved changes in the schema editor. Do you want to discard them "
+"and close the application?"
+msgstr ""
+"Sunt modificări nesalvate în redactorul de scheme. Doriți să le aruncați și "
+"să închideți aplicația?"
+
+#: mainwindow.ui:14
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "User Feedback Console"
+msgstr "Consola de reacții ale utilizatorului"
+
+#: mainwindow.ui:50
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "&File"
+msgstr "&Fișier"
+
+#: mainwindow.ui:58
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Pro&ducts"
+msgstr "Pro&duse"
+
+#: mainwindow.ui:67
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "&Survey"
+msgstr "&Sondaj"
+
+#: mainwindow.ui:72
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Anal&ytics"
+msgstr "&Analitice"
+
+#: mainwindow.ui:77
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "&Help"
+msgstr "&Ajutor"
+
+#: mainwindow.ui:85
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "S&chema"
+msgstr "S&chemă"
+
+#: mainwindow.ui:90
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "&Window"
+msgstr "&Fereastră"
+
+#: mainwindow.ui:95
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "&View"
+msgstr "&Vizualizare"
+
+#: mainwindow.ui:113
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Log Messages"
+msgstr "Mesaje din jurnal"
+
+#: mainwindow.ui:132
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Products"
+msgstr "Produse"
+
+#: mainwindow.ui:160
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "View Toolbar"
+msgstr "Bara de vizualizare"
+
+#: mainwindow.ui:186
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "&Connect to Server..."
+msgstr "&Conectează la server…"
+
+#: mainwindow.ui:189
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Connect to analytics server."
+msgstr "Conectează la serverul analitic."
+
+#: mainwindow.ui:192
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "F2"
+msgstr "F2"
+
+#: mainwindow.ui:200
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "&Quit"
+msgstr "&Termină"
+
+#: mainwindow.ui:203
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Quit the user feedback console."
+msgstr "Termină consola de reacții ale utilizatorului."
+
+#: mainwindow.ui:214
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "&Add Product..."
+msgstr "&Adaugă produs…"
+
+#: mainwindow.ui:217
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Add a new product."
+msgstr "Adaugă un produs nou."
+
+#: mainwindow.ui:225
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "&Delete Product"
+msgstr "Șterge pro&dusul"
+
+#: mainwindow.ui:228
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Delete product and all associated data."
+msgstr "Șterge produsul și toate datele asociate."
+
+#: mainwindow.ui:236
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "&About..."
+msgstr "&Despre…"
+
+#: mainwindow.ui:239
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Information about this program."
+msgstr "Informații despre acest program."
+
+#: mainwindow.ui:247
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "&Contribute..."
+msgstr "&Contribuie…"
+
+#: mainwindow.ui:250
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Help to make this application better for you!"
+msgstr "Ajutați-ne să îmbunătățim această aplicație!"
+
+#: mainwindow.ui:261
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "&Schema"
+msgstr "&Schema"
+
+#: mainwindow.ui:264
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Edit product telemetry schema."
+msgstr "Modifică schema de telemetrie a produsului."
+
+#: mainwindow.ui:275
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "S&urveys"
+msgstr "S&ondaje"
+
+#: mainwindow.ui:278
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Manage product surveys."
+msgstr "Gestionează sondajele pentru produse."
+
+#: mainwindow.ui:289
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "&Analytics"
+msgstr "&Analitice"
+
+#: mainwindow.ui:292
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Analyze product telemetry."
+msgstr "Analizează telemetria produselor."
+
+#: mainwindow.ui:300
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "User Manual..."
+msgstr "Manualul utilizatorului…"
+
+#: mainwindow.ui:303
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Show the user manual"
+msgstr "Arată manualul utilizatorului"
+
+#: mainwindow.ui:311
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Import Product..."
+msgstr "Importă produs…"
+
+#: mainwindow.ui:314
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Import product settings and data."
+msgstr "Importă configurările și datele produsului."
+
+#: mainwindow.ui:322
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Export Product..."
+msgstr "Exportă produs…"
+
+#: mainwindow.ui:325
+msgctxt "KUserFeedback::Console::MainWindow|"
+msgid "Export all product settings and data."
+msgstr "Exportă toate configurările și datele produsului."
+
+#: model/aggregationeditormodel.cpp:61
+msgctxt "KUserFeedback::Console::AggregationEditorModel|"
+msgid "<none>"
+msgstr "<niciunul>"
+
+#: model/aggregationeditormodel.cpp:90
+msgctxt "KUserFeedback::Console::AggregationEditorModel|"
+msgid "Name"
+msgstr "Denumire"
+
+#: model/aggregationeditormodel.cpp:91
+msgctxt "KUserFeedback::Console::AggregationEditorModel|"
+msgid "Type"
+msgstr "Tip"
+
+#: model/aggregationeditormodel.cpp:92
+msgctxt "KUserFeedback::Console::AggregationEditorModel|"
+msgid "Element"
+msgstr "Element"
+
+#: model/aggregationelementeditmodel.cpp:48
+msgctxt "KUserFeedback::Console::AggregationElementEditModel|"
+msgid "<new element>"
+msgstr "<element nou>"
+
+#: model/aggregationelementeditmodel.cpp:60
+msgctxt "KUserFeedback::Console::AggregationElementEditModel|"
+msgid "Element"
+msgstr "Element"
+
+#: model/categoryaggregationmodel.cpp:103
+msgctxt "KUserFeedback::Console::CategoryAggregationModel|"
+msgid "[empty]"
+msgstr "[gol]"
+
+#: model/datamodel.cpp:158
+msgctxt "KUserFeedback::Console::DataModel|"
+msgid "Timestamp"
+msgstr "Amprentă temporală"
+
+#: model/numericaggregationmodel.cpp:78
+msgctxt "KUserFeedback::Console::NumericAggregationModel|"
+msgid "Lower Extreme"
+msgstr "Extrema de jos"
+
+#: model/numericaggregationmodel.cpp:79
+msgctxt "KUserFeedback::Console::NumericAggregationModel|"
+msgid "Lower Quartile"
+msgstr "Cuartul de jos"
+
+#: model/numericaggregationmodel.cpp:80
+msgctxt "KUserFeedback::Console::NumericAggregationModel|"
+msgid "Median"
+msgstr "Mediana"
+
+#: model/numericaggregationmodel.cpp:81
+msgctxt "KUserFeedback::Console::NumericAggregationModel|"
+msgid "Upper Quartile"
+msgstr "Cuartul de sus"
+
+#: model/numericaggregationmodel.cpp:82
+msgctxt "KUserFeedback::Console::NumericAggregationModel|"
+msgid "Upper Extreme"
+msgstr "Extrema de sus"
+
+#: model/productmodel.cpp:82
+msgctxt "KUserFeedback::Console::ProductModel|"
+msgid "Products"
+msgstr "Produse"
+
+#: model/ratiosetaggregationmodel.cpp:87
+msgctxt "KUserFeedback::Console::RatioSetAggregationModel|"
+msgid "[empty]"
+msgstr "[gol]"
+
+#: model/schemamodel.cpp:145
+msgctxt "KUserFeedback::Console::SchemaModel|"
+msgid "Name"
+msgstr "Denumire"
+
+#: model/schemamodel.cpp:146
+msgctxt "KUserFeedback::Console::SchemaModel|"
+msgid "Type"
+msgstr "Tip"
+
+#: model/surveymodel.cpp:110
+msgctxt "KUserFeedback::Console::SurveyModel|"
+msgid "Name"
+msgstr "Denumire"
+
+#: model/surveymodel.cpp:111
+msgctxt "KUserFeedback::Console::SurveyModel|"
+msgid "URL"
+msgstr "URL"
+
+#: model/surveymodel.cpp:112
+msgctxt "KUserFeedback::Console::SurveyModel|"
+msgid "Active"
+msgstr "Activă"
+
+#: model/surveymodel.cpp:113
+msgctxt "KUserFeedback::Console::SurveyModel|"
+msgid "Target"
+msgstr "Destinație"
+
+#: model/timeaggregationmodel.cpp:153
+msgctxt "KUserFeedback::Console::TimeAggregationModel|"
+msgid "Time"
+msgstr "Oră"
+
+#: model/timeaggregationmodel.cpp:154
+msgctxt "KUserFeedback::Console::TimeAggregationModel|"
+msgid "Samples"
+msgstr "Mostre"
+
+#: schemaeditor/aggregationeditwidget.cpp:99
+msgctxt "KUserFeedback::Console::AggregationEditWidget|"
+msgid "Delete Aggregation"
+msgstr "Șterge agregarea"
+
+#: schemaeditor/aggregationeditwidget.cpp:100
+msgctxt "KUserFeedback::Console::AggregationEditWidget|"
+msgid "Do you want to delete the currently selected aggregation?"
+msgstr "Doriți să ștergeți agregarea aleasă?"
+
+#: schemaeditor/aggregationeditwidget.ui:60
+msgctxt "KUserFeedback::Console::AggregationEditWidget|"
+msgid "&Add"
+msgstr "&Adaugă"
+
+#: schemaeditor/aggregationeditwidget.ui:67
+msgctxt "KUserFeedback::Console::AggregationEditWidget|"
+msgid "&Delete"
+msgstr "Ș&terge"
+
+#: schemaeditor/aggregationeditwidget.ui:83
+msgctxt "KUserFeedback::Console::AggregationEditWidget|"
+msgid "Add &Aggregation"
+msgstr "Adaugă &agregare"
+
+#: schemaeditor/aggregationeditwidget.ui:86
+msgctxt "KUserFeedback::Console::AggregationEditWidget|"
+msgid "Add a new aggregation."
+msgstr "Adaugă agregare nouă."
+
+#: schemaeditor/aggregationeditwidget.ui:94
+msgctxt "KUserFeedback::Console::AggregationEditWidget|"
+msgid "&Delete Aggregation"
+msgstr "Ș&terge agregarea"
+
+#: schemaeditor/aggregationeditwidget.ui:97
+msgctxt "KUserFeedback::Console::AggregationEditWidget|"
+msgid "Delete the currently selected aggregation."
+msgstr "Șterge agregarea aleasă."
+
+#: schemaeditor/schemaeditor.cpp:40
+msgctxt "KUserFeedback::Console::SchemaEditor|"
+msgid "Source Templates"
+msgstr "Șabloane-sursă"
+
+#: schemaeditor/schemaeditor.cpp:119
+msgctxt "KUserFeedback::Console::SchemaEditor|"
+msgid "Export Schema"
+msgstr "Exportă schema"
+
+#: schemaeditor/schemaeditor.cpp:125
+msgctxt "KUserFeedback::Console::SchemaEditor|"
+msgid "Export Failed"
+msgstr "Exportul a eșuat"
+
+#: schemaeditor/schemaeditor.cpp:125 schemaeditor/schemaeditor.cpp:140
+#, qt-format
+msgctxt "KUserFeedback::Console::SchemaEditor|"
+msgid "Could not open file: %1"
+msgstr "Fișierul nu poate fi deschis: %1"
+
+#: schemaeditor/schemaeditor.cpp:129
+#, qt-format
+msgctxt "KUserFeedback::Console::SchemaEditor|"
+msgid "Schema of %1 exported to %2."
+msgstr "Schema pentru %1 a fost exportată la %2."
+
+#: schemaeditor/schemaeditor.cpp:134
+msgctxt "KUserFeedback::Console::SchemaEditor|"
+msgid "Import Schema"
+msgstr "Importă schema"
+
+#: schemaeditor/schemaeditor.cpp:140 schemaeditor/schemaeditor.cpp:145
+msgctxt "KUserFeedback::Console::SchemaEditor|"
+msgid "Import Failed"
+msgstr "Importul a eșuat"
+
+#: schemaeditor/schemaeditor.cpp:145
+msgctxt "KUserFeedback::Console::SchemaEditor|"
+msgid "Selected file contains no valid product schema."
+msgstr "Fișierul ales nu conține nicio schemă de produs validă."
+
+#: schemaeditor/schemaeditor.cpp:153
+#, qt-format
+msgctxt "KUserFeedback::Console::SchemaEditor|"
+msgid "Schema of %1 imported from %2."
+msgstr "Schema pentru %1 a fost importată din %2."
+
+#: schemaeditor/schemaeditor.ui:33
+msgctxt "KUserFeedback::Console::SchemaEditor|"
+msgid "Schema"
+msgstr "Schemă"
+
+#: schemaeditor/schemaeditor.ui:38
+msgctxt "KUserFeedback::Console::SchemaEditor|"
+msgid "Aggregation"
+msgstr "Agregare"
+
+#: schemaeditor/schemaeditor.ui:49
+msgctxt "KUserFeedback::Console::SchemaEditor|"
+msgid "&Save Schema"
+msgstr "&Salvează schema"
+
+#: schemaeditor/schemaeditor.ui:52
+msgctxt "KUserFeedback::Console::SchemaEditor|"
+msgid "Save changes to the product schema."
+msgstr "Salvează modificările aduse schemei produsului."
+
+#: schemaeditor/schemaeditor.ui:60
+msgctxt "KUserFeedback::Console::SchemaEditor|"
+msgid "&Import Schema..."
+msgstr "&Importă schema…"
+
+#: schemaeditor/schemaeditor.ui:63
+msgctxt "KUserFeedback::Console::SchemaEditor|"
+msgid "Import a schema for this product."
+msgstr "Importă o schemă pentru acest produs."
+
+#: schemaeditor/schemaeditor.ui:71
+msgctxt "KUserFeedback::Console::SchemaEditor|"
+msgid "&Export Schema..."
+msgstr "&Exportă schema…"
+
+#: schemaeditor/schemaeditor.ui:74
+msgctxt "KUserFeedback::Console::SchemaEditor|"
+msgid "Export the schema of this product."
+msgstr "Exportă schema acestui produs."
+
+#: schemaeditor/schemaeditwidget.cpp:72
+msgctxt "KUserFeedback::Console::SchemaEditWidget|"
+msgid "Add Source"
+msgstr "Adaugă sursă"
+
+#: schemaeditor/schemaeditwidget.cpp:72 schemaeditor/schemaeditwidget.cpp:81
+msgctxt "KUserFeedback::Console::SchemaEditWidget|"
+msgid "Name:"
+msgstr "Denumire:"
+
+#: schemaeditor/schemaeditwidget.cpp:81
+msgctxt "KUserFeedback::Console::SchemaEditWidget|"
+msgid "Add Source Element"
+msgstr "Adaugă element la sursă"
+
+#: schemaeditor/schemaeditwidget.cpp:96
+msgctxt "KUserFeedback::Console::SchemaEditWidget|"
+msgid "Delete Source"
+msgstr "Șterge sursa"
+
+#: schemaeditor/schemaeditwidget.cpp:97
+#, qt-format
+msgctxt "KUserFeedback::Console::SchemaEditWidget|"
+msgid ""
+"Do you really want to delete the source '%1', and all recorded data for it?"
+msgstr ""
+"Sigur doriți să ștergeți sursa „%1” și toate datele înregistrate pentru "
+"aceasta?"
+
+#: schemaeditor/schemaeditwidget.cpp:102
+msgctxt "KUserFeedback::Console::SchemaEditWidget|"
+msgid "Delete Schema Entry"
+msgstr "Șterge înregistrarea schemei"
+
+#: schemaeditor/schemaeditwidget.cpp:103
+msgctxt "KUserFeedback::Console::SchemaEditWidget|"
+msgid "Do you really want to delete this entry, and all recorded data for it?"
+msgstr ""
+"Sigur doriți să ștergeți această înregistrare și toate datele înregistrate "
+"pentru aceasta?"
+
+#: schemaeditor/schemaeditwidget.ui:30
+msgctxt "KUserFeedback::Console::SchemaEditWidget|"
+msgid "&Delete"
+msgstr "Ș&terge"
+
+#: schemaeditor/schemaeditwidget.ui:33
+msgctxt "KUserFeedback::Console::SchemaEditWidget|"
+msgid "Delete the selected element or entry."
+msgstr "Șterge elementul sau înregistrarea aleasă."
+
+#: schemaeditor/schemaeditwidget.ui:36
+msgctxt "KUserFeedback::Console::SchemaEditWidget|"
+msgid "Del"
+msgstr "Ștr"
+
+#: schemaeditor/schemaeditwidget.ui:44
+msgctxt "KUserFeedback::Console::SchemaEditWidget|"
+msgid "Add &Source..."
+msgstr "Adaugă &sursă…"
+
+#: schemaeditor/schemaeditwidget.ui:47
+msgctxt "KUserFeedback::Console::SchemaEditWidget|"
+msgid "Add a new data source."
+msgstr "Adaugă sursă de date nouă."
+
+#: schemaeditor/schemaeditwidget.ui:55
+msgctxt "KUserFeedback::Console::SchemaEditWidget|"
+msgid "Add Source &Element..."
+msgstr "Adaugă &element la sursă…"
+
+#: schemaeditor/schemaeditwidget.ui:58
+msgctxt "KUserFeedback::Console::SchemaEditWidget|"
+msgid "Add an element to a data source."
+msgstr "Adaugă un element la o sursă de date."
+
+#: surveyeditor/surveydialog.ui:14
+msgctxt "KUserFeedback::Console::SurveyDialog|"
+msgid "Survey"
+msgstr "Sondaj"
+
+#: surveyeditor/surveydialog.ui:22
+msgctxt "KUserFeedback::Console::SurveyDialog|"
+msgid "&Name:"
+msgstr "De&numire:"
+
+#: surveyeditor/surveydialog.ui:35
+msgctxt "KUserFeedback::Console::SurveyDialog|"
+msgid "&URL:"
+msgstr "&URL:"
+
+#: surveyeditor/surveydialog.ui:50
+msgctxt "KUserFeedback::Console::SurveyDialog|"
+msgid "Targeting e&xpression:"
+msgstr "E&xpresia de orientare:"
+
+#: surveyeditor/surveyeditor.cpp:105
+msgctxt "KUserFeedback::Console::SurveyEditor|"
+msgid "Delete Survey"
+msgstr "Șterge sondajul"
+
+#: surveyeditor/surveyeditor.cpp:106
+msgctxt "KUserFeedback::Console::SurveyEditor|"
+msgid "Do you really want to delete the selected survey?"
+msgstr "Sigur doriți să ștergeți sondajul ales?"
+
+#: surveyeditor/surveyeditor.ui:45
+msgctxt "KUserFeedback::Console::SurveyEditor|"
+msgid "&Add Survey..."
+msgstr "&Adaugă sondaj…"
+
+#: surveyeditor/surveyeditor.ui:48
+msgctxt "KUserFeedback::Console::SurveyEditor|"
+msgid "Add new survey."
+msgstr "Adaugă un nou sondaj."
+
+#: surveyeditor/surveyeditor.ui:56
+msgctxt "KUserFeedback::Console::SurveyEditor|"
+msgid "&Delete Survey"
+msgstr "Șterge son&dajul"
+
+#: surveyeditor/surveyeditor.ui:59
+msgctxt "KUserFeedback::Console::SurveyEditor|"
+msgid "Delete a survey."
+msgstr "Șterge un sondaj."
+
+#: surveyeditor/surveyeditor.ui:67
+msgctxt "KUserFeedback::Console::SurveyEditor|"
+msgid "&Edit Survey..."
+msgstr "&Modifică sondajul…"
+
+#: surveyeditor/surveyeditor.ui:70
+msgctxt "KUserFeedback::Console::SurveyEditor|"
+msgid "Edit the currently selected survey."
+msgstr "Modifică sondajul ales."

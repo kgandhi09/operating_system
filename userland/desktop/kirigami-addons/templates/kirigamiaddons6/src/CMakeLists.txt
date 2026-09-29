@@ -1,0 +1,53 @@
+# SPDX-License-Identifier: BSD-2-Clause
+# SPDX-FileCopyrightText: %{CURRENT_YEAR} %{AUTHOR} <%{EMAIL}>
+
+add_subdirectory(settings)
+
+qt_add_library(%{APPNAMELC}_static STATIC)
+ecm_add_qml_module(%{APPNAMELC}_static
+    URI org.kde.%{APPNAMELC}
+    GENERATE_PLUGIN_SOURCE
+    QML_FILES
+        qml/Main.qml
+    DEPENDENCIES
+        org.kde.kirigamiaddons.formcard
+        org.kde.kirigamiaddons.actions
+        org.kde.kirigami
+        org.kde.%{APPNAMELC}.settings
+)
+
+target_link_libraries(%{APPNAMELC}_static PUBLIC
+    Qt6::Quick
+    KF6::I18n
+    KF6::CoreAddons
+    KF6::ConfigGui
+    KirigamiAddonsActions
+)
+target_include_directories(%{APPNAMELC}_static PUBLIC ${CMAKE_BINARY_DIR})
+
+if (ANDROID)
+    kirigami_package_breeze_icons(ICONS
+        list-add
+        help-about
+        application-exit
+        applications-graphics
+    )
+else()
+    target_link_libraries(%{APPNAMELC}_static PUBLIC
+        Qt::Widgets
+        KF6::I18nQml
+    )
+endif()
+
+kconfig_add_kcfg_files(%{APPNAMELC}_static GENERATE_MOC %{APPNAMELC}config.kcfgc)
+
+add_executable(%{APPNAMELC} main.cpp)
+target_link_libraries(%{APPNAMELC} PUBLIC
+    KirigamiApp
+    %{APPNAMELC}_static
+    %{APPNAMELC}_staticplugin
+    %{APPNAMELC}_settings
+    %{APPNAMELC}_settingsplugin
+)
+install(TARGETS %{APPNAMELC} ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
+ecm_add_android_apk(%{APPNAMELC} ANDROID_DIR ${CMAKE_SOURCE_DIR}/android)

@@ -1,0 +1,172 @@
+/*
+    SPDX-FileCopyrightText: KDE Developers
+
+    SPDX-License-Identifier: LGPL-2.0-or-later
+*/
+
+#include "registers.h"
+#include "globalstate.h"
+#include "history.h"
+#include "katepartdebug.h"
+
+#include <KConfigGroup>
+
+#include <QApplication>
+#include <QClipboard>
+
+using namespace Qt::StringLiterals;
+using namespace KateVi;
+
+void Registers::readConfig(const KConfigGroup &config)
+{
+    const QStringList names = config.readEntry("ViRegisterNames", QStringList());
+    const QStringList contents = config.readEntry("ViRegisterContents", QStringList());
+    const QList<int> flags = config.readEntry("ViRegisterFlags", QList<int>());
+
+    if (names.size() != contents.size() || contents.size() != flags.size()) {
+        return;
+    }
+
+    for (int i = 0; i < names.size(); i++) {
+        if (!names.at(i).isEmpty()) {
+            set(names.at(i).at(0), contents.at(i), (OperationMode)(flags.at(i)));
+        }
+    }
+}
+
+void Registers::writeConfig(KConfigGroup &config) const
+{
+    if (m_registers.empty()) {
+        return;
+    }
+
+    QStringList names;
+    QStringList contents;
+    QList<int> flags;
+    for (const auto &[name, reg] : m_registers) {
+        if (reg.contents.length() <= 1000) {
+            names << name;
+            contents << reg.contents;
+            flags << int(reg.opMode);
+        } else {
+            qCDebug(LOG_KTE) << "Did not save contents of register " << name << ": contents too long (" << reg.contents.length() << " characters)";
+        }
+    }
+
+    config.writeEntry("ViRegisterNames", names);
+    config.writeEntry("ViRegisterContents", contents);
+    config.writeEntry("ViRegisterFlags", flags);
+}
+
+bool Registers::isValidRegister(const QChar &reg)
+{
+    return charInList(reg, SpecialRegisters)
+        || charInRange(reg, FirstNumberedRegister, LastNumberedRegister)
+        || charInRange(reg.toLower(), 'a'_L1, 'z'_L1);
+}
+
+void Registers::setInsertStopped(const QString &text)
+{
+    // Setter for a special read-only register
+    // Not using `set()` to prevent users from manual overriding it
+    m_registers.insert_or_assign(InsertStoppedRegister, Register(text, CharWise));
+}
+
+void Registers::set(const QChar &reg, const QString &text, OperationMode flag)
+{
+    if (charInList(reg, ReadOnlyRegisters)) {
+        return;
+    }
+
+    if (reg == PrependNumberedRegister || charInRange(reg, FirstNumberedRegister, LastNumberedRegister)) { // "kill ring" registers
+        setNumberedRegister(reg, text, flag);
+    } else if (reg == SystemClipboardRegister) {
+        QApplication::clipboard()->setText(text, QClipboard::Clipboard);
+    } else if (reg == SystemSelectionRegister) {
+        if (QApplication::clipboard()->supportsSelection()) {
+            QApplication::clipboard()->setText(text, QClipboard::Selection);
+        }
+    } else {
+        const QChar lowercase_reg = reg.toLower();
+        if (reg != lowercase_reg) {
+            m_registers[lowercase_reg].contents.append(text);
+        } else {
+            m_registers.insert_or_assign(lowercase_reg, Register(text, flag));
+        }
+    }
+
+    if (charInList(reg, std::array{ZeroRegister, PrependNumberedRegister, SmallDeleteRegister})) {
+        m_default = reg;
+    }
+}
+
+QString Registers::getContent(const QChar &reg) const
+{
+    return getRegister(reg).contents;
+}
+
+OperationMode Registers::getFlag(const QChar &reg) const
+{
+    return getRegister(reg).opMode;
+}
+
+Registers::Register Registers::getRegister(const QChar &reg) const
+{
+    QChar _reg = (reg != UnnamedRegister ? reg : m_default);
+
+    if (charInRange(_reg, FirstNumberedRegister, LastNumberedRegister)) {
+        const int index = _reg.digitValue() - 1;
+        if (m_numbered.size() > index) {
+            return m_numbered.at(index);
+        }
+    } else if (_reg == PrependNumberedRegister) {
+        if (!m_numbered.isEmpty()) {
+            return m_numbered.front();
+        }
+    } else if (_reg == SystemClipboardRegister) {
+        return Register(QApplication::clipboard()->text(QClipboard::Clipboard), CharWise);
+    } else if (_reg == SystemSelectionRegister) {
+        return Register(QApplication::clipboard()->text(QClipboard::Selection), CharWise);
+    } else if (_reg == SearchRegister) {
+        if (!m_global->searchHistory()->isEmpty()) {
+            return Register(m_global->searchHistory()->items().last(), CharWise);
+        }
+    } else if (_reg == CommandRegister) {
+        if (!m_global->commandHistory()->isEmpty()) {
+            return Register(m_global->commandHistory()->items().last(), CharWise);
+        }
+    } else if (_reg == FileNameRegister) {
+        if (!m_global->filenameHistory()->isEmpty()) {
+            return Register(m_global->filenameHistory()->items().last(), CharWise);
+        }
+    } else if (_reg == LastFileNameRegister) {
+        const QStringList &filenames = m_global->filenameHistory()->items();
+        if (filenames.count() >= 2) {
+            return Register(filenames.at(filenames.count() - 2), CharWise);
+        }
+    } else {
+        const QChar lowercase_reg = _reg.toLower();
+        auto it = m_registers.find(lowercase_reg);
+        if (it != m_registers.end()) {
+            return it->second;
+        }
+    }
+
+    return {};
+}
+
+void Registers::setNumberedRegister(const QChar &reg, const QString &text, OperationMode flag)
+{
+    const int index = reg.digitValue() - 1;
+    if (reg == PrependNumberedRegister || index > m_numbered.size()) {
+        if (m_numbered.size() == 9) {
+            m_numbered.removeLast();
+        }
+
+        // register 0 is used for the last yank command, so insert at position 1
+        m_numbered.prepend(Register(text, flag));
+    } else {
+        m_numbered[index].contents = text;
+        m_numbered[index].opMode = flag;
+    }
+}

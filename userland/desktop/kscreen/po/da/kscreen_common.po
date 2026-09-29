@@ -1,0 +1,88 @@
+# Copyright (C) YEAR This_file_is_part_of_KDE
+# This file is distributed under the same license as the PACKAGE package.
+#
+# Martin Schlander <mschlander@opensuse.org>, 2015, 2016, 2018.
+# SPDX-FileCopyrightText: 2024, 2025 rasmus rosendahl-kaa <rasmus@rosendahl-kaa.name>
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2025-11-17 11:53+0000\n"
+"PO-Revision-Date: 2025-11-02 23:09+0100\n"
+"Last-Translator: Rasmus Rosendahl-Kaa <rasmus@rosendahl-kaa.name>\n"
+"Language-Team: Danish <kde-i18n-doc@kde.org>\n"
+"Language: da\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Lokalize 25.08.2\n"
+
+#: osdaction.cpp:28
+#, kde-format
+msgid "Only use external screen"
+msgstr "Brug kun ekstern skærm"
+
+#: osdaction.cpp:29
+#, kde-format
+msgid "Only use built-in screen"
+msgstr "Brug kun indbygget skærm"
+
+#: osdaction.cpp:30
+#, kde-format
+msgid "Mirror screens"
+msgstr "Spejl skærme"
+
+#: osdaction.cpp:31
+#, kde-format
+msgid "Extend to left of built-in screen"
+msgstr "Udvid til venstre af indbygget skærm"
+
+#: osdaction.cpp:32
+#, kde-format
+msgid "Extend to right of built-in screen"
+msgstr "Udvid til højre af indbygget skærm"
+
+#: osdaction.cpp:33
+#, kde-format
+msgid "Leave unchanged"
+msgstr "Efterlad uændret"
+
+#: utils.cpp:22
+#, kde-format
+msgid "Built-in Screen"
+msgstr "Indbygget skærm"
+
+#~ msgid "Switch to laptop screen"
+#~ msgstr "Skift til den bærbares skærm"
+
+#~ msgid "Unify outputs"
+#~ msgstr "Foren output"
+
+#~ msgid "Extend to left"
+#~ msgstr "Udvid til venstre"
+
+#~ msgid "Switch Display"
+#~ msgstr "Skift skærm"
+
+#~ msgctxt "OSD text after XF86Display button press"
+#~ msgid "No External Display"
+#~ msgstr "Ingen ekstern skærm"
+
+#~ msgctxt "OSD text after XF86Display button press"
+#~ msgid "Changing Screen Layout"
+#~ msgstr "Skift af skærmlayout"
+
+#, fuzzy
+#~| msgctxt "OSD text after XF86Display button press"
+#~| msgid "No External Display"
+#~ msgctxt "osd when displaybutton is pressed"
+#~ msgid "Cloned Display"
+#~ msgstr "Ingen ekstern skærm"
+
+#, fuzzy
+#~| msgctxt "OSD text after XF86Display button press"
+#~| msgid "No External Display"
+#~ msgctxt "osd when displaybutton is pressed"
+#~ msgid "External Only"
+#~ msgstr "Ingen ekstern skærm"

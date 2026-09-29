@@ -1,0 +1,135 @@
+# Copyright (C) 2025 This file is copyright:
+# This file is distributed under the same license as the kscreen package.
+#
+# SPDX-FileCopyrightText: 2025, 2026 Mincho Kondarev <mkondarev@yahoo.de>
+msgid ""
+msgstr ""
+"Project-Id-Version: kscreen\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-05-07 00:46+0000\n"
+"PO-Revision-Date: 2026-02-25 20:21+0100\n"
+"Last-Translator: Mincho Kondarev <mkondarev@yahoo.de>\n"
+"Language-Team: Bulgarian <kde-i18n-doc@kde.org>\n"
+"Language: bg\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Poedit 3.8\n"
+
+#, kde-format
+msgctxt "NAME OF TRANSLATORS"
+msgid "Your names"
+msgstr "Минчо Кондарев"
+
+#, kde-format
+msgctxt "EMAIL OF TRANSLATORS"
+msgid "Your emails"
+msgstr "mkondarev@yahoo.de"
+
+#: hdrcalibrator.cpp:137 Main.qml:16
+#, kde-format
+msgctxt "@title:window"
+msgid "HDR Calibration"
+msgstr "Калибриране на HDR"
+
+#: Main.qml:188 Main.qml:366
+#, kde-format
+msgctxt "@action:button"
+msgid "Next"
+msgstr "Напред"
+
+#: Main.qml:195 Main.qml:372
+#, kde-format
+msgctxt "@info accessible description of a push button"
+msgid "Switches to the next page"
+msgstr "Преминаване към следващата страница"
+
+#: Main.qml:199 Main.qml:376 Main.qml:476
+#, kde-format
+msgctxt "@action:button"
+msgid "Cancel"
+msgstr "Отмяна"
+
+#: Main.qml:202 Main.qml:379 Main.qml:479
+#, kde-format
+msgctxt "@info accessible description of a push button"
+msgid "Cancels the calibration process"
+msgstr "Отменя процеса на калибриране"
+
+#: Main.qml:211
+#, kde-format
+msgid ""
+"To determine the maximum brightness of the screen, adjust the slider until "
+"the logo is barely visible"
+msgstr ""
+"За да определите максималната яркост на екрана, регулирайте плъзгача, докато "
+"логото стане едва видимо"
+
+#: Main.qml:390
+#, kde-format
+msgid ""
+"Configure how bright “100%” on the normal brightness slider should be. Make "
+"it as bright as you'd ever use it, as long as the HDR image still looks good "
+"and the gradients are smooth.\n"
+"To avoid brightness fluctuations, it's recommended to not exceed the "
+"display's maximum average brightness of %1cd/m²"
+msgstr ""
+"Настройте колко ярко трябва да бъде „100%“ на нормалния плъзгач за яркост. "
+"Направете го толкова светло, колкото искате да го използвате, докато "
+"изображението на HDR все още изглежда добре и преходите са гладки.\n"
+"За да се избегнат колебания на яркостта, се препоръчва да не се превишава "
+"максималната средна яркост на %1cd/m²"
+
+#: Main.qml:392
+#, kde-format
+msgid ""
+"Configure how bright “100%” on the normal brightness slider should be. Make "
+"it as bright as you'd ever use it, as long as the HDR image still looks good "
+"and the gradients are smooth."
+msgstr ""
+"Настройте колко ярко трябва да бъде „100%“ на нормалния плъзгач за яркост. "
+"Направете го толкова светло, колкото искате да го използвате, докато "
+"изображението на HDR все още изглежда добре и преходите са гладки."
+
+#: Main.qml:439
+#, kde-format
+msgid "Maximum luminance: %1cd/m²"
+msgstr "Максимална яркост: %1cd/m²"
+
+#: Main.qml:460
+#, kde-format
+msgid "Reference luminance / paper white: %1cd/m²"
+msgstr "Референтна яркост /хартиено бяло: %1cd/m²"
+
+#: Main.qml:471
+#, kde-format
+msgctxt "@action:checkbox"
+msgid "Assume Windows HDR applications are calibrated for this screen"
+msgstr ""
+"Предполага се, че приложенията за Windows с поддръжка на HDE са калибрирани "
+"за този екран."
+
+#: Main.qml:483
+#, kde-format
+msgctxt "@action:button"
+msgid "Done"
+msgstr "Готово"
+
+#: Main.qml:492
+#, kde-format
+msgctxt "@info accessible description of a push button"
+msgid "Finish the calibration process"
+msgstr "Завършва процеса на калибриране"
+
+#: Main.qml:501
+#, kde-format
+msgid ""
+"Many Windows applications come with their own calibration settings, which "
+"this system wide configuration conflicts with. If this option is set, their "
+"calibration settings will work as expected on this specific display."
+msgstr ""
+"Много приложения за Windows имат свои собствени настройки за калибриране, "
+"които влизат в конфликт с тази системна конфигурация. Ако тази опция е "
+"активирана, настройките за калибриране ще работят както се очаква на този "
+"конкретен дисплей."

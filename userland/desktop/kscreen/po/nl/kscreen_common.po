@@ -1,0 +1,62 @@
+# Copyright (C) 2025 This file is copyright:
+# This file is distributed under the same license as the kscreen package.
+#
+# SPDX-FileCopyrightText: 2023, 2025 Freek de Kruijf <freekdekruijf@kde.nl>
+msgid ""
+msgstr ""
+"Project-Id-Version: kscreen\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2025-11-17 11:53+0000\n"
+"PO-Revision-Date: 2025-06-16 13:22+0200\n"
+"Last-Translator: Freek de Kruijf <freekdekruijf@kde.nl>\n"
+"Language-Team: \n"
+"Language: nl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Lokalize 25.04.2\n"
+
+#: osdaction.cpp:28
+#, kde-format
+msgid "Only use external screen"
+msgstr "Alleen extern scherm gebruiken"
+
+#: osdaction.cpp:29
+#, kde-format
+msgid "Only use built-in screen"
+msgstr "Alleen ingebouwd scherm gebruiken"
+
+#: osdaction.cpp:30
+#, kde-format
+msgid "Mirror screens"
+msgstr "Schermen spiegelen"
+
+#: osdaction.cpp:31
+#, kde-format
+msgid "Extend to left of built-in screen"
+msgstr "Naar links uitbreiden van ingebouwd scherm"
+
+#: osdaction.cpp:32
+#, kde-format
+msgid "Extend to right of built-in screen"
+msgstr "Naar rechts uitbreiden van ingebouwd scherm"
+
+#: osdaction.cpp:33
+#, kde-format
+msgid "Leave unchanged"
+msgstr "Ongewijzigd laten"
+
+#: utils.cpp:22
+#, kde-format
+msgid "Built-in Screen"
+msgstr "Ingebouwd scherm"
+
+#~ msgid "Switch to laptop screen"
+#~ msgstr "Naar laptopscherm overschakelen"
+
+#~ msgid "Unify outputs"
+#~ msgstr "Uitvoer gelijk maken"
+
+#~ msgid "Extend to left"
+#~ msgstr "Naar links uitbreiden"
