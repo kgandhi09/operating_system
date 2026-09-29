@@ -6,6 +6,8 @@
 #   GUI=1    also open a window with a virtual GPU, keyboard and mouse, for the
 #            desktop (log in on tty2 there and run jk-gui; MEM=4G or more)
 #   DISPLAY_OPT=vnc=:1   how QEMU shows that screen (default: gtk)
+#   DISK=path.qcow2      a hard disk to install on (default build/<arch>/disk.qcow2,
+#                        created empty at DISK_SIZE, 32G, on first use); DISK=none: no disk
 # Quit QEMU with Ctrl-A then X.
 source "$(dirname "$0")/common.sh"
 
@@ -27,6 +29,25 @@ if [[ "${GUI:-0}" == 1 ]]; then
     [[ "$ARCH" == aarch64 ]] && screen[1]=virtio-gpu-pci
 else
     screen=(-nographic)
+fi
+
+# The disk jk-install installs on. Once installed, boot it without the ISO
+# with BOOT=disk (UEFI=1 on x86_64: the installed system boots through UEFI).
+disk=()
+DISK="${DISK:-$OUT_DIR/disk.qcow2}"
+if [[ "$DISK" != none ]]; then
+    if [[ ! -f "$DISK" ]]; then
+        need qemu-img
+        qemu-img create -q -f qcow2 "$DISK" "${DISK_SIZE:-32G}"
+        log "created an empty install disk: $DISK (${DISK_SIZE:-32G})"
+    fi
+    disk=(-drive "if=virtio,format=qcow2,file=$DISK")
+fi
+iso=(-cdrom "$ISO" -boot d)
+if [[ "${BOOT:-iso}" == disk ]]; then
+    [[ "$DISK" != none ]] || die "BOOT=disk needs a DISK"
+    iso=()
+    UEFI=1      # the installed system boots through UEFI (EFI/BOOT/BOOT*.EFI)
 fi
 
 accel=(-cpu max)
@@ -54,7 +75,7 @@ x86_64)
             -drive "if=pflash,format=raw,file=$vars")
     fi
     exec qemu-system-x86_64 "${accel[@]}" "${fw[@]}" -m "$MEM" -smp 2 \
-        -cdrom "$ISO" -boot d \
+        "${iso[@]}" "${disk[@]}" \
         -nic user,model=virtio-net-pci \
         "${screen[@]}"
     ;;
@@ -72,8 +93,10 @@ aarch64)
     # The ISO goes in as a (USB-stick-like) disk, not a CD: its EFI system
     # partition holds the whole kernel, too big for an El Torito boot image
     # (32 MiB at most), so UEFI only finds it through the GPT.
+    iso=(-drive "if=virtio,format=raw,readonly=on,file=$ISO")
+    [[ "${BOOT:-iso}" == disk ]] && iso=()
     exec qemu-system-aarch64 -machine virt,gic-version=max "${accel[@]}" "${fw[@]}" -m "$MEM" -smp 2 \
-        -drive "if=virtio,format=raw,readonly=on,file=$ISO" \
+        "${iso[@]}" "${disk[@]}" \
         -nic user,model=virtio-net-pci \
         "${screen[@]}"
     ;;

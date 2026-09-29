@@ -14,7 +14,7 @@ if command -v apt-get >/dev/null; then
           meson ninja-build pkg-config gperf autoconf automake libtool python3-packaging squashfs-tools
           python3-mako python3-yaml python3-ply glslang-tools gettext xsltproc docbook-xsl
           grub-common xorriso mtools dosfstools
-          qemu-system-x86 qemu-system-arm qemu-efi-aarch64 ovmf)
+          qemu-system-x86 qemu-system-arm qemu-utils qemu-efi-aarch64 ovmf)
     case "$host" in
         x86_64)  pkgs+=(grub-pc-bin grub-efi-amd64-bin gcc-aarch64-linux-gnu libc6-dev-arm64-cross) ;;
         aarch64) pkgs+=(gcc-x86-64-linux-gnu libc6-dev-amd64-cross) ;;

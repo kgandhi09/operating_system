@@ -296,7 +296,7 @@ choose_use() {
         /mnt/*/*) ;;
         /mnt/?*) return 0 ;;
     esac
-    warn "the OS itself runs from RAM; only $MOUNTS_ALLOWED can live on disk"
+    warn "the OS image lives in /data; only $MOUNTS_ALLOWED can be mount points"
     return 1
 }
 
@@ -616,8 +616,9 @@ if [ -n "$AUTO" ]; then
 else
     echo; cat /usr/share/jk_os/banner
     head_line "Install $PRETTY_NAME"
-    say "  The system runs from RAM; the disk keeps the kernel (/boot) and your"
-    say "  data (/data, /home, ...), so installing needs little space."
+    say "  The disk keeps the kernel (/boot) and, in /data, the OS image, your"
+    say "  changes to the system and your files (/home, ...). The OS image with"
+    say "  the desktop is about 1 GB; give /data 20 GB or more."
     choose_disk
     load_disk
     head_line "Installation type"
