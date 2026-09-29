@@ -25,15 +25,15 @@ install -m 0755 "$ROOT_DIR/initramfs/init" init
 # Drivers built into the kernel (Wi-Fi, some Ethernet) ask for firmware while
 # the kernel starts, before jk_os.squashfs is mounted. The image has the same
 # files for devices plugged in later.
-FW_SRC="$ROOT_DIR/userland/firmware"
+FW_SRC="$ROOT_DIR/userspace/firmware"
 if [[ -f "$FW_SRC/$ARCH.files" ]]; then
     while IFS= read -r f; do
-        [[ -f "$FW_SRC/$f" ]] || die "userland/firmware/$f missing (run scripts/update-firmware.sh)"
+        [[ -f "$FW_SRC/$f" ]] || die "userspace/firmware/$f missing (run scripts/update-firmware.sh)"
         mkdir -p "lib/firmware/$(dirname "$f")"
         cp "$FW_SRC/$f" "lib/firmware/$f"
     done < "$FW_SRC/$ARCH.files"
 else
-    warn "no userland/firmware/$ARCH.files: Wi-Fi and some Ethernet chips will lack firmware"
+    warn "no userspace/firmware/$ARCH.files: Wi-Fi and some Ethernet chips will lack firmware"
 fi
 
 chmod -R go-w .

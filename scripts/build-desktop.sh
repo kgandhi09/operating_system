@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build the desktop stack (KDE Plasma, started on demand with jk-gui) into
 # build/<arch>/dyn, next to the network stack, from the sources in
-# userland/desktop (configs/desktop/sources.list).
+# userspace/desktop (configs/desktop/sources.list).
 #
 # Everything is compiled with jk_os's own GCC 16 and its glibc
 # (build/<arch>/toolchain as the sysroot), so nothing from the build host's
@@ -24,13 +24,13 @@ need make meson ninja cmake pkg-config python3 wayland-scanner glslangValidator
 TC="$OUT_DIR/toolchain"
 [[ -x "$TC/usr/bin/gcc" ]] || die "toolchain not built yet (run: make toolchain)"
 [[ -x "$OUT_DIR/dyn/usr/sbin/NetworkManager" ]] || die "network stack not built yet (run: make network)"
-SRC="$ROOT_DIR/userland/desktop"
+SRC="$ROOT_DIR/userspace/desktop"
 [[ -d "$SRC" ]] || die "no desktop sources (run: scripts/update-desktop-sources.sh)"
 
 # Compiler wrappers: GCC 16 with the jk_os sysroot. On x86_64 that is the
 # toolchain's own GCC; for aarch64 the cross compiler build-toolchain.sh made.
-# Meson from userland/desktop (some packages need a newer one than the host's).
-[[ -f "$SRC/meson/meson.py" ]] || die "no userland/desktop/meson (run: scripts/update-desktop-sources.sh meson)"
+# Meson from userspace/desktop (some packages need a newer one than the host's).
+[[ -f "$SRC/meson/meson.py" ]] || die "no userspace/desktop/meson (run: scripts/update-desktop-sources.sh meson)"
 MESON="python3 $SRC/meson/meson.py"
 
 TRIPLE="$ARCH-linux-gnu"
@@ -114,7 +114,7 @@ cmakepkg() {
     DESTDIR="$DYN" ninja -C "$out" -j"$JOBS" install
 }
 
-# pkg <name> <function> <options...>: build userland/desktop/<name>.
+# pkg <name> <function> <options...>: build userspace/desktop/<name>.
 pkg() { local name="$1"; shift; step "$name" "$SRC/$name" "$@"; }
 
 # libxcb and the xcb utilities read xcb-proto's XML and Python module
@@ -538,7 +538,7 @@ pkg libei            mesonpkg -Dtests=disabled -Dliboeffis=disabled -Ddocumentat
 step libxcrypt "$LIBXCRYPT_SRC" autotools --enable-hashes=strong,glibc --enable-obsolete-api=no \
     --disable-failure-tokens --disable-werror
 pkg linux-pam        b_pam
-step libcap "$ROOT_DIR/userland/libcap" b_libcap
+step libcap "$ROOT_DIR/userspace/libcap" b_libcap
 pkg attr             autotools --disable-nls
 pkg acl              autotools --disable-nls
 pkg elogind          b_elogind

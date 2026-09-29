@@ -37,7 +37,8 @@ export CC="${CROSS_COMPILE}gcc"
 # arguments changed. The stamp is only written after a successful configure.
 configure_once() {
     local src="$1" out="$2"; shift 2
-    local stamp="$out/.jk_os-configured" want="$*"
+    # The source path is part of it: a configured tree names its source by path.
+    local stamp="$out/.jk_os-configured" want="$src $*"
     if [[ -f "$stamp" && "$stamp" -nt "$src/configure" && "$(cat "$stamp")" == "$want" ]]; then
         return
     fi

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Maintainer tool: fetch the desktop stack's sources, listed in
-# configs/desktop/sources.list, into userland/desktop/<name>. Builds never run
+# configs/desktop/sources.list, into userspace/desktop/<name>. Builds never run
 # this; they only use the trees in the repo.
 #
 #   scripts/update-desktop-sources.sh            fetch what is missing or changed
@@ -15,7 +15,7 @@ source "$(dirname "$0")/common.sh"
 need curl tar sha256sum git
 
 LIST="$ROOT_DIR/configs/desktop/sources.list"
-DEST_ROOT="$ROOT_DIR/userland/desktop"
+DEST_ROOT="$ROOT_DIR/userspace/desktop"
 mkdir -p "$DEST_ROOT"
 only=("$@")
 
@@ -55,7 +55,7 @@ fetch_one() {
     echo "$ver" > "${top[0]}/.jk_os-version"
     rm -rf "$dest"
     mv "${top[0]}" "$dest"
-    log "userland/desktop/$name is now $ver"
+    log "userspace/desktop/$name is now $ver"
 }
 
 while read -r name ver url pin _; do
@@ -67,4 +67,4 @@ while read -r name ver url pin _; do
     fi
     fetch_one "$name" "$ver" "$url" "$pin"
 done < <(cat "$LIST")
-echo "Commit with: git add -f userland/desktop configs/desktop/sources.list"
+echo "Commit with: git add -f userspace/desktop configs/desktop/sources.list"

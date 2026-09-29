@@ -3,7 +3,7 @@
 A minimal 64-bit Linux system built from source:
 
 - the **official Linux kernel** from Linus Torvalds' mainline releases, kept in this repo as plain source,
-- **BusyBox** as the base userland (shell, init, coreutils, networking),
+- **BusyBox** as the base userspace (shell, init, coreutils, networking),
 - **util-linux** and **e2fsprogs** disk tools (GPT partitioning, ext4) for the installer,
 - **shadow-utils** (with **libxcrypt**) for users and passwords: `useradd`, `passwd`, `su`, `login`, ..., and **sudo**,
 - **NetworkManager** (`nmcli`) for wired, Wi-Fi and IPv6, with the firmware common network chips need,
@@ -17,7 +17,7 @@ works from a CD/DVD, a VM, or written raw to a USB stick.
 Every source tree lives in the repo, so **a build needs no network and no
 git**: a copied folder or an unpacked archive of this repo builds offline.
 The one exception is a GitHub binary newly added to `configs/binaries/`, which
-is downloaded once into `userland/binaries/` (see [Binaries from GitHub](#binaries-from-github)).
+is downloaded once into `userspace/binaries/` (see [Binaries from GitHub](#binaries-from-github)).
 
 ## Quick start
 
@@ -87,17 +87,17 @@ runs `/etc/init.d/S??*` (storage, syslog, udev, D-Bus, NetworkManager).
 Makefile                  entry point (see `make help`)
 versions.env              OS name/version, which source tree each arch uses
 kernel/mainline/          Linux source, Torvalds' mainline release (plain files)
-userland/busybox/         BusyBox source (plain files)
-userland/util-linux/      util-linux source: sfdisk, fdisk, lsblk, wipefs, partx
-userland/e2fsprogs/       e2fsprogs source: mkfs.ext4, e2fsck, resize2fs, tune2fs
-userland/shadow/          shadow-utils source: useradd, usermod, passwd, su, login, ...
-userland/libxcrypt/       libxcrypt source: password hashing (yescrypt) for shadow
+userspace/busybox/         BusyBox source (plain files)
+userspace/util-linux/      util-linux source: sfdisk, fdisk, lsblk, wipefs, partx
+userspace/e2fsprogs/       e2fsprogs source: mkfs.ext4, e2fsck, resize2fs, tune2fs
+userspace/shadow/          shadow-utils source: useradd, usermod, passwd, su, login, ...
+userspace/libxcrypt/       libxcrypt source: password hashing (yescrypt) for shadow
 configs/kernel/           kernel config fragments merged over the arch defconfig
 configs/busybox/          BusyBox config fragments merged over defconfig
 configs/binaries/         GitHub binaries: common.list (every arch) + <arch>.list
 initramfs/init            early boot: find and mount jk_os.squashfs, switch into it
 configs/initramfs.list    device nodes added to the initramfs
-userland/binaries/<arch>/ fetched binaries (bin/) and what they came from (sources.lock)
+userspace/binaries/<arch>/ fetched binaries (bin/) and what they came from (sources.lock)
 rootfs/                   files copied verbatim into the root filesystem
 boot/grub.cfg             x86_64 GRUB menu
 scripts/                  one script per build step
@@ -117,7 +117,7 @@ same source.
 ```sh
 KERNEL_TREE_x86_64=kernel/mainline
 KERNEL_TREE_aarch64=kernel/mainline
-BUSYBOX_TREE=userland/busybox
+BUSYBOX_TREE=userspace/busybox
 ```
 
 Both x86_64 and aarch64 are fully supported by Torvalds' mainline kernel, so
@@ -306,13 +306,13 @@ rg      BurntSushi/ripgrep  15.2.0   ripgrep-*-@ARCH@-unknown-linux-musl.tar.gz
 `make` runs `make binaries` before assembling the rootfs. For each entry, it
 downloads the one matching asset of that release, checks it against GitHub's
 published SHA-256 digest, unpacks it (tar.*, zip, gz/xz/bz2/zst, or a bare
-binary), and installs the binary as `userland/binaries/<arch>/bin/<name>`.
+binary), and installs the binary as `userspace/binaries/<arch>/bin/<name>`.
 The binary ends up at `/usr/local/bin/<name>` in the OS, which comes first in
 `PATH`, so it takes precedence over a BusyBox applet with the same name. What was
-fetched (tag, asset, sha256) goes into `userland/binaries/<arch>/sources.lock`.
+fetched (tag, asset, sha256) goes into `userspace/binaries/<arch>/sources.lock`.
 
 - **Offline builds keep working.** An entry that still matches its lock line
-  is not fetched again, so commit `userland/binaries/` and the repo builds with no
+  is not fetched again, so commit `userspace/binaries/` and the repo builds with no
   network. Only a new or changed entry downloads anything. `OFFLINE=1` turns that
   download into an error.
 - **Updating.** `tag` can be `latest`. It is resolved once and then stays pinned

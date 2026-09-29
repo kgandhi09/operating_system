@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Pull the prebuilt binaries listed in configs/binaries/{common,$ARCH}.list
-# from GitHub releases into userland/binaries/$ARCH/bin.
+# from GitHub releases into userspace/binaries/$ARCH/bin.
 #
-# What was fetched is recorded in userland/binaries/$ARCH/sources.lock. An
+# What was fetched is recorded in userspace/binaries/$ARCH/sources.lock. An
 # entry that still matches its lock line is left alone, so once the binaries
 # are in the repo this step needs no network. Binaries no longer listed are
 # removed.

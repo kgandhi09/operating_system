@@ -86,7 +86,7 @@ ROOTFS_DIR="$OUT_DIR/rootfs"
 SQUASHFS_IMG="$OUT_DIR/jk_os.squashfs"
 INITRAMFS_DIR="$OUT_DIR/initramfs"
 # Prebuilt binaries from GitHub releases (scripts/fetch-binaries.sh).
-BINARIES_DIR="$ROOT_DIR/userland/binaries/$ARCH"
+BINARIES_DIR="$ROOT_DIR/userspace/binaries/$ARCH"
 ISO_DIR="$OUT_DIR/iso"
 
 # tree_version <dir>: "7.2", "1.37.0", ... Autotools release tarballs record

@@ -1,5 +1,5 @@
 # Sources of the desktop stack (KDE Plasma and what it needs), fetched by
-# scripts/update-desktop-sources.sh into userland/desktop/<name>.
+# scripts/update-desktop-sources.sh into userspace/desktop/<name>.
 #
 # <name>  <version>  <url, {v} = version; git+<repo>#<tag>>  <sha256 or commit>
 

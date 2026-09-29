@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Maintainer tool: refresh the firmware kept in userland/firmware from
+# Maintainer tool: refresh the firmware kept in userspace/firmware from
 # linux-firmware and wireless-regdb (cdn.kernel.org, checked against the
 # published SHA-256 sums). Builds never run this; they only use what is in
 # the repo, like the other source trees.
@@ -16,7 +16,7 @@
 #   skip <glob>     leave out files a driver line brought in (chips jk_os
 #                   won't meet, such as access-point radios)
 # Files are stored zstd-compressed, as the kernel loads them (<name>.zst);
-# userland/firmware/<arch>.files lists each arch's share.
+# userspace/firmware/<arch>.files lists each arch's share.
 source "$(dirname "$0")/common.sh"
 need curl tar zstd sha256sum
 
@@ -24,7 +24,7 @@ fw_ver="${1:-}" regdb_ver="${2:-}"
 [[ -n "$fw_ver" && -n "$regdb_ver" ]] || die "usage: $0 <linux-firmware version> <wireless-regdb version>"
 
 LIST_DIR="$ROOT_DIR/configs/firmware"
-DEST="$ROOT_DIR/userland/firmware"
+DEST="$ROOT_DIR/userspace/firmware"
 
 tmp="$(mktemp -d "$ROOT_DIR/.update-firmware.XXXXXX")"
 trap 'rm -rf "$tmp"' EXIT
@@ -127,4 +127,4 @@ printf 'linux-firmware %s\nwireless-regdb %s\n' "$fw_ver" "$regdb_ver" > "$DEST.
 cp "$tmp/linux-firmware-$fw_ver/WHENCE" "$DEST.new/WHENCE"   # licence of every file
 [[ -d "$DEST" ]] && mv "$DEST" "$tmp/old"
 mv "$DEST.new" "$DEST"
-log "userland/firmware: $(du -sh "$DEST" | cut -f1) (linux-firmware $fw_ver, wireless-regdb $regdb_ver)"
+log "userspace/firmware: $(du -sh "$DEST" | cut -f1) (linux-firmware $fw_ver, wireless-regdb $regdb_ver)"
