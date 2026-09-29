@@ -292,18 +292,21 @@ pkg xwayland         b_xwayland -Dglamor=true -Dxvfb=false -Dxwayland_ei=false -
 # (build/<arch>/desktop/host/qt, no windowing) and the target Qt uses it
 # through QT_HOST_PATH.
 QT_HOST="$HOSTDIR/qt"
+# KDE_CLANG_FORMAT_EXECUTABLE=OFF: with a clang-format on the build host, ECM
+# rewrites <src>/.clang-format on every configure, which makes the source tree
+# newer than its stamp and the package rebuild on every run.
 hostqt() {      # hostqt <src> <out> <cmake options...>
     local src="$1" out="$2"; shift 2
     "${HOST_ENV[@]}" cmake -G Ninja -S "$src" -B "$out" -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX="$QT_HOST" -DCMAKE_PREFIX_PATH="$QT_HOST" \
         -DCMAKE_C_COMPILER="$(command -v gcc)" -DCMAKE_CXX_COMPILER="$(command -v g++)" \
-        -DQT_BUILD_EXAMPLES=OFF -DQT_BUILD_TESTS=OFF "$@"
+        -DQT_BUILD_EXAMPLES=OFF -DQT_BUILD_TESTS=OFF -DKDE_CLANG_FORMAT_EXECUTABLE=OFF "$@"
     "${HOST_ENV[@]}" ninja -C "$out" -j"$JOBS"
     "${HOST_ENV[@]}" ninja -C "$out" -j"$JOBS" install
 }
 qtpkg() {       # qtpkg <src> <out> <cmake options...>: a target Qt module
     cmakepkg "$@" -DQT_HOST_PATH="$QT_HOST" -DQT_BUILD_EXAMPLES=OFF -DQT_BUILD_TESTS=OFF \
-        -DQT_GENERATE_SBOM=OFF -DCMAKE_PREFIX_PATH="$DYN/usr"
+        -DQT_GENERATE_SBOM=OFF -DCMAKE_PREFIX_PATH="$DYN/usr" -DKDE_CLANG_FORMAT_EXECUTABLE=OFF
 }
 # Where the target Qt goes (the other modules take it from qtbase): its
 # plugins, QML modules and internal tools under /usr/lib/qt6, as distributions
@@ -698,6 +701,8 @@ pkg gdk-pixbuf       b_gdk_pixbuf -Dpng=enabled -Djpeg=enabled -Dtiff=disabled -
 pkg at-spi2-core     mesonpkg -Dintrospection=disabled -Ddocs=false -Duse_systemd=false -Dx11=enabled \
                          -Ddbus_daemon=/usr/bin/dbus-daemon -Ddbus_services_dir=/usr/share/dbus-1/services \
                          -Dsystemd_user_dir=/usr/lib/systemd/user -Dgtk2_atk_adaptor=false
+# libxul links libasound; its configuration goes to /usr/share/alsa.
+pkg alsa-lib         autotools --disable-python --without-debug
 pkg gtk3             b_gtk3 -Dx11_backend=true -Dwayland_backend=true -Dbroadway_backend=false \
                          -Dintrospection=false -Dgtk_doc=false -Dman=false -Dtests=false -Dinstalled_tests=false \
                          -Dexamples=false -Ddemos=false -Dcolord=no -Dcloudproviders=false -Dtracker3=false \

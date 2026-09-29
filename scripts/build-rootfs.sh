@@ -39,7 +39,8 @@ cp -a "$TOOLS_OUT/bin/." bin/   # passwd, su, ... keep their setuid bit
 # The network stack (build-network.sh: NetworkManager, D-Bus, udev, GLib,
 # wpa_supplicant) and the desktop (build-desktop.sh: KDE Plasma, Qt, Mesa,
 # elogind). Only what runs: no headers, static libraries, docs, translations
-# or build tools. BusyBox keeps clear/reset/tput and friends.
+# or build tools. BusyBox keeps clear/reset/tput and friends. GLib's settings
+# schemas stay compiled only (gschemas.compiled: GTK aborts without it).
 (cd "$DYN" && tar -cf - \
     --exclude=./usr/include --exclude=./usr/lib/pkgconfig --exclude=./usr/share/pkgconfig \
     --exclude=./usr/lib/cmake --exclude=./usr/lib/glib-2.0 --exclude=./usr/lib/dbus-1.0 \
@@ -48,7 +49,10 @@ cp -a "$TOOLS_OUT/bin/." bin/   # passwd, su, ... keep their setuid bit
     --exclude=./usr/share/man --exclude=./usr/share/doc --exclude=./usr/share/info \
     --exclude=./usr/share/locale --exclude=./usr/share/aclocal --exclude=./usr/share/gdb \
     --exclude=./usr/share/bash-completion --exclude=./usr/share/gettext \
-    --exclude=./usr/share/glib-2.0 --exclude=./usr/share/terminfo \
+    --exclude=./usr/share/terminfo \
+    --exclude=./usr/share/glib-2.0/codegen --exclude=./usr/share/glib-2.0/dtds \
+    --exclude=./usr/share/glib-2.0/gdb --exclude=./usr/share/glib-2.0/valgrind \
+    --exclude='./usr/share/glib-2.0/schemas/*.xml' --exclude=./usr/share/glib-2.0/schemas/gschema.dtd \
     --exclude=./etc/NetworkManager/dnsmasq.d --exclude=./etc/NetworkManager/dnsmasq-shared.d \
     --exclude=./usr/libexec/gio-launch-desktop --exclude=./usr/libexec/nm-initrd-generator \
     --exclude=./usr/libexec/dbus-daemon-launch-helper \

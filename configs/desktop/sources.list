@@ -227,6 +227,10 @@ cairo  1.18.6  https://cairographics.org/releases/cairo-{v}.tar.xz  1c7673081743
 pango  1.56.4  https://download.gnome.org/sources/pango/1.56/pango-{v}.tar.xz  17065e2fcc5f5a5bdbffc884c956bfc7c451a96e8c4fb2f8ad837c6413cb5a01
 gdk-pixbuf  2.44.8  https://download.gnome.org/sources/gdk-pixbuf/2.44/gdk-pixbuf-{v}.tar.xz  919f529512961a12e81cd4b4b466a48c3933469e7f9a310c6513cd4fb252ba3c
 at-spi2-core  2.62.0.1  https://download.gnome.org/sources/at-spi2-core/2.62/at-spi2-core-{v}.tar.xz  fa462f1834bae569c5944c34608872f9447e5a2889ba2aa4d5ff9f2d6ff8a395
+# libxul links ALSA's libasound (sound goes out through ALSA until PipeWire
+# is here); pin from the tarball, whose signature checked out against the
+# ALSA release key (F04D F507 37AC 1A88 4C4B  3D71 8380 596D A6E5 9C91).
+alsa-lib  1.2.16.1  https://www.alsa-project.org/files/pub/lib/alsa-lib-{v}.tar.bz2  f740db7f488255944ffd4428416ee3390a96742856916433df468c281436480e
 gtk3  3.24.52  https://download.gnome.org/sources/gtk/3.24/gtk-{v}.tar.xz  80931fa472a77b9a164f6740e3c0b444fac6770054632d35a7ff9d679e5e7b9f
 firefox-x86_64  156.0.1  https://archive.mozilla.org/pub/firefox/releases/{v}/linux-x86_64/en-US/firefox-{v}.tar.xz  7405c0487fa3e517c1e20e5aec0ed14014185dad6357d99a59b53f65acb10ed6
 firefox-aarch64  156.0.1  https://archive.mozilla.org/pub/firefox/releases/{v}/linux-aarch64/en-US/firefox-{v}.tar.xz  ab705ced251327e99e71493ca55698c9b7c07c5eb219ff2bfd3fe497a6b0f78c

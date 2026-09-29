@@ -13,7 +13,7 @@ ask_secret() {
     while :; do
         printf '%s: ' "$1"; stty -echo 2>/dev/null; read -r secret; r1=$?; stty echo 2>/dev/null; echo
         [ $r1 = 0 ] || die "input closed"
-        if [ ${#secret} -lt 8 ]; then warn "use at least 8 characters"; continue; fi
+        if [ ${#secret} -lt 4 ]; then warn "use at least 4 characters"; continue; fi
         printf '%s (again): ' "$1"; stty -echo 2>/dev/null; read -r again; stty echo 2>/dev/null; echo
         [ "$secret" = "$again" ] && return 0
         warn "the passwords do not match"
