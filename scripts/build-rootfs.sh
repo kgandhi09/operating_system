@@ -106,6 +106,12 @@ while :; do
 done
 # pthread_cancel/exit unwinding makes glibc dlopen libgcc_s.
 [[ -e usr/lib/libgcc_s.so.1 ]] || cp -L "$("${CROSS_COMPILE}gcc" -print-file-name=libgcc_s.so.1)" usr/lib/
+# glibc builds in only the plain C locale; C.UTF-8 is data it loads from
+# /usr/lib/locale (without it, LANG=C.UTF-8 falls back to ASCII and perl
+# warns). The build host's copy (libc-bin) is the toolchain's glibc release.
+[[ -d /usr/lib/locale/C.utf8 ]] || die "no C.UTF-8 locale on the build host (/usr/lib/locale/C.utf8, from libc-bin)"
+mkdir -p usr/lib/locale
+cp -R /usr/lib/locale/C.utf8 usr/lib/locale/
 # The dynamic loader where the programs look for it (/lib64/ld-linux-x86-64.so.2,
 # /lib/ld-linux-aarch64.so.1): /lib and /lib64 point at /usr/lib.
 ln -s usr/lib lib

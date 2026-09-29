@@ -5,7 +5,7 @@
 
 export XDG_SESSION_TYPE=wayland XDG_CURRENT_DESKTOP=KDE XDG_SESSION_DESKTOP=KDE KDE_SESSION_VERSION=6
 export XDG_CONFIG_DIRS=/etc/xdg XDG_DATA_DIRS=/usr/local/share:/usr/share
-# Qt needs a UTF-8 locale; glibc's built-in C.UTF-8 when none is set.
+# Qt needs a UTF-8 locale; C.UTF-8 (shipped in /usr/lib/locale) when none is set.
 case "${LANG:-}" in *UTF-8*|*utf8*) ;; *) export LANG=C.UTF-8 ;; esac
 
 state="${XDG_STATE_HOME:-$HOME/.local/state}"
