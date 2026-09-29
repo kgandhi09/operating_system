@@ -219,3 +219,14 @@ ModemManager  1.24.2  git+https://gitlab.freedesktop.org/mobile-broadband/ModemM
 kfilemetadata  6.30.0  https://download.kde.org/stable/frameworks/6.30/kfilemetadata-{v}.tar.xz  5e14cd8e395e927042cb3eb7cff47e0effda5e8bf2520cf18d1082a9403b2e62
 konsole  26.08.1  https://download.kde.org/stable/release-service/{v}/src/konsole-{v}.tar.xz  64d8aaba741f4412ede26ffbbbe3824523e941b725d3046ec27f510fd42d82e6
 dolphin  26.08.1  https://download.kde.org/stable/release-service/{v}/src/dolphin-{v}.tar.xz  f5635feff84e7070d35342d6defb46e9b42ff1c44e3896635f4bd9f43da947c1
+
+# ---- Firefox (Mozilla's release builds, pins from its SHA256SUMS, whose
+# signature checked out against the Mozilla release key) and the GTK 3
+# libraries it runs on (pins from download.gnome.org / cairographics.org).
+cairo  1.18.6  https://cairographics.org/releases/cairo-{v}.tar.xz  1c767308174337a74694da0f3ec069c271452163a1ef4540964c50c301f157d4
+pango  1.56.4  https://download.gnome.org/sources/pango/1.56/pango-{v}.tar.xz  17065e2fcc5f5a5bdbffc884c956bfc7c451a96e8c4fb2f8ad837c6413cb5a01
+gdk-pixbuf  2.44.8  https://download.gnome.org/sources/gdk-pixbuf/2.44/gdk-pixbuf-{v}.tar.xz  919f529512961a12e81cd4b4b466a48c3933469e7f9a310c6513cd4fb252ba3c
+at-spi2-core  2.62.0.1  https://download.gnome.org/sources/at-spi2-core/2.62/at-spi2-core-{v}.tar.xz  fa462f1834bae569c5944c34608872f9447e5a2889ba2aa4d5ff9f2d6ff8a395
+gtk3  3.24.52  https://download.gnome.org/sources/gtk/3.24/gtk-{v}.tar.xz  80931fa472a77b9a164f6740e3c0b444fac6770054632d35a7ff9d679e5e7b9f
+firefox-x86_64  156.0.1  https://archive.mozilla.org/pub/firefox/releases/{v}/linux-x86_64/en-US/firefox-{v}.tar.xz  7405c0487fa3e517c1e20e5aec0ed14014185dad6357d99a59b53f65acb10ed6
+firefox-aarch64  156.0.1  https://archive.mozilla.org/pub/firefox/releases/{v}/linux-aarch64/en-US/firefox-{v}.tar.xz  ab705ced251327e99e71493ca55698c9b7c07c5eb219ff2bfd3fe497a6b0f78c
