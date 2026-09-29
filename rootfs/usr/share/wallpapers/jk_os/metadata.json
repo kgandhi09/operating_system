@@ -1,0 +1,13 @@
+{
+    "KPackageStructure": "Wallpaper/Images",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "J.K. Robotics Pvt. Ltd."
+            }
+        ],
+        "Id": "jk_os",
+        "License": "Proprietary",
+        "Name": "J.K. Robotics"
+    }
+}

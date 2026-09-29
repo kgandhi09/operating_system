@@ -255,6 +255,43 @@ is on `/data`. Files never changed keep coming from the image, so a new jk_os
 version updates them. A file you changed keeps your version. System accounts a
 new image adds are merged into your `/etc/passwd` at boot.
 
+## Packages (apt)
+
+The installer asks for a **package management** choice after the accounts:
+
+1. **apt**: Debian packages (Debian 13 "trixie"), with the usual commands:
+   `sudo apt update`, `sudo apt install <name>`, `sudo apt remove <name>`,
+   `apt search`, `dpkg -l`, ...
+2. **None**: only the programs jk_os comes with. You can add apt later with
+   `sudo apt-setup`.
+
+`jk-install --auto` takes `--packages apt|none` (default `none`).
+
+Debian's packages are built against Debian's libraries, not jk_os's, so they
+don't go into the OS itself. They go into a Debian system of their own on the
+data partition, **`/data/apt/root`**, unpacked from the Debian base system that
+the OS image carries (the official Docker image's root filesystem,
+`userspace/debian/<arch>`, see `configs/debian/rootfs.list` and
+`scripts/update-debian-rootfs.sh`). Because it lives on `/data` and not in
+`/data/system/root`, what you install stays when jk_os is updated.
+
+`apt` and `dpkg` (`/usr/lib/jk_os/apt`) run in that system inside a
+[bubblewrap](https://github.com/containers/bubblewrap) container, as root. Afterwards:
+
+- each command a package added gets a launcher in `/data/apt/bin`, which is on
+  `PATH` (and sudo's `secure_path`) after jk_os's own directories. jk_os's
+  commands win when a name is in both, and `apt-run <command>` runs the
+  Debian one;
+- menu entries go to `/data/apt/share/applications`, and the desktop lists them
+  after the next login.
+
+Programs run as you, sharing `/home`, `/tmp`, `/mnt`, `/media`, `/run` (the
+desktop's Wayland and D-Bus sockets) and the devices. The Debian system itself
+is read-only to them. The container relies on user namespaces
+(`CONFIG_USER_NS`). Services that packages would start (`policy-rc.d`) don't
+start, since no init runs in there. The live system has no apt, because nothing
+is kept there.
+
 ## C and C++ development
 
 Every jk_os image carries a toolchain (`scripts/build-toolchain.sh`, `make toolchain`):
@@ -329,6 +366,7 @@ fetched (tag, asset, sha256) goes into `userspace/binaries/<arch>/sources.lock`.
 ## Customizing
 
 - **Add files to the OS**: drop them under `rootfs/` (e.g. `rootfs/etc/init.d/S50myapp`, executable, taking `start`/`stop`), then `make`.
+- **Branding**: the desktop's logo, launcher icon (`jk-os`), wallpaper (`jk_os`), splash screen and Global Theme (`org.jk_os.desktop`, set in `rootfs/etc/xdg/kdeglobals`) come from `J.K. Logo.png`. After changing the logo, run `scripts/make-branding.py` (needs Python with Pillow and NumPy) to regenerate the images under `rootfs/usr/share/`, then `make`.
 - **Kernel options**: `make menuconfig` to explore, then put the options you want to keep in `configs/kernel/common.config` or `configs/kernel/<arch>.config`. Fragments are re-applied whenever they change. The build warns if an option you asked for was dropped.
 - **Clean**: `make clean` (current arch) or `make distclean` (all of `build/` and `out/`; source trees are left alone).
 

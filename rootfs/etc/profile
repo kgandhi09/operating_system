@@ -1,7 +1,18 @@
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+# Programs installed with apt (/usr/lib/jk_os/apt), after jk_os's own.
+[ -d /data/apt/bin ] && PATH="$PATH:/data/apt/bin"
 export HOME="${HOME:-/root}"
 export TERM="${TERM:-linux}"
-export PS1='\u@\h:\w\$ '
+# Prompt: user@host in green (red for root), the directory in blue.
+# \[ \] mark the colour codes as zero-width so line editing stays aligned.
+if [ "$TERM" = dumb ]; then
+    PS1='\u@\h:\w\$ '
+elif [ "$(id -u)" = 0 ]; then
+    PS1='\[\e[1;31m\]\u@\h\[\e[0m\] \[\e[1;34m\]\w\[\e[0m\] \[\e[1;31m\]\$\[\e[0m\] '
+else
+    PS1='\[\e[1;32m\]\u@\h\[\e[0m\] \[\e[1;34m\]\w\[\e[0m\] \[\e[1;32m\]\$\[\e[0m\] '
+fi
+export PS1
 umask 022
 # CMake builds with Ninja unless a project says otherwise (-G).
 export CMAKE_GENERATOR=Ninja

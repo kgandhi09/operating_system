@@ -1,0 +1,5 @@
+# jk_os's Global Theme (/usr/share/plasma/look-and-feel/org.jk_os.desktop):
+# Breeze, with the J.K. Robotics wallpaper and splash screen. startplasma
+# applies its defaults (~/.config/kdedefaults) at login.
+[KDE]
+LookAndFeelPackage=org.jk_os.desktop

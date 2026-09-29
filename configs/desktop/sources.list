@@ -234,3 +234,6 @@ alsa-lib  1.2.16.1  https://www.alsa-project.org/files/pub/lib/alsa-lib-{v}.tar.
 gtk3  3.24.52  https://download.gnome.org/sources/gtk/3.24/gtk-{v}.tar.xz  80931fa472a77b9a164f6740e3c0b444fac6770054632d35a7ff9d679e5e7b9f
 firefox-x86_64  156.0.1  https://archive.mozilla.org/pub/firefox/releases/{v}/linux-x86_64/en-US/firefox-{v}.tar.xz  7405c0487fa3e517c1e20e5aec0ed14014185dad6357d99a59b53f65acb10ed6
 firefox-aarch64  156.0.1  https://archive.mozilla.org/pub/firefox/releases/{v}/linux-aarch64/en-US/firefox-{v}.tar.xz  ab705ced251327e99e71493ca55698c9b7c07c5eb219ff2bfd3fe497a6b0f78c
+
+# ---- apt (Debian packages, in a container on /data): the sandbox it runs in
+bubblewrap  0.13.0  git+https://github.com/containers/bubblewrap.git#v{v}  719a4fd474d44b26906bcf2b1b0fb6eddd8d56d0

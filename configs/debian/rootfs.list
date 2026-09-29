@@ -1,0 +1,9 @@
+# The Debian base system apt runs in (see rootfs/usr/lib/jk_os/apt): the
+# "slim" root filesystem the official Docker image is made of, built by
+# debuerreotype (github.com/debuerreotype/docker-debian-artifacts), fetched by
+# scripts/update-debian-rootfs.sh into userspace/debian/<arch>/rootfs.tar.gz.
+#
+# <arch>  <suite>  <artifacts commit (branch dist-<debian arch>)>  <sha256>
+# The sha256 is the image layer's digest from the commit's OCI manifest.
+x86_64   trixie  8f962b15d7884a90e17876a9303cbac909d119aa  6b37362b3da78869050b894b799ad4df04f1f3b52774087db0d81151570244c8
+aarch64  trixie  ca011a8b1c3b259e4cbbf83bf6841f1fd5f497c1  bd36565c0fdebaf0f3af5c3b4ce610ca085ced32e9e9da850d95912f5f18f47b

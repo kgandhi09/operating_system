@@ -3,7 +3,7 @@
 # See sudoers(5).
 
 Defaults env_reset
-Defaults secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Defaults secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/data/apt/bin"
 # Asking again after 15 minutes; a wrong password is retried 3 times.
 Defaults timestamp_timeout=15
 Defaults passwd_tries=3

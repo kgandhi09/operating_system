@@ -1,0 +1,66 @@
+#!/bin/sh
+# apt-setup: set up apt (Debian packages) on an installed jk_os.
+#
+#   apt-setup              on the running system's /data
+#   apt-setup <data dir>   on another data partition (jk-install uses this)
+#
+# apt and everything it installs live in a Debian system of their own,
+# <data>/apt/root, unpacked from the Debian base the OS image carries
+# (/usr/share/jk_os/debian). It is on the data partition, next to /home, so
+# the packages stay when the OS image is updated or reinstalled over a kept
+# /data. /usr/lib/jk_os/apt runs apt in it and makes the programs it installs available
+# (see /usr/lib/jk_os/apt).
+
+set -eu
+BASE=/usr/share/jk_os/debian
+
+die() { echo "apt-setup: $*" >&2; exit 1; }
+[ "$(id -u)" = 0 ] || die "run as root (sudo apt-setup)"
+
+if [ $# -gt 0 ]; then
+    DATA="$1"
+else
+    case "$(cat /run/jk-mode 2>/dev/null)" in
+        installed|setup) DATA=/data ;;
+        *) die "apt needs an installed jk_os: packages are kept on its /data partition" ;;
+    esac
+fi
+[ -d "$DATA" ] || die "no $DATA"
+[ -f "$BASE/rootfs.tar.gz" ] || die "this OS image has no Debian base ($BASE)"
+A="$DATA/apt"
+
+if [ -d "$A/root/var/lib/dpkg" ]; then
+    echo "apt is already set up in $A"
+    exit 0
+fi
+
+read -r suite _ < "$BASE/pin"
+echo "Setting up apt: Debian $suite in $A/root"
+rm -rf "$A/root.new"
+mkdir -p "$A/root.new"
+tar -xzf "$BASE/rootfs.tar.gz" -C "$A/root.new"
+R="$A/root.new"
+
+# Services don't start inside it (no init runs there); package scripts that
+# try are told so (policy-rc.d exit 101 = "action forbidden").
+printf '#!/bin/sh\n# jk_os: no services start in the apt container.\nexit 101\n' > "$R/usr/sbin/policy-rc.d"
+chmod 755 "$R/usr/sbin/policy-rc.d"
+# Mount points for what apt shares with the container (host files are
+# bound over these).
+mkdir -p "$R/home" "$R/mnt" "$R/media" "$R/run" "$R/tmp"
+for f in resolv.conf hosts hostname; do
+    [ -f "$R/etc/$f" ] && [ ! -L "$R/etc/$f" ] || { rm -f "$R/etc/$f"; : > "$R/etc/$f"; }
+done
+
+# The commands Debian's base system comes with: jk_os has its own, so only
+# the ones packages add later are offered outside the container.
+for d in usr/bin usr/sbin usr/games bin sbin; do
+    [ -d "$R/$d" ] && [ ! -L "$R/$d" ] && ls "$R/$d"
+done | sort -u > "$A/base-commands"
+
+mv "$R" "$A/root"
+mkdir -p "$A/bin" "$A/share/applications"
+ln -sfn ../root/usr/share/icons "$A/share/icons"
+ln -sfn ../root/usr/share/pixmaps "$A/share/pixmaps"
+cp "$BASE/pin" "$A/debian-base"
+echo "apt is ready. Get the package lists with: sudo apt update"

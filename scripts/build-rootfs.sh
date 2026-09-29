@@ -142,6 +142,12 @@ if compgen -G "$BINARIES_DIR/bin/*" >/dev/null; then
     cp -a "$BINARIES_DIR/bin/." usr/local/bin/
 fi
 cp -a "$ROOT_DIR/rootfs/." "$ROOTFS_DIR/"
+# The Debian base system apt-setup unpacks into /data/apt when apt is
+# chosen (scripts/update-debian-rootfs.sh).
+DEB_SRC="$ROOT_DIR/userspace/debian/$ARCH"
+[[ -f "$DEB_SRC/rootfs.tar.gz" ]] || die "no userspace/debian/$ARCH/rootfs.tar.gz (run: scripts/update-debian-rootfs.sh $ARCH)"
+mkdir -p usr/share/jk_os/debian
+cp "$DEB_SRC/rootfs.tar.gz" "$DEB_SRC/pin" usr/share/jk_os/debian/
 
 echo "$OS_HOSTNAME" > etc/hostname
 printf '127.0.1.1\t%s\n' "$OS_HOSTNAME" >> etc/hosts
@@ -152,6 +158,7 @@ ID=$OS_NAME
 VERSION="$OS_VERSION"
 VERSION_ID=$OS_VERSION
 PRETTY_NAME="$OS_NAME $OS_VERSION ($ARCH)"
+LOGO=jk-os
 OSR
 
 # Before login: the banner (getty reads backslashes as escapes such as \n,
@@ -170,6 +177,7 @@ cat > etc/motd <<MOTD
     nmcli              network: wired, Wi-Fi, IPv6
     gcc / clang        C and C++ (C++20), with cmake, ninja and gdb
     git / ssh / curl   version control, remote login, downloads
+    sudo apt install   Debian packages, kept in /data/apt (if chosen at install)
     jk-gui             the desktop (KDE Plasma), on tty2 (Ctrl+Alt+F2)
 
 MOTD

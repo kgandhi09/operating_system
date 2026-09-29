@@ -542,6 +542,10 @@ step libxcrypt "$LIBXCRYPT_SRC" autotools --enable-hashes=strong,glibc --enable-
     --disable-failure-tokens --disable-werror
 pkg linux-pam        b_pam
 step libcap "$ROOT_DIR/userspace/libcap" b_libcap
+# bwrap: the container apt and the programs it installs run in (/usr/lib/jk_os/apt).
+# Not setuid: users get it through unprivileged user namespaces.
+pkg bubblewrap       mesonpkg -Dman=disabled -Dselinux=disabled -Dtests=false \
+                         -Dbash_completion=disabled -Dzsh_completion=disabled
 pkg attr             autotools --disable-nls
 pkg acl              autotools --disable-nls
 pkg elogind          b_elogind

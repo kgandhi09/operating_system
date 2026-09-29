@@ -1,0 +1,150 @@
+#!/bin/sh
+# apt for jk_os (/usr/bin/apt and the other links there). Debian packages
+# go into a Debian system of their own on the data partition, /data/apt/root
+# (made by apt-setup), so they never mix with the OS image's libraries and
+# stay across OS updates.
+#
+# Called by the name of the command it stands for (the links in /usr/bin):
+#   apt, apt-get, apt-cache, apt-mark, dpkg, dpkg-query
+#       run in the container as root (through sudo when needed); read-only
+#       queries (apt search/show/list/policy, apt-cache, dpkg-query) run as
+#       the user
+#   apt-run <command> [args]
+#       run a program from the container as the calling user, with /home,
+#       /tmp, /run (the desktop's sockets) and the devices shared
+#
+# After apt or dpkg changes packages, the commands they added get launchers
+# in /data/apt/bin (on PATH after jk_os's own directories, so jk_os's
+# commands win), and their menu entries go to /data/apt/share/applications.
+#
+# The container is bubblewrap (bwrap): unprivileged for users (user
+# namespaces), with all capabilities for root.
+
+APT_HOME=/data/apt
+ROOT=$APT_HOME/root
+CPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games
+HOST_DIRS="/usr/local/sbin /usr/local/bin /usr/sbin /usr/bin /sbin /bin"
+
+die() { echo "${0##*/}: $*" >&2; exit 1; }
+
+need_setup() {
+    case "$(cat /run/jk-mode 2>/dev/null)" in
+        installed|setup) ;;
+        *) die "apt works on an installed jk_os (packages are kept on its /data partition)" ;;
+    esac
+    [ -d "$ROOT/var/lib/dpkg" ] && return 0
+    echo "${0##*/}: apt is not set up on this system (no package management was" >&2
+    echo "chosen when it was installed). To add it: sudo apt-setup" >&2
+    exit 1
+}
+
+# The directory to start in: the caller's, if the container sees it.
+start_dir() {
+    case "$PWD" in
+        /home|/home/*|/tmp|/tmp/*|/mnt|/mnt/*|/media|/media/*|/root|/root/*) echo "$PWD" ;;
+        *) echo / ;;
+    esac
+}
+
+# in_root <command...>: run in the container as root, allowed to change it.
+in_root() {
+    bwrap --bind "$ROOT" / --dev-bind /dev /dev --proc /proc --ro-bind /sys /sys \
+        --bind /home /home --bind /tmp /tmp --bind /root /root \
+        --bind-try /mnt /mnt --bind-try /media /media \
+        --ro-bind-try /etc/resolv.conf /etc/resolv.conf --ro-bind-try /etc/hosts /etc/hosts \
+        --ro-bind-try /etc/hostname /etc/hostname \
+        --unshare-pid --die-with-parent --cap-add ALL --chdir "$(start_dir)" \
+        --setenv PATH "$CPATH" --setenv HOME /root "$@"
+}
+
+# in_user <command...>: run in the container as the caller; the Debian
+# system itself is read-only. jk_os's users and groups are the container's.
+in_user() {
+    caps=""
+    [ "$(id -u)" = 0 ] && caps="--cap-add ALL"
+    exec bwrap --ro-bind "$ROOT" / --dev-bind /dev /dev --proc /proc --ro-bind /sys /sys \
+        --bind /home /home --bind /tmp /tmp --bind /run /run \
+        --bind-try /mnt /mnt --bind-try /media /media \
+        --ro-bind /etc/passwd /etc/passwd --ro-bind /etc/group /etc/group \
+        --ro-bind-try /etc/resolv.conf /etc/resolv.conf --ro-bind-try /etc/hosts /etc/hosts \
+        --ro-bind-try /etc/hostname /etc/hostname \
+        --unshare-pid --die-with-parent $caps --chdir "$(start_dir)" \
+        --setenv PATH "$CPATH" "$@"
+}
+
+# export_all: launchers for the commands packages added, and their menu
+# entries. Rebuilt from scratch, so removed packages lose theirs.
+export_all() {
+    bin="$APT_HOME/bin" apps="$APT_HOME/share/applications"
+    rm -rf "$bin.new" "$apps.new"
+    mkdir -p "$bin.new" "$apps.new"
+    for d in usr/bin usr/sbin usr/games; do
+        [ -d "$ROOT/$d" ] || continue
+        for f in "$ROOT/$d"/*; do
+            n=${f##*/}
+            [ -e "$f" ] || [ -L "$f" ] || continue
+            grep -qxF "$n" "$APT_HOME/base-commands" 2>/dev/null && continue
+            [ -e "$bin.new/$n" ] && continue
+            skip=0
+            for h in $HOST_DIRS; do [ -e "$h/$n" ] && { skip=1; break; }; done
+            [ $skip = 0 ] || continue
+            printf '#!/bin/sh\n# %s from apt (Debian); see /usr/lib/jk_os/apt.\nexec /usr/bin/apt-run /%s/%s "$@"\n' \
+                "$n" "$d" "$n" > "$bin.new/$n"
+            chmod 755 "$bin.new/$n"
+        done
+    done
+    for f in "$ROOT"/usr/share/applications/*.desktop; do
+        [ -f "$f" ] || continue
+        sed -e 's|^Exec=|Exec=apt-run |' -e '/^TryExec=/d' \
+            -e 's|^DBusActivatable=true|DBusActivatable=false|' "$f" > "$apps.new/${f##*/}"
+    done
+    rm -rf "$bin.old" "$apps.old"
+    [ -d "$bin" ] && mv "$bin" "$bin.old"
+    [ -d "$apps" ] && mv "$apps" "$apps.old"
+    mv "$bin.new" "$bin"
+    mv "$apps.new" "$apps"
+    rm -rf "$bin.old" "$apps.old"
+}
+
+# lists_empty: no package lists yet (the Debian base comes without them).
+lists_empty() {
+    ! ls "$ROOT/var/lib/apt/lists/" 2>/dev/null | grep -q '_Packages'
+}
+
+name=${0##*/}
+case "$name" in
+    apt-run)
+        need_setup
+        [ $# -gt 0 ] || die "usage: apt-run <command> [args...]"
+        in_user "$@" ;;
+    apt|apt-get|apt-cache|apt-mark|dpkg|dpkg-query) ;;
+    *) die "called as apt, apt-get, apt-cache, apt-mark, dpkg, dpkg-query or apt-run" ;;
+esac
+need_setup
+
+# Queries don't need root.
+readonly_query=0
+case "$name" in
+    apt-cache|dpkg-query) readonly_query=1 ;;
+    apt) case "${1:-}" in search|show|list|policy|depends|rdepends|showsrc|changelog|"") readonly_query=1 ;; esac ;;
+    apt-mark) case "${1:-}" in show*|"") readonly_query=1 ;; esac ;;
+    dpkg) case "${1:-}" in -l|--list|-L|--listfiles|-s|--status|-S|--search|--print-architecture|--version|"") readonly_query=1 ;; esac ;;
+esac
+if [ "$(id -u)" != 0 ]; then
+    [ $readonly_query = 1 ] && in_user "$name" "$@"
+    exec sudo "/usr/bin/$name" "$@"
+fi
+[ $readonly_query = 1 ] && in_user "$name" "$@"
+
+# The first install on a fresh base: fetch the package lists first.
+case "$name:${1:-}" in
+    apt:install|apt:upgrade|apt:full-upgrade|apt-get:install|apt-get:upgrade|apt-get:dist-upgrade)
+        if lists_empty; then
+            echo "${0##*/}: no package lists yet, running apt update first"
+            in_root apt-get update || exit $?
+        fi ;;
+esac
+in_root "$name" "$@"
+rc=$?
+export_all
+exit $rc

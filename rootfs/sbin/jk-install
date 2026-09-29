@@ -5,6 +5,7 @@
 #   jk-install                                   interactive
 #   jk-install --auto /dev/sdX [--swap 2G] [--yes]  erase the disk, default layout
 #       [--user NAME [--fullname "Full Name"] [--no-admin]] [--hostname NAME]
+#       [--packages apt|none]
 #       passwords come from $JK_USER_PASSWORD and $JK_ROOT_PASSWORD; with no
 #       --user, the accounts are set up at first boot (jk-setup)
 #
@@ -15,6 +16,8 @@
 #   /data  ext4 (JK_DATA): the OS image (system/jk_os.squashfs, read-only),
 #          everything changed on top of it (system/root), and your files.
 #          /data/etc/fstab lists the other partitions (/home, swap, ...).
+#          With apt chosen, /data/apt holds Debian's package manager and
+#          everything installed with it (see apt-setup).
 # Installed systems boot through UEFI.
 #
 # Nothing is written until the final summary is confirmed.
@@ -428,6 +431,10 @@ summary() {
         keep)  say "  - keep the users and settings already on /data" ;;
         later) say "  - no user yet: the first boot asks for one" ;;
     esac
+    case "$PACKAGES" in
+        apt)  say "  - package management: apt (Debian $DEB_SUITE packages, kept in /data/apt)" ;;
+        none) say "  - no package management" ;;
+    esac
     echo
     others=$(findfs LABEL=JK_DATA 2>/dev/null || true)
     if [ -n "$others" ] && [ "$(parent_disk "$others")" != "$DISK" ]; then
@@ -564,6 +571,13 @@ apply() {
         later) rm -f "$TARGET/data/etc/jk_os-setup-done" ;;
     esac
 
+    if [ "$PACKAGES" = apt ]; then
+        say "  setting up apt (Debian $DEB_SUITE) in /data/apt"
+        /usr/sbin/apt-setup "$TARGET/data" | sed 's/^/    /'
+        [ -d "$TARGET/data/apt/root/var/lib/dpkg" ] || die "apt could not be set up"
+    fi
+    echo "PACKAGES=$PACKAGES" >> "$TARGET/data/etc/jk_os-install"
+
     sync
     cleanup
     : > "$WORK/installed"   # tells jk-live to offer the reboot
@@ -575,7 +589,7 @@ apply() {
 
 # ---------------------------------------------------------------- main
 
-usage() { sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
+usage() { sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
 
 [ "$(id -u)" = 0 ] || { echo "jk-install: run as root" >&2; exit 1; }
 for t in sfdisk wipefs partx mkfs.ext4 e2label mkfs.vfat mkswap blkid findfs lsblk; do
@@ -587,7 +601,7 @@ mkdir "$LOCK" 2>/dev/null || { echo "jk-install: already running (remove $LOCK i
 trap 'rmdir "$LOCK" 2>/dev/null' EXIT
 rm -rf "$WORK"; mkdir -p "$WORK"
 
-AUTO="" SWAP=0 YES=0 ACCOUNTS=new
+AUTO="" SWAP=0 YES=0 ACCOUNTS=new PACKAGES=""
 ACC_USER="" ACC_FULLNAME="" ACC_ADMIN=yes ACC_HOSTNAME=$(cat /etc/hostname)
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -598,6 +612,7 @@ while [ $# -gt 0 ]; do
         --fullname) ACC_FULLNAME="${2:-}"; shift ;;
         --hostname) ACC_HOSTNAME="${2:-}"; shift ;;
         --no-admin) ACC_ADMIN=no ;;
+        --packages) PACKAGES="${2:-}"; shift ;;
         -h|--help) usage ;;
         *) usage 1 ;;
     esac
@@ -638,6 +653,12 @@ else
 fi
 
 find_sources
+DEB_SUITE=$(cut -d' ' -f1 /usr/share/jk_os/debian/pin 2>/dev/null)
+case "$PACKAGES" in
+    ""|apt|none) ;;
+    *) die "bad --packages: $PACKAGES (apt or none)" ;;
+esac
+[ "$PACKAGES" != apt ] || [ -n "$DEB_SUITE" ] || die "this OS image has no Debian base for apt"
 
 # Who are you? Asked after the disk layout, as in Ubuntu's installer.
 if [ -n "$AUTO" ]; then
@@ -657,6 +678,26 @@ else
         [ "$ans" = yes ] && ACCOUNTS=keep
     fi
     [ "$ACCOUNTS" = new ] && accounts_ask
+fi
+
+# Package management: apt, or none (the OS image as it is).
+if [ -z "$PACKAGES" ] && [ -n "$AUTO" ]; then
+    PACKAGES=none
+elif [ -z "$PACKAGES" ] && [ -z "$DEB_SUITE" ]; then
+    PACKAGES=none
+elif [ -z "$PACKAGES" ]; then
+    head_line "Package management"
+    say "  1) apt: install Debian $DEB_SUITE packages (sudo apt install <name>)."
+    say "     They go into /data/apt, a Debian system of their own on the data"
+    say "     partition, so they stay when jk_os is updated. About 100 MB to start."
+    say "  2) None: only the programs jk_os comes with."
+    while :; do
+        ask "Choice" 1
+        case "$ans" in
+            1) PACKAGES=apt; break ;;
+            2) PACKAGES=none; break ;;
+        esac
+    done
 fi
 
 summary
