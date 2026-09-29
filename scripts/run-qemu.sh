@@ -25,6 +25,8 @@ first_file() {
 # The console stays on this terminal (the serial line); with GUI=1 a window
 # shows the virtual screen (tty1, tty2 and the desktop) too.
 if [[ "${GUI:-0}" == 1 ]]; then
+    log "consoles in the window: Alt+F1 / Alt+F2 on a text console, Ctrl+Alt+F1 / F2 in the desktop"
+    log "if the host keeps those keys: Ctrl-A C here, then 'sendkey ctrl-alt-f2' (Ctrl-A C again to come back)"
     screen=(-device virtio-vga -device qemu-xhci -device usb-kbd -device usb-tablet
             -display "${DISPLAY_OPT:-gtk}" -serial mon:stdio)
     [[ "$ARCH" == aarch64 ]] && screen[1]=virtio-gpu-pci

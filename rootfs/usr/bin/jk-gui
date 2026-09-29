@@ -8,7 +8,12 @@
 case "$(tty)" in
     /dev/tty2) ;;
     /dev/tty[0-9]*)
-        echo "jk-gui: the desktop runs on tty2: press Ctrl+Alt+F2, log in there and run jk-gui" >&2
+        # Take the user there (the keys may not reach this machine, e.g. a VM
+        # window on a desktop that keeps Ctrl+Alt+F2 for itself).
+        echo "jk-gui: the desktop runs on tty2; switching there: log in and run jk-gui" >&2
+        echo "        (to switch yourself: Alt+F2 on a text console, Ctrl+Alt+F2 in the desktop)" >&2
+        sleep 2
+        chvt 2 2>/dev/null
         exit 1 ;;
     *)
         echo "jk-gui: run this on the tty2 console (Ctrl+Alt+F2), not over a serial line or SSH" >&2
