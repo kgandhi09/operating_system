@@ -41,16 +41,35 @@ find_labels() {
     data=$(echo "$labels" | sed -n 's/^\([^:]*\):.* LABEL="JK_DATA".*/\1/p' | head -n1)
 }
 
-# USB storage shows up a few seconds after boot. Wait up to 10 s for the
-# installer medium, but only 3 s once an installed system has been found.
+# Which system to start. The kernel is the same on the installer medium and
+# on an installed disk, so the medium's GRUB menu says so on the command line
+# (jk.live). Without it (booted from the disk, or from the aarch64 medium,
+# which has no boot menu) an installed system wins, but while the medium is
+# attached the installer is offered for a few seconds.
+from_medium=0
+case " $(cat /proc/cmdline) " in *" jk.live "*) from_medium=1 ;; esac
+
+# USB storage shows up a few seconds after boot: wait up to 10 s for the
+# system to start.
 i=0
 while :; do
     find_labels
-    [ -n "$live" ] && break
-    [ -n "$data" ] && [ $i -ge 12 ] && break
+    [ "$from_medium" = 1 ] && [ -n "$live" ] && break
+    [ "$from_medium" = 0 ] && [ -n "$data" ] && break
     [ $i -ge 40 ] && break
     sleep 0.25; i=$((i + 1))
 done
+# A USB stick found with the disk may still be settling; look once more.
+[ -n "$data" ] && [ -z "$live" ] && { sleep 1; find_labels; }
+
+if [ -n "$live" ] && [ -n "$data" ] && [ "$from_medium" = 0 ]; then
+    say "jk_os is installed on $data; the installer medium is attached too."
+    printf 'jk_os: press i within 5 seconds to start the installer instead: ' > /dev/console
+    key=""
+    read -r -s -n 1 -t 5 key < /dev/console
+    echo > /dev/console
+    case "$key" in i|I) ;; *) live="" ;; esac
+fi
 
 # overlay_root <image> <upper> <work>: the OS image with a writable layer.
 overlay_root() {
