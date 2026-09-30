@@ -17,6 +17,9 @@
 # /etc/xdg/foot/foot.ini).
 
 export XDG_SESSION_TYPE=wayland XDG_CURRENT_DESKTOP=cage XDG_SESSION_DESKTOP=cage
+# Tells the shells in its terminal they are in the dev session (/etc/profile
+# greets them with jk_os's banner).
+export JK_DEV_SESSION=1
 export XDG_CONFIG_DIRS=/etc/xdg XDG_DATA_DIRS=/usr/local/share:/usr/share
 # Programs from apt (/usr/lib/jk_os/apt), after jk_os's own.
 if [ -d /data/apt/bin ]; then

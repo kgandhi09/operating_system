@@ -280,6 +280,9 @@ session for it). It runs as a regular user, not root (root gets a plain
 shell); if it can't start, the shell stays and the reason is in
 `~/.local/state/jk-dev.log`. `JK_DEV_AUTOSTART=no` in
 `~/.config/jk_os/dev-session` keeps the plain shell on login.
+Its terminal opens with the J.K. Robotics banner (`/usr/share/jk_os/banner`,
+shown by `/etc/profile`, which sets `JK_DEV_SESSION=1` there and
+`JK_BANNER_SHOWN=1` once the banner is up).
 
 Settings:
 
