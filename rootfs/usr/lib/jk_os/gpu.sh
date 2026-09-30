@@ -5,15 +5,15 @@
 # the picture to the other's screens.
 #
 # JK_GPU, from ~/.config/jk_os/gpu or /etc/jk_os/gpu (shell syntax):
-#   auto     (default) the NVIDIA GPU when a screen is connected to it,
+#   nvidia   (default) the NVIDIA GPU, whenever NVIDIA's driver runs
+#   auto     the NVIDIA GPU when a screen is connected to it at login,
 #            otherwise the built-in one (longer battery life)
-#   nvidia   always the NVIDIA GPU (NVIDIA's driver)
 #   builtin  always the built-in GPU; programs can still use the NVIDIA one
 #            with prime-run
 # Sets KWIN_DRM_DEVICES (KWin) and WLR_DRM_DEVICES (cage), primary first.
 
 jk_gpu_select() {
-    JK_GPU=auto
+    JK_GPU=nvidia
     [ -f /etc/jk_os/gpu ] && . /etc/jk_os/gpu
     [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/jk_os/gpu" ] && . "${XDG_CONFIG_HOME:-$HOME/.config}/jk_os/gpu"
     [ -d /sys/module/nvidia_drm ] || return 0

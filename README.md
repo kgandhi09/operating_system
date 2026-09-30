@@ -299,14 +299,21 @@ an NVIDIA GPU is present (Turing, RTX 20, and newer), and falls back to nouveau
 for older cards. These are the kernel's only loadable modules; everything else
 is built in.
 
-- Which GPU draws the desktop and the dev session: `JK_GPU=auto|nvidia|builtin`
-  in `~/.config/jk_os/gpu` (or `/etc/jk_os/gpu`). `auto` uses the NVIDIA GPU
-  while a screen is connected to it (on most laptops the HDMI port), the
-  built-in one otherwise.
+- Which GPU draws the desktop and the dev session: `JK_GPU=nvidia|auto|builtin`
+  in `~/.config/jk_os/gpu` (or `/etc/jk_os/gpu`). The default, `nvidia`, draws
+  on the NVIDIA GPU whenever its driver runs; `auto` only when a screen is
+  connected to it at login (on most laptops the HDMI port), the built-in GPU
+  otherwise (longer battery life); `builtin` always on the built-in GPU.
 - `prime-run <program>` runs one program on the NVIDIA GPU.
 - `NVIDIA_DRIVER=nouveau` in `/etc/jk_os/gpu` uses nouveau instead.
-- CUDA programs run as they are; the CUDA toolkit (`nvcc`) is not in the image:
-  NVIDIA's runfile installs it (toolkit only) into `/usr/local/cuda`.
+- CUDA programs run as they are. The CUDA toolkit (`nvcc`, cuBLAS, cuFFT, ...,
+  about 6 GB) is installed on demand: `sudo jk-cuda install` (the newest
+  release the driver runs; `--minimal` for the compiler and runtime only,
+  ~0.4 GB) puts NVIDIA's archives, checked against their SHA-256, in
+  `/usr/local/cuda-<version>` on the data partition. `jk-cuda status`,
+  `jk-cuda list`, `sudo jk-cuda remove`. jk_os's GCC 16 is newer than CUDA
+  lists as supported, so `/etc/profile` sets
+  `NVCC_APPEND_FLAGS=-allow-unsupported-compiler`.
 
 ## Packages (apt)
 

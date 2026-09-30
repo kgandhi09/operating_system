@@ -1,0 +1,140 @@
+#!/bin/sh
+# jk-cuda: the CUDA toolkit (nvcc, the CUDA runtime and math libraries) for
+# the NVIDIA driver in the image, installed on demand into /usr/local, which
+# is on the data partition: about 2.5 GB to download and 6 GB installed, too
+# much to carry in every image.
+#
+#   sudo jk-cuda install [--minimal] [<version>]
+#       <version>: a CUDA release such as 13.2.2 (default: the newest one the
+#       driver supports). --minimal: the compiler and runtime only (nvcc,
+#       NVRTC, cudart, ~0.4 GB), without cuBLAS, cuFFT, cuSOLVER, ...
+#   jk-cuda list            the releases NVIDIA offers for this driver
+#   jk-cuda status          what is installed
+#   sudo jk-cuda remove [<version>]
+#
+# The pieces are NVIDIA's own archives (developer.download.nvidia.com/
+# compute/cuda/redist), each checked against the SHA-256 in the release's
+# index. The toolkit goes in /usr/local/cuda-<version>, with /usr/local/cuda
+# pointing at the one in use; /etc/profile puts its bin/ on PATH and its lib/
+# on LD_LIBRARY_PATH. jk_os's GCC is newer than CUDA's list of supported
+# compilers, so /etc/profile also sets NVCC_APPEND_FLAGS=-allow-unsupported-compiler.
+
+REDIST=https://developer.download.nvidia.com/compute/cuda/redist
+PREFIX=/usr/local
+# What a full install has: compiler, runtime, tools, math and media libraries.
+MINIMAL="cuda_cccl cuda_crt cuda_cudart cuda_culibos cuda_nvcc cuda_nvrtc libnvvm libnvjitlink libnvptxcompiler libnvfatbin cuda_cuobjdump cuda_cuxxfilt cuda_nvdisasm cuda_nvprune cuda_profiler_api cuda_nvml_dev"
+FULL="$MINIMAL cuda_cupti cuda_gdb cuda_nvtx cuda_opencl cuda_sanitizer_api cuda_tileiras libcublas libcufft libcurand libcusolver libcusparse libnpp libnvjpeg"
+
+name=${0##*/}
+die() { echo "$name: $*" >&2; exit 1; }
+usage() { sed -n '2,21p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
+
+case "$(uname -m)" in
+    x86_64) plat=linux-x86_64 ;;
+    aarch64) plat=linux-sbsa ;;
+    *) die "unsupported machine $(uname -m)" ;;
+esac
+
+# The newest CUDA the driver runs (nvidia-smi's "CUDA Version: 13.2").
+driver_cuda() {
+    [ -d /sys/module/nvidia ] && command -v nvidia-smi >/dev/null || return 1
+    nvidia-smi 2>/dev/null | sed -n 's/.*CUDA Version: *\([0-9.]*\).*/\1/p' | head -n1
+}
+
+# releases: every CUDA release NVIDIA's redist index offers, oldest first.
+releases() {
+    curl -fsSL "$REDIST/" | grep -oE 'redistrib_[0-9]+\.[0-9]+\.[0-9]+\.json' | sort -u |
+        sed 's/redistrib_\(.*\)\.json/\1/' | sort -t. -k1,1n -k2,2n -k3,3n
+}
+
+# pick_version: the newest release within what the driver supports.
+pick_version() {
+    max=$(driver_cuda) || max=""
+    releases | while read -r v; do
+        if [ -z "$max" ]; then echo "$v"; continue; fi
+        mm=${v%.*}
+        # keep versions whose major.minor <= the driver's
+        [ "$(printf '%s\n%s\n' "$mm" "$max" | sort -t. -k1,1n -k2,2n | tail -n1)" = "$max" ] && echo "$v"
+    done | tail -n1
+}
+
+cmd=${1:-}
+[ -n "$cmd" ] || usage 1
+shift
+
+case "$cmd" in
+    -h|--help) usage ;;
+    list)
+        echo "The driver runs CUDA up to $(driver_cuda || echo '? (NVIDIA driver not loaded)')"
+        releases | tr '\n' ' '; echo
+        exit 0 ;;
+    status)
+        found=0
+        for d in "$PREFIX"/cuda-*; do
+            [ -x "$d/bin/nvcc" ] || continue
+            found=1
+            mark=""; [ "$(readlink "$PREFIX/cuda")" = "${d##*/}" ] && mark=" (in use: $PREFIX/cuda)"
+            echo "${d##*/}$mark: $("$d/bin/nvcc" --version | tail -n1)"
+        done
+        [ $found = 1 ] || echo "No CUDA toolkit installed (sudo $name install)."
+        exit 0 ;;
+    install|remove) ;;
+    *) usage 1 ;;
+esac
+
+[ "$(id -u)" = 0 ] || exec sudo "$0" "$cmd" "$@"
+
+if [ "$cmd" = remove ]; then
+    v=${1:-$(readlink "$PREFIX/cuda" 2>/dev/null | sed 's/^cuda-//')}
+    [ -n "$v" ] && [ -d "$PREFIX/cuda-$v" ] || die "no CUDA $v installed ($name status)"
+    rm -rf "$PREFIX/cuda-$v"
+    [ "$(readlink "$PREFIX/cuda")" = "cuda-$v" ] && rm -f "$PREFIX/cuda"
+    echo "Removed CUDA $v."
+    exit 0
+fi
+
+parts=$FULL
+if [ "${1:-}" = --minimal ]; then parts=$MINIMAL; shift; fi
+command -v jq >/dev/null || die "jq is missing"
+v=${1:-}
+if [ -z "$v" ]; then
+    echo "Finding the newest CUDA release for this driver..."
+    v=$(pick_version)
+    [ -n "$v" ] || die "cannot reach $REDIST"
+fi
+dest="$PREFIX/cuda-${v%.*}"   # cuda-13.2, as NVIDIA's installer names it
+tmp=/data/tmp/jk-cuda.$$
+mkdir -p "$tmp" || die "cannot create $tmp"
+trap 'rm -rf "$tmp"' EXIT INT TERM
+
+curl -fsSL "$REDIST/redistrib_$v.json" -o "$tmp/index.json" || die "no CUDA release $v ($name list)"
+echo "Installing CUDA $v into $dest ($( [ "$parts" = "$MINIMAL" ] && echo minimal || echo full ))"
+
+rm -rf "$dest.new"; mkdir -p "$dest.new"
+for p in $parts; do
+    path=$(jq -r --arg p "$p" --arg pl "$plat" '.[$p][$pl].relative_path // empty' "$tmp/index.json")
+    sum=$(jq -r --arg p "$p" --arg pl "$plat" '.[$p][$pl].sha256 // empty' "$tmp/index.json")
+    [ -n "$path" ] || { echo "  (no $p in CUDA $v, skipped)"; continue; }
+    size=$(jq -r --arg p "$p" --arg pl "$plat" '.[$p][$pl].size // 0' "$tmp/index.json")
+    echo "  $p ($((size / 1048576)) MB)"
+    f="$tmp/${path##*/}"
+    curl -fL --retry 5 --retry-all-errors -# -o "$f" "$REDIST/$path" || die "cannot download $path"
+    [ "$(sha256sum "$f" | cut -d' ' -f1)" = "$sum" ] || die "checksum mismatch for ${path##*/}"
+    mkdir -p "$tmp/x"
+    tar -xf "$f" -C "$tmp/x" || die "cannot unpack ${path##*/}"
+    rm -f "$f"
+    for top in "$tmp"/x/*/; do
+        cp -a "$top". "$dest.new/"
+    done
+    rm -rf "$tmp/x"
+done
+[ -x "$dest.new/bin/nvcc" ] || die "no nvcc in what was downloaded"
+# The layout NVIDIA's installer makes: lib64 next to lib (CMake, Makefiles).
+[ -e "$dest.new/lib64" ] || ln -s lib "$dest.new/lib64"
+rm -rf "$dest"
+mv "$dest.new" "$dest"
+ln -sfn "cuda-${v%.*}" "$PREFIX/cuda"
+
+echo
+echo "CUDA $v is in $dest ($PREFIX/cuda). Log in again (or: . /etc/profile), then:"
+echo "  nvcc --version"
