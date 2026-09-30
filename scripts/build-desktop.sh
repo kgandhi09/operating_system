@@ -171,7 +171,7 @@ b_mesa() {
         -Dshared-glapi=enabled "${llvm[@]}" -Dvalgrind=disabled -Dlibunwind=disabled \
         -Dlmsensors=disabled -Dbuild-tests=false -Dgallium-va=disabled -Dgallium-rusticl=false \
         -Dzstd=enabled -Dexpat=enabled -Dvideo-codecs= -Dintel-rt=disabled -Dcpp_rtti=false \
-        -Dmesa-clc=system -Dprecomp-compiler=system
+        -Dmesa-clc=system -Dprecomp-compiler=system "${@:3}"
     ninja -C "$2" -j"$JOBS"
     DESTDIR="$DYN" $MESON install -C "$2" --no-rebuild
 }
@@ -265,7 +265,16 @@ b_libelf() {
     make -C "$2/config" install DESTDIR="$DYN"   # libelf.pc
 }
 pkg elfutils         b_libelf
-pkg mesa             b_mesa
+# GLVND: libEGL/libGL/libGLES dispatch to a vendor's implementation, Mesa's
+# or NVIDIA's (/usr/share/glvnd/egl_vendor.d). Mesa's own libEGL/libGL from
+# before GLVND are removed, so only the dispatch libraries answer to those names.
+b_libglvnd() {
+    rm -f "$DYN"/usr/lib/libEGL.so.1.0.0 "$DYN"/usr/lib/libGL.so.1.2.0 "$DYN"/usr/lib/libGLESv2.so.2.0.0
+    mesonpkg "$@"
+}
+pkg libglvnd         b_libglvnd -Dx11=enabled -Dglx=enabled -Degl=true -Dgles1=true -Dgles2=true \
+                         -Dheaders=false -Dhgl=false
+pkg mesa             b_mesa -Dglvnd=enabled
 # libepoxy compiles against Mesa's EGL and GL headers.
 pkg libepoxy         mesonpkg -Dtests=false -Degl=yes -Dglx=yes -Dx11=true
 # Xwayland compiles in the DRI driver directory from dri.pc, where pkg-config's

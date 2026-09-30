@@ -67,6 +67,8 @@ spirv-headers  1.4.357  git+https://github.com/KhronosGroup/SPIRV-Headers.git#vu
 spirv-tools  1.4.357  git+https://github.com/KhronosGroup/SPIRV-Tools.git#vulkan-sdk-{v}.0  9a49b0883b9b635689a85b5647dbfcb223268151
 spirv-llvm-translator  23.1.1  git+https://github.com/KhronosGroup/SPIRV-LLVM-Translator.git#v{v}  c808623558686b7b285cabfa71542a93a5390f55
 elfutils  0.196  https://sourceware.org/elfutils/ftp/{v}/elfutils-{v}.tar.bz2  fd5cc6b77ad6773cac93cb3f415f9318ac3b3455eecf801f6b4a742c4f6c7209
+# GL/EGL dispatch (GLVND), so NVIDIA's GL libraries and Mesa's sit side by side.
+libglvnd  1.7.0  git+https://gitlab.freedesktop.org/glvnd/libglvnd.git#v{v}  faa23f21fc677af5792825dc30cb1ccef4bf33a6
 mesa  26.2.3  https://archive.mesa3d.org/mesa-{v}.tar.xz  1628058a8d2c0615975de5a15ab7bbb9638c50000b5bed9456ff423ea034a81f
 xwayland  24.1.13  https://xorg.freedesktop.org/releases/individual/xserver/xwayland-{v}.tar.xz  173aea3d6f79609164c04528e1c8e4c9b60fcd59391c3c9dad4667297d727fb6
 

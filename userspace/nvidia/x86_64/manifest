@@ -1,0 +1,88 @@
+firmware/gsp_tu10x.bin 0444 FIRMWARE INHERIT_PATH_DEPTH:1 MODULE:gsp
+firmware/gsp_ga10x.bin 0444 FIRMWARE INHERIT_PATH_DEPTH:1 MODULE:gsp
+nvidia-smi 0755 UTILITY_BINARY MODULE:nvml
+libnvidia-ml.so.595.104.02 0755 CUDA_LIB NATIVE / MODULE:nvml
+libnvidia-ml.so.1 0000 CUDA_SYMLINK NATIVE / libnvidia-ml.so.595.104.02 MODULE:nvml
+libnvidia-ml.so 0000 CUDA_SYMLINK NATIVE / libnvidia-ml.so.1 MODULE:nvml
+nvidia-debugdump 0755 UTILITY_BINARY MODULE:nvml
+libcuda.so.595.104.02 0755 CUDA_LIB NATIVE / MODULE:gpgpu
+libcuda.so.1 0000 CUDA_SYMLINK NATIVE / libcuda.so.595.104.02 MODULE:gpgpu
+libcuda.so 0000 CUDA_SYMLINK NATIVE / libcuda.so.1 MODULE:gpgpu
+libnvidia-opencl.so.595.104.02 0755 OPENCL_LIB NATIVE / MODULE:gpgpu
+libnvidia-opencl.so.1 0000 OPENCL_LIB_SYMLINK NATIVE / libnvidia-opencl.so.595.104.02 MODULE:gpgpu
+libOpenCL.so.1.0.0 0755 OPENCL_WRAPPER_LIB NATIVE / MODULE:gpgpu
+libOpenCL.so.1.0 0000 OPENCL_WRAPPER_SYMLINK NATIVE / libOpenCL.so.1.0.0 MODULE:gpgpu
+libOpenCL.so.1 0000 OPENCL_WRAPPER_SYMLINK NATIVE / libOpenCL.so.1.0 MODULE:gpgpu
+libOpenCL.so 0000 OPENCL_WRAPPER_SYMLINK NATIVE / libOpenCL.so.1 MODULE:gpgpu
+nvidia.icd 0444 CUDA_ICD MODULE:gpgpu
+nvidia-cuda-mps-control 0755 UTILITY_BINARY MODULE:gpgpu
+nvidia-cuda-mps-server 0755 UTILITY_BINARY MODULE:gpgpu
+libnvidia-ptxjitcompiler.so.595.104.02 0755 CUDA_LIB NATIVE / MODULE:gpgpucomp
+libnvidia-ptxjitcompiler.so.1 0000 CUDA_SYMLINK NATIVE / libnvidia-ptxjitcompiler.so.595.104.02 MODULE:gpgpucomp
+libnvidia-ptxjitcompiler.so 0000 CUDA_SYMLINK NATIVE / libnvidia-ptxjitcompiler.so.1 MODULE:gpgpucomp
+libcudadebugger.so.595.104.02 0755 CUDA_LIB NATIVE / MODULE:gpgpudbg
+libcudadebugger.so.1 0000 CUDA_SYMLINK NATIVE / libcudadebugger.so.595.104.02 MODULE:gpgpudbg
+nvidia-persistenced 0755 UTILITY_BINARY MODULE:nvpd
+libnvidia-nvvm.so.595.104.02 0755 CUDA_LIB NATIVE / MODULE:compiler
+libnvidia-nvvm.so.4 0000 CUDA_SYMLINK NATIVE / libnvidia-nvvm.so.595.104.02 MODULE:compiler
+libnvidia-nvvm.so 0000 CUDA_SYMLINK NATIVE / libnvidia-nvvm.so.4 MODULE:compiler
+libnvidia-nvvm70.so.4 0755 CUDA_LIB NATIVE / MODULE:compiler
+libnvidia-gpucomp.so.595.104.02 0755 UTILITY_LIB NATIVE / MODULE:nvgpucomp
+libnvidia-api.so.1 0755 UTILITY_LIB NATIVE / MODULE:nvapi
+libnvidia-glcore.so.595.104.02 0755 OPENGL_LIB NATIVE MODULE:opengl
+libnvidia-tls.so.595.104.02 0755 TLS_LIB NATIVE / MODULE:opengl
+nvidia_icd.json 0644 VULKAN_ICD_JSON icd.d/ MODULE:opengl
+nvidia_layers.json 0644 VULKAN_ICD_JSON implicit_layer.d/ MODULE:opengl
+nvidia-application-profiles-595.104.02-rc 0444 APPLICATION_PROFILE / MODULE:opengl
+nvidia-application-profiles-595.104.02-key-documentation 0444 APPLICATION_PROFILE / MODULE:opengl
+libGLX_nvidia.so.595.104.02 0755 OPENGL_LIB NATIVE MODULE:opengl
+libGLX_nvidia.so.0 0000 OPENGL_SYMLINK NATIVE libGLX_nvidia.so.595.104.02 MODULE:opengl
+libGLX_indirect.so.0 0000 OPENGL_SYMLINK NATIVE libGLX_nvidia.so.595.104.02 MODULE:opengl
+libnvidia-glsi.so.595.104.02 0755 OPENGL_LIB NATIVE MODULE:opengl
+libnvidia-glvkspirv.so.595.104.02 0755 OPENGL_LIB NATIVE MODULE:opengl
+10_nvidia.json 0644 GLVND_EGL_ICD_JSON MODULE:opengl
+libnvidia-eglcore.so.595.104.02 0755 OPENGL_LIB NATIVE MODULE:egl
+libEGL_nvidia.so.595.104.02 0755 OPENGL_LIB NATIVE MODULE:egl
+libEGL_nvidia.so.0 0000 OPENGL_SYMLINK NATIVE libEGL_nvidia.so.595.104.02 MODULE:egl
+libGLESv2_nvidia.so.595.104.02 0755 OPENGL_LIB NATIVE MODULE:egl
+libGLESv2_nvidia.so.2 0000 OPENGL_SYMLINK NATIVE libGLESv2_nvidia.so.595.104.02 MODULE:egl
+libGLESv1_CM_nvidia.so.595.104.02 0755 OPENGL_LIB NATIVE MODULE:egl
+libGLESv1_CM_nvidia.so.1 0000 OPENGL_SYMLINK NATIVE libGLESv1_CM_nvidia.so.595.104.02 MODULE:egl
+libnvidia-egl-wayland.so.1.1.20 0755 OPENGL_LIB NATIVE MODULE:egl
+10_nvidia_wayland.json 0644 EGL_EXTERNAL_PLATFORM_JSON MODULE:egl
+libnvidia-egl-gbm.so.1.1.3 0755 OPENGL_LIB NATIVE MODULE:egl
+15_nvidia_gbm.json 0644 EGL_EXTERNAL_PLATFORM_JSON MODULE:egl
+libnvidia-egl-xlib.so.1.0.5 0755 OPENGL_LIB NATIVE MODULE:egl
+20_nvidia_xlib.json 0644 EGL_EXTERNAL_PLATFORM_JSON MODULE:egl
+libnvidia-egl-xcb.so.1.0.5 0755 OPENGL_LIB NATIVE MODULE:egl
+20_nvidia_xcb.json 0644 EGL_EXTERNAL_PLATFORM_JSON MODULE:egl
+libnvidia-egl-wayland2.so.1.0.1 0755 OPENGL_LIB NATIVE MODULE:egl
+09_nvidia_wayland2.json 0644 EGL_EXTERNAL_PLATFORM_JSON MODULE:egl
+libvdpau_nvidia.so.595.104.02 0755 VDPAU_LIB NATIVE vdpau/ MODULE:vdpau
+libvdpau_nvidia.so.1 0000 VDPAU_SYMLINK NATIVE vdpau/ libvdpau_nvidia.so.595.104.02 MODULE:vdpau
+libvdpau_nvidia.so 0000 VDPAU_SYMLINK NATIVE / vdpau/libvdpau_nvidia.so.595.104.02 MODULE:vdpau
+libnvidia-allocator.so.595.104.02 0755 UTILITY_LIB NATIVE MODULE:nvalloc
+libnvidia-allocator.so.1 0000 UTILITY_LIB_SYMLINK NATIVE libnvidia-allocator.so.595.104.02 MODULE:nvalloc
+libnvidia-allocator.so 0000 UTILITY_LIB_SYMLINK NATIVE libnvidia-allocator.so.1 MODULE:nvalloc
+nvidia-drm_gbm.so 0000 GBM_BACKEND_LIB_SYMLINK NATIVE libnvidia-allocator.so.1 MODULE:nvalloc
+libnvidia-rtcore.so.595.104.02 0755 OPENGL_LIB NATIVE MODULE:raytracing
+libnvoptix.so.595.104.02 0755 OPENGL_LIB NATIVE MODULE:optix
+libnvoptix.so.1 0000 OPENGL_SYMLINK NATIVE libnvoptix.so.595.104.02 MODULE:optix
+libnvidia-ngx.so.595.104.02 0755 OPENGL_LIB NATIVE MODULE:ngx
+libnvidia-fbc.so.595.104.02 0755 UTILITY_LIB NATIVE MODULE:nvfbc
+libnvidia-fbc.so.1 0000 UTILITY_LIB_SYMLINK NATIVE libnvidia-fbc.so.595.104.02 MODULE:nvfbc
+libnvidia-fbc.so 0000 UTILITY_LIB_SYMLINK NATIVE libnvidia-fbc.so.1 MODULE:nvfbc
+libnvcuvid.so.595.104.02 0755 NVCUVID_LIB NATIVE MODULE:nvcuvid
+libnvcuvid.so.1 0000 NVCUVID_LIB_SYMLINK NATIVE libnvcuvid.so.595.104.02 MODULE:nvcuvid
+libnvcuvid.so 0000 NVCUVID_LIB_SYMLINK NATIVE libnvcuvid.so.1 MODULE:nvcuvid
+libnvidia-encode.so.595.104.02 0755 ENCODEAPI_LIB NATIVE MODULE:encodeapi
+libnvidia-encode.so.1 0000 ENCODEAPI_LIB_SYMLINK NATIVE libnvidia-encode.so.595.104.02 MODULE:encodeapi
+libnvidia-encode.so 0000 ENCODEAPI_LIB_SYMLINK NATIVE libnvidia-encode.so.1 MODULE:encodeapi
+libnvidia-opticalflow.so.595.104.02 0755 NVCUVID_LIB NATIVE MODULE:opticalflow
+libnvidia-opticalflow.so.1 0000 NVCUVID_LIB_SYMLINK NATIVE libnvidia-opticalflow.so.595.104.02 MODULE:opticalflow
+libnvidia-opticalflow.so 0000 NVCUVID_LIB_SYMLINK NATIVE libnvidia-opticalflow.so.1 MODULE:opticalflow
+libnvidia-present.so.595.104.02 0755 OPENGL_LIB NATIVE MODULE:nvpresent
+libnvidia-sandboxutils.so.595.104.02 0755 CUDA_LIB NATIVE / MODULE:nvsandboxutils
+libnvidia-sandboxutils.so.1 0000 CUDA_SYMLINK NATIVE / libnvidia-sandboxutils.so.595.104.02 MODULE:nvsandboxutils
+libnvidia-sandboxutils.so 0000 CUDA_SYMLINK NATIVE / libnvidia-sandboxutils.so.1 MODULE:nvsandboxutils
+libnvidia-tileiras.so.595.104.02 0755 CUDA_LIB NATIVE / MODULE:tileiraslib

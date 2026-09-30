@@ -9,22 +9,21 @@
 #   LINUX_FIRMWARE_TARBALL=~/linux-firmware-20260916.tar.xz scripts/update-firmware.sh ...
 #
 # What is kept, per arch, comes from configs/firmware/{common,<arch>}.list:
-#   driver <name>   every file that built-in driver may load, as the kernel
-#                   build lists it (build/<arch>/linux/modules.builtin.modinfo,
-#                   so run `make kernel` for each arch first)
+#   driver <name>   every file that driver may load, as the kernel build
+#                   lists it (build/<arch>/linux/modules.builtin.modinfo, or
+#                   the module in build/<arch>/modules; run `make kernel` for
+#                   each arch first)
 #   file <glob>     files no driver declares (board files, regulatory.db, ...)
 #   skip <glob>     leave out files a driver line brought in (chips jk_os
 #                   won't meet, such as access-point radios)
-#   late <glob>     keep those files in the OS image only, not in the kernel's
-#                   initramfs: firmware too big to carry in every kernel, for
-#                   drivers jk_os binds again once the root is up
-#                   (/etc/init.d/S13late-firmware). linux-firmware's links
-#                   among them stay links, so shared blobs are stored once.
+#   linked <glob>   keep linux-firmware's links among those files (and turn
+#                   identical copies into links), so a blob many chips share
+#                   is stored once: NVIDIA's GSP firmware
 # Files are stored zstd-compressed, as the kernel loads them (<name>.zst);
-# userspace/firmware/<arch>.files lists each arch's share, <arch>.late the
-# late files. An arch whose kernel isn't built keeps its current lists.
+# userspace/firmware/<arch>.files lists each arch's share, <arch>.linked the
+# linked ones. An arch whose kernel isn't built keeps its current lists.
 source "$(dirname "$0")/common.sh"
-need curl tar zstd sha256sum
+need curl tar zstd sha256sum modinfo
 
 fw_ver="${1:-}" regdb_ver="${2:-}"
 [[ -n "$fw_ver" && -n "$regdb_ver" ]] || die "usage: $0 <linux-firmware version> <wireless-regdb version>"
@@ -79,13 +78,13 @@ resolve() {
 rm -rf "$DEST.new"; mkdir -p "$DEST.new"
 for arch in x86_64 aarch64; do
     modinfo="$ROOT_DIR/build/$arch/linux/modules.builtin.modinfo"
-    : > "$tmp/$arch.files"; : > "$tmp/$arch.skip"; : > "$tmp/$arch.latepat"; : > "$tmp/$arch.late"
+    : > "$tmp/$arch.files"; : > "$tmp/$arch.skip"; : > "$tmp/$arch.linkpat"; : > "$tmp/$arch.linked"
     if [[ ! -f "$modinfo" && -f "$DEST/$arch.files" ]]; then
         warn "$arch: no kernel built (make kernel ARCH=$arch); keeping its current firmware lists"
         sed 's/\.zst$//' "$DEST/$arch.files" > "$tmp/$arch.files"
-        [[ -f "$DEST/$arch.late" ]] && sed 's/\.zst$//' "$DEST/$arch.late" > "$tmp/$arch.late"
+        [[ -f "$DEST/$arch.linked" ]] && sed 's/\.zst$//' "$DEST/$arch.linked" > "$tmp/$arch.linked"
         sed 's/$/.zst/' "$tmp/$arch.files" > "$DEST.new/$arch.files"
-        sed 's/$/.zst/' "$tmp/$arch.late" > "$DEST.new/$arch.late"
+        sed 's/$/.zst/' "$tmp/$arch.linked" > "$DEST.new/$arch.linked"
         continue
     fi
     for list in "$LIST_DIR/common.list" "$LIST_DIR/$arch.list"; do
@@ -99,6 +98,11 @@ for arch in x86_64 aarch64; do
                         continue
                     fi
                     names=$(tr '\0' '\n' < "$modinfo" | sed -n "s/^$what\.firmware=//p")
+                    # Or a loadable module (nouveau), from build/<arch>/modules.
+                    if [[ -z "$names" ]]; then
+                        ko=$(find "$ROOT_DIR/build/$arch/modules/lib/modules" -name "$what.ko*" 2>/dev/null | head -n1)
+                        [[ -n "$ko" ]] && names=$(modinfo -F firmware "$ko")
+                    fi
                     [[ -n "$names" ]] || warn "$arch: driver $what is not built in, or declares no firmware"
                     for n in $names; do
                         resolve "$n" >> "$tmp/$arch.files" || true   # many are for chips never released
@@ -107,7 +111,7 @@ for arch in x86_64 aarch64; do
                     # shellcheck disable=SC2086 # a glob on purpose
                     compgen -G "$what" >> "$tmp/$arch.files" || warn "${list##*/}: nothing matches $what" ;;
                 skip) echo "$what" >> "$tmp/$arch.skip" ;;
-                late) echo "$what" >> "$tmp/$arch.latepat" ;;
+                linked) echo "$what" >> "$tmp/$arch.linkpat" ;;
                 *) die "${list##*/}: unknown line '$kind $what'" ;;
             esac
         done < "$list"
@@ -124,31 +128,31 @@ for arch in x86_64 aarch64; do
         done < "$tmp/$arch.files" > "$tmp/$arch.kept"
         mv "$tmp/$arch.kept" "$tmp/$arch.files"
     fi
-    # The late ones, and whatever their links point at.
-    if [[ -s "$tmp/$arch.latepat" ]]; then
-        : > "$tmp/$arch.early"
+    # The linked ones, and whatever their links point at.
+    if [[ -s "$tmp/$arch.linkpat" ]]; then
+        : > "$tmp/$arch.plain"
         while IFS= read -r f; do
-            late=0
+            linked=0
             while IFS= read -r pat; do
                 # shellcheck disable=SC2053 # a glob on purpose
-                [[ "$f" == $pat ]] && { late=1; break; }
-            done < "$tmp/$arch.latepat"
-            if (( late )); then echo "$f" >> "$tmp/$arch.late"; else echo "$f" >> "$tmp/$arch.early"; fi
+                [[ "$f" == $pat ]] && { linked=1; break; }
+            done < "$tmp/$arch.linkpat"
+            if (( linked )); then echo "$f" >> "$tmp/$arch.linked"; else echo "$f" >> "$tmp/$arch.plain"; fi
         done < "$tmp/$arch.files"
-        mv "$tmp/$arch.early" "$tmp/$arch.files"
+        mv "$tmp/$arch.plain" "$tmp/$arch.files"
         while IFS= read -r f; do
             if [[ -L "$f" ]]; then realpath --relative-to=. "$f"; fi
-        done < "$tmp/$arch.late" >> "$tmp/$arch.late"
-        sort -u "$tmp/$arch.late" -o "$tmp/$arch.late"
+        done < "$tmp/$arch.linked" > "$tmp/$arch.targets"
+        sort -u "$tmp/$arch.linked" "$tmp/$arch.targets" -o "$tmp/$arch.linked"
     fi
     sed 's/$/.zst/' "$tmp/$arch.files" > "$DEST.new/$arch.files"
-    sed 's/$/.zst/' "$tmp/$arch.late" > "$DEST.new/$arch.late"
-    log "$arch: $(wc -l < "$tmp/$arch.files") files, $(wc -l < "$tmp/$arch.late") late"
+    sed 's/$/.zst/' "$tmp/$arch.linked" > "$DEST.new/$arch.linked"
+    log "$arch: $(wc -l < "$tmp/$arch.files") files, $(wc -l < "$tmp/$arch.linked") linked"
 done
 
 log "compressing"
-# Late files keep linux-firmware's links (to the .zst of their target).
-sort -u "$tmp"/*.late | while IFS= read -r f; do
+# Linked files keep linux-firmware's links (to the .zst of their target).
+sort -u "$tmp"/*.linked | while IFS= read -r f; do
     [[ -n "$f" ]] || continue
     mkdir -p "$DEST.new/$(dirname "$f")"
     if [[ -L "$f" ]]; then
@@ -158,9 +162,9 @@ sort -u "$tmp"/*.late | while IFS= read -r f; do
     fi
 done
 # linux-firmware ships some blobs as identical copies (NVIDIA's GSP firmware
-# per chip): each late copy after the first becomes a link to it.
-if compgen -G "$tmp/*.late" >/dev/null; then
-    sort -u "$tmp"/*.late | while IFS= read -r f; do
+# per chip): each linked copy after the first becomes a link to it.
+if compgen -G "$tmp/*.linked" >/dev/null; then
+    sort -u "$tmp"/*.linked | while IFS= read -r f; do
         if [[ -f "$DEST.new/$f.zst" && ! -L "$DEST.new/$f.zst" ]]; then
             echo "$(sha256sum < "$DEST.new/$f.zst" | cut -d' ' -f1) $f"
         fi

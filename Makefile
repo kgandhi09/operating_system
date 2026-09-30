@@ -27,7 +27,7 @@ export NOWARN_CFLAGS
 SHELL := /bin/bash
 S := scripts
 
-.PHONY: all iso kernel initramfs rootfs busybox tools network toolchain desktop binaries run flash deps menuconfig clean distclean help
+.PHONY: all iso kernel nvidia initramfs rootfs busybox tools network toolchain desktop binaries run flash deps menuconfig clean distclean help
 
 all: iso
 
@@ -50,7 +50,11 @@ desktop: toolchain network
 binaries:
 	$(S)/fetch-binaries.sh
 
-rootfs: busybox tools network toolchain desktop binaries
+# NVIDIA's driver, built against the kernel (userspace/nvidia/<arch>).
+nvidia: kernel
+	$(S)/build-nvidia.sh
+
+rootfs: busybox tools network toolchain desktop binaries nvidia
 	$(S)/build-rootfs.sh
 
 initramfs: busybox tools

@@ -1,0 +1,9 @@
+#!/bin/sh
+# prime-run <program> [args]: run a program on the NVIDIA GPU (NVIDIA's
+# driver), while the desktop stays on the built-in one. OpenGL, EGL and
+# Vulkan; CUDA programs use the NVIDIA GPU anyway.
+[ $# -gt 0 ] || { echo "usage: prime-run <program> [args...]" >&2; exit 1; }
+export __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia \
+    __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/10_nvidia.json \
+    __VK_LAYER_NV_optimus=NVIDIA_only
+exec "$@"

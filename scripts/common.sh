@@ -61,6 +61,7 @@ tree_var="KERNEL_TREE_$ARCH"
 KERNEL_TREE="${!tree_var}"
 KERNEL_SRC="$ROOT_DIR/$KERNEL_TREE"
 KERNEL_OUT="$OUT_DIR/linux"
+MODULES_OUT="$OUT_DIR/modules"   # the kernel's loadable modules (lib/modules/<release>)
 BUSYBOX_SRC="$ROOT_DIR/$BUSYBOX_TREE"
 BUSYBOX_OUT="$OUT_DIR/busybox"
 UTIL_LINUX_SRC="$ROOT_DIR/$UTIL_LINUX_TREE"

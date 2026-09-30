@@ -18,6 +18,9 @@ export XDG_CONFIG_DIRS=/etc/xdg XDG_DATA_DIRS=/usr/local/share:/usr/share
 if [ -d /data/apt/bin ]; then
     export PATH="$PATH:/data/apt/bin" XDG_DATA_DIRS="$XDG_DATA_DIRS:/data/apt/share"
 fi
+# The GPU to render on (NVIDIA or built-in): /usr/lib/jk_os/gpu.sh.
+. /usr/lib/jk_os/gpu.sh
+jk_gpu_select
 # A UTF-8 locale; C.UTF-8 (shipped in /usr/lib/locale) when none is set.
 case "${LANG:-}" in *UTF-8*|*utf8*) ;; *) export LANG=C.UTF-8 ;; esac
 

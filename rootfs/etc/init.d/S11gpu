@@ -1,0 +1,65 @@
+#!/bin/sh
+# NVIDIA GPUs: NVIDIA's own driver (its open kernel modules, Turing and
+# newer, built by scripts/build-nvidia.sh), or nouveau for older cards and
+# when that driver can't start. Both are loadable modules; every other
+# driver is built into the kernel. Runs before udev, so the DRM devices are
+# there when the rest of the system starts.
+#
+# /etc/jk_os/gpu (optional): NVIDIA_DRIVER=nouveau uses nouveau even where
+# NVIDIA's driver would work.
+
+MODDIR=/lib/modules/$(uname -r)
+
+nvidia_gpus() {   # the PCI addresses of NVIDIA display controllers
+    for d in /sys/bus/pci/devices/*; do
+        [ "$(cat "$d/vendor" 2>/dev/null)" = 0x10de ] || continue
+        case "$(cat "$d/class" 2>/dev/null)" in 0x03*) echo "${d##*/}" ;; esac
+    done
+}
+
+# The device nodes NVIDIA's libraries open (the modules don't create them).
+nvidia_nodes() {
+    [ -e /dev/nvidiactl ] || mknod -m 666 /dev/nvidiactl c 195 255
+    i=0
+    for _ in $(nvidia_gpus); do
+        [ -e /dev/nvidia$i ] || mknod -m 666 /dev/nvidia$i c 195 $i
+        i=$((i + 1))
+    done
+    [ -e /dev/nvidia-modeset ] || mknod -m 666 /dev/nvidia-modeset c 195 254
+    uvm=$(sed -n 's/^\([0-9]*\) nvidia-uvm$/\1/p' /proc/devices)
+    if [ -n "$uvm" ]; then
+        [ -e /dev/nvidia-uvm ] || mknod -m 666 /dev/nvidia-uvm c "$uvm" 0
+        [ -e /dev/nvidia-uvm-tools ] || mknod -m 666 /dev/nvidia-uvm-tools c "$uvm" 1
+    fi
+}
+
+load_nvidia() {
+    [ -f "$MODDIR/extra/nvidia.ko" ] || return 1
+    insmod "$MODDIR/extra/nvidia.ko" NVreg_DynamicPowerManagement=0x02 || return 1
+    insmod "$MODDIR/extra/nvidia-modeset.ko" || return 1
+    # modeset: the DRM device KWin and cage need; fbdev: the console on it.
+    insmod "$MODDIR/extra/nvidia-drm.ko" modeset=1 fbdev=1 || return 1
+    insmod "$MODDIR/extra/nvidia-uvm.ko"     # CUDA's memory manager
+    nvidia_nodes
+}
+
+load_nouveau() {
+    for m in "$MODDIR"/kernel/drivers/gpu/drm/nouveau/nouveau.ko*; do
+        [ -f "$m" ] && insmod "$m"
+    done
+}
+
+case "$1" in
+    start)
+        [ -n "$(nvidia_gpus)" ] || exit 0
+        NVIDIA_DRIVER=nvidia
+        [ -f /etc/jk_os/gpu ] && . /etc/jk_os/gpu
+        if [ "$NVIDIA_DRIVER" != nouveau ] && load_nvidia; then
+            echo "gpu: NVIDIA driver $(cat /sys/module/nvidia/version 2>/dev/null)"
+        else
+            [ "$NVIDIA_DRIVER" != nouveau ] && echo "gpu: NVIDIA's driver did not start; using nouveau"
+            for m in nvidia_uvm nvidia_drm nvidia_modeset nvidia; do rmmod "$m" 2>/dev/null; done
+            load_nouveau
+        fi
+        ;;
+esac

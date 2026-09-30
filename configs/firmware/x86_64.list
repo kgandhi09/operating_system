@@ -38,8 +38,7 @@ driver xe
 driver amdgpu
 driver nouveau
 # NVIDIA's GSP firmware, which nouveau needs from Turing on (RTX 20, 30,
-# 40, ...): one large blob per GPU family, so it is in the OS image only
-# (late: S13late-firmware binds nouveau once the root is up), in its newest
-# version.
+# 40, ...), in its newest version: two large blobs (Turing; Ampere and
+# newer) that every chip of the family links to.
 skip nvidia/*/gsp/*-535.113.01.bin
-late nvidia/*/gsp/*
+linked nvidia/*/gsp/*

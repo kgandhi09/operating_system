@@ -1,0 +1,30 @@
+#!/bin/sh
+# Screen brightness across reboots, as systemd-backlight does on other
+# systems: saved at shutdown into /var/lib/jk_os/backlight/<device>, put
+# back at boot. The first boot (nothing saved yet) starts at full brightness,
+# not at whatever level the firmware left the panel.
+
+dir=/var/lib/jk_os/backlight
+
+case "$1" in
+    start)
+        for b in /sys/class/backlight/*; do
+            [ -f "$b/max_brightness" ] || continue
+            max=$(cat "$b/max_brightness")
+            want=$max
+            if [ -f "$dir/${b##*/}" ]; then
+                want=$(cat "$dir/${b##*/}")
+                # Never come back to a black screen.
+                [ "$want" -ge $((max / 20)) ] 2>/dev/null || want=$max
+                [ "$want" -le "$max" ] 2>/dev/null || want=$max
+            fi
+            echo "$want" > "$b/brightness" 2>/dev/null
+        done
+        ;;
+    stop)
+        mkdir -p "$dir"
+        for b in /sys/class/backlight/*; do
+            [ -f "$b/brightness" ] && cat "$b/brightness" > "$dir/${b##*/}"
+        done
+        ;;
+esac

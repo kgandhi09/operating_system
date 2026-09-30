@@ -288,6 +288,26 @@ Settings:
   XKB_DEFAULT_LAYOUT=de       # keyboard layout (XKB_DEFAULT_VARIANT, XKB_DEFAULT_OPTIONS)
   ```
 
+## NVIDIA GPUs
+
+jk_os carries NVIDIA's own driver (`userspace/nvidia/<arch>`, from
+`scripts/update-nvidia.sh <version>`): its open kernel modules, built against
+jk_os's kernel by `scripts/build-nvidia.sh` (`make nvidia`), and its libraries
+for OpenGL/EGL/GLES (through GLVND, next to Mesa), Vulkan, GBM (KWin, cage),
+CUDA, OpenCL, NVENC/NVDEC and `nvidia-smi`. `/etc/init.d/S11gpu` loads it when
+an NVIDIA GPU is present (Turing, RTX 20, and newer), and falls back to nouveau
+for older cards. These are the kernel's only loadable modules; everything else
+is built in.
+
+- Which GPU draws the desktop and the dev session: `JK_GPU=auto|nvidia|builtin`
+  in `~/.config/jk_os/gpu` (or `/etc/jk_os/gpu`). `auto` uses the NVIDIA GPU
+  while a screen is connected to it (on most laptops the HDMI port), the
+  built-in one otherwise.
+- `prime-run <program>` runs one program on the NVIDIA GPU.
+- `NVIDIA_DRIVER=nouveau` in `/etc/jk_os/gpu` uses nouveau instead.
+- CUDA programs run as they are; the CUDA toolkit (`nvcc`) is not in the image:
+  NVIDIA's runfile installs it (toolkit only) into `/usr/local/cuda`.
+
 ## Packages (apt)
 
 The installer asks for a **package management** choice after the accounts:
