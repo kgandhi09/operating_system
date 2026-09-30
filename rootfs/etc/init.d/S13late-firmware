@@ -1,0 +1,17 @@
+#!/bin/sh
+# Drivers whose firmware is in the OS image only (userspace/firmware/<arch>.late:
+# NVIDIA's GSP firmware for nouveau, too big for the kernel's initramfs). Built
+# into the kernel, they tried their devices while it started, before the root
+# was mounted, and gave up; now that /lib/firmware has everything, let every
+# device without a driver be probed again.
+
+case "$1" in
+    start)
+        for d in /sys/bus/pci/devices/*; do
+            [ -e "$d/driver" ] && continue
+            # Display controllers (PCI class 0x03xxxx) only.
+            case "$(cat "$d/class" 2>/dev/null)" in 0x03*) ;; *) continue ;; esac
+            echo "${d##*/}" > /sys/bus/pci/drivers_probe 2>/dev/null
+        done
+        ;;
+esac

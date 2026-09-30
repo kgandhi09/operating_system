@@ -37,5 +37,9 @@ driver i915
 driver xe
 driver amdgpu
 driver nouveau
-# NVIDIA's GSP firmware (Turing and newer) is huge; nouveau stays basic there.
-skip nvidia/*/gsp/*
+# NVIDIA's GSP firmware, which nouveau needs from Turing on (RTX 20, 30,
+# 40, ...): one large blob per GPU family, so it is in the OS image only
+# (late: S13late-firmware binds nouveau once the root is up), in its newest
+# version.
+skip nvidia/*/gsp/*-535.113.01.bin
+late nvidia/*/gsp/*

@@ -15,8 +15,14 @@
 #   file <glob>     files no driver declares (board files, regulatory.db, ...)
 #   skip <glob>     leave out files a driver line brought in (chips jk_os
 #                   won't meet, such as access-point radios)
+#   late <glob>     keep those files in the OS image only, not in the kernel's
+#                   initramfs: firmware too big to carry in every kernel, for
+#                   drivers jk_os binds again once the root is up
+#                   (/etc/init.d/S13late-firmware). linux-firmware's links
+#                   among them stay links, so shared blobs are stored once.
 # Files are stored zstd-compressed, as the kernel loads them (<name>.zst);
-# userspace/firmware/<arch>.files lists each arch's share.
+# userspace/firmware/<arch>.files lists each arch's share, <arch>.late the
+# late files. An arch whose kernel isn't built keeps its current lists.
 source "$(dirname "$0")/common.sh"
 need curl tar zstd sha256sum
 
@@ -73,7 +79,15 @@ resolve() {
 rm -rf "$DEST.new"; mkdir -p "$DEST.new"
 for arch in x86_64 aarch64; do
     modinfo="$ROOT_DIR/build/$arch/linux/modules.builtin.modinfo"
-    : > "$tmp/$arch.files"; : > "$tmp/$arch.skip"
+    : > "$tmp/$arch.files"; : > "$tmp/$arch.skip"; : > "$tmp/$arch.latepat"; : > "$tmp/$arch.late"
+    if [[ ! -f "$modinfo" && -f "$DEST/$arch.files" ]]; then
+        warn "$arch: no kernel built (make kernel ARCH=$arch); keeping its current firmware lists"
+        sed 's/\.zst$//' "$DEST/$arch.files" > "$tmp/$arch.files"
+        [[ -f "$DEST/$arch.late" ]] && sed 's/\.zst$//' "$DEST/$arch.late" > "$tmp/$arch.late"
+        sed 's/$/.zst/' "$tmp/$arch.files" > "$DEST.new/$arch.files"
+        sed 's/$/.zst/' "$tmp/$arch.late" > "$DEST.new/$arch.late"
+        continue
+    fi
     for list in "$LIST_DIR/common.list" "$LIST_DIR/$arch.list"; do
         [[ -f "$list" ]] || continue
         while read -r kind what _; do
@@ -93,6 +107,7 @@ for arch in x86_64 aarch64; do
                     # shellcheck disable=SC2086 # a glob on purpose
                     compgen -G "$what" >> "$tmp/$arch.files" || warn "${list##*/}: nothing matches $what" ;;
                 skip) echo "$what" >> "$tmp/$arch.skip" ;;
+                late) echo "$what" >> "$tmp/$arch.latepat" ;;
                 *) die "${list##*/}: unknown line '$kind $what'" ;;
             esac
         done < "$list"
@@ -109,11 +124,51 @@ for arch in x86_64 aarch64; do
         done < "$tmp/$arch.files" > "$tmp/$arch.kept"
         mv "$tmp/$arch.kept" "$tmp/$arch.files"
     fi
+    # The late ones, and whatever their links point at.
+    if [[ -s "$tmp/$arch.latepat" ]]; then
+        : > "$tmp/$arch.early"
+        while IFS= read -r f; do
+            late=0
+            while IFS= read -r pat; do
+                # shellcheck disable=SC2053 # a glob on purpose
+                [[ "$f" == $pat ]] && { late=1; break; }
+            done < "$tmp/$arch.latepat"
+            if (( late )); then echo "$f" >> "$tmp/$arch.late"; else echo "$f" >> "$tmp/$arch.early"; fi
+        done < "$tmp/$arch.files"
+        mv "$tmp/$arch.early" "$tmp/$arch.files"
+        while IFS= read -r f; do
+            if [[ -L "$f" ]]; then realpath --relative-to=. "$f"; fi
+        done < "$tmp/$arch.late" >> "$tmp/$arch.late"
+        sort -u "$tmp/$arch.late" -o "$tmp/$arch.late"
+    fi
     sed 's/$/.zst/' "$tmp/$arch.files" > "$DEST.new/$arch.files"
-    log "$arch: $(wc -l < "$tmp/$arch.files") files"
+    sed 's/$/.zst/' "$tmp/$arch.late" > "$DEST.new/$arch.late"
+    log "$arch: $(wc -l < "$tmp/$arch.files") files, $(wc -l < "$tmp/$arch.late") late"
 done
 
 log "compressing"
+# Late files keep linux-firmware's links (to the .zst of their target).
+sort -u "$tmp"/*.late | while IFS= read -r f; do
+    [[ -n "$f" ]] || continue
+    mkdir -p "$DEST.new/$(dirname "$f")"
+    if [[ -L "$f" ]]; then
+        ln -sfn "$(readlink "$f").zst" "$DEST.new/$f.zst"
+    else
+        zstd -q -19 -f -o "$DEST.new/$f.zst" "$f"
+    fi
+done
+# linux-firmware ships some blobs as identical copies (NVIDIA's GSP firmware
+# per chip): each late copy after the first becomes a link to it.
+if compgen -G "$tmp/*.late" >/dev/null; then
+    sort -u "$tmp"/*.late | while IFS= read -r f; do
+        if [[ -f "$DEST.new/$f.zst" && ! -L "$DEST.new/$f.zst" ]]; then
+            echo "$(sha256sum < "$DEST.new/$f.zst" | cut -d' ' -f1) $f"
+        fi
+    done | sort -k1,1 -k2,2 | awk '$1 == prev { print first " " $2; next } { prev = $1; first = $2 }' |
+    while read -r first dup; do
+        ln -sfn "$(realpath -m --relative-to="$(dirname "$DEST.new/$dup")" "$DEST.new/$first.zst")" "$DEST.new/$dup.zst"
+    done
+fi
 sort -u "$tmp"/*.files | while IFS= read -r f; do
     mkdir -p "$DEST.new/$(dirname "$f")"
     # Copy first: zstd skips links (every name the kernel may ask for must be

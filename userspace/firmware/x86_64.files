@@ -630,30 +630,44 @@ ath9k_htc/htc_7010-1.4.0.fw.zst
 ath9k_htc/htc_9271-1.4.0.fw.zst
 brcm/bcm43xx-0.fw.zst
 brcm/bcm43xx_hdr-0.fw.zst
+brcm/brcmfmac43012-sdio.bin.zst
 brcm/brcmfmac43012-sdio.clm_blob.zst
 brcm/brcmfmac43143.bin.zst
+brcm/brcmfmac43143-sdio.bin.zst
 brcm/brcmfmac43236b.bin.zst
+brcm/brcmfmac43241b0-sdio.bin.zst
 brcm/brcmfmac43241b4-sdio.Advantech-MICA-071.txt.zst
+brcm/brcmfmac43241b4-sdio.bin.zst
 brcm/brcmfmac43241b4-sdio.Intel Corp.-VALLEYVIEW C0 PLATFORM.txt.zst
+brcm/brcmfmac43241b5-sdio.bin.zst
 brcm/brcmfmac43242a.bin.zst
+brcm/brcmfmac4329-sdio.bin.zst
+brcm/brcmfmac4330-sdio.bin.zst
 brcm/brcmfmac4330-sdio.Prowise-PT301.txt.zst
 brcm/brcmfmac43340-sdio.ASUSTeK COMPUTER INC.-TF103CE.txt.zst
+brcm/brcmfmac43340-sdio.bin.zst
 brcm/brcmfmac43340-sdio.Insyde-VESPA2.txt.zst
 brcm/brcmfmac43340-sdio.meegopad-t08.txt.zst
 brcm/brcmfmac43340-sdio.pov-tab-p1006w-data.txt.zst
 brcm/brcmfmac43340-sdio.predia-basic.txt.zst
+brcm/brcmfmac4334-sdio.bin.zst
+brcm/brcmfmac4335-sdio.bin.zst
 brcm/brcmfmac43362-sdio.ASUSTeK COMPUTER INC.-ME176C.txt.zst
+brcm/brcmfmac43362-sdio.bin.zst
 brcm/brcmfmac43362-sdio.cubietech,cubietruck.txt.zst
 brcm/brcmfmac43362-sdio.kobo,aura.txt.zst
 brcm/brcmfmac43362-sdio.kobo,tolino-shine2hd.txt.zst
 brcm/brcmfmac43362-sdio.lemaker,bananapro.txt.zst
 brcm/brcmfmac43362-sdio.WC121.txt.zst
+brcm/brcmfmac4339-sdio.bin.zst
+brcm/brcmfmac43430a0-sdio.bin.zst
 brcm/brcmfmac43430a0-sdio.ilife-S806.txt.zst
 brcm/brcmfmac43430a0-sdio.jumper-ezpad-mini3.txt.zst
 brcm/brcmfmac43430a0-sdio.ONDA-V80 PLUS.txt.zst
 brcm/brcmfmac43430-sdio.AP6212.txt.zst
 brcm/brcmfmac43430-sdio.beagle,beaglev-starlight-jh7100-a1.txt.zst
 brcm/brcmfmac43430-sdio.beagle,beaglev-starlight-jh7100-r0.txt.zst
+brcm/brcmfmac43430-sdio.bin.zst
 brcm/brcmfmac43430-sdio.clm_blob.zst
 brcm/brcmfmac43430-sdio.friendlyarm,nanopi-neo4.txt.zst
 brcm/brcmfmac43430-sdio.friendlyarm,nanopi-r1.txt.zst
@@ -673,6 +687,7 @@ brcm/brcmfmac43430-sdio.ultrapower,taiqicat-a01.txt.zst
 brcm/brcmfmac43455-sdio.acepc-t8.txt.zst
 brcm/brcmfmac43455-sdio.AW-CM256SM.txt.zst
 brcm/brcmfmac43455-sdio.beagle,am5729-beagleboneai.txt.zst
+brcm/brcmfmac43455-sdio.bin.zst
 brcm/brcmfmac43455-sdio.clm_blob.zst
 brcm/brcmfmac43455-sdio.khadas,vim.txt.zst
 brcm/brcmfmac43455-sdio.MINIX-NEO Z83-4.txt.zst
@@ -699,6 +714,7 @@ brcm/brcmfmac43455-sdio.Raspberry Pi Foundation-Raspberry Pi 4 Model B.txt.zst
 brcm/brcmfmac43455-sdio.Raspberry Pi Foundation-Raspberry Pi Compute Module 4.txt.zst
 brcm/brcmfmac4350c2-pcie.bin.zst
 brcm/brcmfmac4350-pcie.bin.zst
+brcm/brcmfmac4354-sdio.bin.zst
 brcm/brcmfmac4354-sdio.clm_blob.zst
 brcm/brcmfmac4354-sdio.nvidia,p2371-2180.txt.zst
 brcm/brcmfmac43569.bin.zst
@@ -708,6 +724,7 @@ brcm/brcmfmac4356-pcie.gpd-win-pocket.txt.zst
 brcm/brcmfmac4356-pcie.Intel Corporation-CHERRYVIEW D1 PLATFORM.txt.zst
 brcm/brcmfmac4356-pcie.Xiaomi Inc-Mipad2.txt.zst
 brcm/brcmfmac4356-sdio.AP6356S.txt.zst
+brcm/brcmfmac4356-sdio.bin.zst
 brcm/brcmfmac4356-sdio.clm_blob.zst
 brcm/brcmfmac4356-sdio.firefly,firefly-rk3399.txt.zst
 brcm/brcmfmac4356-sdio.friendlyarm,nanopc-t4.txt.zst
@@ -723,6 +740,7 @@ brcm/brcmfmac4366b-pcie.bin.zst
 brcm/brcmfmac4366c-pcie.bin.zst
 brcm/brcmfmac4371-pcie.bin.zst
 brcm/brcmfmac4373.bin.zst
+brcm/brcmfmac4373-sdio.bin.zst
 brcm/brcmfmac4373-sdio.clm_blob.zst
 brcm/brcmfmac54591-pcie.bin.zst
 brcm/brcmfmac54591-pcie.clm_blob.zst

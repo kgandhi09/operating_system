@@ -135,6 +135,15 @@ if [[ -f "$FW_SRC/$ARCH.files" ]]; then
 else
     warn "no userspace/firmware/$ARCH.files: Wi-Fi and some Ethernet chips will lack firmware"
 fi
+# Firmware in the image only (<arch>.late: NVIDIA's GSP firmware), links kept.
+if [[ -f "$FW_SRC/$ARCH.late" ]]; then
+    while IFS= read -r f; do
+        [[ -n "$f" ]] || continue
+        [[ -e "$FW_SRC/$f" || -L "$FW_SRC/$f" ]] || die "userspace/firmware/$f missing (run scripts/update-firmware.sh)"
+        mkdir -p "usr/lib/firmware/$(dirname "$f")"
+        cp -P "$FW_SRC/$f" "usr/lib/firmware/$f"
+    done < "$FW_SRC/$ARCH.late"
+fi
 
 # /usr/local/bin comes first in PATH, so these win over BusyBox applets.
 mkdir -p usr/local/bin
