@@ -316,6 +316,9 @@ is built in.
   because cage can't show a picture drawn on the NVIDIA GPU on the laptop's
   own screen (that screen freezes), while the other way round works.
 - `prime-run <program>` runs one program on the NVIDIA GPU.
+- Programs from apt get the same NVIDIA libraries (OpenGL, EGL, Vulkan, CUDA):
+  `/usr/lib/jk_os/apt` binds them into its container, next to Debian's Mesa.
+  A container set up before this gets its mount point at the next `sudo apt ...`.
 - `NVIDIA_DRIVER=nouveau` in `/etc/jk_os/gpu` uses nouveau instead.
 - Power: `sudo jk-power performance|balanced|quiet` sets the laptop firmware's
   profile (fans, power limits), the CPUs' energy preference, NVIDIA persistence

@@ -153,6 +153,10 @@ if [[ -d "$MODULES_OUT/lib/modules" ]]; then
 fi
 if [[ -d "$OUT_DIR/nvidia" ]]; then
     cp -a "$OUT_DIR/nvidia/." .
+    # Its libraries (relative to /usr/lib), which /usr/lib/jk_os/apt shares
+    # with programs from apt. Not the OpenCL loader: Debian has its own.
+    (cd "$OUT_DIR/nvidia/usr/lib" && find . -maxdepth 2 \( -type f -o -type l \) -name '*.so*' \
+        ! -name 'libOpenCL.so*' ! -path './modules/*' | sed 's|^\./||' | sort) > usr/share/nvidia/libraries
 fi
 for d in usr/lib/modules/*/; do
     [[ -d "$d" ]] && depmod -b "$ROOTFS_DIR" "$(basename "$d")"

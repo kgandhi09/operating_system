@@ -46,8 +46,8 @@ R="$A/root.new"
 printf '#!/bin/sh\n# jk_os: no services start in the apt container.\nexit 101\n' > "$R/usr/sbin/policy-rc.d"
 chmod 755 "$R/usr/sbin/policy-rc.d"
 # Mount points for what apt shares with the container (host files are
-# bound over these).
-mkdir -p "$R/home" "$R/mnt" "$R/media" "$R/run" "$R/tmp"
+# bound over these; usr/lib/jk_os/nvidia: NVIDIA's driver libraries).
+mkdir -p "$R/home" "$R/mnt" "$R/media" "$R/run" "$R/tmp" "$R/usr/lib/jk_os/nvidia"
 for f in resolv.conf hosts hostname; do
     [ -f "$R/etc/$f" ] && [ ! -L "$R/etc/$f" ] || { rm -f "$R/etc/$f"; : > "$R/etc/$f"; }
 done

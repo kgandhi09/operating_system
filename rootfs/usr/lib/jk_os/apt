@@ -57,12 +57,50 @@ in_root() {
         --setenv PATH "$CPATH" --setenv HOME /root "$@"
 }
 
+# NVIDIA's driver libraries from the OS image (OpenGL, EGL, Vulkan, CUDA,
+# NVENC/NVDEC), shared with programs from apt: Debian's Mesa can't use an
+# NVIDIA GPU that runs NVIDIA's driver, and Debian's own NVIDIA packages
+# would not match the kernel driver. The libraries (the list build-rootfs.sh
+# writes) and the files that register them with GLVND's EGL, NVIDIA's EGL
+# platforms and the Vulkan loader are bound into $NV, a mount point in the
+# container (made by apt-setup, or here by root), and found through the
+# variables those libraries read; Debian's own drivers stay usable too.
+NV=/usr/lib/jk_os/nvidia
+NV_LIBS=/usr/share/nvidia/libraries
+
+# nvidia_args: the bwrap arguments for that, none when NVIDIA's driver isn't
+# running (nouveau, or no NVIDIA GPU).
+nvidia_args() {
+    [ -d /sys/module/nvidia ] && [ -f "$NV_LIBS" ] || return 0
+    [ -d "$ROOT$NV" ] || { [ "$(id -u)" = 0 ] && mkdir -p "$ROOT$NV"; } || return 0
+    echo "--tmpfs $NV"
+    while read -r l; do
+        [ -e "/usr/lib/$l" ] && echo "--ro-bind /usr/lib/$l $NV/$l"
+    done < "$NV_LIBS"
+    for d in glvnd/egl_vendor.d egl/egl_external_platform.d vulkan/icd.d vulkan/implicit_layer.d; do
+        for f in /usr/share/$d/*nvidia*.json; do
+            [ -f "$f" ] && echo "--ro-bind $f $NV/${d#*/}/${f##*/}"
+        done
+    done
+    echo "--setenv LD_LIBRARY_PATH $NV${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+    echo "--setenv __EGL_VENDOR_LIBRARY_DIRS $NV/egl_vendor.d:/etc/glvnd/egl_vendor.d:/usr/share/glvnd/egl_vendor.d"
+    echo "--setenv __EGL_EXTERNAL_PLATFORM_CONFIG_DIRS $NV/egl_external_platform.d"
+    echo "--setenv VK_ADD_DRIVER_FILES $NV/icd.d/nvidia_icd.json"
+    echo "--setenv VK_ADD_IMPLICIT_LAYER_PATH $NV/implicit_layer.d"
+    echo "--setenv GBM_BACKENDS_PATH $NV/gbm"
+    # prime-run names jk_os's copy of NVIDIA's EGL vendor file.
+    case "${__EGL_VENDOR_LIBRARY_FILENAMES:-}" in
+        */10_nvidia.json) echo "--setenv __EGL_VENDOR_LIBRARY_FILENAMES $NV/egl_vendor.d/10_nvidia.json" ;;
+    esac
+}
+
 # in_user <command...>: run in the container as the caller; the Debian
 # system itself is read-only. jk_os's users and groups are the container's.
 in_user() {
     caps=""
     [ "$(id -u)" = 0 ] && caps="--cap-add ALL"
     exec bwrap --ro-bind "$ROOT" / --dev-bind /dev /dev --proc /proc --ro-bind /sys /sys \
+        $(nvidia_args) \
         --bind /home /home --bind /tmp /tmp --bind /run /run \
         --bind-try /mnt /mnt --bind-try /media /media \
         --ro-bind /etc/passwd /etc/passwd --ro-bind /etc/group /etc/group \
@@ -134,6 +172,8 @@ if [ "$(id -u)" != 0 ]; then
     [ $readonly_query = 1 ] && in_user "$name" "$@"
     exec sudo "/usr/bin/$name" "$@"
 fi
+# A container set up before it had one gets the mount point for NVIDIA's libraries.
+mkdir -p "$ROOT$NV"
 [ $readonly_query = 1 ] && in_user "$name" "$@"
 
 # The first install on a fresh base: fetch the package lists first.
