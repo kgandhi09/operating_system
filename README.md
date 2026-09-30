@@ -286,9 +286,10 @@ shown by `/etc/profile`, which sets `JK_DEV_SESSION=1` there and
 Settings:
 
 - the terminal: `~/.config/foot/foot.ini` (jk_os's defaults: `/etc/xdg/foot/foot.ini`:
-  login shell, DejaVu Sans Mono 11, black background, underline cursor,
-  `TERM=xterm-256color`, true colour). Fonts such as a
-  Nerd Font go in `~/.local/share/fonts`.
+  login shell, FiraCode Nerd Font Mono 9 pt (in the image, with DejaVu Sans
+  Mono for what it lacks), pure black background and colour 0, underline
+  cursor, `TERM=xterm-256color`, true colour). Other fonts go in
+  `~/.local/share/fonts`.
 - the session: `~/.config/jk_os/dev-session`, shell variables, e.g.
 
   ```sh

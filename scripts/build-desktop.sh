@@ -142,6 +142,13 @@ b_dejavu() {
     cp "$1"/fontconfig/*.conf "$DYN/etc/fonts/conf.d/" 2>/dev/null || true
 }
 
+b_firacode() {
+    install -d "$DYN/usr/share/fonts/firacode-nerd"
+    # Regular and Bold: the other weights also call themselves Regular, and
+    # fontconfig could pick one of them for the terminal.
+    install -m 0644 "$1"/FiraCodeNerdFontMono-{Regular,Bold}.ttf "$1/LICENSE" "$DYN/usr/share/fonts/firacode-nerd/"
+}
+
 # Mesa's GPU drivers: every laptop and desktop GPU family on x86_64; on
 # aarch64 the common ARM GPUs too. llvmpipe is the software fallback.
 case "$ARCH" in
@@ -220,6 +227,7 @@ pkg harfbuzz         mesonpkg -Dtests=disabled -Ddocs=disabled -Dfreetype=enable
                          -Dicu=disabled -Dcairo=disabled -Dintrospection=disabled
 pkg fribidi          mesonpkg -Ddocs=false -Dtests=false
 pkg dejavu-fonts     b_dejavu
+pkg firacode-nerd-font b_firacode
 pkg vulkan-headers   cmakepkg
 pkg vulkan-loader    cmakepkg -DBUILD_WSI_XCB_SUPPORT=ON -DBUILD_WSI_XLIB_SUPPORT=ON \
                          -DBUILD_WSI_WAYLAND_SUPPORT=ON -DUPDATE_DEPS=OFF

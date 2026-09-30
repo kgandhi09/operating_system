@@ -59,6 +59,9 @@ fontconfig  2.18.3  https://gitlab.freedesktop.org/api/v4/projects/890/packages/
 harfbuzz  14.5.0  https://github.com/harfbuzz/harfbuzz/releases/download/{v}/harfbuzz-{v}.tar.xz  b7132e148358a45185c9feafd049dbaf243649d3c44414b3534d9c95d18592b9
 fribidi  1.0.17  https://github.com/fribidi/fribidi/releases/download/v{v}/fribidi-{v}.tar.xz  6949dcde27d41cebad1fd741fcafc36d55a1020d2d872d4a6eb3914caabbada2
 dejavu-fonts  2.37  https://github.com/dejavu-fonts/dejavu-fonts/releases/download/version_2_37/dejavu-fonts-ttf-{v}.tar.bz2  fa9ca4d13871dd122f61258a80d01751d603b4d3ee14095d65453b4e846e17d7
+# FiraCode Nerd Font (the Mono variants): the dev session's terminal font,
+# with the icons Neovim plugins and shell prompts draw.
+firacode-nerd-font  3.5.1  https://github.com/ryanoasis/nerd-fonts/releases/download/v{v}/FiraCode.tar.xz  68e3bd6164864b8b514605bc34e3a87ac401c8c48682fcce6478c70263340207
 vulkan-headers  1.4.357  git+https://github.com/KhronosGroup/Vulkan-Headers.git#vulkan-sdk-{v}.0  e3b1eec08173d6b825cd3ac88c885a63b621504a
 vulkan-loader  1.4.357  git+https://github.com/KhronosGroup/Vulkan-Loader.git#vulkan-sdk-{v}.0  5f157b62e333c63260d05d81bf66faa216ab0fb8
 # Mesa's Intel and Panfrost drivers precompile OpenCL kernels at build time,

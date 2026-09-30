@@ -51,6 +51,11 @@ fetch_one() {
         tar -xf "$file" -C "$work/x"
     fi
     local top=("$work/x"/*)
+    # Archives of loose files (font releases) get a directory of their own.
+    if [[ ${#top[@]} -gt 1 && ! -e "$work/x/src" ]]; then
+        mkdir "$work/src"; mv "$work/x"/* "$work/src/"; mv "$work/src" "$work/x/src"
+        top=("$work/x/src")
+    fi
     [[ ${#top[@]} -eq 1 && -d "${top[0]}" ]] || die "$name: unexpected archive layout"
     echo "$ver" > "${top[0]}/.jk_os-version"
     rm -rf "$dest"
