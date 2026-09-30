@@ -431,6 +431,89 @@ pkg libogg           autotools
 pkg libvorbis        autotools
 pkg libcanberra      autotools --disable-oss --disable-pulse --disable-alsa --disable-gstreamer \
                          --disable-gtk --disable-gtk3 --disable-tdb --disable-lynx --enable-null
+# ---------------------------------------------------------------- sound, Bluetooth
+# ALSA (libasound, which libxul links too; its configuration and the cards'
+# UCM profiles in /usr/share/alsa), ALSA's tools, PipeWire with WirePlumber
+# and its PulseAudio server (started with the desktop and the dev session:
+# /usr/lib/jk_os/jk-audio), BlueZ (bluetoothd: /etc/init.d/S42bluetooth)
+# with the SBC codec for Bluetooth audio, and PulseAudio's client library
+# (plasma-pa), which links libsndfile.
+pkg alsa-lib         autotools --disable-python --without-debug
+b_alsa_conf() {   # data only: the tree goes to /usr/share/alsa/<dir>
+    install -d "$DYN/usr/share/alsa/$3"
+    cp -a "$1/$3/." "$DYN/usr/share/alsa/$3/"
+}
+pkg alsa-ucm-conf       b_alsa_conf ucm2
+pkg alsa-topology-conf  b_alsa_conf topology
+pkg alsa-utils       autotools --disable-alsamixer --disable-xmlto --disable-rst2man --disable-nls \
+                         --disable-bat --with-udev-rules-dir=/usr/lib/udev/rules.d \
+                         --with-systemdsystemunitdir=no --with-asound-state-dir=/var/lib/alsa
+pkg libsndfile       cmakepkg -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DBUILD_SHARED_LIBS=ON -DENABLE_EXTERNAL_LIBS=OFF -DENABLE_MPEG=OFF \
+                         -DBUILD_PROGRAMS=OFF -DBUILD_EXAMPLES=OFF -DENABLE_CPACK=OFF -DINSTALL_MANPAGES=OFF
+pkg sbc              autotools --disable-tools --disable-tester
+pkg bluez            autotools --disable-systemd --disable-cups --disable-obex --disable-mesh \
+                         --disable-midi --disable-manpages --disable-test --enable-library \
+                         --with-dbusconfdir=/usr/share --with-dbussystembusdir=/usr/share/dbus-1/system-services \
+                         --with-dbussessionbusdir=/usr/share/dbus-1/services --with-udevdir=/usr/lib/udev
+# Only the client libraries (libpulse, libpulse-mainloop-glib) and pactl:
+# PipeWire is the sound server.
+pkg pulseaudio       mesonpkg -Ddaemon=false -Dclient=true -Ddoxygen=false -Dman=false -Dtests=false \
+                         -Dglib=enabled -Ddbus=enabled -Dgsettings=disabled -Dgtk=disabled -Dx11=disabled \
+                         -Dalsa=disabled -Dasyncns=disabled -Davahi=disabled -Dbluez5=disabled \
+                         -Dconsolekit=disabled -Delogind=disabled -Dfftw=disabled -Dgstreamer=disabled \
+                         -Djack=disabled -Dlirc=disabled -Dopenssl=disabled -Dorc=disabled -Doss-output=disabled \
+                         -Dsamplerate=disabled -Dsoxr=disabled -Dspeex=disabled -Dsystemd=disabled \
+                         -Dtcpwrap=disabled -Dudev=disabled -Dvalgrind=disabled -Dwebrtc-aec=disabled \
+                         -Dbashcompletiondir=no -Dzshcompletiondir=no
+# Lua for WirePlumber's scripts, linked into it statically (lua.pc written
+# here: Lua's own build has none).
+b_lua() {
+    local src="$1" out="$2"
+    copy_tree "$src" "$out"
+    make -C "$out/src" -j"$JOBS" liblua.a CC="$CC" AR="$AR rcu" RANLIB="$RANLIB" \
+        MYCFLAGS="-fPIC -DLUA_USE_LINUX" MYLIBS=
+    install -Dm644 "$out/src/liblua.a" "$DYN/usr/lib/liblua5.4.a"
+    install -d "$DYN/usr/include/lua5.4"
+    install -m644 "$out"/src/{lua.h,luaconf.h,lualib.h,lauxlib.h,lua.hpp} "$DYN/usr/include/lua5.4/"
+    local v; v=$(cat "$src/.jk_os-version")
+    install -Dm644 /dev/stdin "$DYN/usr/lib/pkgconfig/lua5.4.pc" <<PC
+prefix=/usr
+libdir=\${prefix}/lib
+includedir=\${prefix}/include/lua5.4
+
+Name: Lua
+Description: Lua language engine
+Version: $v
+Libs: -L\${libdir} -l:liblua5.4.a -lm -ldl
+Cflags: -I\${includedir}
+PC
+}
+pkg lua              b_lua
+pkg pipewire         mesonpkg -Dsession-managers=[] -Dexamples=disabled -Dtests=disabled \
+                         -Dinstalled_tests=disabled -Dman=disabled -Ddocs=disabled -Dgstreamer=disabled \
+                         -Dgstreamer-device-provider=disabled -Dlibsystemd=disabled -Dlogind=enabled \
+                         -Dlogind-provider=libelogind -Dsystemd-system-service=disabled \
+                         -Dsystemd-user-service=disabled -Dselinux=disabled -Dpipewire-alsa=enabled \
+                         -Dpipewire-jack=disabled -Djack=disabled -Djack-devel=false -Dpipewire-v4l2=disabled \
+                         -Dalsa=enabled -Dbluez5=enabled -Dbluez5-backend-native-mm=disabled \
+                         -Dbluez5-backend-ofono=disabled -Dbluez5-backend-hsphfpd=disabled \
+                         -Dbluez5-codec-aptx=disabled -Dbluez5-codec-ldac=disabled -Dbluez5-codec-aac=disabled \
+                         -Dbluez5-codec-lc3plus=disabled -Dbluez5-codec-opus=disabled -Dbluez5-codec-lc3=disabled \
+                         -Dbluez5-codec-g722=disabled -Dbluez5-plc-spandsp=disabled -Dv4l2=enabled \
+                         -Dlibcamera=disabled -Dffmpeg=disabled -Dpw-cat-ffmpeg=disabled -Dvulkan=disabled \
+                         -Dsdl2=disabled -Dsndfile=enabled -Dlibmysofa=disabled -Dlibpulse=disabled \
+                         -Droc=disabled -Davahi=disabled -Decho-cancel-webrtc=disabled -Dlibusb=disabled \
+                         -Draop=disabled -Dlv2=disabled -Dx11=disabled -Dx11-xfixes=disabled \
+                         -Dlibcanberra=disabled -Dlegacy-rtkit=false -Davb=disabled -Dflatpak=disabled \
+                         -Dreadline=disabled -Dgsettings=disabled -Dcompress-offload=disabled -Dopus=disabled \
+                         -Dlibffado=disabled -Dgsettings-pulse-schema=disabled -Dsnap=disabled -Debur128=disabled \
+                         -Dfftw=disabled -Donnxruntime=disabled -Dudev=enabled -Dudevrulesdir=/usr/lib/udev/rules.d \
+                         -Devl=disabled -Dtest=disabled -Dvideotestsrc=disabled -Daudiotestsrc=disabled \
+                         -Dpam-defaults-install=false -Drlimits-install=false
+pkg wireplumber      mesonpkg -Dsystem-lua=true -Dsystem-lua-version=5.4 -Dintrospection=disabled \
+                         -Ddoc=disabled -Delogind=enabled -Dsystemd=disabled -Dsystemd-system-service=false \
+                         -Dsystemd-user-service=false -Dtests=false -Ddbus-tests=false
+
 # ModemManager (mobile broadband), for ModemManagerQt; AT-command modems only
 # (no MBIM/QMI libraries yet).
 pkg ModemManager     mesonpkg -Dmbim=false -Dqmi=false -Dqrtr=false -Dpolkit=no -Dintrospection=false \
@@ -457,7 +540,7 @@ for kf in kconfig kcoreaddons ki18n kwidgetsaddons kguiaddons kitemmodels kitemv
           knotifications kiconthemes kjobwidgets kservice kpackage kxmlgui kbookmarks \
           kwallet ktextwidgets kio kded kdeclarative ksvg kcmutils knewstuff kparts kpty kdesu \
           kstatusnotifieritem krunner knotifyconfig frameworkintegration qqc2-desktop-style \
-          networkmanager-qt modemmanager-qt kuserfeedback prison kimageformats ktexteditor kirigami-addons; do
+          networkmanager-qt modemmanager-qt bluez-qt kuserfeedback prison kimageformats ktexteditor kirigami-addons; do
     case "$kf" in
         # Only the KWallet client library: the wallet daemons need GPGME and
         # libgcrypt, and there is nothing to keep in a wallet here.
@@ -617,7 +700,7 @@ for p in kdecoration layer-shell-qt kwayland plasma-activities plasma-activities
          kactivitymanagerd libplasma plasma5support kglobalacceld knighttime libkscreen \
          libksysguard kscreenlocker breeze kwin aurorae plasma-integration plasma-workspace milou \
          plasma-desktop systemsettings kscreen powerdevil plasma-nm kde-cli-tools \
-         qqc2-breeze-style ocean-sound-theme; do
+         qqc2-breeze-style ocean-sound-theme pulseaudio-qt plasma-pa bluedevil; do
     case "$p" in
         breeze)             pkg breeze kfpkg -DBUILD_QT5=OFF -DBUILD_QT6=ON ;;
         aurorae)            pkg aurorae b_aurorae \
@@ -625,6 +708,7 @@ for p in kdecoration layer-shell-qt kwayland plasma-activities plasma-activities
         plasma-nm)          pkg plasma-nm kfpkg -DBUILD_OPENCONNECT=OFF ;;
         # No KDocTools: no handbooks.
         kde-cli-tools)      pkg kde-cli-tools kfpkg -DBUILD_DOC=OFF ;;
+        plasma-pa)          pkg plasma-pa kfpkg -DBUILD_DOC=OFF ;;
         plasma-integration) pkg plasma-integration kfpkg -DBUILD_QT5=OFF -DBUILD_QT6=ON ;;
         # Wayland session only (X11 apps still run, through Xwayland); locales
         # come with glibc, nothing to generate.
@@ -784,8 +868,6 @@ pkg gdk-pixbuf       b_gdk_pixbuf -Dpng=enabled -Djpeg=enabled -Dtiff=disabled -
 pkg at-spi2-core     mesonpkg -Dintrospection=disabled -Ddocs=false -Duse_systemd=false -Dx11=enabled \
                          -Ddbus_daemon=/usr/bin/dbus-daemon -Ddbus_services_dir=/usr/share/dbus-1/services \
                          -Dsystemd_user_dir=/usr/lib/systemd/user -Dgtk2_atk_adaptor=false
-# libxul links libasound; its configuration goes to /usr/share/alsa.
-pkg alsa-lib         autotools --disable-python --without-debug
 pkg gtk3             b_gtk3 -Dx11_backend=true -Dwayland_backend=true -Dbroadway_backend=false \
                          -Dintrospection=false -Dgtk_doc=false -Dman=false -Dtests=false -Dinstalled_tests=false \
                          -Dexamples=false -Ddemos=false -Dcolord=no -Dcloudproviders=false -Dtracker3=false \

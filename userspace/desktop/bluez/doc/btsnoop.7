@@ -1,0 +1,413 @@
+'\" t
+.\" Man page generated from reStructuredText
+.\" by the Docutils 0.22.4 manpage writer.
+.
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.TH "btsnoop" "7" "February 2026" "BlueZ" "Linux System Administration"
+.SH Name
+btsnoop \- BTSnoop/Monitor protocol documentation
+.SH SYNOPSIS
+.sp
+This document describes the BTSnoop/Monitor formats used to record and
+transport HCI/PHY traffic. The formats are used by tools such as btmon and the
+BlueZ btsnoop implementation.
+.SH DESCRIPTION
+.SS Opcode definitions
+.sp
+The following opcodes are used by the BTSnoop/Monitor formats. The numeric
+values match the definitions in \fBsrc/shared/btsnoop.h\fP\&.
+.SS BTSnoop opcodes
+.TS
+box center;
+l|l|l|l.
+T{
+Name
+T}	T{
+Code (dec)
+T}	T{
+Code (hex)
+T}	T{
+Meaning
+T}
+_
+T{
+BTSNOOP_OPCODE_NEW_INDEX
+T}	T{
+0
+T}	T{
+0x0000
+T}	T{
+New controller index (parameters: type, bus, bdaddr, name)
+T}
+_
+T{
+BTSNOOP_OPCODE_DEL_INDEX
+T}	T{
+1
+T}	T{
+0x0001
+T}	T{
+Deleted controller index
+T}
+_
+T{
+BTSNOOP_OPCODE_COMMAND_PKT
+T}	T{
+2
+T}	T{
+0x0002
+T}	T{
+HCI Command packet
+T}
+_
+T{
+BTSNOOP_OPCODE_EVENT_PKT
+T}	T{
+3
+T}	T{
+0x0003
+T}	T{
+HCI Event packet
+T}
+_
+T{
+BTSNOOP_OPCODE_ACL_TX_PKT
+T}	T{
+4
+T}	T{
+0x0004
+T}	T{
+Outgoing ACL packet
+T}
+_
+T{
+BTSNOOP_OPCODE_ACL_RX_PKT
+T}	T{
+5
+T}	T{
+0x0005
+T}	T{
+Incoming ACL packet
+T}
+_
+T{
+BTSNOOP_OPCODE_SCO_TX_PKT
+T}	T{
+6
+T}	T{
+0x0006
+T}	T{
+Outgoing SCO packet
+T}
+_
+T{
+BTSNOOP_OPCODE_SCO_RX_PKT
+T}	T{
+7
+T}	T{
+0x0007
+T}	T{
+Incoming SCO packet
+T}
+_
+T{
+BTSNOOP_OPCODE_OPEN_INDEX
+T}	T{
+8
+T}	T{
+0x0008
+T}	T{
+HCI transport for the specified controller opened
+T}
+_
+T{
+BTSNOOP_OPCODE_CLOSE_INDEX
+T}	T{
+9
+T}	T{
+0x0009
+T}	T{
+HCI transport for the specified controller closed
+T}
+_
+T{
+BTSNOOP_OPCODE_INDEX_INFO
+T}	T{
+10
+T}	T{
+0x000a
+T}	T{
+Index information (parameters: bdaddr, manufacturer)
+T}
+_
+T{
+BTSNOOP_OPCODE_VENDOR_DIAG
+T}	T{
+11
+T}	T{
+0x000b
+T}	T{
+Vendor diagnostic information
+T}
+_
+T{
+BTSNOOP_OPCODE_SYSTEM_NOTE
+T}	T{
+12
+T}	T{
+0x000c
+T}	T{
+System note
+T}
+_
+T{
+BTSNOOP_OPCODE_USER_LOGGING
+T}	T{
+13
+T}	T{
+0x000d
+T}	T{
+User logging (parameters: priority, ident_len, ident)
+T}
+_
+T{
+BTSNOOP_OPCODE_CTRL_OPEN
+T}	T{
+14
+T}	T{
+0x000e
+T}	T{
+Control channel opened
+T}
+_
+T{
+BTSNOOP_OPCODE_CTRL_CLOSE
+T}	T{
+15
+T}	T{
+0x000f
+T}	T{
+Control channel closed
+T}
+_
+T{
+BTSNOOP_OPCODE_CTRL_COMMAND
+T}	T{
+16
+T}	T{
+0x0010
+T}	T{
+Control command packet
+T}
+_
+T{
+BTSNOOP_OPCODE_CTRL_EVENT
+T}	T{
+17
+T}	T{
+0x0011
+T}	T{
+Control event packet
+T}
+_
+T{
+BTSNOOP_OPCODE_ISO_TX_PKT
+T}	T{
+18
+T}	T{
+0x0012
+T}	T{
+Outgoing ISO packet
+T}
+_
+T{
+BTSNOOP_OPCODE_ISO_RX_PKT
+T}	T{
+19
+T}	T{
+0x0013
+T}	T{
+Incoming ISO packet
+T}
+.TE
+.SS New Index
+.sp
+Code: 0x0000
+.sp
+Parameters:
+.INDENT 0.0
+.IP \(bu 2
+Type (1 octet)
+.IP \(bu 2
+Bus (1 octet)
+.IP \(bu 2
+BD_Addr (6 octets)
+.IP \(bu 2
+Name (8 octets)
+.UNINDENT
+.sp
+This opcode indicates that a new controller instance with a given index was
+added. With some transports (for example a single TTY device) the index is
+implicitly 0.
+.SS Deleted Index
+.sp
+Code: 0x0001
+.sp
+Indicates that the controller with a specific index was removed.
+.SS TTY\-based protocol
+.sp
+The TTY protocol used by btmon with the \fB\-\-tty\fP option is a little\-endian
+packet format. Each packet uses this header:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+struct tty_hdr {
+    uint16_t data_len;
+    uint16_t opcode;
+    uint8_t  flags;
+    uint8_t  hdr_len;
+    uint8_t  ext_hdr[0];
+} __attribute__ ((packed));
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+The payload starts at \fBext_hdr + hdr_len\fP and has length
+\fBdata_len \- 4 \- hdr_len\fP\&.
+.SS Extended header format
+.sp
+Each extension field is encoded as:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+struct {
+    uint8_t type;
+    uint8_t value[length];
+};
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Defined types:
+.SS Extended header types
+.TS
+box center;
+l|l|l.
+T{
+Type
+T}	T{
+Length
+T}	T{
+Meaning
+T}
+_
+T{
+1
+T}	T{
+1 byte
+T}	T{
+Command drops (dropped HCI command packets)
+T}
+_
+T{
+2
+T}	T{
+1 byte
+T}	T{
+Event drops (dropped HCI event packets)
+T}
+_
+T{
+3
+T}	T{
+1 byte
+T}	T{
+ACL TX drops
+T}
+_
+T{
+4
+T}	T{
+1 byte
+T}	T{
+ACL RX drops
+T}
+_
+T{
+5
+T}	T{
+1 byte
+T}	T{
+SCO TX drops
+T}
+_
+T{
+6
+T}	T{
+1 byte
+T}	T{
+SCO RX drops
+T}
+_
+T{
+7
+T}	T{
+1 byte
+T}	T{
+Other drops
+T}
+_
+T{
+8
+T}	T{
+4 bytes
+T}	T{
+32\-bit timestamp (1/10th ms)
+T}
+.TE
+.sp
+The drops fields contain the number of packets the implementation had to drop
+since the last reported drop count. Extension fields must be sorted by
+increasing \fBtype\fP so unknown types can be skipped and the payload location
+discovered.
+.SH RESOURCES
+.sp
+\%<http://\:www\:.bluez\:.org>
+.SH REPORTING BUGS
+.sp
+\%<linux-bluetooth@\:vger\:.kernel\:.org>
+.SH SEE ALSO
+.sp
+btmon(1)
+.SH Copyright
+Free use of this software is granted under the terms of the GNU
+Lesser General Public Licenses (LGPL).
+.\" End of generated man page.

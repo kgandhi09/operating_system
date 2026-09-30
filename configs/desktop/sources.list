@@ -151,6 +151,8 @@ knotifyconfig  6.30.0  https://download.kde.org/stable/frameworks/6.30/knotifyco
 frameworkintegration  6.30.0  https://download.kde.org/stable/frameworks/6.30/frameworkintegration-{v}.tar.xz  817c49b2f6abbfe624e32f9a21ffcac7edf6e0486a0883050a1441e2fef3c932
 qqc2-desktop-style  6.30.0  https://download.kde.org/stable/frameworks/6.30/qqc2-desktop-style-{v}.tar.xz  74c6402fa697a76254e1c68ebd86136be49e03fad86482e86a27e5478f662c41
 networkmanager-qt  6.30.0  https://download.kde.org/stable/frameworks/6.30/networkmanager-qt-{v}.tar.xz  f6ba5f54d413ea0b2642207a6ebd0803e7cb8392b91fcf8a1679fd0c21062865
+# Bluetooth for KDE (bluedevil's library).
+bluez-qt  6.30.0  https://download.kde.org/stable/frameworks/6.30/bluez-qt-{v}.tar.xz  f5045b14a6c689bbfded9437582f943dd4f8f74537085ab6115bcacdea2110d8
 modemmanager-qt  6.30.0  https://download.kde.org/stable/frameworks/6.30/modemmanager-qt-{v}.tar.xz  d7c4106dc130729fdfd435abaeaf85039a874fc18563a41755e14f7ea174ae21
 kdesu  6.30.0  https://download.kde.org/stable/frameworks/6.30/kdesu-{v}.tar.xz  9bf244884b09ce38ad84d00e5879e798b02e1610ec8f3d9ee6c93e7502b356e2
 kuserfeedback  6.30.0  https://download.kde.org/stable/frameworks/6.30/kuserfeedback-{v}.tar.xz  c8a463c8e570f6d532cbe150732220575c6385df97c91399b6c84450691771ca
@@ -191,6 +193,10 @@ qqc2-breeze-style  6.7.5  https://download.kde.org/stable/plasma/{v}/qqc2-breeze
 ocean-sound-theme  6.7.5  https://download.kde.org/stable/plasma/{v}/ocean-sound-theme-{v}.tar.xz  452e5ab04f5e2d7cbf9357e4e12badf8493aefda437ba130eb38c9e511313b72
 plasma-pa  6.7.5  https://download.kde.org/stable/plasma/{v}/plasma-pa-{v}.tar.xz  4fe28579693858cdaf34d5b7e25b441d3e653058ff18579c8596eb8a57221a25
 kpipewire  6.7.5  https://download.kde.org/stable/plasma/{v}/kpipewire-{v}.tar.xz  20af39d9450d495468c56a50930810d82137f7ccd3a710592e02b6f620758f55
+# The volume and Bluetooth applets and settings pages (plasma-pa's PulseAudio
+# library for Qt; PipeWire answers its PulseAudio calls).
+pulseaudio-qt  1.9.0  https://download.kde.org/stable/pulseaudio-qt/pulseaudio-qt-{v}.tar.xz  c2aace3ac1a9c8c9b9c57ba0ffc99a3d310737cc004db0491802e03536e27c69
+bluedevil  6.7.5  https://download.kde.org/stable/plasma/{v}/bluedevil-{v}.tar.xz  1f6c0b01327b4b5e2ddcf11fd8e4b3e66ba492c9c66c61a95d4ddfd258850d5f
 xdg-desktop-portal-kde  6.7.5  https://download.kde.org/stable/plasma/{v}/xdg-desktop-portal-kde-{v}.tar.xz  5ebedc3dcf508e85f2f7bbddffa2cca6805650ffe1dce350c4a1dfc5d2f07c50
 # Plasma's other dependencies
 lm-sensors  3.6.2  git+https://github.com/hramrach/lm-sensors.git#V3-6-2  5c3ba50f806dea27c3b1e368966191c735459111
@@ -241,6 +247,22 @@ at-spi2-core  2.62.0.1  https://download.gnome.org/sources/at-spi2-core/2.62/at-
 # is here); pin from the tarball, whose signature checked out against the
 # ALSA release key (F04D F507 37AC 1A88 4C4B  3D71 8380 596D A6E5 9C91).
 alsa-lib  1.2.16.1  https://www.alsa-project.org/files/pub/lib/alsa-lib-{v}.tar.bz2  f740db7f488255944ffd4428416ee3390a96742856916433df468c281436480e
+# ---- Sound and Bluetooth: PipeWire (with its PulseAudio server) and
+# WirePlumber, ALSA's per-card configurations (UCM: which the Intel SOF
+# sound of recent laptops needs), BlueZ and the SBC codec for Bluetooth
+# audio, PulseAudio's client library (plasma-pa) and libsndfile, which it
+# links; ALSA's tools (aplay, amixer, speaker-test). Lua goes into
+# WirePlumber's build (its scripting language).
+alsa-ucm-conf  1.2.16.1  https://www.alsa-project.org/files/pub/lib/alsa-ucm-conf-{v}.tar.bz2  cf3d1c07e089a83c4ece2c20f05dd6a8aab7fcd108768c38811386880575492b
+alsa-topology-conf  1.2.5.1  https://www.alsa-project.org/files/pub/lib/alsa-topology-conf-{v}.tar.bz2  f7c5bae1545abcd73824bc97f4e72c340e11abea188ba0f1c06f5e0ad776b179
+alsa-utils  1.2.16  https://www.alsa-project.org/files/pub/utils/alsa-utils-{v}.tar.bz2  092399d5e8749a1d5e188e393157521cec4b75693b60ebb79bbce728cff2232c
+libsndfile  1.2.2  https://github.com/libsndfile/libsndfile/releases/download/{v}/libsndfile-{v}.tar.xz  3799ca9924d3125038880367bf1468e53a1b7e3686a934f098b7e1d286cdb80e
+pulseaudio  17.0  https://www.freedesktop.org/software/pulseaudio/releases/pulseaudio-{v}.tar.xz  053794d6671a3e397d849e478a80b82a63cb9d8ca296bd35b73317bb5ceb87b5
+sbc  2.2  https://www.kernel.org/pub/linux/bluetooth/sbc-{v}.tar.xz  a1ada76ef35e5af9c2fbd063754dc9e37a8d989417c6eb1ecebb089b1383ae9e
+bluez  5.87  https://www.kernel.org/pub/linux/bluetooth/bluez-{v}.tar.xz  26bdcf2cebd7310c6f598850606b037ef0c515fe6608ebc54d22c50c4c32b35f
+lua  5.4.9  https://www.lua.org/ftp/lua-{v}.tar.gz  2335b6c582a52654f94612bf10d2f4672805d05329aa6568b1d8cd9e5c6fb8e6
+pipewire  1.6.9  git+https://gitlab.freedesktop.org/pipewire/pipewire.git#{v}  8fa27cabdc6c0c1350c69c026af5850ef0af1e26
+wireplumber  0.5.18  git+https://gitlab.freedesktop.org/pipewire/wireplumber.git#{v}  81606cbb32d29df20147d1b68b662c1082654d81
 gtk3  3.24.52  https://download.gnome.org/sources/gtk/3.24/gtk-{v}.tar.xz  80931fa472a77b9a164f6740e3c0b444fac6770054632d35a7ff9d679e5e7b9f
 firefox-x86_64  156.0.1  https://archive.mozilla.org/pub/firefox/releases/{v}/linux-x86_64/en-US/firefox-{v}.tar.xz  7405c0487fa3e517c1e20e5aec0ed14014185dad6357d99a59b53f65acb10ed6
 firefox-aarch64  156.0.1  https://archive.mozilla.org/pub/firefox/releases/{v}/linux-aarch64/en-US/firefox-{v}.tar.xz  ab705ced251327e99e71493ca55698c9b7c07c5eb219ff2bfd3fe497a6b0f78c
