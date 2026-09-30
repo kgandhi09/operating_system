@@ -1,0 +1,25 @@
+# jk_os's Plasma style (scripts/make-theme.py): Breeze for everything it
+# doesn't draw itself.
+[Settings]
+FallbackTheme=default
+
+[Wallpaper]
+defaultWallpaperTheme=jk_os
+defaultFileSuffix=.png
+defaultWidth=1920
+defaultHeight=1080
+
+# Panels turn opaque while a window is maximized.
+[AdaptiveTransparency]
+enabled=true
+
+[BlurBehindEffect]
+enabled=true
+
+# What shows through the glass: a little more contrast and colour, as
+# macOS's vibrancy does.
+[ContrastEffect]
+enabled=true
+contrast=0.35
+intensity=1.3
+saturation=1.8

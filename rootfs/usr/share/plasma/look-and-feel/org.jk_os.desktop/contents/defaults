@@ -2,13 +2,13 @@
 widgetStyle=Breeze
 
 [kdeglobals][General]
-ColorScheme=BreezeLight
+ColorScheme=JkOsLight
 
 [kdeglobals][Icons]
 Theme=breeze
 
 [plasmarc][Theme]
-name=default
+name=jk_os
 
 [Wallpaper]
 Image=jk_os
@@ -17,8 +17,8 @@ Image=jk_os
 cursorTheme=breeze_cursors
 
 [kwinrc][org.kde.kdecoration2]
-library=org.kde.breeze
-theme=Breeze
+library=org.kde.kwin.aurorae.v2
+theme=__aurorae__svg__jk_os-light
 
 [ksplashrc][KSplash]
 Theme=org.jk_os.desktop

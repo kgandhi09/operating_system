@@ -6,11 +6,11 @@
                 "Name": "J.K. Robotics Pvt. Ltd."
             }
         ],
-        "Description": "jk_os: Breeze with the J.K. Robotics wallpaper and splash screen",
+        "Description": "jk_os, light: a menu bar and a floating dock in glass, title bars with the buttons on the left, the J.K. Robotics wallpaper",
         "Id": "org.jk_os.desktop",
         "License": "GPLv2+",
-        "Name": "jk_os"
+        "Name": "jk_os Light"
     },
-    "Keywords": "Desktop;Workspace;Appearance;Look and Feel;jk_os;J.K. Robotics;",
+    "Keywords": "Desktop;Workspace;Appearance;Look and Feel;jk_os;J.K. Robotics;Light;",
     "X-Plasma-APIVersion": "2"
 }

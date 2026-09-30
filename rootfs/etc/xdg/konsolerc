@@ -1,0 +1,3 @@
+# New Konsole windows use jk_os's glass profile (/usr/share/konsole).
+[Desktop Entry]
+DefaultProfile=JK Glass.profile

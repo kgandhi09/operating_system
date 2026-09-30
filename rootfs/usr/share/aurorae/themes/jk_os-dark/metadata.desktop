@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=jk_os Dark
+Comment=jk_os's title bars (dark): buttons on the left, a translucent bar
+X-KDE-PluginInfo-Author=J.K. Robotics Pvt. Ltd.
+X-KDE-PluginInfo-Name=jk_os-dark
+X-KDE-PluginInfo-Version=1.0
+X-KDE-PluginInfo-License=GPLv2+
+X-KDE-PluginInfo-EnabledByDefault=true
+X-Plasma-API=javascript
+X-KDE-ServiceTypes=KWin/Decoration

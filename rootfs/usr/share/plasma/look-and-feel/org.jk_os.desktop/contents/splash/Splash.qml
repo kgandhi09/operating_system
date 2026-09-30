@@ -1,7 +1,9 @@
 /*
-    jk_os's splash screen, shown while Plasma starts: the J.K. Robotics logo
-    on the wallpaper's light background. Based on Breeze's (Marco Martin,
-    GPL-2.0-or-later); ksplashqml advances `stage` as startup progresses.
+    jk_os's splash screen, shown while Plasma starts: the J.K. Robotics
+    wallpaper (logo and name), so the desktop fades in on the same picture.
+    Based on Breeze's (Marco Martin, GPL-2.0-or-later); ksplashqml advances
+    `stage` as startup progresses. The dark Global Theme's splash is this file
+    with the dark wallpaper.
 */
 
 import QtQuick
@@ -10,12 +12,11 @@ import org.kde.plasma.components as PlasmaComponents3
 
 Rectangle {
     id: root
-    gradient: Gradient {
-        GradientStop { position: 0.0; color: "#f6f8f7" }
-        GradientStop { position: 1.0; color: "#e2e8e5" }
-    }
+    color: "#e4ece9"
 
     property int stage
+    readonly property string wallpaper: "file:///usr/share/wallpapers/jk_os/contents/images/3840x2160.jpg"
+    readonly property color footerColor: "#4d5358"
 
     onStageChanged: {
         if (stage == 2) {
@@ -28,32 +29,23 @@ Rectangle {
         }
     }
 
+    Image {
+        anchors.fill: parent
+        source: root.wallpaper
+        fillMode: Image.PreserveAspectCrop
+        asynchronous: false
+        smooth: true
+    }
+
     Item {
         id: content
         anchors.fill: parent
         opacity: 0
 
-        Image {
-            id: logo
-            readonly property real size: Kirigami.Units.gridUnit * 14
-
-            anchors.centerIn: parent
-            anchors.verticalCenterOffset: -Kirigami.Units.gridUnit
-
-            asynchronous: true
-            source: "file:///usr/share/jk_os/logo.png"
-            fillMode: Image.PreserveAspectFit
-            smooth: true
-            mipmap: true
-
-            width: size
-            height: size
-        }
-
         PlasmaComponents3.BusyIndicator {
             id: busyIndicator
-            // in the middle of the space below the logo
-            y: parent.height - (parent.height - logo.y - logo.height) / 2 - height / 2
+            // below the logo and name, which sit a little above the middle
+            y: parent.height * 0.74 - height / 2
             anchors.horizontalCenter: parent.horizontalCenter
             implicitWidth: Kirigami.Units.gridUnit * 2
             implicitHeight: Kirigami.Units.gridUnit * 2
@@ -66,7 +58,7 @@ Rectangle {
                 right: parent.right
                 margins: Kirigami.Units.gridUnit
             }
-            color: "#4d5358"
+            color: root.footerColor
             text: "jk_os · J.K. Robotics Pvt. Ltd."
             textFormat: Text.PlainText
             Accessible.name: text

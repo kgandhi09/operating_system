@@ -1,0 +1,16 @@
+{
+    "KPackageStructure": "Plasma/LookAndFeel",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "J.K. Robotics Pvt. Ltd."
+            }
+        ],
+        "Description": "jk_os, dark: a menu bar and a floating dock in glass, title bars with the buttons on the left, the J.K. Robotics wallpaper",
+        "Id": "org.jk_os.desktop.dark",
+        "License": "GPLv2+",
+        "Name": "jk_os Dark"
+    },
+    "Keywords": "Desktop;Workspace;Appearance;Look and Feel;jk_os;J.K. Robotics;Dark;",
+    "X-Plasma-APIVersion": "2"
+}

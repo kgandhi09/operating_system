@@ -1,0 +1,4 @@
+# Menus of applications (Breeze style) in glass: translucent, KWin blurs
+# what is behind them.
+[Style]
+MenuOpacity=78

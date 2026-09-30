@@ -35,8 +35,26 @@ OUT = ROOT / "rootfs/usr/share"
 
 GREEN = np.array([62, 178, 74], float)
 DARK = np.array([68, 69, 69], float)
-LIGHT_BG = ((246, 248, 247), (226, 232, 229))    # wallpaper, top -> bottom
+LIGHT_BG = ((246, 248, 247), (226, 232, 229))    # plain backgrounds, top -> bottom
 DARK_BG = ((35, 38, 41), (20, 22, 24))
+# The wallpaper: soft glows of colour, kept away from the logo, on a gradient
+# (what shows through the desktop's glass panels). Each glow: centre (x, y,
+# as fractions of the width and height), radius (fraction of the width),
+# colour, strength.
+AURORA_LIGHT = dict(base=((236, 243, 240), (221, 231, 238)), glows=[
+    (0.10, 0.18, 0.42, (150, 226, 176), 0.85),     # mint, top left
+    (0.92, 0.10, 0.40, (150, 200, 250), 0.80),     # sky, top right
+    (0.86, 0.92, 0.46, (205, 190, 250), 0.70),     # lilac, bottom right
+    (0.14, 0.95, 0.40, (252, 214, 180), 0.60),     # peach, bottom left
+    (0.55, 1.10, 0.30, (160, 230, 220), 0.45),     # aqua, bottom
+])
+AURORA_DARK = dict(base=((12, 16, 24), (6, 8, 13)), glows=[
+    (0.08, 0.90, 0.50, (34, 150, 70), 0.75),       # the logo's green, bottom left
+    (0.95, 0.12, 0.45, (18, 104, 140), 0.70),      # teal, top right
+    (0.80, 0.98, 0.42, (70, 48, 150), 0.65),       # indigo, bottom right
+    (0.10, 0.05, 0.38, (24, 56, 120), 0.60),       # deep blue, top left
+    (0.50, -0.15, 0.30, (40, 120, 110), 0.35),     # a green-blue glow above
+])
 
 
 def color_to_alpha(img):
@@ -115,10 +133,24 @@ def gradient(size, top, bottom):
     return Image.fromarray(np.repeat(col[:, None, :], w, axis=1).round().astype(np.uint8), "RGB")
 
 
-def compose(size, logo, bg, height=0.34):
-    """The logo centred (slightly above the middle) on a vertical gradient."""
+def aurora(size, spec, seed=7):
+    """Glows of colour over a gradient, with a little noise against banding."""
     w, h = size
-    img = gradient(size, *bg).convert("RGBA")
+    base = np.asarray(gradient(size, *spec["base"]), float)
+    yy, xx = np.mgrid[0:h, 0:w]
+    for cx, cy, r, colour, a in spec["glows"]:
+        d2 = ((xx - cx * w) ** 2 + (yy - cy * h) ** 2) / (r * w) ** 2
+        k = (a * np.exp(-2.2 * d2))[..., None]
+        base = base * (1 - k) + np.array(colour, float) * k
+    base += np.random.default_rng(seed).uniform(-1.2, 1.2, base.shape)
+    return Image.fromarray(base.round().clip(0, 255).astype(np.uint8), "RGB")
+
+
+def compose(size, logo, bg, height=0.34):
+    """The logo centred (slightly above the middle) on a vertical gradient,
+    or on glows (bg: an AURORA_* spec)."""
+    w, h = size
+    img = (aurora(size, bg) if isinstance(bg, dict) else gradient(size, *bg)).convert("RGBA")
     lh = round(min(h * height, w * height * 0.9))
     lw = round(logo.width * lh / logo.height)
     lg = logo.resize((lw, lh), Image.LANCZOS)
@@ -216,20 +248,33 @@ def main():
 
     named = trim(color_to_alpha(full_name_logo()), 12)
     named_dark = invert_lightness(named)
+    # JPEG: the glows' fine noise (against banding) doesn't compress as PNG.
     wp = OUT / "wallpapers/jk_os/contents"
     for w, h in ((1920, 1080), (2560, 1440), (3840, 2160), (1080, 1920)):
-        save(compose((w, h), named, LIGHT_BG), wp / f"images/{w}x{h}.png")
-        save(compose((w, h), named_dark, DARK_BG), wp / f"images_dark/{w}x{h}.png")
-    save(compose((400, 250), named, LIGHT_BG), wp / "screenshot.png")
+        save(compose((w, h), named, AURORA_LIGHT), wp / f"images/{w}x{h}.jpg", quality=93)
+        save(compose((w, h), named_dark, AURORA_DARK), wp / f"images_dark/{w}x{h}.jpg", quality=93)
+    save(compose((400, 250), named, AURORA_LIGHT), wp / "screenshot.png")
 
-    pv = OUT / "plasma/look-and-feel/org.jk_os.desktop/contents/previews"
-    full = compose((1920, 1080), named, LIGHT_BG)
-    save(full, pv / "fullscreenpreview.jpg", quality=90)
-    prev = full.resize((600, 337), Image.LANCZOS).convert("RGBA")
-    ImageDraw.Draw(prev).rectangle([0, 337 - 16, 600, 337], fill=(239, 240, 241, 255))
-    prev.alpha_composite(render_mark(12), (6, 337 - 14))
-    save(prev, pv / "preview.png")
-    save(compose((300, 169), logo, LIGHT_BG, height=0.42), pv / "splash.png")
+    # The Global Themes' previews (light and dark): the wallpaper, a menu bar
+    # along the top and a dock at the bottom, in glass.
+    for package, img_logo, spec, glass, text in (
+            ("org.jk_os.desktop", named, AURORA_LIGHT, (245, 245, 248, 150), (29, 29, 31, 255)),
+            ("org.jk_os.desktop.dark", named_dark, AURORA_DARK, (40, 40, 44, 150), (242, 242, 247, 255))):
+        pv = OUT / f"plasma/look-and-feel/{package}/contents/previews"
+        full = compose((1920, 1080), img_logo, spec)
+        save(full, pv / "fullscreenpreview.jpg", quality=90)
+        prev = full.resize((600, 337), Image.LANCZOS).convert("RGBA")
+        layer = Image.new("RGBA", prev.size)
+        d = ImageDraw.Draw(layer)
+        d.rectangle([0, 0, 600, 11], fill=glass)
+        d.rounded_rectangle([222, 306, 378, 330], radius=7, fill=glass)
+        for i, c in enumerate(((66, 133, 244), (255, 149, 0), (40, 40, 44), (142, 142, 147), (62, 178, 74))):
+            d.rounded_rectangle([230 + i * 30, 310, 246 + i * 30, 326], radius=4, fill=c + (255,))
+        d.text((560, 0), "9:41", fill=text)
+        prev.alpha_composite(layer)
+        prev.alpha_composite(render_mark(10), (4, 1))
+        save(prev, pv / "preview.png")
+        save(compose((300, 169), img_logo, spec, height=0.42), pv / "splash.png")
 
 
 if __name__ == "__main__":

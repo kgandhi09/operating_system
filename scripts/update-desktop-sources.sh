@@ -7,12 +7,13 @@
 #   scripts/update-desktop-sources.sh <name>...  only these
 #
 # List lines: <name> <version> <url> <pin>
-#   <url>  with {v} for the version; "git+<repo url>#<tag>" fetches that tag
+#   <url>  with {v} for the version (a tarball or a .zip); "git+<repo url>#<tag>"
+#          fetches that tag
 #   <pin>  the tarball's SHA-256, or the tag's commit for git sources; "-"
 #          means not pinned yet: the first fetch records it in the list
 #          (check it against the project's published checksum or signature)
 source "$(dirname "$0")/common.sh"
-need curl tar sha256sum git
+need curl tar unzip sha256sum git
 
 LIST="$ROOT_DIR/configs/desktop/sources.list"
 DEST_ROOT="$ROOT_DIR/userspace/desktop"
@@ -48,7 +49,10 @@ fetch_one() {
         if [[ "$pin" == - ]]; then pin_entry "$name" "$sum"; warn "$name: pinned to sha256 $sum"
         elif [[ "$pin" != "$sum" ]]; then die "$name: sha256 $sum does not match the list's $pin"; fi
         mkdir "$work/x"
-        tar -xf "$file" -C "$work/x"
+        case "$file" in
+            *.zip) unzip -q "$file" -d "$work/x" ;;
+            *)     tar -xf "$file" -C "$work/x" ;;
+        esac
     fi
     local top=("$work/x"/*)
     # Archives of loose files (font releases) get a directory of their own.

@@ -43,7 +43,7 @@ network:
 toolchain: network
 	$(S)/build-toolchain.sh
 
-# The desktop (KDE Plasma), started on demand with jk-gui on tty2.
+# The desktop (KDE Plasma), started on demand with jk-gui.
 desktop: toolchain network
 	$(S)/build-desktop.sh
 

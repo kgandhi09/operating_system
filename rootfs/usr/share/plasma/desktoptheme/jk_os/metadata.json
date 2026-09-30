@@ -1,0 +1,16 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "J.K. Robotics Pvt. Ltd."
+            }
+        ],
+        "Description": "jk_os: Breeze, with glass panels, pop-ups and tooltips (follows the colour scheme)",
+        "EnabledByDefault": true,
+        "Id": "jk_os",
+        "License": "LGPL",
+        "Name": "jk_os",
+        "Version": "1.0"
+    },
+    "X-Plasma-API": "5.0"
+}

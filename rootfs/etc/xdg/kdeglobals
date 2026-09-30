@@ -1,5 +1,21 @@
-# jk_os's Global Theme (/usr/share/plasma/look-and-feel/org.jk_os.desktop):
-# Breeze, with the J.K. Robotics wallpaper and splash screen. startplasma
-# applies its defaults (~/.config/kdedefaults) at login.
+# jk_os's Global Themes (/usr/share/plasma/look-and-feel): jk_os Light
+# (org.jk_os.desktop) and jk_os Dark (org.jk_os.desktop.dark), made of the
+# jk_os colour schemes, Plasma style and title bars (scripts/make-theme.py).
+# startplasma applies the theme's defaults (~/.config/kdedefaults) at login.
+# The two are the pair System Settings (Global Theme, and Quick Settings'
+# light/dark switch) toggles between, or follows the time of day with.
 [KDE]
 LookAndFeelPackage=org.jk_os.desktop
+DefaultLightLookAndFeel=org.jk_os.desktop
+DefaultDarkLookAndFeel=org.jk_os.desktop.dark
+
+# Inter for the interface (semibold window titles), FiraCode for monospace.
+[General]
+font=Inter,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
+menuFont=Inter,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
+toolBarFont=Inter,9,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
+smallestReadableFont=Inter,8,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
+fixed=FiraCode Nerd Font Mono,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
+
+[WM]
+activeFont=Inter,10,-1,5,600,0,0,0,0,0,0,0,0,0,0,1

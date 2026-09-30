@@ -149,6 +149,14 @@ b_firacode() {
     install -m 0644 "$1"/FiraCodeNerdFontMono-{Regular,Bold}.ttf "$1/LICENSE" "$DYN/usr/share/fonts/firacode-nerd/"
 }
 
+# Inter, the desktop's font: the static weights the themes use (plain
+# files match more reliably than the variable font's named instances).
+b_inter() {
+    install -d "$DYN/usr/share/fonts/inter"
+    install -m 0644 "$1"/extras/ttf/Inter-{Regular,Italic,Medium,MediumItalic,SemiBold,SemiBoldItalic,Bold,BoldItalic}.ttf \
+        "$1/LICENSE.txt" "$DYN/usr/share/fonts/inter/"
+}
+
 # Mesa's GPU drivers: every laptop and desktop GPU family on x86_64; on
 # aarch64 the common ARM GPUs too. llvmpipe is the software fallback.
 case "$ARCH" in
@@ -228,6 +236,7 @@ pkg harfbuzz         mesonpkg -Dtests=disabled -Ddocs=disabled -Dfreetype=enable
 pkg fribidi          mesonpkg -Ddocs=false -Dtests=false
 pkg dejavu-fonts     b_dejavu
 pkg firacode-nerd-font b_firacode
+pkg inter            b_inter
 pkg vulkan-headers   cmakepkg
 pkg vulkan-loader    cmakepkg -DBUILD_WSI_XCB_SUPPORT=ON -DBUILD_WSI_XLIB_SUPPORT=ON \
                          -DBUILD_WSI_WAYLAND_SUPPORT=ON -DUPDATE_DEPS=OFF
@@ -588,17 +597,31 @@ b_plasma_desktop() {
     sed -i 's|"${CMAKE_SYSROOT}/${XKBDIR}"|"'"$DYN"'/${XKBDIR}"|' "$out/src/ConfigureChecks.cmake"
     PKG_CONFIG_FDO_SYSROOT_RULES=1 kfpkg "$out/src" "$out/build" "$@"
 }
+# Aurorae with jk_os's patches (configs/desktop/patches/aurorae: rounded
+# window corners and an outline for its themes), built from a copy; the
+# patches' checksum is part of the options.
+b_aurorae() {
+    local src="$1" out="$2"; shift 2
+    mkdir -p "$out/src"; copy_tree "$src" "$out/src"
+    local p
+    for p in "$ROOT_DIR"/configs/desktop/patches/aurorae/*.patch; do
+        patch -d "$out/src" -p1 --no-backup-if-mismatch < "$p"
+    done
+    kfpkg "$out/src" "$out/build" "${@:1:$#-1}"
+}
 b_no_users_kcm() {
     rm -f "$DYN/usr/lib/qt6/plugins/plasma/kcms/systemsettings/kcm_users.so" \
           "$DYN/usr/share/applications/kcm_users.desktop" "$DYN"/usr/share/locale/*/LC_MESSAGES/kcm_users.mo
 }
 for p in kdecoration layer-shell-qt kwayland plasma-activities plasma-activities-stats \
          kactivitymanagerd libplasma plasma5support kglobalacceld knighttime libkscreen \
-         libksysguard kscreenlocker breeze kwin plasma-integration plasma-workspace milou \
+         libksysguard kscreenlocker breeze kwin aurorae plasma-integration plasma-workspace milou \
          plasma-desktop systemsettings kscreen powerdevil plasma-nm kde-cli-tools \
          qqc2-breeze-style ocean-sound-theme; do
     case "$p" in
         breeze)             pkg breeze kfpkg -DBUILD_QT5=OFF -DBUILD_QT6=ON ;;
+        aurorae)            pkg aurorae b_aurorae \
+                                "patches=$(cat "$ROOT_DIR"/configs/desktop/patches/aurorae/*.patch | sha256sum | cut -c1-16)" ;;
         plasma-nm)          pkg plasma-nm kfpkg -DBUILD_OPENCONNECT=OFF ;;
         # No KDocTools: no handbooks.
         kde-cli-tools)      pkg kde-cli-tools kfpkg -DBUILD_DOC=OFF ;;

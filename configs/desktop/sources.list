@@ -62,6 +62,8 @@ dejavu-fonts  2.37  https://github.com/dejavu-fonts/dejavu-fonts/releases/downlo
 # FiraCode Nerd Font (the Mono variants): the dev session's terminal font,
 # with the icons Neovim plugins and shell prompts draw.
 firacode-nerd-font  3.5.1  https://github.com/ryanoasis/nerd-fonts/releases/download/v{v}/FiraCode.tar.xz  68e3bd6164864b8b514605bc34e3a87ac401c8c48682fcce6478c70263340207
+# Inter: the desktop's interface font (jk_os's Global Themes).
+inter  4.1  https://github.com/rsms/inter/releases/download/v{v}/Inter-{v}.zip  9883fdd4a49d4fb66bd8177ba6625ef9a64aa45899767dde3d36aa425756b11e
 vulkan-headers  1.4.357  git+https://github.com/KhronosGroup/Vulkan-Headers.git#vulkan-sdk-{v}.0  e3b1eec08173d6b825cd3ac88c885a63b621504a
 vulkan-loader  1.4.357  git+https://github.com/KhronosGroup/Vulkan-Loader.git#vulkan-sdk-{v}.0  5f157b62e333c63260d05d81bf66faa216ab0fb8
 # Mesa's Intel and Panfrost drivers precompile OpenCL kernels at build time,
@@ -173,6 +175,9 @@ knighttime  6.7.5  https://download.kde.org/stable/plasma/{v}/knighttime-{v}.tar
 kscreenlocker  6.7.5  https://download.kde.org/stable/plasma/{v}/kscreenlocker-{v}.tar.xz  6c41ce2cb79d2b85d4fbe5a3a61c09e40c70e5a869ae6f0352c7e1cb3b44606b
 kwin  6.7.5  https://download.kde.org/stable/plasma/{v}/kwin-{v}.tar.xz  6baa910b732d93c48c90f9c1cc685cc93d0b8de0cdf138c24192c045bc3a48e2
 breeze  6.7.5  https://download.kde.org/stable/plasma/{v}/breeze-{v}.tar.xz  aa05c0c31c852ed5b137327e7798fd763a54c643875d5d8070625475e0af6976
+# Aurorae: KWin's SVG window decorations (jk_os's title bars: buttons on the
+# left, a blurred translucent bar).
+aurorae  6.7.5  https://download.kde.org/stable/plasma/{v}/aurorae-{v}.tar.xz  7e4305d4e28698024fcd797554ccad84bfd4ed4e5bdcb0f42b5da77fab244416
 plasma-integration  6.7.5  https://download.kde.org/stable/plasma/{v}/plasma-integration-{v}.tar.xz  0786c49f2f357744e0f4cfda49f55284faa1a97da85a667ca6cf1d8ab07aff89
 plasma-workspace  6.7.5  https://download.kde.org/stable/plasma/{v}/plasma-workspace-{v}.tar.xz  94ab21e2243b7876f65c315f1e545081c6437f5bd0a041ca4fb6c2533ae874c9
 plasma-desktop  6.7.5  https://download.kde.org/stable/plasma/{v}/plasma-desktop-{v}.tar.xz  079fcf6b87d7bf65e3f2a4670d605fac9469344c279a285a98ad549332d7b53e

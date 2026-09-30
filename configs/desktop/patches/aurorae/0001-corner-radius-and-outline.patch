@@ -1,0 +1,172 @@
+jk_os: rounded window corners and a hairline outline for Aurorae (v2) themes.
+
+Two theme settings the C++ Aurorae didn't have: [Layout] CornerRadius, the
+radius KWin rounds the whole window with (the application's content too, as
+Breeze does without borders), and [General] ActiveOutlineColor /
+InactiveOutlineColor, a 1px outline KWin draws around the window. Both are
+off (0, transparent) for themes that don't set them, and when maximized.
+With rounded corners the shadow reaches into the corners, as Breeze's does.
+
+diff -ruN a/v2/decoration.cpp b/v2/decoration.cpp
+--- a/v2/decoration.cpp
++++ b/v2/decoration.cpp
+@@ -16,6 +16,7 @@
+ #include <KDecoration3/DecoratedWindow>
+ #include <KDecoration3/DecorationSettings>
+ #include <KDecoration3/DecorationShadow>
++#include <KDecoration3/ScaleHelpers>
+ #include <KPluginFactory>
+ #include <KSvg/FrameSvg>
+ 
+@@ -137,6 +138,7 @@
+     updateDecoration();
+     updateInnerBorder();
+     updateBlur();
++    updateCorners();
+ 
+     connect(window(), &KDecoration3::DecoratedWindow::activeChanged, this, &Decoration::onWindowActiveChanged);
+     connect(window(), &KDecoration3::DecoratedWindow::sizeChanged, this, &Decoration::onWindowSizeChanged);
+@@ -293,6 +295,7 @@
+ {
+     updateDecoration();
+     updateInnerBorder();
++    updateCorners();
+ }
+ 
+ void Decoration::onWindowSizeChanged()
+@@ -314,6 +317,7 @@
+     updateCaption();
+     updateDecoration();
+     updateBlur();
++    updateCorners();
+ }
+ 
+ void Decoration::onWindowCaptionChanged()
+@@ -514,13 +518,22 @@
+     painter.setPen(Qt::NoPen);
+     painter.setBrush(Qt::black);
+     painter.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+-    painter.drawRect(innerRect);
++    // jk_os: with rounded corners the shadow must reach into the window's
++    // rectangle, up to the rounded edge; KWin then draws the whole image
++    // (its inner rectangle is a point in the middle), as with Breeze.
++    const qreal radius = m_theme->cornerRadius();
++    if (radius > 0) {
++        painter.setRenderHint(QPainter::Antialiasing);
++        painter.drawRoundedRect(innerRect, radius, radius);
++    } else {
++        painter.drawRect(innerRect);
++    }
+     painter.end();
+ 
+     auto shadow = std::make_shared<KDecoration3::DecorationShadow>();
+     shadow->setShadow(image);
+     shadow->setPadding(m_theme->padding());
+-    shadow->setInnerShadowRect(innerRect);
++    shadow->setInnerShadowRect(radius > 0 ? QRectF(innerRect.center(), QSizeF(1, 1)) : innerRect);
+     setShadow(shadow);
+ 
+     m_shadow = shadow;
+@@ -542,6 +555,21 @@
+     }
+ }
+ 
++void Decoration::updateCorners()
++{
++    const bool maximized = window()->isMaximized();
++    const qreal radius = maximized ? 0 : m_theme->cornerRadius();
++    setBorderRadius(KDecoration3::BorderRadius(radius));
++
++    const QColor color = window()->isActive() ? m_theme->activeOutlineColor() : m_theme->inactiveOutlineColor();
++    if (maximized || color.alpha() == 0) {
++        setBorderOutline(KDecoration3::BorderOutline());
++    } else {
++        const qreal thickness = std::max(KDecoration3::pixelSize(window()->nextScale()), KDecoration3::snapToPixelGrid(1, window()->nextScale()));
++        setBorderOutline(KDecoration3::BorderOutline(thickness, color, KDecoration3::BorderRadius(radius)));
++    }
++}
++
+ void Decoration::setCurrentDecoration(KSvg::FrameSvg *decoration)
+ {
+     if (m_currentDecoration == decoration) {
+diff -ruN a/v2/decoration.h b/v2/decoration.h
+--- a/v2/decoration.h
++++ b/v2/decoration.h
+@@ -64,6 +64,7 @@
+     void updateInnerBorder();
+     void updateShadow();
+     void updateBlur();
++    void updateCorners();
+ 
+     void setCurrentDecoration(KSvg::FrameSvg *decoration);
+     void setCurrentInnerBorder(KSvg::FrameSvg *innerBorder);
+diff -ruN a/v2/decorationtheme.cpp b/v2/decorationtheme.cpp
+--- a/v2/decorationtheme.cpp
++++ b/v2/decorationtheme.cpp
+@@ -59,6 +59,10 @@
+ 
+     m_activeTextColor = general.readEntry("ActiveTextColor", QColor(Qt::black));
+     m_inactiveTextColor = general.readEntry("InactiveTextColor", QColor(Qt::black));
++    // jk_os: a hairline KWin draws around the whole window (title bar and
++    // content), none when transparent.
++    m_activeOutlineColor = general.readEntry("ActiveOutlineColor", QColor(Qt::transparent));
++    m_inactiveOutlineColor = general.readEntry("InactiveOutlineColor", m_activeOutlineColor);
+ 
+     QString alignment = (general.readEntry("TitleAlignment", "Left")).toLower();
+     if (alignment == QLatin1StringView("left")) {
+@@ -126,6 +130,9 @@
+     m_buttonMarginTopMaximized = std::round(scaleFactor * border.readEntry("ButtonMarginTopMaximized", 0));
+     m_explicitButtonSpacer = std::round(scaleFactor * border.readEntry("ExplicitButtonSpacer", 10));
+ 
++    // jk_os: the radius KWin rounds the window's corners with, the
++    // application's content included (0: square).
++    m_cornerRadius = border.readEntry("CornerRadius", 0.0);
+     m_paddingLeft = std::round(scaleFactor * border.readEntry("PaddingLeft", 0));
+     m_paddingRight = std::round(scaleFactor * border.readEntry("PaddingRight", 0));
+     m_paddingTop = std::round(scaleFactor * border.readEntry("PaddingTop", 0));
+@@ -250,6 +257,21 @@
+     }
+ }
+ 
++qreal DecorationTheme::cornerRadius() const
++{
++    return m_cornerRadius;
++}
++
++QColor DecorationTheme::activeOutlineColor() const
++{
++    return m_activeOutlineColor;
++}
++
++QColor DecorationTheme::inactiveOutlineColor() const
++{
++    return m_inactiveOutlineColor;
++}
++
+ QMarginsF DecorationTheme::padding() const
+ {
+     return QMarginsF(m_paddingLeft, m_paddingTop, m_paddingRight, m_paddingBottom);
+diff -ruN a/v2/decorationtheme.h b/v2/decorationtheme.h
+--- a/v2/decorationtheme.h
++++ b/v2/decorationtheme.h
+@@ -73,6 +73,9 @@
+     Qt::Alignment alignment() const;
+     Qt::Alignment verticalAlignment() const;
+     DecorationPosition decorationPosition() const;
++    qreal cornerRadius() const;
++    QColor activeOutlineColor() const;
++    QColor inactiveOutlineColor() const;
+ 
+ private:
+     explicit DecorationTheme(const QString &themeName);
+@@ -133,6 +136,10 @@
+     qreal m_buttonMarginTopMaximized;
+     qreal m_explicitButtonSpacer;
+ 
++    qreal m_cornerRadius;
++    QColor m_activeOutlineColor;
++    QColor m_inactiveOutlineColor;
++
+     qreal m_paddingLeft;
+     qreal m_paddingRight;
+     qreal m_paddingTop;

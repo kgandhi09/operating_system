@@ -1,0 +1,24 @@
+# jk_os's window manager defaults (the Global Themes pick the title bar
+# theme, light or dark: jk_os-light, jk_os-dark).
+
+# Title bars as on macOS: close, minimize, zoom on the left, nothing on the
+# right, no borders (the corners are rounded and outlined instead; windows
+# still resize from their edges).
+[org.kde.kdecoration2]
+ButtonsOnLeft=XIA
+ButtonsOnRight=
+BorderSize=None
+BorderSizeAuto=false
+
+# Glass: what shows through panels, pop-ups and title bars is blurred and
+# its colours deepened (Saturation, 100 = unchanged).
+[Effect-blur]
+BlurStrength=11
+NoiseStrength=2
+Saturation=175
+
+# Minimized windows pour into the dock (magic lamp) instead of shrinking.
+[Plugins]
+blurEnabled=true
+magiclampEnabled=true
+squashEnabled=false

@@ -3,3 +3,11 @@
 [Daemon]
 Autolock=false
 LockOnResume=false
+
+# The lock screen (locking by hand: Meta+L) shows the jk_os wallpaper.
+[Greeter]
+WallpaperPlugin=org.kde.image
+
+[Greeter][Wallpaper][org.kde.image][General]
+Image=/usr/share/wallpapers/jk_os/
+PreviewImage=/usr/share/wallpapers/jk_os/
