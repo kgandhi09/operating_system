@@ -312,6 +312,9 @@ is built in.
   on the NVIDIA GPU whenever its driver runs; `auto` only when a screen is
   connected to it at login (on most laptops the HDMI port), the built-in GPU
   otherwise (longer battery life); `builtin` always on the built-in GPU.
+  `JK_DEV_GPU` (same choices) is for the dev session; it defaults to `builtin`,
+  because cage can't show a picture drawn on the NVIDIA GPU on the laptop's
+  own screen (that screen freezes), while the other way round works.
 - `prime-run <program>` runs one program on the NVIDIA GPU.
 - `NVIDIA_DRIVER=nouveau` in `/etc/jk_os/gpu` uses nouveau instead.
 - Power: `sudo jk-power performance|balanced|quiet` sets the laptop firmware's
