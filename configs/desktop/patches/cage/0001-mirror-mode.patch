@@ -1,0 +1,215 @@
+cage: -m mirror, the same picture on every output (jk_os: the dev session on a laptop with an external screen).
+Every output sits at 0,0 of the layout, scaled so all are as wide as the narrowest; views fill the part every output shows.
+
+diff -ruN a/cage.c b/cage.c
+--- a/cage.c	2026-07-01 00:21:00.000000000 +0530
++++ b/cage.c	2026-09-30 14:14:24.010981381 +0530
+@@ -246,6 +246,7 @@
+ 		" -h\t Display this help message\n"
+ 		" -m extend Extend the display across all connected outputs (default)\n"
+ 		" -m last Use only the last connected output\n"
++		" -m mirror Show the same picture on every connected output\n"
+ 		" -s\t Allow VT switching\n"
+ 		" -v\t Show the version number and exit\n"
+ 		"\n"
+@@ -273,6 +274,8 @@
+ 				server->output_mode = CAGE_MULTI_OUTPUT_MODE_LAST;
+ 			} else if (strcmp(optarg, "extend") == 0) {
+ 				server->output_mode = CAGE_MULTI_OUTPUT_MODE_EXTEND;
++			} else if (strcmp(optarg, "mirror") == 0) {
++				server->output_mode = CAGE_MULTI_OUTPUT_MODE_MIRROR;
+ 			}
+ 			break;
+ 		case 's':
+diff -ruN a/output.c b/output.c
+--- a/output.c	2026-07-01 00:21:00.000000000 +0530
++++ b/output.c	2026-09-30 14:47:54.231854329 +0530
+@@ -96,6 +96,85 @@
+ 	wlr_output_layout_remove(output->server->output_layout, output->wlr_output);
+ }
+ 
++/* Mirror mode: every output at 0,0 of the layout, each scaled so that all
++ * are as wide (in layout coordinates) as the narrowest one; views then fill
++ * the part all of them show (server_usable_box). */
++static void
++mirror_update(struct cg_server *server)
++{
++	/* Changing scales and positions changes the layout, which calls this
++	 * again (handle_output_layout_change). */
++	static bool updating = false;
++	if (server->output_mode != CAGE_MULTI_OUTPUT_MODE_MIRROR || updating) {
++		return;
++	}
++	updating = true;
++	int min_width = 0;
++	struct cg_output *output;
++	wl_list_for_each (output, &server->outputs, link) {
++		struct wlr_output *o = output->wlr_output;
++		if (o->enabled && o->width > 0 && (min_width == 0 || o->width < min_width)) {
++			min_width = o->width;
++		}
++	}
++	if (min_width == 0) {
++		updating = false;
++		return;
++	}
++	wl_list_for_each (output, &server->outputs, link) {
++		struct wlr_output *o = output->wlr_output;
++		if (!o->enabled || o->width <= 0) {
++			continue;
++		}
++		float scale = (float)o->width / (float)min_width;
++		if (scale < 1.0f) {
++			scale = 1.0f;
++		}
++		if (o->scale != scale) {
++			struct wlr_output_state state = {0};
++			wlr_output_state_set_scale(&state, scale);
++			wlr_output_commit_state(o, &state);
++			wlr_output_state_finish(&state);
++			wlr_xcursor_manager_load(server->seat->xcursor_manager, scale);
++		}
++		if (output->scene_output) {
++			output_layout_add(output, 0, 0);
++		}
++		wlr_log(WLR_DEBUG, "Mirroring on output %s (%dx%d, scale %.2f)", o->name, o->width, o->height,
++			o->scale);
++	}
++	updating = false;
++}
++
++void
++server_usable_box(struct cg_server *server, struct wlr_box *box)
++{
++	wlr_output_layout_get_box(server->output_layout, NULL, box);
++	if (server->output_mode != CAGE_MULTI_OUTPUT_MODE_MIRROR) {
++		return;
++	}
++	bool first = true;
++	struct cg_output *output;
++	wl_list_for_each (output, &server->outputs, link) {
++		struct wlr_box ob;
++		wlr_output_layout_get_box(server->output_layout, output->wlr_output, &ob);
++		if (wlr_box_empty(&ob)) {
++			continue;
++		}
++		if (first) {
++			*box = ob;
++			first = false;
++		} else {
++			if (ob.width < box->width) {
++				box->width = ob.width;
++			}
++			if (ob.height < box->height) {
++				box->height = ob.height;
++			}
++		}
++	}
++}
++
+ static void
+ output_enable(struct cg_output *output)
+ {
+@@ -110,8 +189,13 @@
+ 	wlr_output_state_set_enabled(&state, true);
+ 
+ 	if (wlr_output_commit_state(wlr_output, &state)) {
+-		output_layout_add_auto(output);
++		if (output->server->output_mode == CAGE_MULTI_OUTPUT_MODE_MIRROR) {
++			output_layout_add(output, 0, 0);
++		} else {
++			output_layout_add_auto(output);
++		}
+ 	}
++	mirror_update(output->server);
+ 
+ 	update_output_manager_config(output->server);
+ }
+@@ -161,6 +245,10 @@
+ 	if (event->state->committed & OUTPUT_CONFIG_UPDATED) {
+ 		update_output_manager_config(output->server);
+ 	}
++	/* A new mode (and size) on one output changes every mirror's scale. */
++	if ((event->state->committed & WLR_OUTPUT_STATE_MODE) && output->wlr_output->enabled) {
++		mirror_update(output->server);
++	}
+ }
+ 
+ static void
+@@ -179,6 +267,7 @@
+ {
+ 	struct cg_server *server = wl_container_of(listener, server, output_layout_change);
+ 
++	mirror_update(server);
+ 	view_position_all(server);
+ 	update_output_manager_config(server);
+ }
+@@ -313,8 +402,13 @@
+ 
+ 	wlr_log(WLR_DEBUG, "Enabling new output %s", wlr_output->name);
+ 	if (wlr_output_commit_state(wlr_output, &state)) {
+-		output_layout_add_auto(output);
++		if (server->output_mode == CAGE_MULTI_OUTPUT_MODE_MIRROR) {
++			output_layout_add(output, 0, 0);
++		} else {
++			output_layout_add_auto(output);
++		}
+ 	}
++	mirror_update(server);
+ 
+ 	view_position_all(output->server);
+ 	update_output_manager_config(output->server);
+diff -ruN a/seat.c b/seat.c
+--- a/seat.c	2026-07-01 00:21:00.000000000 +0530
++++ b/seat.c	2026-09-30 14:14:24.014364903 +0530
+@@ -978,6 +978,6 @@
+ {
+ 	/* Place the cursor in the center of the output layout. */
+ 	struct wlr_box layout_box;
+-	wlr_output_layout_get_box(seat->server->output_layout, NULL, &layout_box);
++	server_usable_box(seat->server, &layout_box);
+ 	wlr_cursor_warp(seat->cursor, NULL, layout_box.width / 2, layout_box.height / 2);
+ }
+diff -ruN a/server.h b/server.h
+--- a/server.h	2026-07-01 00:21:00.000000000 +0530
++++ b/server.h	2026-09-30 14:14:24.010683195 +0530
+@@ -20,8 +20,15 @@
+ enum cg_multi_output_mode {
+ 	CAGE_MULTI_OUTPUT_MODE_EXTEND,
+ 	CAGE_MULTI_OUTPUT_MODE_LAST,
++	CAGE_MULTI_OUTPUT_MODE_MIRROR,
+ };
+ 
++struct wlr_box;
++struct cg_server;
++/* The area views are laid out in: the whole output layout, or in mirror mode
++ * the part every output shows. */
++void server_usable_box(struct cg_server *server, struct wlr_box *box);
++
+ struct cg_server {
+ 	struct wl_display *wl_display;
+ 	struct wl_list views;
+diff -ruN a/view.c b/view.c
+--- a/view.c	2026-07-01 00:21:00.000000000 +0530
++++ b/view.c	2026-09-30 14:14:24.014223261 +0530
+@@ -94,7 +94,7 @@
+ view_position(struct cg_view *view)
+ {
+ 	struct wlr_box layout_box;
+-	wlr_output_layout_get_box(view->server->output_layout, NULL, &layout_box);
++	server_usable_box(view->server, &layout_box);
+ 
+ 	if (view_is_primary(view) || view_extends_output_layout(view, &layout_box)) {
+ 		view_maximize(view, &layout_box);
+diff -ruN a/xdg_shell.c b/xdg_shell.c
+--- a/xdg_shell.c	2026-07-01 00:21:00.000000000 +0530
++++ b/xdg_shell.c	2026-09-30 14:14:24.014297042 +0530
+@@ -199,7 +199,7 @@
+ 	 * display in fullscreen mode, so we set it here.
+ 	 */
+ 	struct wlr_box layout_box;
+-	wlr_output_layout_get_box(xdg_shell_view->view.server->output_layout, NULL, &layout_box);
++	server_usable_box(xdg_shell_view->view.server, &layout_box);
+ 	wlr_xdg_toplevel_set_size(xdg_shell_view->xdg_toplevel, layout_box.width, layout_box.height);
+ 	wlr_xdg_toplevel_set_fullscreen(xdg_shell_view->xdg_toplevel, fullscreen);
+ }

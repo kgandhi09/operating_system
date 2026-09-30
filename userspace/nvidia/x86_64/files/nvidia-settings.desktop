@@ -1,0 +1,21 @@
+[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Name=NVIDIA X Server Settings
+Comment=Configure NVIDIA X Server Settings
+Exec=__UTILS_PATH__/nvidia-settings
+Icon=nvidia-settings
+Categories=Settings;HardwareSettings;
+
+# Translation by Marcin Mikołajczak
+Name[pl]=Ustawienia serwera X NVIDIA
+Comment[pl]=Narzędzie konfiguracyjne dla ustawień serwera X NVIDIA
+
+# Translation by RDL
+Name[ru]=Параметры NVIDIA X Server
+Comment[ru]=Конфигурирование параметров NVIDIA X Server
+
+# Translation by Tractix
+Name[ro]=Setări NVIDIA X Server
+Comment[ro]=Configurează setările NVIDIA X Server
+

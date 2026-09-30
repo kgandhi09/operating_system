@@ -1,0 +1,9 @@
+#!/bin/sh
+# The power mode chosen with jk-power (/etc/jk_os/power; default balanced):
+# firmware profile, CPU energy preference, NVIDIA persistence and Dynamic
+# Boost (nvidia-powerd, which needs the D-Bus system bus, S15dbus).
+
+case "$1" in
+    start) /usr/sbin/jk-power --boot ;;
+    stop)  killall nvidia-powerd 2>/dev/null ;;
+esac

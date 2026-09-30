@@ -1,5 +1,5 @@
 #!/bin/sh
-# The dev session on tty1, run by jk-session as the user, inside the elogind
+# The dev session on a text console, run by jk-session as the user, inside the elogind
 # session it opened for this console: one terminal (foot), full screen in
 # the kiosk compositor cage (jk-dev starts it). Leaving the terminal ends the
 # session, back to the shell jk-dev was run from. Its
@@ -9,6 +9,10 @@
 # for example:
 #   JK_DEV_COMMAND=herdr     run this in the terminal first (then your shell)
 #   XKB_DEFAULT_LAYOUT=de    keyboard layout (also XKB_DEFAULT_VARIANT, _OPTIONS)
+#   JK_DEV_AUTOSTART=no      don't start it on login (run jk-dev instead)
+#   JK_DEV_OUTPUTS=extend    with an external screen: mirror (default: the
+#                            same terminal on every screen), extend (one
+#                            terminal across them) or last (the newest only)
 # The terminal itself: ~/.config/foot/foot.ini (jk_os's defaults are in
 # /etc/xdg/foot/foot.ini).
 
@@ -35,10 +39,15 @@ state="${XDG_STATE_HOME:-$HOME/.local/state}"
 mkdir -p "$state"
 [ -f "$state/jk-dev.log" ] && mv -f "$state/jk-dev.log" "$state/jk-dev.log.old"
 
-# cage: -s lets Ctrl+Alt+F2/F3 switch consoles, -d keeps foot undecorated.
+# cage: -s lets Ctrl+Alt+F2/F3 switch consoles, -d keeps foot undecorated,
+# -m how several screens are used (mirror: jk_os's patch to cage).
+case "${JK_DEV_OUTPUTS:-mirror}" in
+    extend|last|mirror) outputs=${JK_DEV_OUTPUTS:-mirror} ;;
+    *) outputs=mirror ;;
+esac
 if [ -n "${JK_DEV_COMMAND:-}" ]; then
     set -- foot -- /bin/sh -lc "$JK_DEV_COMMAND; exec \"\${SHELL:-/bin/sh}\" -l"
 else
     set -- foot
 fi
-exec dbus-run-session cage -s -d -- "$@" > "$state/jk-dev.log" 2>&1
+exec dbus-run-session cage -s -d -m "$outputs" -- "$@" > "$state/jk-dev.log" 2>&1

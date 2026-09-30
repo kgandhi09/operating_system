@@ -86,6 +86,14 @@ while read -r file mode type rest; do
             install -D -m 0644 "$F/$file" "$NV_OUT/etc/OpenCL/vendors/$base" ;;
         APPLICATION_PROFILE)
             install -D -m 0644 "$F/$file" "$NV_OUT/usr/share/nvidia/$base" ;;
+        DOT_DESKTOP)   # the installer fills these in
+            install -d "$NV_OUT/usr/share/applications"
+            sed -e 's|__UTILS_PATH__|/usr/bin|g' -e 's|__PIXMAP_PATH__/nvidia-settings.png|nvidia-settings|g' \
+                "$F/$file" > "$NV_OUT/usr/share/applications/$base" ;;
+        ICON)
+            install -D -m 0644 "$F/$file" "$NV_OUT/usr/share/icons/hicolor/$sub$base" ;;
+        DBUS_POLICY)
+            install -D -m 0644 "$F/$file" "$NV_OUT/usr/share/dbus-1/system.d/$base" ;;
         *) die "manifest: don't know where $type ($file) goes" ;;
     esac
 done < "$NV_SRC/manifest"

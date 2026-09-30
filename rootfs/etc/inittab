@@ -5,11 +5,10 @@
 
 # Login prompts on three text consoles and on whichever serial console
 # exists (PC UART, ARM PL011, or a hypervisor console):
-#   tty1 (Ctrl+Alt+F1)  the dev console: log in and run jk-dev for the dev
-#                       session, a full-screen terminal
-#   tty2 (Ctrl+Alt+F2)  the desktop: log in and run jk-gui; logging out of
-#                       it returns to the shell on tty2
-#   tty3 (Ctrl+Alt+F3)  a plain text console
+#   tty1-tty3 (Ctrl+Alt+F1-F3)  logging in starts the dev session there, a
+#                       full-screen terminal (jk-dev, from /etc/profile);
+#                       leaving it comes back to the shell, where jk-gui
+#                       starts the desktop (on tty2)
 # tty4-tty6 stay off.
 ::respawn:/sbin/jk-getty tty1
 ::respawn:/sbin/jk-getty tty2

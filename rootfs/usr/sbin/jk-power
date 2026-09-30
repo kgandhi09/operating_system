@@ -1,0 +1,99 @@
+#!/bin/sh
+# jk-power: the machine's power mode, for the CPU, the NVIDIA GPU and the
+# laptop's firmware (fans, power limits), kept across reboots.
+#
+#   jk-power                 show the mode and what it set
+#   sudo jk-power performance | balanced | quiet
+#
+#   performance  the firmware's performance profile (ASUS: "Turbo"/
+#                "Performance"; higher power limits, faster fans), CPUs
+#                favouring speed (intel_pstate EPP "performance"), the NVIDIA
+#                GPU kept initialised (persistence mode) with Dynamic Boost
+#                (nvidia-powerd) moving power from the CPU to the GPU
+#   balanced     (default) the firmware's balanced profile, EPP
+#                "balance_performance", Dynamic Boost on
+#   quiet        the firmware's quiet profile (low power, quiet fans), EPP
+#                "power", Dynamic Boost off
+#
+# The mode is kept in /etc/jk_os/power; /etc/init.d/S41power applies it at
+# boot. On AC power only, the NVIDIA driver lets Dynamic Boost raise the GPU's
+# power limit (RTX 4050 laptop: 35 W up to 65 W).
+
+CONF=/etc/jk_os/power
+name=${0##*/}
+die() { echo "$name: $*" >&2; exit 1; }
+
+current() {
+    MODE=balanced
+    [ -f "$CONF" ] && . "$CONF"
+    echo "$MODE"
+}
+
+# profile_for <mode>: the firmware profile name among the ones offered.
+profile_for() {
+    choices=$(cat /sys/firmware/acpi/platform_profile_choices 2>/dev/null)
+    case "$1" in
+        performance) want="performance balanced-performance" ;;
+        balanced)    want="balanced" ;;
+        quiet)       want="quiet low-power cool" ;;
+    esac
+    for w in $want; do
+        case " $choices " in *" $w "*) echo "$w"; return ;; esac
+    done
+}
+
+apply() {
+    mode=$1
+    p=$(profile_for "$mode")
+    if [ -n "$p" ]; then
+        echo "$p" > /sys/firmware/acpi/platform_profile 2>/dev/null
+    fi
+    case "$mode" in
+        performance) epp=performance ;;
+        balanced)    epp=balance_performance ;;
+        quiet)       epp=power ;;
+    esac
+    for f in /sys/devices/system/cpu/cpu[0-9]*/cpufreq/energy_performance_preference; do
+        [ -f "$f" ] && echo "$epp" > "$f" 2>/dev/null
+    done
+    if [ -d /sys/module/nvidia ] && command -v nvidia-smi >/dev/null; then
+        if [ "$mode" = performance ]; then
+            nvidia-smi -pm 1 >/dev/null 2>&1
+        else
+            nvidia-smi -pm 0 >/dev/null 2>&1
+        fi
+        if [ "$mode" = quiet ]; then
+            killall nvidia-powerd 2>/dev/null
+        elif [ -x /usr/bin/nvidia-powerd ] && ! pidof nvidia-powerd >/dev/null; then
+            start-stop-daemon -S -b -q -x /usr/bin/nvidia-powerd
+        fi
+    fi
+}
+
+show() {
+    echo "Power mode: $(current)"
+    [ -f /sys/firmware/acpi/platform_profile ] &&
+        echo "  firmware profile: $(cat /sys/firmware/acpi/platform_profile) (of: $(cat /sys/firmware/acpi/platform_profile_choices))"
+    f=/sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference
+    [ -f "$f" ] && echo "  CPU energy preference: $(cat "$f")"
+    if [ -d /sys/module/nvidia ] && command -v nvidia-smi >/dev/null; then
+        nvidia-smi --query-gpu=name,persistence_mode,pstate,power.limit,power.max_limit,clocks.gr,clocks.max.gr \
+            --format=csv,noheader 2>/dev/null | while IFS=, read -r n pm ps pl pmax cg cgmax; do
+            echo "  GPU:$n, persistence$pm, state$ps, power limit$pl (max$pmax), clock$cg (max$cgmax)"
+        done
+        echo "  Dynamic Boost (nvidia-powerd): $(pidof nvidia-powerd >/dev/null && echo running || echo off)"
+    fi
+}
+
+case "${1:-}" in
+    "") show ;;
+    --boot) apply "$(current)" ;;
+    performance|balanced|quiet)
+        [ "$(id -u)" = 0 ] || exec sudo "$0" "$1"
+        mkdir -p "${CONF%/*}"
+        echo "MODE=$1" > "$CONF"
+        apply "$1"
+        show ;;
+    -h|--help) sed -n '2,24p' "$0" | sed 's/^# \{0,1\}//' ;;
+    *) die "usage: $name [performance|balanced|quiet]" ;;
+esac

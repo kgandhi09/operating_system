@@ -1,23 +1,17 @@
 #!/bin/sh
-# jk-dev: start the dev session on tty1: one full-screen terminal (foot in
-# the cage compositor), for Neovim, herdr and the like.
+# jk-dev: start the dev session on this console: one full-screen terminal
+# (foot in the cage compositor), for Neovim, herdr and the like.
 #
-# Log in on tty1 (Ctrl+Alt+F1) and run jk-dev; leaving the terminal (exit)
-# comes back to the shell there. tty2 is for the desktop (jk-gui), tty3 is
-# a plain text console. Settings: see /usr/lib/jk_os/jk-dev-session.
+# Logging in on a text console (tty1, tty2, tty3) starts it by itself
+# (/etc/profile; JK_DEV_AUTOSTART=no in ~/.config/jk_os/dev-session turns
+# that off). Leaving the terminal (exit) comes back to the shell there, where
+# jk-dev starts it again, or jk-gui starts the desktop (on tty2). Each console
+# has its own session. Settings: see /usr/lib/jk_os/jk-dev-session.
 
 case "$(tty)" in
-    /dev/tty1) ;;
-    /dev/tty[0-9]*)
-        # Take the user there (the keys may not reach this machine, e.g. a VM
-        # window on a desktop that keeps Ctrl+Alt+F1 for itself).
-        echo "jk-dev: the dev session runs on tty1; switching there: log in and run jk-dev" >&2
-        echo "        (to switch yourself: Alt+F1 on a text console, Ctrl+Alt+F1 in the desktop)" >&2
-        sleep 2
-        chvt 1 2>/dev/null
-        exit 1 ;;
+    /dev/tty[0-9]*) ;;
     *)
-        echo "jk-dev: run this on the tty1 console (Ctrl+Alt+F1), not over a serial line or SSH" >&2
+        echo "jk-dev: run this on a text console (tty1-tty3: Ctrl+Alt+F1-F3), not in a terminal, over a serial line or SSH" >&2
         exit 1 ;;
 esac
 if [ ! -x /usr/bin/cage ] || [ ! -x /usr/bin/foot ]; then
@@ -26,10 +20,6 @@ if [ ! -x /usr/bin/cage ] || [ ! -x /usr/bin/foot ]; then
 fi
 if [ "$(id -u)" = 0 ]; then
     echo "jk-dev: log in as a regular user to start the dev session" >&2
-    exit 1
-fi
-if pidof cage >/dev/null 2>&1; then
-    echo "jk-dev: the dev session is already running (Ctrl+Alt+F1)" >&2
     exit 1
 fi
 /usr/lib/jk_os/jk-session dev

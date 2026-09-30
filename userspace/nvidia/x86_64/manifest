@@ -29,6 +29,8 @@ libnvidia-nvvm.so 0000 CUDA_SYMLINK NATIVE / libnvidia-nvvm.so.4 MODULE:compiler
 libnvidia-nvvm70.so.4 0755 CUDA_LIB NATIVE / MODULE:compiler
 libnvidia-gpucomp.so.595.104.02 0755 UTILITY_LIB NATIVE / MODULE:nvgpucomp
 libnvidia-api.so.1 0755 UTILITY_LIB NATIVE / MODULE:nvapi
+nvidia-powerd 0755 UTILITY_BINARY MODULE:nvtopps
+nvidia-dbus.conf 0444 DBUS_POLICY NVIDIA_GLX-1.0/ MODULE:nvtopps
 libnvidia-glcore.so.595.104.02 0755 OPENGL_LIB NATIVE MODULE:opengl
 libnvidia-tls.so.595.104.02 0755 TLS_LIB NATIVE / MODULE:opengl
 nvidia_icd.json 0644 VULKAN_ICD_JSON icd.d/ MODULE:opengl
@@ -58,6 +60,14 @@ libnvidia-egl-xcb.so.1.0.5 0755 OPENGL_LIB NATIVE MODULE:egl
 20_nvidia_xcb.json 0644 EGL_EXTERNAL_PLATFORM_JSON MODULE:egl
 libnvidia-egl-wayland2.so.1.0.1 0755 OPENGL_LIB NATIVE MODULE:egl
 09_nvidia_wayland2.json 0644 EGL_EXTERNAL_PLATFORM_JSON MODULE:egl
+nvidia-settings.png 0444 ICON 128x128/apps/ MODULE:xutils
+nvidia-settings.desktop 0444 DOT_DESKTOP NVIDIA_GLX-1.0/ MODULE:xutils
+nvidia-settings 0755 UTILITY_BINARY MODULE:xutils
+libnvidia-gtk3.so.595.104.02 0755 UTILITY_LIB NATIVE MODULE:xutils
+libnvidia-wayland-client.so.595.104.02 0755 UTILITY_LIB NATIVE MODULE:xutils
+libnvidia-cfg.so.595.104.02 0755 UTILITY_LIB NATIVE MODULE:xutils
+libnvidia-cfg.so.1 0000 UTILITY_LIB_SYMLINK NATIVE libnvidia-cfg.so.595.104.02 MODULE:xutils
+libnvidia-cfg.so 0000 UTILITY_LIB_SYMLINK NATIVE libnvidia-cfg.so.1 MODULE:xutils
 libvdpau_nvidia.so.595.104.02 0755 VDPAU_LIB NATIVE vdpau/ MODULE:vdpau
 libvdpau_nvidia.so.1 0000 VDPAU_SYMLINK NATIVE vdpau/ libvdpau_nvidia.so.595.104.02 MODULE:vdpau
 libvdpau_nvidia.so 0000 VDPAU_SYMLINK NATIVE / vdpau/libvdpau_nvidia.so.595.104.02 MODULE:vdpau

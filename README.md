@@ -265,15 +265,21 @@ new image adds are merged into your `/etc/passwd` at boot.
 
 | Console | Keys | After logging in |
 |---|---|---|
-| tty1 | Ctrl+Alt+F1 | a shell; `jk-dev` starts **the dev session**: one full-screen terminal ([foot](https://codeberg.org/dnkl/foot)) in the kiosk compositor [cage](https://github.com/cage-kiosk/cage), for Neovim, herdr and the like. Leaving the terminal (`exit`) comes back to the shell |
-| tty2 | Ctrl+Alt+F2 | a shell; `jk-gui` starts the desktop (KDE Plasma), and logging out of it comes back here |
-| tty3 | Ctrl+Alt+F3 | a plain text console |
+| tty1, tty2, tty3 | Ctrl+Alt+F1, F2, F3 | **the dev session**, started by itself: one full-screen terminal ([foot](https://codeberg.org/dnkl/foot)) in the kiosk compositor [cage](https://github.com/cage-kiosk/cage), for Neovim, herdr and the like, one per console. Leaving the terminal (`exit`) comes back to the shell, where `jk-dev` starts it again |
+| tty2 | Ctrl+Alt+F2 | also the desktop: leave the dev session, then `jk-gui` starts KDE Plasma; logging out of it comes back to the shell |
 | ttyS0, ... | serial line | a plain text console |
 
 Ctrl+Alt+F1/F2/F3 switch between them, from the dev session and the desktop too.
+With an external screen, the dev session shows the same terminal on the laptop's
+screen and on it (mirror: every screen is scaled to the narrowest one's width,
+and the terminal fills the part all of them show). KDE on tty2 extends the
+desktop across the screens by default; Meta+P, or System Settings → Display
+Configuration, switches it to mirroring.
 The dev session runs on the GPU like the desktop does (jk-session opens an elogind
-session for it). It runs as a regular user, not root; if it can't start, the
-reason is in `~/.local/state/jk-dev.log`.
+session for it). It runs as a regular user, not root (root gets a plain
+shell); if it can't start, the shell stays and the reason is in
+`~/.local/state/jk-dev.log`. `JK_DEV_AUTOSTART=no` in
+`~/.config/jk_os/dev-session` keeps the plain shell on login.
 
 Settings:
 
@@ -285,6 +291,8 @@ Settings:
 
   ```sh
   JK_DEV_COMMAND=herdr        # run this in the terminal first, then the shell
+  JK_DEV_AUTOSTART=no         # don't start the dev session on login
+  JK_DEV_OUTPUTS=extend       # external screen: mirror (default), extend or last
   XKB_DEFAULT_LAYOUT=de       # keyboard layout (XKB_DEFAULT_VARIANT, XKB_DEFAULT_OPTIONS)
   ```
 
@@ -306,6 +314,13 @@ is built in.
   otherwise (longer battery life); `builtin` always on the built-in GPU.
 - `prime-run <program>` runs one program on the NVIDIA GPU.
 - `NVIDIA_DRIVER=nouveau` in `/etc/jk_os/gpu` uses nouveau instead.
+- Power: `sudo jk-power performance|balanced|quiet` sets the laptop firmware's
+  profile (fans, power limits), the CPUs' energy preference, NVIDIA persistence
+  mode and Dynamic Boost (`nvidia-powerd`: on AC power the GPU gets power the
+  CPU doesn't use); `jk-power` shows the current state. Kept in
+  `/etc/jk_os/power`, applied at boot. `nvidia-settings` is there for looking
+  at the GPU (clocks, temperatures, PowerMizer levels); on Wayland it can't
+  change settings, `jk-power` and `nvidia-smi` do that.
 - CUDA programs run as they are. The CUDA toolkit (`nvcc`, cuBLAS, cuFFT, ...,
   about 6 GB) is installed on demand: `sudo jk-cuda install` (the newest
   release the driver runs; `--minimal` for the compiler and runtime only,

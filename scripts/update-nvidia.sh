@@ -14,10 +14,12 @@
 #                    and the libraries and tools: OpenGL/EGL/GLES (through
 #                    GLVND), Vulkan (with ray tracing, OptiX), GBM (KWin,
 #                    cage), EGL on Wayland and GBM, CUDA and OpenCL,
-#                    NVENC/NVDEC, VDPAU, NVML and nvidia-smi
+#                    NVENC/NVDEC, VDPAU, NVML and nvidia-smi, nvidia-settings,
+#                    nvidia-powerd (Dynamic Boost: more power for the GPU
+#                    on laptops)
 #   manifest         what goes where (read by build-nvidia.sh)
 # Left out: 32-bit libraries, GLVND (jk_os builds its own), the X.org
-# driver and nvidia-settings, the installer, and the closed kernel modules.
+# driver and nvidia-xconfig, the installer, and the closed kernel modules.
 source "$(dirname "$0")/common.sh"
 need curl sha256sum
 
@@ -53,12 +55,15 @@ sh "$tmp/$run" --extract-only --target "$tmp/x" >/dev/null
 # Types kept; everything else (COMPAT32, XMODULE_*, installer, ...) is left out.
 # GLVND's own libraries (libEGL, libGL, libGLX, libGLES*, libOpenGL,
 # libGLdispatch) are left out: jk_os builds libglvnd itself.
-keep_types='^(OPENGL_LIB|OPENGL_SYMLINK|GLVND_EGL_ICD_JSON|EGL_EXTERNAL_PLATFORM_JSON|VULKAN_ICD_JSON|GBM_BACKEND_LIB_SYMLINK|TLS_LIB|UTILITY_LIB|UTILITY_LIB_SYMLINK|UTILITY_BINARY|CUDA_LIB|CUDA_SYMLINK|OPENCL_LIB|OPENCL_LIB_SYMLINK|OPENCL_WRAPPER_LIB|OPENCL_WRAPPER_SYMLINK|CUDA_ICD|NVCUVID_LIB|NVCUVID_LIB_SYMLINK|ENCODEAPI_LIB|ENCODEAPI_LIB_SYMLINK|VDPAU_LIB|VDPAU_SYMLINK|FIRMWARE|APPLICATION_PROFILE)$'
-# Parts for X.org, the installer, systemd, Vulkan SC and the Windows-style
-# services (nvidia-powerd, NGX updater), by the package's MODULE: tag.
-drop_modules='MODULE:(installer|xutils|nvlibpkcs11|vulkansc|nvtopps|pcc)$'
-tail -n +9 "$tmp/x/.manifest" | awk -v keep="$keep_types" -v drop="$drop_modules" '
-    $3 ~ keep && $0 !~ / COMPAT32 / && $NF !~ drop && $1 != "nvidia-ngx-updater" { print }' > "$tmp/manifest"
+keep_types='^(DOT_DESKTOP|ICON|OPENGL_LIB|OPENGL_SYMLINK|GLVND_EGL_ICD_JSON|EGL_EXTERNAL_PLATFORM_JSON|VULKAN_ICD_JSON|GBM_BACKEND_LIB_SYMLINK|TLS_LIB|UTILITY_LIB|UTILITY_LIB_SYMLINK|UTILITY_BINARY|CUDA_LIB|CUDA_SYMLINK|OPENCL_LIB|OPENCL_LIB_SYMLINK|OPENCL_WRAPPER_LIB|OPENCL_WRAPPER_SYMLINK|CUDA_ICD|NVCUVID_LIB|NVCUVID_LIB_SYMLINK|ENCODEAPI_LIB|ENCODEAPI_LIB_SYMLINK|VDPAU_LIB|VDPAU_SYMLINK|FIRMWARE|APPLICATION_PROFILE)$'
+# Parts for the installer, systemd, Vulkan SC and PCC, by the package's
+# MODULE: tag; from the X.org tools only nvidia-settings (GTK 3) is kept.
+# nvidia-powerd (Dynamic Boost) keeps its D-Bus policy (as DBUS_POLICY).
+drop_modules='MODULE:(installer|nvlibpkcs11|vulkansc|pcc)$'
+drop_files='^(nvidia-ngx-updater|nvidia-xconfig|nvidia-xconfig\.1\.gz|libnvidia-gtk2\.so\..*)$'
+tail -n +9 "$tmp/x/.manifest" | awk -v keep="$keep_types" -v drop="$drop_modules" -v dropf="$drop_files" '
+    $1 == "nvidia-dbus.conf" { $3 = "DBUS_POLICY"; print; next }
+    $3 ~ keep && $0 !~ / COMPAT32 / && $NF !~ drop && $1 !~ dropf { print }' > "$tmp/manifest"
 [[ -s "$tmp/manifest" ]] || die "nothing to keep from the manifest"
 
 rm -rf "$DEST.new"; mkdir -p "$DEST.new/files"

@@ -635,7 +635,19 @@ b_wlroots() {
 pkg wlroots          b_wlroots -Dxwayland=disabled -Dexamples=false -Dbackends=drm,libinput \
                          -Drenderers=gles2 -Dallocators=gbm -Dsession=enabled -Dxcb-errors=disabled \
                          -Dlibliftoff=disabled
-pkg cage             mesonpkg -Dman-pages=disabled
+# cage with jk_os's patches (configs/desktop/patches/cage: -m mirror), built
+# from a copy; the patches' checksum is part of the options.
+b_cage() {
+    local src="$1" out="$2"; shift 2
+    mkdir -p "$out/src"; copy_tree "$src" "$out/src"
+    local p
+    for p in "$ROOT_DIR"/configs/desktop/patches/cage/*.patch; do
+        patch -d "$out/src" -p1 --no-backup-if-mismatch < "$p"
+    done
+    mesonpkg "$out/src" "$out/build" "${@:1:$#-1}"
+}
+pkg cage             b_cage -Dman-pages=disabled \
+                         "patches=$(cat "$ROOT_DIR"/configs/desktop/patches/cage/*.patch | sha256sum | cut -c1-16)"
 pkg tllist           mesonpkg
 pkg fcft             mesonpkg -Ddocs=disabled -Dexamples=false -Dgrapheme-shaping=enabled \
                          -Drun-shaping=disabled -Dsvg-backend=nanosvg
