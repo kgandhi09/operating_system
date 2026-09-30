@@ -35,10 +35,13 @@ rescue() {
 }
 
 # find_labels: set $live and $data to the devices labeled JK_OS / JK_DATA.
+# The label alone is not enough for the medium: GRUB's hybrid ISO also carries
+# an HFS+ partition (for Macs) named JK_OS, so on a USB stick sdX3 matches
+# too. Only the ISO 9660 filesystem (the whole stick, or the CD) will do.
 find_labels() {
     labels=$(blkid 2>/dev/null)
-    live=$(echo "$labels" | sed -n 's/^\([^:]*\):.* LABEL="JK_OS".*/\1/p' | head -n1)
-    data=$(echo "$labels" | sed -n 's/^\([^:]*\):.* LABEL="JK_DATA".*/\1/p' | head -n1)
+    live=$(echo "$labels" | grep ' LABEL="JK_OS"' | sed -n 's/^\([^:]*\):.* TYPE="iso9660".*/\1/p' | head -n1)
+    data=$(echo "$labels" | grep ' LABEL="JK_DATA"' | sed -n 's/^\([^:]*\):.* TYPE="ext4".*/\1/p' | head -n1)
 }
 
 # Which system to start. The kernel is the same on the installer medium and

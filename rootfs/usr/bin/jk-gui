@@ -2,8 +2,8 @@
 # jk-gui: start the desktop (KDE Plasma) on this console.
 #
 # The desktop runs on tty2 (Ctrl+Alt+F2): log in there and run jk-gui.
-# tty1 (Ctrl+Alt+F1) stays a text console the whole time; logging out of
-# Plasma comes back to the shell on tty2.
+# Logging out of Plasma comes back to the shell on tty2. tty1 (Ctrl+Alt+F1)
+# is the dev session (jk-dev), tty3 (Ctrl+Alt+F3) a plain text console.
 
 case "$(tty)" in
     /dev/tty2) ;;

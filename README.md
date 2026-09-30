@@ -207,6 +207,12 @@ If it finds neither, it opens a rescue shell on the console.
   kernel's EFI stub is the firmware's default boot file, so no boot loader or NVRAM
   entry is involved. Legacy BIOS is only supported for the live ISO. On x86_64,
   consoles come from the built-in command line (`CONFIG_CMDLINE`).
+- **Next to another Linux (dual boot).** Free space for jk_os beforehand (e.g. shrink Ubuntu with GParted from its live USB), then pick
+  **Something else** and create a new 512 MiB `/boot` and an ext4 `/data` in the free space, leaving the other system's partitions
+  as they are. If that system boots with GRUB (Ubuntu, Debian, Fedora, ... on ext4), the installer offers to add jk_os to its boot
+  menu: it writes an entry to that GRUB's `custom.cfg` (`/boot/grub/custom.cfg` on Ubuntu), which GRUB reads at every start and
+  `update-grub` leaves alone, and makes the menu show if it was hidden. Reinstalling replaces the entry; delete the `jk_os` block
+  there to remove it. GRUB starts jk_os only with Secure Boot off (the installer warns if it is on).
 - **Updating.** A new jk_os version is a new kernel file and a new image. Put them
   at `/boot/EFI/BOOT/BOOT*.EFI` and `/data/system/jk_os.squashfs` (or reinstall
   and keep `/data`). Your changes in `/data/system/root` stay on top of the new image.
@@ -254,6 +260,33 @@ network settings, files added to `/usr/local`) is kept across reboots, and `/hom
 is on `/data`. Files never changed keep coming from the image, so a new jk_os
 version updates them. A file you changed keeps your version. System accounts a
 new image adds are merged into your `/etc/passwd` at boot.
+
+## Consoles
+
+| Console | Keys | After logging in |
+|---|---|---|
+| tty1 | Ctrl+Alt+F1 | a shell; `jk-dev` starts **the dev session**: one full-screen terminal ([foot](https://codeberg.org/dnkl/foot)) in the kiosk compositor [cage](https://github.com/cage-kiosk/cage), for Neovim, herdr and the like. Leaving the terminal (`exit`) comes back to the shell |
+| tty2 | Ctrl+Alt+F2 | a shell; `jk-gui` starts the desktop (KDE Plasma), and logging out of it comes back here |
+| tty3 | Ctrl+Alt+F3 | a plain text console |
+| ttyS0, ... | serial line | a plain text console |
+
+Ctrl+Alt+F1/F2/F3 switch between them, from the dev session and the desktop too.
+The dev session runs on the GPU like the desktop does (jk-session opens an elogind
+session for it). It runs as a regular user, not root; if it can't start, the
+reason is in `~/.local/state/jk-dev.log`.
+
+Settings:
+
+- the terminal: `~/.config/foot/foot.ini` (jk_os's defaults: `/etc/xdg/foot/foot.ini`:
+  login shell, DejaVu Sans Mono 11, black background, underline cursor,
+  `TERM=xterm-256color`, true colour). Fonts such as a
+  Nerd Font go in `~/.local/share/fonts`.
+- the session: `~/.config/jk_os/dev-session`, shell variables, e.g.
+
+  ```sh
+  JK_DEV_COMMAND=herdr        # run this in the terminal first, then the shell
+  XKB_DEFAULT_LAYOUT=de       # keyboard layout (XKB_DEFAULT_VARIANT, XKB_DEFAULT_OPTIONS)
+  ```
 
 ## Packages (apt)
 

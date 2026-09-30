@@ -1,17 +1,23 @@
 /*
- * jk-session: start the desktop on the console the user is logged in on.
+ * jk-session [desktop|dev]: start a graphical session on the console the
+ * user is logged in on.
  *
- * KWin needs a logind (elogind) session to get the GPU and the input devices
- * and to let the kernel switch consoles while the desktop runs. Console
+ *   desktop  KDE Plasma (/usr/lib/jk_os/jk-gui-session; jk-gui, on tty2)
+ *   dev      the dev session: one terminal in the cage kiosk compositor
+ *            (/usr/lib/jk_os/jk-dev-session; jk-dev, on tty1)
+ *
+ * Compositors need a logind (elogind) session to get the GPU and the input
+ * devices and to let the kernel switch consoles while they run. Console
  * logins here don't go through PAM, so they don't have one; this helper opens
- * it, the way a display manager would, then runs the desktop as the user:
+ * it, the way a display manager would, then runs the session as the user:
  *
  *   pam_open_session (service "jk-gui": pam_elogind) on this console,
- *   drop to the user, run /usr/lib/jk_os/jk-gui-session, wait for it,
+ *   drop to the user, run the session program, wait for it,
  *   pam_close_session.
  *
- * Installed setuid root; jk-gui runs it. It takes no arguments and runs
- * nothing the caller chooses: the caller must be a regular user, and its
+ * Installed setuid root; jk-gui and jk-dev run it. It runs nothing the
+ * caller chooses beyond picking one of the two programs above: the caller
+ * must be a regular user, and its
  * standard input must be a text console (/dev/ttyN) that it owns, which login
  * made it. No password is asked: the user has already logged in there.
  */
@@ -29,7 +35,6 @@
 #include <security/pam_appl.h>
 
 #define SERVICE "jk-gui"
-#define SESSION_PROGRAM "/usr/lib/jk_os/jk-gui-session"
 #define DEFAULT_PATH "/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin"
 
 static void die(const char *msg)
@@ -61,13 +66,21 @@ static void keep(char **envp, size_t *n, const char *name)
         (*n)++;
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
+    const char *program = "/usr/lib/jk_os/jk-gui-session", *desktop = "KDE";
+    if (argc == 2 && strcmp(argv[1], "dev") == 0) {
+        program = "/usr/lib/jk_os/jk-dev-session";
+        desktop = "cage";
+    } else if (argc > 2 || (argc == 2 && strcmp(argv[1], "desktop") != 0)) {
+        die("usage: jk-session [desktop|dev]");
+    }
+
     uid_t uid = getuid();
     if (geteuid() != 0)
         die("must be installed setuid root");
     if (uid == 0)
-        die("run the desktop as a regular user, not as root");
+        die("start a graphical session as a regular user, not as root");
 
     struct passwd *pw = getpwuid(uid);
     if (!pw)
@@ -84,7 +97,7 @@ int main(void)
     unsigned vt;
     char rest;
     if (!tty || sscanf(tty, "/dev/tty%u%c", &vt, &rest) != 1 || vt < 1 || vt > 63)
-        die("start the desktop from a text console (tty2: Ctrl+Alt+F2)");
+        die("start the session from a text console you are logged in on");
     if (fstat(STDIN_FILENO, &st) != 0 || st.st_uid != uid)
         die("this console belongs to another user");
     char vtnr[8];
@@ -103,18 +116,20 @@ int main(void)
     check_pam(pamh, pam_set_item(pamh, PAM_TTY, tty + strlen("/dev/")), "PAM_TTY");
     /* What pam_elogind registers: a graphical user session on seat0, on this VT. */
     const char *const session_env[] = {
-        "XDG_SESSION_TYPE=wayland", "XDG_SESSION_CLASS=user", "XDG_SESSION_DESKTOP=KDE",
-        "XDG_SEAT=seat0", NULL,
+        "XDG_SESSION_TYPE=wayland", "XDG_SESSION_CLASS=user", "XDG_SEAT=seat0", NULL,
     };
     for (const char *const *e = session_env; *e; e++)
         check_pam(pamh, pam_putenv(pamh, *e), "pam_putenv");
+    char deskenv[64];
+    snprintf(deskenv, sizeof deskenv, "XDG_SESSION_DESKTOP=%s", desktop);
+    check_pam(pamh, pam_putenv(pamh, deskenv), "pam_putenv");
     char vtenv[32];
     snprintf(vtenv, sizeof vtenv, "XDG_VTNR=%s", vtnr);
     check_pam(pamh, pam_putenv(pamh, vtenv), "pam_putenv");
     check_pam(pamh, pam_acct_mgmt(pamh, 0), "account");
     check_pam(pamh, pam_open_session(pamh, 0), "cannot open a session");
 
-    /* The desktop's environment: the session's (XDG_RUNTIME_DIR,
+    /* The session's environment: the session's (XDG_RUNTIME_DIR,
      * XDG_SESSION_ID, ...) plus a few of the caller's; nothing else passes
      * through a setuid program. */
     char **pam_env = pam_getenvlist(pamh);
@@ -148,9 +163,9 @@ int main(void)
             signal(s, SIG_DFL);
         if (chdir(home) != 0)
             (void)chdir("/");
-        char *argv[] = { SESSION_PROGRAM, NULL };
-        execve(SESSION_PROGRAM, argv, envp);
-        fprintf(stderr, "jk-session: cannot run %s: %s\n", SESSION_PROGRAM, strerror(errno));
+        char *child_argv[] = { (char *)program, NULL };
+        execve(program, child_argv, envp);
+        fprintf(stderr, "jk-session: cannot run %s: %s\n", program, strerror(errno));
         _exit(127);
     }
 

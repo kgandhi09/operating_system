@@ -18,7 +18,9 @@
 #          /data/etc/fstab lists the other partitions (/home, swap, ...).
 #          With apt chosen, /data/apt holds Debian's package manager and
 #          everything installed with it (see apt-setup).
-# Installed systems boot through UEFI.
+# Installed systems boot through UEFI. When another system on the machine
+# (Ubuntu, Debian, Fedora, ...) boots with GRUB, jk_os can also be added to
+# its boot menu: an entry in that GRUB's custom.cfg starts the kernel above.
 #
 # Nothing is written until the final summary is confirmed.
 
@@ -49,7 +51,7 @@ die()  { printf '%serror:%s %s\n' "$C_R" "$C_N" "$*" >&2; cleanup; exit 1; }
 head_line() { printf '\n%s== %s ==%s\n\n' "$C_B" "$*" "$C_N"; }
 
 cleanup() {
-    for m in "$TARGET/boot" "$TARGET/data" "$WORK/media"; do
+    for m in "$TARGET/boot" "$TARGET/data" "$WORK/media" "$WORK/scan" "$WORK/grubfs"; do
         mountpoint -q "$m" 2>/dev/null && umount "$m"
     done
     return 0
@@ -408,6 +410,107 @@ auto_layout() {   # auto_layout <swap sectors>: ESP + [swap] + JK_DATA on an emp
     echo "$num|$s|$(( (LAST + 1 - s) / ALIGN * ALIGN ))|$LINUX_GUID|new|ext4|/data|-|-" >> "$PLAN"
 }
 
+# ---------------------------------------------------------------- other systems' GRUB
+
+# find_grubs: other systems' GRUB installs, one "dev|dir|name" per line in
+# $WORK/grubs: an ext4 partition this install leaves alone (a root with
+# boot/grub, or a separate /boot with grub), whose grub.cfg reads custom.cfg
+# (Debian's, Ubuntu's and Fedora's all do, from /etc/grub.d/41_custom).
+# custom.cfg is read at every boot and update-grub never rewrites it, so an
+# entry there needs nothing run on the other system. Partitions are only
+# looked at here, mounted read-only without replaying their journal.
+find_grubs() {
+    : > "$WORK/grubs"
+    mkdir -p "$WORK/scan"
+    live=$(live_disk || true)
+    blkid 2>/dev/null | sed -n 's/^\([^:]*\):.* TYPE="ext4".*/\1/p' | while read -r dev; do
+        [ -f "/sys/class/block/${dev##*/}/partition" ] || continue
+        disk=$(parent_disk "$dev")
+        [ "$disk" != "$live" ] || continue
+        grep -q "^$dev " /proc/mounts && continue
+        if [ "$disk" = "$DISK" ]; then
+            [ "$NEWTABLE" = 0 ] || continue
+            num=${dev##*[!0-9]}
+            # only partitions kept as they are (not deleted, formatted or /data)
+            awk -F'|' -v n="$num" '$1 == n && $5 == "old" && ($6 == "none" || $6 == "keep") && $7 != "/data"' \
+                "$PLAN" | grep -q . || continue
+        fi
+        mount -t ext4 -o ro,noload "$dev" "$WORK/scan" 2>/dev/null || continue
+        for dir in boot/grub boot/grub2 grub grub2; do
+            cfg="$WORK/scan/$dir/grub.cfg"
+            [ -f "$cfg" ] && grep -q 'custom\.cfg' "$cfg" || continue
+            name=$(sed -n "s/^menuentry '\([^']*\)'.*/\1/p" "$cfg" | head -n1 | tr -cd '[:alnum:] ._()/+-')
+            if [ -z "$name" ] && [ -f "$WORK/scan/etc/os-release" ]; then
+                name=$(sed -n 's/^PRETTY_NAME="\{0,1\}\([^"]*\)"\{0,1\}$/\1/p' "$WORK/scan/etc/os-release" |
+                       head -n1 | tr -cd '[:alnum:] ._()/+-')
+            fi
+            echo "$dev|$dir|${name:-Linux}" >> "$WORK/grubs"
+            break
+        done
+        umount "$WORK/scan"
+    done
+    [ -s "$WORK/grubs" ]
+}
+
+# ask_grubs: which of those boot menus get a jk_os entry ($WORK/grub-add).
+ask_grubs() {
+    : > "$WORK/grub-add"
+    find_grubs || return 0
+    head_line "Boot menu"
+    say "  Other systems on this machine start from a GRUB boot menu. jk_os can"
+    say "  be added to it, so that you choose between them at every start."
+    while IFS='|' read -r dev dir name <&3; do
+        ask "  Add $NAME to the boot menu of $name ($dev)? (yes/no)" yes
+        [ "$ans" = yes ] && echo "$dev|$dir|$name" >> "$WORK/grub-add"
+    done 3< "$WORK/grubs"
+    return 0
+}
+
+# secure_boot: the firmware has Secure Boot turned on.
+secure_boot() {
+    [ -d /sys/firmware/efi/efivars ] || return 1
+    mountpoint -q /sys/firmware/efi/efivars || mount -t efivarfs efivarfs /sys/firmware/efi/efivars 2>/dev/null
+    f=$(ls /sys/firmware/efi/efivars/SecureBoot-* 2>/dev/null | head -n1)
+    [ -n "$f" ] && [ "$(od -An -tu1 -j4 -N1 "$f" 2>/dev/null | tr -d ' ')" = 1 ]
+}
+
+# add_grub_entries <ESP UUID>: write the jk_os entry into each chosen GRUB's
+# custom.cfg, between markers, replacing an earlier jk_os entry. It starts
+# the kernel from the ESP it was installed to (found by the FAT volume ID),
+# and shows the menu when that GRUB would hide it (Ubuntu does, with a
+# single system). Failures only warn: jk_os itself is installed by now.
+add_grub_entries() {
+    [ -s "$WORK/grub-add" ] || return 0
+    mkdir -p "$WORK/grubfs"
+    while IFS='|' read -r dev dir name; do
+        say "  adding $NAME to the boot menu of $name ($dev)"
+        mount -t ext4 "$dev" "$WORK/grubfs" || { warn "cannot mount $dev; add jk_os to its boot menu by hand"; continue; }
+        cfg="$WORK/grubfs/$dir/custom.cfg"
+        {
+            [ -f "$cfg" ] && awk '/^### BEGIN jk_os/ { skip = 1 } !skip { print } /^### END jk_os/ { skip = 0 }' "$cfg"
+            cat <<GRUB
+### BEGIN jk_os (written by jk-install; remove this block to drop the entry) ###
+if [ "\${timeout}" = "0" ]; then
+    set timeout=5
+fi
+if [ "\${timeout_style}" = "hidden" ]; then
+    set timeout_style=menu
+fi
+menuentry "$PRETTY_NAME" --class jk_os {
+    insmod part_gpt
+    insmod fat
+    insmod chain
+    search --no-floppy --fs-uuid --set=root $1
+    chainloader /EFI/BOOT/$EFI_NAME
+}
+### END jk_os ###
+GRUB
+        } > "$cfg.new" && mv "$cfg.new" "$cfg" || warn "cannot write $cfg"
+        umount "$WORK/grubfs"
+    done < "$WORK/grub-add"
+    return 0
+}
+
 # ---------------------------------------------------------------- apply
 
 summary() {
@@ -435,12 +538,18 @@ summary() {
         apt)  say "  - package management: apt (Debian $DEB_SUITE packages, kept in /data/apt)" ;;
         none) say "  - no package management" ;;
     esac
+    while IFS='|' read -r dev dir name; do
+        say "  - add $NAME to the boot menu of $name (GRUB on $dev, /$dir/custom.cfg)"
+    done < "$WORK/grub-add"
     echo
     others=$(findfs LABEL=JK_DATA 2>/dev/null || true)
     if [ -n "$others" ] && [ "$(parent_disk "$others")" != "$DISK" ]; then
         warn "$others on another disk is also labeled JK_DATA; the first one found at boot is used"
     fi
     [ -d /sys/firmware/efi ] || warn "this machine booted without UEFI; the installed system boots only through UEFI"
+    if [ -s "$WORK/grub-add" ] && secure_boot; then
+        warn "Secure Boot is on: GRUB will refuse to start jk_os until it is turned off in the firmware settings"
+    fi
 }
 
 wait_dev() {
@@ -528,6 +637,8 @@ apply() {
     run mkdir -p "$TARGET/data/system"
     run cp "$IMAGE_FILE" "$TARGET/data/system/jk_os.squashfs.new"
     run mv "$TARGET/data/system/jk_os.squashfs.new" "$TARGET/data/system/jk_os.squashfs"
+    esp_uuid=$(blkid "$esp" | sed -n 's/.* UUID="\([^"]*\)".*/\1/p')
+    add_grub_entries "$esp_uuid"
 
     say "  writing /data/etc/fstab"
     run mkdir -p "$TARGET/data/etc" "$TARGET/data/home"
@@ -583,7 +694,12 @@ apply() {
     : > "$WORK/installed"   # tells jk-live to offer the reboot
     head_line "Done"
     say "  $PRETTY_NAME is installed on $DISK."
-    say "  Once the installer medium is removed, the firmware boots $DISK through UEFI."
+    if [ -s "$WORK/grub-add" ]; then
+        say "  Once the installer medium is removed, choose $PRETTY_NAME in the"
+        say "  boot menu of $(head -n1 "$WORK/grub-add" | cut -d'|' -f3)."
+    else
+        say "  Once the installer medium is removed, the firmware boots $DISK through UEFI."
+    fi
     return 0
 }
 
@@ -699,6 +815,10 @@ elif [ -z "$PACKAGES" ]; then
         esac
     done
 fi
+
+# Other systems' GRUB menus (interactive only; --auto erases its disk anyway).
+: > "$WORK/grub-add"
+[ -n "$AUTO" ] || ask_grubs
 
 summary
 if [ "$YES" = 0 ]; then

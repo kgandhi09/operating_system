@@ -8,11 +8,12 @@
 # headers or libraries gets in.
 #
 # Phase A: graphics (libdrm, Mesa, Vulkan), Wayland, input (libinput,
-#          xkbcommon, seatd), fonts, and the X11 libraries for Xwayland.
+#          xkbcommon), fonts, and the X11 libraries for Xwayland.
 # Phase B: Qt 6.
 # Phase C: KDE Frameworks.
 # Phase D: KDE Plasma, elogind, PAM, UPower.
 # Phase E: Konsole, Dolphin.
+# Phase F: the dev session on tty1 (seatd's libseat, wlroots, cage, foot).
 #
 # A package is rebuilt only when its source tree or its build options change.
 source "$(dirname "$0")/common.sh"
@@ -208,8 +209,6 @@ pkg libevdev         mesonpkg -Dtests=disabled -Ddocumentation=disabled
 pkg mtdev            autotools
 pkg libinput         mesonpkg -Dlibwacom=false -Ddebug-gui=false -Dtests=false -Ddocumentation=false \
                          -Dudev-dir=/usr/lib/udev
-pkg seatd            mesonpkg -Dlibseat-seatd=enabled -Dlibseat-builtin=enabled -Dlibseat-logind=disabled \
-                         -Dserver=enabled -Dexamples=disabled -Dman-pages=disabled
 pkg pixman           mesonpkg -Dtests=disabled -Ddemos=disabled -Dgtk=disabled -Dlibpng=disabled
 pkg libpng           autotools
 pkg libjpeg-turbo    cmakepkg -DENABLE_STATIC=OFF -DWITH_SIMD=OFF -DWITH_TURBOJPEG=ON
@@ -608,6 +607,34 @@ done
 pkg kfilemetadata    kfpkg
 pkg konsole          kfpkg -DBUILD_DOC=OFF -DWITH_LIBSSH=OFF
 pkg dolphin          kfpkg -DBUILD_DOC=OFF
+
+# ---------------------------------------------------------------- Phase F
+# The dev session (jk-dev, on tty1): one terminal, foot, full screen in the
+# kiosk compositor cage (on wlroots). libseat reaches the GPU and input
+# devices through the elogind session jk-session opens, like KWin does.
+pkg seatd            mesonpkg -Dlibseat-logind=elogind -Dlibseat-seatd=enabled -Dlibseat-builtin=disabled \
+                         -Dserver=enabled -Dexamples=disabled -Dman-pages=disabled
+# wlroots reads hwdata's monitor vendor table (pnp.ids) while it builds: a
+# build-machine pkg-config file pointing at the copy in $DYN.
+b_wlroots() {
+    local src="$1" out="$2"; shift 2
+    mkdir -p "$out.pc"
+    sed "s|^pkgdatadir=.*|pkgdatadir=$DYN/usr/share/hwdata|" "$DYN/usr/share/pkgconfig/hwdata.pc" \
+        > "$out.pc/hwdata.pc"
+    PKG_CONFIG_PATH_FOR_BUILD="$out.pc:$PKG_CONFIG_PATH_FOR_BUILD" mesonpkg "$src" "$out" "$@"
+}
+pkg wlroots          b_wlroots -Dxwayland=disabled -Dexamples=false -Dbackends=drm,libinput \
+                         -Drenderers=gles2 -Dallocators=gbm -Dsession=enabled -Dxcb-errors=disabled \
+                         -Dlibliftoff=disabled
+pkg cage             mesonpkg -Dman-pages=disabled
+pkg tllist           mesonpkg
+pkg fcft             mesonpkg -Ddocs=disabled -Dexamples=false -Dgrapheme-shaping=enabled \
+                         -Drun-shaping=disabled -Dsvg-backend=nanosvg
+# TERM is xterm-256color, not foot's own: its terminfo is in the image and
+# in apt's Debian system, where programs such as Neovim run.
+pkg foot             mesonpkg -Ddocs=disabled -Dtests=false -Dterminfo=disabled \
+                         -Ddefault-terminfo=xterm-256color \
+                         -Dgrapheme-clustering=disabled -Dutmp-backend=none
 
 # ---------------------------------------------------------------- Firefox
 # Mozilla's own release build, on the GTK 3 libraries built here.
