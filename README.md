@@ -265,21 +265,20 @@ new image adds are merged into your `/etc/passwd` at boot.
 
 | Console | Keys | After logging in |
 |---|---|---|
-| tty1, tty2, tty3 | Ctrl+Alt+F1, F2, F3 | **the dev session**, started by itself: one full-screen terminal ([foot](https://codeberg.org/dnkl/foot)) in the kiosk compositor [cage](https://github.com/cage-kiosk/cage), for Neovim, herdr and the like, one per console. Leaving the terminal (`exit`) comes back to the shell, where `jk-dev` starts it again |
-| tty2 | Ctrl+Alt+F2 | also the desktop: leave the dev session, then `jk-gui` starts KDE Plasma; logging out of it comes back to the shell |
+| tty1 - tty6 | Ctrl+Alt+F1 - F6 | a plain shell. `jk-dev` starts **the dev session** there: one full-screen terminal ([foot](https://codeberg.org/dnkl/foot)) in the kiosk compositor [cage](https://github.com/cage-kiosk/cage), for Neovim, herdr and the like, one per console. Leaving the terminal (`exit`) comes back to the shell, where `jk-dev` starts it again |
+| any of them | | `jk-gui` starts the desktop, KDE Plasma, there (one desktop per user); logging out of it comes back to the shell |
 | ttyS0, ... | serial line | a plain text console |
 
-Ctrl+Alt+F1/F2/F3 switch between them, from the dev session and the desktop too.
+Ctrl+Alt+F1-F6 switch between them, from the dev session and the desktop too.
 With an external screen, the dev session shows the same terminal on the laptop's
 screen and on it (mirror: every screen is scaled to the narrowest one's width,
-and the terminal fills the part all of them show). KDE on tty2 extends the
+and the terminal fills the part all of them show). KDE extends the
 desktop across the screens by default; Meta+P, or System Settings → Display
 Configuration, switches it to mirroring.
 The dev session runs on the GPU like the desktop does (jk-session opens an elogind
 session for it). It runs as a regular user, not root (root gets a plain
 shell); if it can't start, the shell stays and the reason is in
-`~/.local/state/jk-dev.log`. `JK_DEV_AUTOSTART=no` in
-`~/.config/jk_os/dev-session` keeps the plain shell on login.
+`~/.local/state/jk-dev.log`. Nothing starts it (or the desktop) by itself.
 Its terminal opens with the J.K. Robotics banner (`/usr/share/jk_os/banner`,
 shown by `/etc/profile`, which sets `JK_DEV_SESSION=1` there and
 `JK_BANNER_SHOWN=1` once the banner is up).
@@ -294,7 +293,6 @@ Settings:
 
   ```sh
   JK_DEV_COMMAND=herdr        # run this in the terminal first, then the shell
-  JK_DEV_AUTOSTART=no         # don't start the dev session on login
   JK_DEV_OUTPUTS=extend       # external screen: mirror (default), extend or last
   XKB_DEFAULT_LAYOUT=de       # keyboard layout (XKB_DEFAULT_VARIANT, XKB_DEFAULT_OPTIONS)
   ```

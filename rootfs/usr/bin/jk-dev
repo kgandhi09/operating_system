@@ -2,16 +2,15 @@
 # jk-dev: start the dev session on this console: one full-screen terminal
 # (foot in the cage compositor), for Neovim, herdr and the like.
 #
-# Logging in on a text console (tty1, tty2, tty3) starts it by itself
-# (/etc/profile; JK_DEV_AUTOSTART=no in ~/.config/jk_os/dev-session turns
-# that off). Leaving the terminal (exit) comes back to the shell there, where
-# jk-dev starts it again, or jk-gui starts the desktop (on tty2). Each console
-# has its own session. Settings: see /usr/lib/jk_os/jk-dev-session.
+# Run it after logging in on a text console (tty1-tty6); nothing starts it by
+# itself. Leaving the terminal (exit) comes back to the shell there, where
+# jk-dev starts it again, or jk-gui starts the desktop. Each console has its
+# own session. Settings: see /usr/lib/jk_os/jk-dev-session.
 
 case "$(tty)" in
     /dev/tty[0-9]*) ;;
     *)
-        echo "jk-dev: run this on a text console (tty1-tty3: Ctrl+Alt+F1-F3), not in a terminal, over a serial line or SSH" >&2
+        echo "jk-dev: run this on a text console (tty1-tty6: Ctrl+Alt+F1-F6), not in a terminal, over a serial line or SSH" >&2
         exit 1 ;;
 esac
 if [ ! -x /usr/bin/cage ] || [ ! -x /usr/bin/foot ]; then

@@ -2,9 +2,11 @@
  * jk-session [desktop|dev]: start a graphical session on the console the
  * user is logged in on.
  *
- *   desktop  KDE Plasma (/usr/lib/jk_os/jk-gui-session; jk-gui, on tty2)
+ *   desktop  KDE Plasma (/usr/lib/jk_os/jk-gui-session; jk-gui)
  *   dev      the dev session: one terminal in the cage kiosk compositor
- *            (/usr/lib/jk_os/jk-dev-session; jk-dev, on tty1)
+ *            (/usr/lib/jk_os/jk-dev-session; jk-dev)
+ *
+ * Either runs on any text console, tty1-tty6.
  *
  * Compositors need a logind (elogind) session to get the GPU and the input
  * devices and to let the kernel switch consoles while they run. Console

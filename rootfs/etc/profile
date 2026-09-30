@@ -16,22 +16,6 @@ export PS1
 umask 022
 # CMake builds with Ninja unless a project says otherwise (-G).
 export CMAKE_GENERATOR=Ninja
-# Logging in on a text console (tty1-tty3) starts the dev session there (a
-# full-screen terminal: jk-dev); leaving it comes back to this shell. Not for
-# root, not in terminals (their tty is /dev/pts/N), and not with
-# JK_DEV_AUTOSTART=no in ~/.config/jk_os/dev-session. If it can't start (no
-# GPU, ...), the plain shell stays.
-case "$(tty 2>/dev/null)" in
-    /dev/tty[0-9]*)
-        JK_DEV_AUTOSTART=yes
-        [ -f "$HOME/.config/jk_os/dev-session" ] &&
-            eval "$(grep '^JK_DEV_AUTOSTART=' "$HOME/.config/jk_os/dev-session" | tail -n1)"
-        if [ "$JK_DEV_AUTOSTART" != no ] && [ "$(id -u)" != 0 ] && [ -x /usr/bin/jk-dev ] &&
-           [ "$(cat /run/jk-mode 2>/dev/null)" = installed ]; then
-            /usr/bin/jk-dev || echo "jk_os: the dev session did not start (see ~/.local/state/jk-dev.log); run jk-dev to try again" >&2
-        fi
-        unset JK_DEV_AUTOSTART ;;
-esac
 # The dev session's terminal opens with jk_os's banner, once: shells started
 # inside it (and a ~/.zshrc that shows the banner itself) see JK_BANNER_SHOWN.
 case "$-" in

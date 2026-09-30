@@ -1,22 +1,15 @@
 #!/bin/sh
 # jk-gui: start the desktop (KDE Plasma) on this console.
 #
-# The desktop runs on tty2 (Ctrl+Alt+F2): log in there and run jk-gui.
-# Logging out of Plasma comes back to the shell on tty2. Logging in there
-# starts the dev session (jk-dev) first: leave it (exit), then run jk-gui.
+# Runs on any text console (tty1-tty6, Ctrl+Alt+F1-F6): log in there and run
+# jk-gui; nothing starts it by itself. Logging out of Plasma comes back to the
+# shell there. One desktop per user; dev sessions (jk-dev) can run on the
+# other consoles.
 
 case "$(tty)" in
-    /dev/tty2) ;;
-    /dev/tty[0-9]*)
-        # Take the user there (the keys may not reach this machine, e.g. a VM
-        # window on a desktop that keeps Ctrl+Alt+F2 for itself).
-        echo "jk-gui: the desktop runs on tty2; switching there: log in and run jk-gui" >&2
-        echo "        (to switch yourself: Alt+F2 on a text console, Ctrl+Alt+F2 in the desktop)" >&2
-        sleep 2
-        chvt 2 2>/dev/null
-        exit 1 ;;
+    /dev/tty[0-9]*) ;;
     *)
-        echo "jk-gui: run this on the tty2 console (Ctrl+Alt+F2), not over a serial line or SSH" >&2
+        echo "jk-gui: run this on a text console (tty1-tty6: Ctrl+Alt+F1-F6), not in a terminal, over a serial line or SSH" >&2
         exit 1 ;;
 esac
 if [ ! -x /usr/bin/startplasma-wayland ]; then
@@ -27,9 +20,12 @@ if [ "$(id -u)" = 0 ]; then
     echo "jk-gui: log in as a regular user to start the desktop" >&2
     exit 1
 fi
-if pidof kwin_wayland >/dev/null 2>&1; then
-    echo "jk-gui: the desktop is already running (Ctrl+Alt+F2)" >&2
+# This user's desktop, if it runs already (on which console: its XDG_VTNR).
+for pid in $(pidof kwin_wayland 2>/dev/null); do
+    [ "$(stat -c %u "/proc/$pid" 2>/dev/null)" = "$(id -u)" ] || continue
+    vt=$(tr '\0' '\n' < "/proc/$pid/environ" 2>/dev/null | sed -n 's/^XDG_VTNR=//p')
+    echo "jk-gui: your desktop is already running${vt:+ on tty$vt (Ctrl+Alt+F$vt)}" >&2
     exit 1
-fi
+done
 echo "Starting the desktop... (log out from its menu to come back here)"
 exec /usr/lib/jk_os/jk-session

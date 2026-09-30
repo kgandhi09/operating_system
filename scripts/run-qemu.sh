@@ -4,7 +4,7 @@
 #   MEM=2G   guest memory (default 1G)
 #   AARCH64_EFI=/path/QEMU_EFI.fd   (aarch64) firmware, if not in a standard place
 #   GUI=1    also open a window with a virtual GPU, keyboard and mouse, for the
-#            desktop (log in on tty2 there and run jk-gui; MEM=4G or more)
+#            desktop (log in on a console there and run jk-gui; MEM=4G or more)
 #   DISPLAY_OPT=vnc=:1   how QEMU shows that screen (default: gtk)
 #   DISK=path.qcow2      a hard disk to install on (default build/<arch>/disk.qcow2,
 #                        created empty at DISK_SIZE, 32G, on first use); DISK=none: no disk

@@ -204,10 +204,9 @@ cat > etc/motd <<MOTD
     gcc / clang        C and C++ (C++20), with cmake, ninja and gdb
     git / ssh / curl   version control, remote login, downloads
     sudo apt install   Debian packages, kept in /data/apt (if chosen at install)
-    jk-dev             the dev session (a full-screen terminal), started on login
+    jk-dev             the dev session (a full-screen terminal), on any console
     nvidia-smi         the NVIDIA GPU; sudo jk-cuda install adds CUDA (nvcc)
-    jk-gui             the desktop (KDE Plasma), on tty2 (Ctrl+Alt+F2): exit the
-                       dev session there first
+    jk-gui             the desktop (KDE Plasma), on any console (Ctrl+Alt+F1-F6)
 
 MOTD
 

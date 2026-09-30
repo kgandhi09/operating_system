@@ -3,16 +3,17 @@
 
 ::sysinit:/etc/init.d/rcS
 
-# Login prompts on three text consoles and on whichever serial console
+# Login prompts on six text consoles and on whichever serial console
 # exists (PC UART, ARM PL011, or a hypervisor console):
-#   tty1-tty3 (Ctrl+Alt+F1-F3)  logging in starts the dev session there, a
-#                       full-screen terminal (jk-dev, from /etc/profile);
-#                       leaving it comes back to the shell, where jk-gui
-#                       starts the desktop (on tty2)
-# tty4-tty6 stay off.
+#   tty1-tty6 (Ctrl+Alt+F1-F6)  a plain shell after logging in; jk-dev starts
+#                       the dev session (a full-screen terminal) there, jk-gui
+#                       the desktop; leaving either comes back to the shell
 ::respawn:/sbin/jk-getty tty1
 ::respawn:/sbin/jk-getty tty2
 ::respawn:/sbin/jk-getty tty3
+::respawn:/sbin/jk-getty tty4
+::respawn:/sbin/jk-getty tty5
+::respawn:/sbin/jk-getty tty6
 ::respawn:/sbin/jk-getty ttyS0
 ::respawn:/sbin/jk-getty ttyAMA0
 ::respawn:/sbin/jk-getty hvc0
