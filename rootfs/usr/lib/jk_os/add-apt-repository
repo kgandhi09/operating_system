@@ -1,0 +1,246 @@
+#!/bin/sh
+# add-apt-repository (also apt-add-repository): add or remove package
+# sources for apt's Debian system (/data/apt/root, see /usr/lib/jk_os/apt).
+# Debian 13 no longer ships software-properties-common, so this is jk_os's
+# own, with Ubuntu's usage:
+#
+#   add-apt-repository [options] <repository>
+#     contrib non-free ...     enable components of Debian's own archive
+#     "deb [opts] URI suite components..."   a source line (deb-src too)
+#     URI                      the same as "deb URI trixie main"
+#     ppa:user/name            a Launchpad PPA (built for Ubuntu: see below)
+#   -k, --key URL|FILE   the repository's signing key: stored in
+#                        /etc/apt/keyrings/ (in apt's system) and named in
+#                        the source's signed-by=
+#   -r, --remove         remove the source (or disable the components)
+#   -s, --enable-source  also add a deb-src line
+#   -n, --no-update      don't run apt update afterwards
+#   -y, --yes            don't ask
+#   -L, --list           show the configured sources
+#
+# Paths such as /etc/apt/keyrings/x.gpg in signed-by= are inside apt's
+# system: on jk_os they are /data/apt/root/etc/apt/keyrings/x.gpg.
+
+ROOT=/data/apt/root
+APT_ETC=$ROOT/etc/apt
+LISTS=$APT_ETC/sources.list.d
+DEBIAN_SOURCES=$LISTS/debian.sources
+# Ubuntu's release from the same time as Debian 13, for PPAs.
+PPA_SERIES=${JK_PPA_SERIES:-noble}
+
+name=${0##*/}
+die() { echo "$name: $*" >&2; exit 1; }
+usage() { sed -n '2,24p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
+
+[ -d "$ROOT/var/lib/dpkg" ] || die "apt is not set up on this system (to add it: sudo apt-setup)"
+suite=$(sed -n 's/^VERSION_CODENAME=//p' "$ROOT/etc/os-release" 2>/dev/null)
+suite=${suite:-trixie}
+
+# Changes need root, like apt itself; listing and help don't.
+if [ "$(id -u)" != 0 ]; then
+    need_root=1
+    for a in "$@"; do case "$a" in -L|--list|-h|--help) need_root=0 ;; esac; done
+    [ $need_root = 0 ] || exec sudo "$0" "$@"
+fi
+
+remove=0 source=0 update=1 yes=0 list=0 key="" repo=""
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -r|--remove) remove=1 ;;
+        -s|--enable-source) source=1 ;;
+        -n|--no-update) update=0 ;;
+        -y|--yes) yes=1 ;;
+        -L|--list) list=1 ;;
+        -k|--key) [ $# -ge 2 ] || usage 1; key=$2; shift ;;
+        --key=*) key=${1#--key=} ;;
+        -h|--help) usage ;;
+        -*) usage 1 ;;
+        *) repo="${repo:+$repo }$1" ;;
+    esac
+    shift
+done
+
+if [ $list = 1 ]; then
+    for f in "$APT_ETC/sources.list" "$LISTS"/*.list "$LISTS"/*.sources; do
+        [ -f "$f" ] || continue
+        grep -q '[^[:space:]]' "$f" || continue
+        echo "# ${f#$ROOT}"
+        grep -v '^[[:space:]]*#' "$f" | grep -v '^[[:space:]]*$'
+        echo
+    done
+    exit 0
+fi
+[ -n "$repo" ] || usage 1
+
+confirm() {   # confirm <what>: ask unless -y
+    echo "$1"
+    [ $yes = 1 ] && return 0
+    printf 'Press Enter to continue or Ctrl+C to cancel. '
+    read -r _ || exit 1
+}
+
+# file_name <uri>: the .list file a source goes in, named after its URI.
+file_name() {
+    echo "$1" | sed -e 's|^[a-z+]*://||' -e 's|/*$||' -e 's|[^A-Za-z0-9.-]|_|g'
+}
+
+# fetch_key <url|file> <basename>: store the key in keyrings/, print its path
+# as apt's system sees it.
+fetch_key() {
+    mkdir -p "$APT_ETC/keyrings"
+    tmp=$(mktemp)
+    case "$1" in
+        http://*|https://*) curl -fsSL "$1" -o "$tmp" || { rm -f "$tmp"; die "cannot download the key $1"; } ;;
+        *) [ -f "$1" ] || die "no key file $1"; cp "$1" "$tmp" ;;
+    esac
+    [ -s "$tmp" ] || { rm -f "$tmp"; die "the key $1 is empty"; }
+    if grep -q -- '-----BEGIN PGP PUBLIC KEY BLOCK-----' "$tmp"; then ext=asc; else ext=gpg; fi
+    install -m 0644 "$tmp" "$APT_ETC/keyrings/$2.$ext"
+    rm -f "$tmp"
+    echo "/etc/apt/keyrings/$2.$ext"
+}
+
+# with_signed_by <line> <keyring>: the source line with signed-by= added.
+with_signed_by() {
+    case "$1" in
+        *signed-by=*) echo "$1" ;;
+        *" ["*"] "*) echo "$1" | sed "s|\[|[signed-by=$2 |" ;;
+        *) echo "$1" | sed "s|^\(deb\(-src\)\{0,1\}\) |\1 [signed-by=$2] |" ;;
+    esac
+}
+
+# plain <line>: the source line without its [options], spaces squeezed.
+plain() { echo "$1" | sed -e 's/\[[^]]*\]//' -e 's/[[:space:]][[:space:]]*/ /g' -e 's/ *$//'; }
+
+# uri_of <line>: the URI of a one-line source ("deb [opts] URI suite ...").
+uri_of() { echo "$1" | sed -e 's/^deb\(-src\)\{0,1\}[[:space:]]*//' -e 's/^\[[^]]*\][[:space:]]*//' -e 's/[[:space:]].*//'; }
+
+# ---------------------------------------------------------------- components
+# Components of Debian's own archive: edit the Components: of debian.sources
+# (and the Debian lines of a classic sources.list, if any).
+components() {
+    for c in $repo; do
+        case "$c" in main|contrib|non-free|non-free-firmware) ;; *) return 1 ;; esac
+    done
+    [ -f "$DEBIAN_SOURCES" ] || die "no $DEBIAN_SOURCES to change"
+    if [ $remove = 1 ]; then
+        confirm "Disabling the component(s) $repo of Debian's archive."
+    else
+        confirm "Enabling the component(s) $repo of Debian's archive."
+    fi
+    awk -v comps="$repo" -v rm="$remove" '
+        BEGIN { n = split(comps, want, " ") }
+        /^Components:/ {
+            line = $0; sub(/^Components:[[:space:]]*/, "", line)
+            m = split(line, have, /[[:space:]]+/)
+            out = ""
+            for (i = 1; i <= m; i++) {
+                keep = 1
+                if (rm == 1) for (j = 1; j <= n; j++) if (have[i] == want[j] && have[i] != "main") keep = 0
+                if (keep && have[i] != "") { out = out " " have[i]; seen[have[i]] = 1 }
+            }
+            if (rm != 1) for (j = 1; j <= n; j++) if (!(want[j] in seen)) out = out " " want[j]
+            print "Components:" out; delete seen; next
+        }
+        { print }' "$DEBIAN_SOURCES" > "$DEBIAN_SOURCES.new" && mv "$DEBIAN_SOURCES.new" "$DEBIAN_SOURCES"
+    return 0
+}
+
+# ---------------------------------------------------------------- one source
+add_line() {   # add_line <line>: into the .list file named after its URI
+    uri=$(uri_of "$1")
+    [ -n "$uri" ] || die "no URI in: $1"
+    f="$LISTS/$(file_name "$uri").list"
+    lines="$1"
+    if [ $source = 1 ] && ! echo "$1" | grep -q '^deb-src'; then
+        lines="$1
+$(echo "$1" | sed 's/^deb /deb-src /')"
+    fi
+    if [ $remove = 1 ]; then
+        # The line as given, whatever [options] it was added with; deb-src too with -s.
+        want=$(plain "$1")
+        want_src=$(plain "$(echo "$1" | sed 's/^deb /deb-src /')")
+        confirm "Removing: $want"
+        found=0
+        for g in "$APT_ETC/sources.list" "$LISTS"/*.list; do
+            [ -f "$g" ] || continue
+            : > "$g.new"
+            while IFS= read -r l; do
+                p=$(plain "$l")
+                if [ "$p" = "$want" ] || { [ $source = 1 ] && [ "$p" = "$want_src" ]; }; then
+                    found=1; continue
+                fi
+                printf '%s\n' "$l" >> "$g.new"
+            done < "$g"
+            if cmp -s "$g" "$g.new"; then rm -f "$g.new"; continue; fi
+            mv "$g.new" "$g"
+            grep -q '[^[:space:]]' "$g" || rm -f "$g"
+        done
+        [ $found = 1 ] || echo "$name: no such source: $want" >&2
+        return
+    fi
+    confirm "Adding to ${f#$ROOT}:
+$lines"
+    # apt reaches https:// sources with the CA certificates, which Debian's
+    # minimal base system leaves out.
+    case "$uri" in
+        https://*)
+            if [ ! -s "$ROOT/etc/ssl/certs/ca-certificates.crt" ]; then
+                echo "$name: installing ca-certificates (for https:// sources) first"
+                /usr/bin/apt-get install -y --no-install-recommends ca-certificates || exit $?
+            fi ;;
+    esac
+    mkdir -p "$LISTS"
+    echo "$lines" | while IFS= read -r l; do
+        [ -f "$f" ] && grep -qxF "$l" "$f" && continue
+        echo "$l" >> "$f"
+    done
+    chmod 0644 "$f"
+}
+
+# ---------------------------------------------------------------- PPAs
+ppa() {
+    spec=${repo#ppa:}
+    user=${spec%%/*}; ppaname=${spec#*/}
+    [ "$user" != "$spec" ] || ppaname=ppa
+    echo "$user$ppaname" | grep -qE '^[a-z0-9.+-]+$' || die "not a PPA: $repo"
+    echo "$name: PPAs are built for Ubuntu; this uses its $PPA_SERIES packages" \
+         "(set JK_PPA_SERIES to change), which may not install on Debian $suite;" \
+         "and Debian's apt rejects the older PPAs' SHA-1 signing keys." >&2
+    base="ppa-$user-$ppaname"
+    line="deb [signed-by=/etc/apt/keyrings/$base.asc] https://ppa.launchpadcontent.net/$user/$ppaname/ubuntu $PPA_SERIES main"
+    if [ $remove = 1 ]; then
+        add_line "$line"
+        rm -f "$APT_ETC/keyrings/$base.asc"
+        return
+    fi
+    fpr=$(curl -fsSL "https://api.launchpad.net/1.0/~$user/+archive/ubuntu/$ppaname" |
+          sed -n 's/.*"signing_key_fingerprint": *"\([0-9A-Fa-f]*\)".*/\1/p')
+    [ -n "$fpr" ] || die "cannot find ppa:$user/$ppaname on Launchpad"
+    fetch_key "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x$fpr" "$base" >/dev/null
+    add_line "$line"
+}
+
+# ---------------------------------------------------------------- main
+case "$repo" in
+    ppa:*) ppa ;;
+    deb\ *|deb-src\ *)
+        line=$repo
+        if [ -n "$key" ] && [ $remove = 0 ]; then
+            kr=$(fetch_key "$key" "$(file_name "$(uri_of "$line")")") || exit 1
+            line=$(with_signed_by "$line" "$kr")
+        fi
+        add_line "$line" ;;
+    http://*|https://*|file:/*)
+        line="deb $repo $suite main"
+        if [ -n "$key" ] && [ $remove = 0 ]; then
+            kr=$(fetch_key "$key" "$(file_name "$repo")") || exit 1
+            line=$(with_signed_by "$line" "$kr")
+        fi
+        add_line "$line" ;;
+    *) components || die "not a repository: $repo (a component such as contrib, a deb line, a URI or ppa:user/name)" ;;
+esac
+
+if [ $update = 1 ]; then
+    /usr/bin/apt-get update
+fi

@@ -294,7 +294,15 @@ The installer asks for a **package management** choice after the accounts:
 
 1. **apt**: Debian packages (Debian 13 "trixie"), with the usual commands:
    `sudo apt update`, `sudo apt install <name>`, `sudo apt remove <name>`,
-   `apt search`, `dpkg -l`, ...
+   `apt search`, `dpkg -l`, ... Package sources are added with
+   `sudo add-apt-repository` (or `apt-add-repository`), e.g.
+   `sudo add-apt-repository contrib non-free` or
+   `sudo add-apt-repository -k https://example.com/key.asc "deb https://example.com/apt stable main"`
+   (Debian 13 dropped `software-properties-common`, so this one is jk_os's own:
+   `add-apt-repository --help`; `-k URL` stores a repository's signing key.) The Debian
+   system is `/data/apt/root`, so a repository's key goes in
+   `/data/apt/root/etc/apt/keyrings/` (seen there as `/etc/apt/keyrings/`). Ubuntu PPAs
+   (`ppa:...`) are built for Ubuntu, not Debian, and usually don't install here.
 2. **None**: only the programs jk_os comes with. You can add apt later with
    `sudo apt-setup`.
 
