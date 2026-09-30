@@ -11,7 +11,10 @@ Reads "J.K. Logo.png" at the top of the repo and writes, under rootfs/:
                                             the JK mark as an icon (app
                                             launcher, os-release LOGO)
   usr/share/wallpapers/jk_os/               the default wallpaper (light and
-                                            dark variants)
+                                            dark variants): the mark over the
+                                            company's full name, set in the
+                                            logo's typeface (Poppins Light,
+                                            scripts/branding, SIL OFL)
   usr/share/plasma/look-and-feel/org.jk_os.desktop/contents/previews/
                                             the Global Theme's previews
 
@@ -21,10 +24,13 @@ NumPy; rerun this after changing the logo.
 from pathlib import Path
 
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "J.K. Logo.png"
+FONT = ROOT / "scripts/branding/Poppins-Light.ttf"
+LOGO_TEXT = "JK ROBOTICS"              # the name as the logo spells it
+FULL_NAME = "J.K. ROBOTICS PVT. LTD."  # the wallpaper's
 OUT = ROOT / "rootfs/usr/share"
 
 GREEN = np.array([62, 178, 74], float)
@@ -54,6 +60,52 @@ def invert_lightness(img):
 def trim(img, margin):
     x0, y0, x1, y1 = img.getchannel("A").point(lambda v: 255 if v > 8 else 0).getbbox()
     return img.crop((x0 - margin, y0 - margin, x1 + margin, y1 + margin))
+
+
+def tracked_text(text, font, tracking):
+    """The text's coverage (L), letter by letter with extra spacing, and the
+    bounding box of its ink."""
+    width = round(sum(font.getlength(ch) for ch in text) + tracking * len(text)) + 4
+    size = font.size * 2
+    mask = Image.new("L", (width, size))
+    d = ImageDraw.Draw(mask)
+    x = 0.0
+    for ch in text:
+        d.text((x, size // 4), ch, font=font, fill=255)
+        x += font.getlength(ch) + tracking
+    return mask, mask.getbbox()
+
+
+def full_name_logo():
+    """The logo with its lettering replaced by FULL_NAME: same typeface, cap
+    height, letter spacing, colour and baseline, centred under the mark."""
+    src = Image.open(SRC).convert("RGB")
+    ink = np.asarray(src.convert("L")) < 200
+    rows = np.flatnonzero(ink.any(axis=1))
+    top = rows[np.flatnonzero(np.diff(rows) > 1)[-1] + 1]      # the lettering's first row
+    bottom = rows[-1]
+    cols = np.flatnonzero(ink[top:bottom + 1].any(axis=0))
+    cap, width = bottom - top + 1, cols[-1] - cols[0] + 1
+    block = np.asarray(src)[top:bottom + 1]
+    colour = tuple(int(v) for v in block.reshape(-1, 3)[block.sum(axis=2).argmin()])
+
+    # Match the logo's lettering: the size from its height, the spacing from its width.
+    font = ImageFont.truetype(str(FONT), 100)
+    _, (x0, y0, x1, y1) = tracked_text(LOGO_TEXT, font, 0)
+    font = ImageFont.truetype(str(FONT), round(100 * cap / (y1 - y0)))
+    _, (x0, y0, x1, y1) = tracked_text(LOGO_TEXT, font, 0)
+    tracking = (width - (x1 - x0)) / (len(LOGO_TEXT) - 1)
+
+    mask, (x0, y0, x1, y1) = tracked_text(FULL_NAME, font, tracking)
+    mask = mask.crop((x0, y0, x1, y1))
+    centre = (cols[0] + cols[-1]) / 2
+    margin = cols[0]
+    w = max(src.width, mask.width + 2 * margin)
+    img = Image.new("RGB", (w, src.height), "white")
+    shift = round(w / 2 - centre)
+    img.paste(src.crop((0, 0, src.width, top - 1)), (shift, 0))
+    img.paste(Image.new("RGB", mask.size, colour), (round(w / 2 - mask.width / 2), top), mask)
+    return img
 
 
 def gradient(size, top, bottom):
@@ -162,14 +214,16 @@ def main():
     for n in (16, 22, 24, 32, 48, 64, 96, 128, 256, 512):
         save(render_mark(n), OUT / f"icons/hicolor/{n}x{n}/apps/jk-os.png")
 
+    named = trim(color_to_alpha(full_name_logo()), 12)
+    named_dark = invert_lightness(named)
     wp = OUT / "wallpapers/jk_os/contents"
     for w, h in ((1920, 1080), (2560, 1440), (3840, 2160), (1080, 1920)):
-        save(compose((w, h), logo, LIGHT_BG), wp / f"images/{w}x{h}.png")
-        save(compose((w, h), logo_dark, DARK_BG), wp / f"images_dark/{w}x{h}.png")
-    save(compose((400, 250), logo, LIGHT_BG), wp / "screenshot.png")
+        save(compose((w, h), named, LIGHT_BG), wp / f"images/{w}x{h}.png")
+        save(compose((w, h), named_dark, DARK_BG), wp / f"images_dark/{w}x{h}.png")
+    save(compose((400, 250), named, LIGHT_BG), wp / "screenshot.png")
 
     pv = OUT / "plasma/look-and-feel/org.jk_os.desktop/contents/previews"
-    full = compose((1920, 1080), logo, LIGHT_BG)
+    full = compose((1920, 1080), named, LIGHT_BG)
     save(full, pv / "fullscreenpreview.jpg", quality=90)
     prev = full.resize((600, 337), Image.LANCZOS).convert("RGBA")
     ImageDraw.Draw(prev).rectangle([0, 337 - 16, 600, 337], fill=(239, 240, 241, 255))
