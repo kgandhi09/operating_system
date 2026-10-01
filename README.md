@@ -420,8 +420,10 @@ Every jk_os image carries a toolchain (`scripts/build-toolchain.sh`, `make toolc
 | Language tools | `clangd` (language server for editors), `clang-format`, `clang-tidy` |
 | Binutils | `as`, `ld`, `ar`, `objdump`, `nm`, `strip`, ... (2.47) |
 | Build systems | **CMake 4.4** (HTTPS works, e.g. `FetchContent`) and **Ninja 1.13**; `CMAKE_GENERATOR=Ninja` is set in `/etc/profile` |
+| Classic build tools | **GNU make 4.4** (`make`, `gmake`), **m4 1.4**, **flex 2.6** (`lex`), **bison 3.8** (`yacc`), **Perl 5.44**, **autoconf 2.73**, **automake 1.19**, **libtool 2.6**, `pkg-config` (pkgconf); `autoreconf -fi && ./configure && make` works. Perl is native builds only (not on aarch64 built on x86_64) |
+| Interpreters | **bash 5.3** (patch level 20; `/bin/bash` too, and allowed as a login shell: `chsh -s /bin/bash`) and **Python 3.14** (`python3`, `python`) with OpenSSL (`ssl`, `hashlib`, HTTPS), SQLite, bz2, lzma, zlib, ctypes, readline, curses, uuid, and **pip**, **venv** and **ensurepip**. `python3 -m venv ~/venv && ~/venv/bin/pip install ...`; `pip install --user ...` installs into `~/.local`. Python is native builds only, like Perl |
 | Debugger | **GDB 18.1** and `gdbserver` |
-| Headers | glibc (from the toolchain that builds jk_os) and Linux (`make headers_install` from jk_os's kernel) |
+| Headers | glibc (from the toolchain that builds jk_os) and Linux (`make headers_install` from jk_os's kernel), and every library in the image: headers, pkg-config and CMake files, static libraries (OpenGL/EGL/Vulkan, Wayland/X11, GLib, D-Bus, PipeWire, ALSA, OpenSSL, curl, ...). Qt and KDE Frameworks' headers are there, but building Qt programs needs Qt's code generators (moc, rcc, uic), which jk_os doesn't carry yet |
 
 Clang also cross-compiles for the other architectures (`--target=aarch64-linux-gnu`,
 `arm-none-eabi`, `riscv64-...`). On an installed system anything you build and

@@ -422,6 +422,14 @@ step host-kcmutils "$SRC/kcmutils" hostkf -DTOOLS_ONLY=ON
 step libmount "$UTIL_LINUX_SRC" autotools --disable-all-programs --enable-libmount --enable-libblkid \
     --disable-nls --disable-asciidoc --disable-poman --disable-bash-completion --without-python \
     --without-systemd --without-udev --without-ncursesw --without-tinfo --without-readline
+# pkg-config for what is built on jk_os itself (/usr/lib/pkgconfig and
+# /usr/share/pkgconfig: the graphics development files build-rootfs.sh keeps).
+b_pkgconf() {
+    mesonpkg "$@" -Dwith-pkg-config-dir=/usr/lib/pkgconfig:/usr/share/pkgconfig \
+        -Dwith-system-libdir=/usr/lib -Dwith-system-includedir=/usr/include
+    ln -sf pkgconf "$DYN/usr/bin/pkg-config"
+}
+pkg pkgconf          b_pkgconf
 pkg xz               autotools --disable-doc --disable-nls --disable-xz --disable-xzdec \
                          --disable-lzmadec --disable-lzmainfo --disable-scripts
 # Event sounds (KNotifications, KWin).

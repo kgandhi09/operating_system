@@ -26,7 +26,8 @@ need tar sha256sum
 #   git:    $url, $tag
 SOURCES="kernel busybox util-linux e2fsprogs shadow libxcrypt sudo zlib libffi pcre2 glib
 expat dbus eudev libndp libnl openssl wpa_supplicant ncurses readline networkmanager
-gcc binutils gdb gmp mpfr mpc llvm cmake ninja curl cacert openssh git"
+gcc binutils gdb gmp mpfr mpc llvm cmake ninja make m4 flex bison perl autoconf automake bash python sqlite bzip2
+curl cacert openssh git"
 source_spec() {
     local v="$2"
     case "$1" in
@@ -77,6 +78,28 @@ source_spec() {
         mpc)       tree=$MPC_TREE       kind=gnu base="https://ftp.gnu.org/gnu/mpc"       name="mpc-$v.tar.xz" ;;
         llvm)      tree=$LLVM_TREE      kind=github repo=llvm/llvm-project tag="llvmorg-$v" name="llvm-project-$v.src.tar.xz" ;;
         cmake)     tree=$CMAKE_TREE     kind=github repo=Kitware/CMake     tag="v$v"     name="cmake-$v.tar.gz" ;;
+        make)      tree=$MAKE_TREE      kind=gnu base="https://ftp.gnu.org/gnu/make"      name="make-$v.tar.gz" ;;
+        m4)        tree=$M4_TREE        kind=gnu base="https://ftp.gnu.org/gnu/m4"        name="m4-$v.tar.xz" ;;
+        bison)     tree=$BISON_TREE     kind=gnu base="https://ftp.gnu.org/gnu/bison"     name="bison-$v.tar.xz" ;;
+        autoconf)  tree=$AUTOCONF_TREE  kind=gnu base="https://ftp.gnu.org/gnu/autoconf"  name="autoconf-$v.tar.xz" ;;
+        automake)  tree=$AUTOMAKE_TREE  kind=gnu base="https://ftp.gnu.org/gnu/automake"  name="automake-$v.tar.xz" ;;
+        # flex's release assets have no GitHub digest, only a signature: pass
+        # the tarball, checked against flex-<v>.tar.gz.sig, as a local file.
+        flex)      tree=$FLEX_TREE      kind=github repo=westes/flex tag="v$v" name="flex-$v.tar.gz" ;;
+        # CPAN's <tarball>.sha256.txt holds the bare checksum.
+        perl)      tree=$PERL_TREE      kind=sums name="perl-$v.tar.xz"
+                   base="https://www.cpan.org/src/5.0" sums="$base/$name.sha256.txt" ;;
+        # bash's official patches (bash53-NNN) are in configs/toolchain/patches/bash.
+        bash)      tree=$BASH_TREE      kind=gnu base="https://ftp.gnu.org/gnu/bash"      name="bash-$v.tar.gz" ;;
+        # python.org publishes each file's SHA-256 through its downloads API
+        # (3.14 and newer are signed with Sigstore only, no PGP).
+        python)    tree=$PYTHON_TREE    kind=python name="Python-$v.tar.xz"
+                   base="https://www.python.org/ftp/python/$v" ;;
+        # Checked by hand: SQLite publishes SHA3-256 sums on its download page,
+        # bzip2 a signature by its maintainer (not in the GNU keyring). Pass
+        # the verified tarball as a local file.
+        sqlite)    tree=$SQLITE_TREE    kind=manual url="https://www.sqlite.org/download.html" ;;
+        bzip2)     tree=$BZIP2_TREE     kind=manual url="https://sourceware.org/pub/bzip2/bzip2-$v.tar.gz (.sig)" ;;
         ninja)     tree=$NINJA_TREE     kind=git url=https://github.com/ninja-build/ninja.git tag="v$v" ;;
         dbus)      tree=$DBUS_TREE      kind=git url=https://gitlab.freedesktop.org/dbus/dbus.git tag="dbus-$v" ;;
         eudev)     tree=$EUDEV_TREE     kind=git url=https://github.com/eudev-project/eudev.git   tag="v$v" ;;
@@ -108,6 +131,8 @@ fetch() {
 
 if [[ -f "$ver" ]]; then
     tarball="$ver"
+elif [[ "$kind" == manual ]]; then
+    die "$what: download and verify it yourself ($url), then pass the tarball: $0 $what <file>"
 elif [[ "$kind" == git ]]; then
     need git
     log "fetching $url at $tag"
@@ -126,6 +151,14 @@ else
             || { cat "$tmp/gpgv.log" >&2; die "bad GNU signature on $name"; }
         log "$(grep -o 'Good signature from.*' "$tmp/gpgv.log" | head -n1)"
         sha256sum "$tmp/$name" | sed "s|$tmp/||" > "$tmp/sums"
+    elif [[ "$kind" == python ]]; then
+        need jq
+        id=$(curl -fsSL "https://www.python.org/api/v2/downloads/release/?name=Python%20$ver" \
+            | jq -r '.[0].resource_uri // empty' | sed 's|/$||; s|.*/||')
+        [[ -n "$id" ]] || die "no Python $ver on python.org"
+        curl -fsSL "https://www.python.org/api/v2/downloads/release_file/?release=$id" \
+            | jq -r --arg n "$name" '.[] | select(.url | endswith("/" + $n)) | .sha256_sum // empty' \
+            | sed "s/\$/  $name/" > "$tmp/sums"
     elif [[ "$kind" == github ]]; then
         need jq
         base="https://github.com/$repo/releases/download/$tag"
@@ -136,6 +169,8 @@ else
             | sed -n "s/^sha256:\(.*\)/\1  $name/p" > "$tmp/sums"
     else
         fetch "$sums" "$tmp/sums"
+        # a file with only the checksum (CPAN's): name the tarball
+        grep -q "$name" "$tmp/sums" || echo "$(tr -d '[:space:]' < "$tmp/sums")  $name" > "$tmp/sums"
     fi
     [[ -f "$tmp/$name" ]] || fetch "$base/$name" "$tmp/$name"
     # "<sum>  <name>" or "<sum> *<name>" (binary mode, as NetworkManager writes it)

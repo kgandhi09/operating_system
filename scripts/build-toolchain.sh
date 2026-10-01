@@ -7,6 +7,9 @@
 #   (from the toolchain that built jk_os) and the Linux headers (from
 #   jk_os's kernel). C++20 (gnu++20) is the default standard of both
 #   compilers (GCC 16's own default; Clang gets it from /etc/clang).
+#   And the classic build tools: GNU make, m4, flex, bison, Perl, autoconf,
+#   automake and libtool; and the interpreters bash and Python 3 (OpenSSL,
+#   pip, venv, ensurepip), with SQLite and bzip2 for Python's modules.
 #
 # The tree doubles as the sysroot the target libraries are built against.
 # For aarch64 (built on x86_64) a GCC cross compiler is built first
@@ -41,6 +44,10 @@ else
     export PATH="$CROSS/bin:$PATH"
 fi
 unset CROSS_COMPILE CC CXX CFLAGS CXXFLAGS CPPFLAGS LDFLAGS
+# The build machine's Python settings would steer the Python built here (its
+# ensurepip put pip into the build machine's Debian layout).
+unset PYTHONHOME PYTHONPATH PYTHONSTARTUP PYTHONUSERBASE PYTHONNOUSERSITE
+for v in "${!PIP_@}"; do unset "$v"; done
 
 # step <name> <src> <function> <options...>: as in build-network.sh.
 step() {
@@ -279,6 +286,156 @@ step ninja    "$NINJA_SRC"    b_ninja
 step cmake    "$CMAKE_SRC"    b_cmake
 step gdb      "$GDB_SRC"      b_gdb
 step llvm     "$LLVM_SRC"     b_llvm
+# ------------------------------------------------------------ classic build tools
+# GNU make, m4, flex, bison, Perl, autoconf, automake and libtool, for
+# projects that build with make or autotools. Each finds the others at their
+# /usr/bin paths in the image (m4 for flex, bison and autoconf; Perl for
+# autoconf and automake), not where the build machine has them.
+autotools_tc() {   # autotools_tc <src> <out> <configure args...>
+    local src="$1" out="$2"; shift 2
+    copy_src "$src" "$out"
+    (cd "$out" && CC="$TCC" CXX="$TCXX" CONFIG_SHELL=/bin/sh ./configure "${TARGET_ARGS[@]}" "$@")
+    make -C "$out" -j"$JOBS" MAKEINFO=true
+    make -C "$out" install DESTDIR="$TC" MAKEINFO=true
+}
+# In-tree builds from a copy: some of these don't build out of tree, and the
+# copy keeps the vendored tree clean.
+copy_src() { rm -rf "$2"; mkdir -p "$2"; cp -a "$1/." "$2/"; }
+
+b_make() { autotools_tc "$@" --without-guile; ln -sf make "$TC/usr/bin/gmake"; }
+b_m4()   { autotools_tc "$@"; }
+b_bison() { M4=/usr/bin/m4 autotools_tc "$@"; }
+b_flex() {
+    M4=/usr/bin/m4 autotools_tc "$@" --disable-bootstrap
+    ln -sf flex "$TC/usr/bin/lex"
+}
+# Perl: its own Configure. Native builds only (cross-building Perl needs
+# perl-cross); it links nothing beyond glibc (no DBM libraries, and not the
+# build machine's libcrypt).
+b_perl() {
+    if [[ -n "$CROSS" ]]; then
+        echo "Perl is not cross-built ($ARCH on $HOST_ARCH): autoconf and automake need it at run time" >&2
+        return 0
+    fi
+    copy_src "$1" "$2"
+    (cd "$2" && sh Configure -des -Dprefix=/usr -Dcc="$TCC" -Doptimize=-O2 -Duseshrplib \
+        -Dusethreads -Dlibswanted="pthread dl m util c" -Ud_crypt -Ui_db -Ui_gdbm -Ui_ndbm \
+        -Uinstallusrbinperl -Dman1dir=none -Dman3dir=none -Dperladmin=root@localhost \
+        -Dcf_email=root@localhost -Dmyhostname=jk-os -Dmydomain=.localdomain)
+    make -C "$2" -j"$JOBS"
+    make -C "$2" install DESTDIR="$TC"
+}
+b_autoconf() { M4=/usr/bin/m4 PERL=/usr/bin/perl autotools_tc "$@"; }
+b_automake() { PERL=/usr/bin/perl autotools_tc "$@"; }
+b_libtool()  { M4=/usr/bin/m4 SED=/bin/sed GREP=/bin/grep autotools_tc "$@"; }
+
+step make     "$MAKE_SRC"     b_make
+step m4       "$M4_SRC"       b_m4
+step bison    "$BISON_SRC"    b_bison
+step flex     "$FLEX_SRC"     b_flex
+step perl     "$PERL_SRC"     b_perl
+step autoconf "$AUTOCONF_SRC" b_autoconf
+step automake "$AUTOMAKE_SRC" b_automake
+# The image has binutils as plain ld/nm (no <triple>- names).
+step libtool  "$ROOT_DIR/userspace/desktop/libtool" b_libtool LD=ld NM=nm
+
+# ------------------------------------------------------------ interpreters
+# Compiler and linker flags for what links the network stack's and these
+# libraries (OpenSSL, zlib, libffi, expat, ncurses, readline, ...).
+DEPFLAGS_C="-O2 -I$DYN/usr/include -I$TC/usr/include"
+DEPFLAGS_LD="-L$DYN/usr/lib -L$TC/usr/lib -Wl,-rpath-link,$DYN/usr/lib -Wl,-rpath-link,$TC/usr/lib"
+
+# bzip2: its own Makefiles (a shared libbz2, and the programs), and a
+# bzip2.pc, which upstream doesn't ship.
+b_bzip2() {
+    copy_src "$1" "$2"
+    make -C "$2" -f Makefile-libbz2_so CC="$TCC" CFLAGS="-O2 -fPIC -D_FILE_OFFSET_BITS=64" -j"$JOBS"
+    make -C "$2" CC="$TCC" CFLAGS="-O2 -D_FILE_OFFSET_BITS=64" bzip2 bzip2recover
+    local v; v=$(cat "$1/.jk_os-version")
+    install -Dm755 "$2/libbz2.so.$v" "$TC/usr/lib/libbz2.so.$v"
+    ln -sf "libbz2.so.$v" "$TC/usr/lib/libbz2.so.1.0"
+    ln -sf "libbz2.so.$v" "$TC/usr/lib/libbz2.so.1"
+    ln -sf "libbz2.so.$v" "$TC/usr/lib/libbz2.so"
+    install -Dm644 "$2/bzlib.h" "$TC/usr/include/bzlib.h"
+    install -Dm755 "$2/bzip2-shared" "$TC/usr/bin/bzip2"
+    install -m755 "$2/bzip2recover" "$TC/usr/bin/bzip2recover"
+    ln -sf bzip2 "$TC/usr/bin/bunzip2"; ln -sf bzip2 "$TC/usr/bin/bzcat"
+    install -Dm644 /dev/stdin "$TC/usr/lib/pkgconfig/bzip2.pc" <<PC
+prefix=/usr
+libdir=\${prefix}/lib
+includedir=\${prefix}/include
+
+Name: bzip2
+Description: A file compression library
+Version: $v
+Libs: -L\${libdir} -lbz2
+Cflags: -I\${includedir}
+PC
+}
+
+# SQLite (autosetup's configure: no --build/--target options).
+b_sqlite() {
+    copy_src "$1" "$2"
+    (cd "$2" && CC="$TCC" CFLAGS="-O2" ./configure --prefix=/usr --libdir=/usr/lib --disable-static \
+        --enable-fts5 --enable-rtree --enable-session --soname=legacy --disable-readline)
+    make -C "$2" -j"$JOBS"
+    make -C "$2" install DESTDIR="$TC"
+}
+
+# bash, with its official patches (configs/toolchain/patches/bash: bash53-NNN,
+# GNU-signed), and readline as it ships it, on ncurses. /bin/bash too, for
+# scripts that ask for it there.
+b_bash() {
+    copy_src "$1" "$2"
+    local p
+    for p in "$ROOT_DIR"/configs/toolchain/patches/bash/*.patch; do
+        patch -d "$2" -p0 --no-backup-if-mismatch < "$p"
+    done
+    (cd "$2" && CC="$TCC" CFLAGS="$DEPFLAGS_C" LDFLAGS="$DEPFLAGS_LD" ./configure "${TARGET_ARGS[@]}" \
+        --without-bash-malloc --with-curses --enable-readline --without-installed-readline)
+    make -C "$2" -j"$JOBS" MAKEINFO=true
+    make -C "$2" install DESTDIR="$TC" MAKEINFO=true
+    mkdir -p "$TC/bin"
+    ln -sf /usr/bin/bash "$TC/bin/bash"
+}
+
+# Python 3: shared libpython, OpenSSL (the network stack's: ssl, hashlib,
+# pip over HTTPS), pip installed with ensurepip, venv; the standard modules'
+# libraries given one by one (pkg-config would hand the build machine's
+# /usr paths). No test suite. python, pip: links to python3, pip3.
+b_python() {
+    if [[ -n "$CROSS" ]]; then
+        # Cross-building Python needs a build-machine Python of the same version.
+        echo "Python is not cross-built ($ARCH on $HOST_ARCH)" >&2
+        return 0
+    fi
+    copy_src "$1" "$2"
+    local d="$DYN/usr/include" t="$TC/usr/include"
+    (cd "$2" && CC="$TCC" CXX="$TCXX" CFLAGS="-O2" CPPFLAGS="-I$d -I$t" LDFLAGS="$DEPFLAGS_LD" \
+        PKG_CONFIG=false \
+        ZLIB_CFLAGS="-I$d" ZLIB_LIBS="-lz" BZIP2_CFLAGS="-I$t" BZIP2_LIBS="-lbz2" \
+        LIBLZMA_CFLAGS="-I$d" LIBLZMA_LIBS="-llzma" LIBFFI_CFLAGS="-I$d" LIBFFI_LIBS="-lffi" \
+        LIBEXPAT_CFLAGS="-I$d" LIBEXPAT_LIBS="-lexpat" LIBUUID_CFLAGS="-I$d/uuid" LIBUUID_LIBS="-luuid" \
+        LIBSQLITE3_CFLAGS="-I$t" LIBSQLITE3_LIBS="-lsqlite3" \
+        LIBREADLINE_CFLAGS="-I$d" LIBREADLINE_LIBS="-lreadline -lncursesw" \
+        CURSES_CFLAGS="-I$d -I$d/ncursesw -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600" CURSES_LIBS="-lncursesw" \
+        PANEL_CFLAGS="-I$d -I$d/ncursesw" PANEL_LIBS="-lpanelw" \
+        ./configure "${TARGET_ARGS[@]}" --enable-shared --with-openssl="$DYN/usr" \
+        --with-openssl-rpath=no --with-ssl-default-suites=openssl --with-system-expat \
+        --with-ensurepip=install --with-readline=readline --disable-test-modules \
+        --with-dbmliborder= --without-static-libpython)
+    # The built interpreter runs during the build (it imports every module
+    # it built, and runs ensurepip): with the libraries it links.
+    LD_LIBRARY_PATH="$2:$DYN/usr/lib:$TC/usr/lib" make -C "$2" -j"$JOBS"
+    LD_LIBRARY_PATH="$2:$DYN/usr/lib:$TC/usr/lib" make -C "$2" install DESTDIR="$TC"
+    ln -sf python3 "$TC/usr/bin/python"
+    ln -sf pip3 "$TC/usr/bin/pip"
+}
+
+step bzip2    "$BZIP2_SRC"    b_bzip2
+step sqlite   "$SQLITE_SRC"   b_sqlite
+step bash     "$BASH_SRC"     b_bash "patches=$(cat "$ROOT_DIR"/configs/toolchain/patches/bash/*.patch | sha256sum | cut -c1-16)"
+step python   "$PYTHON_SRC"   b_python
 
 # Clang's C++ standard, like GCC's (config file in CLANG_CONFIG_FILE_SYSTEM_DIR).
 mkdir -p "$TC/etc/clang"

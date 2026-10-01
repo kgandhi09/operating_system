@@ -38,16 +38,20 @@ cp -a "$TOOLS_OUT/sbin/." sbin/
 cp -a "$TOOLS_OUT/bin/." bin/   # passwd, su, ... keep their setuid bit
 # The network stack (build-network.sh: NetworkManager, D-Bus, udev, GLib,
 # wpa_supplicant) and the desktop (build-desktop.sh: KDE Plasma, Qt, Mesa,
-# elogind). Only what runs: no headers, static libraries, docs, translations
-# or build tools. BusyBox keeps clear/reset/tput and friends. GLib's settings
-# schemas stay compiled only (gschemas.compiled: GTK aborts without it).
+# PipeWire, elogind), with every library's development files, so programs
+# built on jk_os can use them: headers, pkg-config and CMake files, static
+# libraries, Qt's mkspecs and module files, ECM, the Wayland and XCB
+# protocols, aclocal macros, the *-config scripts and wayland-scanner (and
+# pkg-config itself: pkgconf). Left out: docs, translations, libtool
+# archives, and the build tools that only run on the build machine (GLib's
+# Python generators, qmake's cross-compiling wrapper, ICU's data tools).
+# BusyBox keeps clear/reset/tput and friends. GLib's settings schemas stay
+# compiled only (gschemas.compiled: GTK aborts without it).
 (cd "$DYN" && tar -cf - \
-    --exclude=./usr/include --exclude=./usr/lib/pkgconfig --exclude=./usr/share/pkgconfig \
-    --exclude=./usr/lib/cmake --exclude=./usr/lib/glib-2.0 --exclude=./usr/lib/dbus-1.0 \
     --exclude=./usr/lib/engines-3 --exclude=./usr/lib/ossl-modules \
-    --exclude='*.a' --exclude='*.la' \
+    --exclude='*.la' \
     --exclude=./usr/share/man --exclude=./usr/share/doc --exclude=./usr/share/info \
-    --exclude=./usr/share/locale --exclude=./usr/share/aclocal --exclude=./usr/share/gdb \
+    --exclude=./usr/share/locale --exclude=./usr/share/gdb \
     --exclude=./usr/share/bash-completion --exclude=./usr/share/gettext \
     --exclude=./usr/share/terminfo \
     --exclude=./usr/share/glib-2.0/codegen --exclude=./usr/share/glib-2.0/dtds \
@@ -56,20 +60,16 @@ cp -a "$TOOLS_OUT/bin/." bin/   # passwd, su, ... keep their setuid bit
     --exclude=./etc/NetworkManager/dnsmasq.d --exclude=./etc/NetworkManager/dnsmasq-shared.d \
     --exclude=./usr/libexec/gio-launch-desktop --exclude=./usr/libexec/nm-initrd-generator \
     --exclude=./usr/libexec/dbus-daemon-launch-helper \
-    --exclude=./usr/lib/qt6/mkspecs --exclude=./usr/lib/qt6/metatypes --exclude=./usr/lib/qt6/modules \
     --exclude=./usr/lib/icu --exclude=./usr/lib/systemd --exclude='./usr/lib/python3*' \
-    --exclude=./usr/share/ECM --exclude=./usr/share/wayland-protocols \
-    --exclude=./usr/share/plasma-wayland-protocols --exclude=./usr/share/xcb \
-    --exclude=./usr/share/libtool --exclude=./usr/share/qt6/modules --exclude=./usr/share/qt6/sbom \
+    --exclude=./usr/share/libtool --exclude=./usr/share/qt6/sbom \
     $(for b in glib-compile-resources glib-compile-schemas glib-genmarshal glib-gettextize \
                glib-mkenums gdbus-codegen gtester gtester-report gi-compile-repository \
                gi-decompile-typelib gi-inspect-typelib gresource gobject-query gio-querymodules \
-               gapplication pcre2-config pcre2grep pcre2test xmlwf ncursesw6-config dbus-launch \
+               gapplication pcre2grep pcre2test xmlwf dbus-launch \
                dbus-test-tool dbus-cleanup-sockets \
                qmake qmake6 qtpaths qtpaths6 target_qt.conf qt-cmake qt-cmake-create \
-               qt-configure-module icu-config libtool libtoolize libtool-next-version \
-               libpng-config libpng16-config xml2-config wayland-scanner genbrk gencfu curl-config \
-               gencnval gendict genrb makeconv pkgdata icuexportdata derb \
+               qt-configure-module libtool libtoolize libtool-next-version \
+               genbrk gencfu gencnval gendict genrb makeconv pkgdata icuexportdata derb \
                clear reset tput tset tabs captoinfo infocmp infotocap tic toe; do
           echo "--exclude=./usr/bin/$b"; done) .) | tar -xf - -C "$ROOTFS_DIR"
 # The C/C++ toolchain (build-toolchain.sh): GCC, Clang/LLVM, binutils,

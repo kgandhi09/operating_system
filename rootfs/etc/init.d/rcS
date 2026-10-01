@@ -20,6 +20,13 @@ chmod 1777 /tmp/.X11-unix /tmp/.ICE-unix
 mkdir -p /sys/fs/cgroup
 mnt cgroup2  cgroup2  /sys/fs/cgroup
 
+# BusyBox's modprobe caches the modules it found in modules.dep.bb, and on an
+# installed system that cache outlives the image it was made from (it lands
+# in /data/system/root, and every jk_os kernel is 7.2.0-jk_os): a module a
+# newer image added (btusb) would never be found. The first modprobe after
+# boot rebuilds it.
+rm -f /lib/modules/*/modules.dep.bb /lib/modules/*/modules.dep.bb.new
+
 hostname -F /etc/hostname
 ip link set lo up
 

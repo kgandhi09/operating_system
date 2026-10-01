@@ -77,7 +77,7 @@ for t in "${NET_TREES[@]}"; do
     v="${t}_TREE"; declare "${t}_SRC=$ROOT_DIR/${!v}"
 done
 # Toolchain (scripts/build-toolchain.sh).
-TC_TREES=(GCC BINUTILS GDB GMP MPFR MPC LLVM CMAKE NINJA)
+TC_TREES=(GCC BINUTILS GDB GMP MPFR MPC LLVM CMAKE NINJA MAKE M4 FLEX BISON PERL AUTOCONF AUTOMAKE BASH PYTHON SQLITE BZIP2)
 for t in "${TC_TREES[@]}"; do
     v="${t}_TREE"; declare "${t}_SRC=$ROOT_DIR/${!v}"
 done

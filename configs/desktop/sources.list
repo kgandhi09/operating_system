@@ -5,6 +5,8 @@
 
 # ---- Build tools (run on the build host)
 meson               1.12.1    https://github.com/mesonbuild/meson/releases/download/{v}/meson-{v}.tar.gz  ab0a6ca09f8ef70c564c8241fb5a23957886a0b53fb58412b5e07eaf07dba743
+# pkg-config for programs built on jk_os (the graphics development files).
+pkgconf  3.0.7  https://distfiles.ariadne.space/pkgconf/pkgconf-{v}.tar.xz  c926ff491cbd9a331a589160811bd97ab1749b4d5198a519338f2cdfabe6940a
 
 # ---- Phase A: graphics, input, fonts, X11 compatibility
 libpciaccess  0.19  https://xorg.freedesktop.org/releases/individual/lib/libpciaccess-{v}.tar.xz  3c55aa86c82e54a4e3109786f0463530d53b36b6d1cfd14616454f985dd2aa43
