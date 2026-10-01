@@ -1,0 +1,33 @@
+#!/bin/sh
+# jk-audio <command> [args]: run a graphical session (jk-gui-session,
+# jk-dev-session) with sound: PipeWire, its session manager WirePlumber and
+# its PulseAudio server (for programs that speak PulseAudio, Firefox and the
+# desktop's volume applet among them), in the session's D-Bus bus. They stop
+# when the command ends. If this user's sound server already runs (a session
+# on another console), the command uses that one.
+
+if [ -z "${XDG_RUNTIME_DIR:-}" ] || ! command -v pipewire >/dev/null; then
+    exec "$@"
+fi
+
+if pw-cli -r pipewire-0 info 0 >/dev/null 2>&1; then
+    exec "$@"
+fi
+
+pipewire &
+pw=$!
+# WirePlumber and the PulseAudio server connect to PipeWire once it is up.
+i=0
+while [ ! -S "$XDG_RUNTIME_DIR/pipewire-0" ] && [ $i -lt 50 ]; do
+    sleep 0.1
+    i=$((i + 1))
+done
+wireplumber &
+wp=$!
+pipewire-pulse &
+pp=$!
+
+"$@"
+rc=$?
+kill "$pp" "$wp" "$pw" 2>/dev/null
+exit "$rc"

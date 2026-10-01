@@ -1,18 +1,24 @@
 #!/usr/bin/env bash
 # Maintainer tool: refresh the firmware kept in userspace/firmware from
 # linux-firmware and wireless-regdb (cdn.kernel.org, checked against the
-# published SHA-256 sums). Builds never run this; they only use what is in
-# the repo, like the other source trees.
+# published SHA-256 sums) and Sound Open Firmware's sof-bin (Intel's audio
+# DSP firmware and topologies, which linux-firmware doesn't carry; GitHub,
+# pinned below by version and SHA-256). Builds never run this; they only use
+# what is in the repo, like the other source trees.
 #
 #   scripts/update-firmware.sh <linux-firmware version> <wireless-regdb version>
 #   scripts/update-firmware.sh 20260916 2026.09.03
 #   LINUX_FIRMWARE_TARBALL=~/linux-firmware-20260916.tar.xz scripts/update-firmware.sh ...
+#   (SOF_BIN_TARBALL=<file>: the same for sof-bin)
 #
 # What is kept, per arch, comes from configs/firmware/{common,<arch>}.list:
 #   driver <name>   every file that driver may load, as the kernel build
 #                   lists it (build/<arch>/linux/modules.builtin.modinfo, or
 #                   the module in build/<arch>/modules; run `make kernel` for
 #                   each arch first)
+#   late <name>     like driver, for a loadable module that /etc/init.d loads
+#                   once the root is mounted (btusb's helpers): its files go
+#                   into the image only, not the kernel's initramfs
 #   file <glob>     files no driver declares (board files, regulatory.db, ...)
 #   skip <glob>     leave out files a driver line brought in (chips jk_os
 #                   won't meet, such as access-point radios)
@@ -20,13 +26,19 @@
 #                   identical copies into links), so a blob many chips share
 #                   is stored once: NVIDIA's GSP firmware
 # Files are stored zstd-compressed, as the kernel loads them (<name>.zst);
-# userspace/firmware/<arch>.files lists each arch's share, <arch>.linked the
-# linked ones. An arch whose kernel isn't built keeps its current lists.
+# userspace/firmware/<arch>.files lists each arch's share (in the initramfs
+# and the image), <arch>.linked the linked and late ones (the image only). An
+# arch whose kernel isn't built keeps its current lists.
 source "$(dirname "$0")/common.sh"
 need curl tar zstd sha256sum modinfo
 
 fw_ver="${1:-}" regdb_ver="${2:-}"
 [[ -n "$fw_ver" && -n "$regdb_ver" ]] || die "usage: $0 <linux-firmware version> <wireless-regdb version>"
+
+# sof-bin: the release, and its SHA-256 as GitHub publishes it (the release's
+# asset digest).
+SOF_BIN_VERSION=2026.09.1
+SOF_BIN_SHA256=42ce40ec98f366365eab8e046d779b416d80b6ff2513b8f6be2a61a88e679b73
 
 LIST_DIR="$ROOT_DIR/configs/firmware"
 DEST="$ROOT_DIR/userspace/firmware"
@@ -50,6 +62,16 @@ get() {
 }
 get https://cdn.kernel.org/pub/linux/kernel/firmware "linux-firmware-$fw_ver.tar.xz" "${LINUX_FIRMWARE_TARBALL:-}"
 get https://cdn.kernel.org/pub/software/network/wireless-regdb "wireless-regdb-$regdb_ver.tar.xz" "${REGDB_TARBALL:-}"
+sof="sof-bin-$SOF_BIN_VERSION.tar.gz"
+if [[ -n "${SOF_BIN_TARBALL:-}" ]]; then
+    cp "$SOF_BIN_TARBALL" "$tmp/$sof"
+else
+    log "downloading $sof"
+    curl -fL --progress-bar --retry 5 --retry-all-errors -o "$tmp/$sof" \
+        "https://github.com/thesofproject/sof-bin/releases/download/v$SOF_BIN_VERSION/$sof"
+fi
+echo "$SOF_BIN_SHA256  $sof" > "$tmp/check"
+(cd "$tmp" && sha256sum --quiet -c check) || die "checksum mismatch for $sof"
 
 log "unpacking"
 tar -xf "$tmp/linux-firmware-$fw_ver.tar.xz" -C "$tmp"
@@ -59,6 +81,13 @@ tar -xf "$tmp/wireless-regdb-$regdb_ver.tar.xz" -C "$tmp"
 mkdir "$tmp/fw"
 (cd "$tmp/linux-firmware-$fw_ver" && ./copy-firmware.sh "$tmp/fw" >/dev/null)
 cp "$tmp/wireless-regdb-$regdb_ver"/regulatory.db{,.p7s} "$tmp/fw/"
+# sof-bin as its install.sh lays it out in /lib/firmware/intel (its links
+# included: most platforms share a firmware file).
+tar -xzf "$tmp/$sof" -C "$tmp"
+for d in sof sof-tplg sof-ipc4 sof-ipc4-lib sof-ipc4-tplg; do
+    cp -a "$tmp/sof-bin-$SOF_BIN_VERSION/$d" "$tmp/fw/intel/$d"
+done
+ln -sfn sof-ipc4-tplg "$tmp/fw/intel/sof-ace-tplg"
 cd "$tmp/fw"
 
 # resolve <name>: the file the kernel would load for a declared name. Drivers
@@ -92,7 +121,7 @@ for arch in x86_64 aarch64; do
         while read -r kind what _; do
             [[ -z "$kind" || "$kind" == \#* ]] && continue
             case "$kind" in
-                driver)
+                driver|late)
                     if [[ ! -f "$modinfo" ]]; then
                         warn "$arch: no kernel built yet (make kernel ARCH=$arch), skipping driver $what"
                         continue
@@ -105,7 +134,10 @@ for arch in x86_64 aarch64; do
                     fi
                     [[ -n "$names" ]] || warn "$arch: driver $what is not built in, or declares no firmware"
                     for n in $names; do
-                        resolve "$n" >> "$tmp/$arch.files" || true   # many are for chips never released
+                        r=$(resolve "$n") || continue    # many are for chips never released
+                        echo "$r" >> "$tmp/$arch.files"
+                        # late: image only, kept with its links like a linked file
+                        [[ "$kind" == late ]] && echo "$r" >> "$tmp/$arch.linkpat"
                     done ;;
                 file)
                     # shellcheck disable=SC2086 # a glob on purpose
@@ -182,8 +214,9 @@ sort -u "$tmp"/*.files | while IFS= read -r f; do
     zstd -q -19 -o "$DEST.new/$f.zst" "$tmp/one"
     rm -f "$tmp/one"
 done
-printf 'linux-firmware %s\nwireless-regdb %s\n' "$fw_ver" "$regdb_ver" > "$DEST.new/VERSIONS"
+printf 'linux-firmware %s\nwireless-regdb %s\nsof-bin %s\n' "$fw_ver" "$regdb_ver" "$SOF_BIN_VERSION" > "$DEST.new/VERSIONS"
 cp "$tmp/linux-firmware-$fw_ver/WHENCE" "$DEST.new/WHENCE"   # licence of every file
+cp "$tmp/sof-bin-$SOF_BIN_VERSION/LICENCE.Intel" "$DEST.new/LICENCE.sof-bin"   # intel/sof*
 [[ -d "$DEST" ]] && mv "$DEST" "$tmp/old"
 mv "$DEST.new" "$DEST"
 log "userspace/firmware: $(du -sh "$DEST" | cut -f1) (linux-firmware $fw_ver, wireless-regdb $regdb_ver)"

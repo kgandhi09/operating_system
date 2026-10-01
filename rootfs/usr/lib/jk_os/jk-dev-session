@@ -52,4 +52,5 @@ if [ -n "${JK_DEV_COMMAND:-}" ]; then
 else
     set -- foot
 fi
-exec dbus-run-session cage -s -d -m "$outputs" -- "$@" > "$state/jk-dev.log" 2>&1
+# Sound (PipeWire) runs in the session's bus: /usr/lib/jk_os/jk-audio.
+exec dbus-run-session /usr/lib/jk_os/jk-audio cage -s -d -m "$outputs" -- "$@" > "$state/jk-dev.log" 2>&1

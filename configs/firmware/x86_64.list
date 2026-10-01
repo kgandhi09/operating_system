@@ -42,3 +42,16 @@ driver nouveau
 # newer) that every chip of the family links to.
 skip nvidia/*/gsp/*-535.113.01.bin
 linked nvidia/*/gsp/*
+
+# Intel's audio DSP (Sound Open Firmware, from sof-bin: see
+# scripts/update-firmware.sh): the firmware for every platform, by the name
+# the kernel asks for (IPC3: intel/sof/sof-<platform>.ri, IPC4:
+# intel/sof-ipc4/<platform>/sof-<platform>.ri), and the
+# topologies, which describe each laptop's audio wiring (HDA codecs, digital
+# microphones, SoundWire). The DSP driver is built in and starts with the
+# kernel, so these are in the initramfs.
+file intel/sof/sof-*.ri
+file intel/sof-ipc4/*/sof-*.ri
+file intel/sof-tplg/*.tplg
+file intel/sof-ipc4-tplg/*.tplg
+file intel/sof-ace-tplg/*.tplg

@@ -7,6 +7,7 @@ A minimal 64-bit Linux system built from source:
 - **util-linux** and **e2fsprogs** disk tools (GPT partitioning, ext4) for the installer,
 - **shadow-utils** (with **libxcrypt**) for users and passwords: `useradd`, `passwd`, `su`, `login`, ..., and **sudo**,
 - **NetworkManager** (`nmcli`) for wired, Wi-Fi and IPv6, with the firmware common network chips need,
+- **sound** (PipeWire), **Bluetooth** (BlueZ) and USB webcams,
 - a **C/C++ toolchain**: GCC 16 and Clang 23 (C++20 by default), binutils, CMake, Ninja and GDB,
 - a short list of **prebuilt static binaries pulled from GitHub releases** (`jq`, `rg`, `fd`, ...),
 - no display manager, X or Wayland: text console on screen plus serial console.
@@ -337,6 +338,31 @@ is built in.
   `jk-cuda list`, `sudo jk-cuda remove`. jk_os's GCC 16 is newer than CUDA
   lists as supported, so `/etc/profile` sets
   `NVCC_APPEND_FLAGS=-allow-unsupported-compiler`.
+
+## Sound, Bluetooth and cameras
+
+- **Sound**: the kernel has every HDA codec family, USB audio, and Intel's
+  audio DSP (Sound Open Firmware, which laptops with digital microphones or
+  SoundWire need; its firmware and topologies come from sof-bin, in the
+  initramfs), plus AMD's digital microphones. ALSA's card profiles (UCM) are
+  in `/usr/share/alsa/ucm2`. **PipeWire**, WirePlumber and PipeWire's
+  PulseAudio server run with the desktop and the dev session
+  (`/usr/lib/jk_os/jk-audio`); programs using ALSA directly go through it too
+  (`/etc/alsa/conf.d`). The desktop's volume applet and settings page are
+  plasma-pa. In a terminal: `wpctl status`, `wpctl set-volume @DEFAULT_SINK@ 50%`,
+  `pactl list sinks`, `speaker-test -c 2`, `aplay -l`.
+- **Bluetooth**: BlueZ's `bluetoothd`, started at boot by
+  `/etc/init.d/S42bluetooth` after it loads the adapters' drivers (`btusb`,
+  `hci_uart`: modules, so their firmware stays in the image). Pair from the
+  desktop's Bluetooth applet or System Settings → Bluetooth, or with
+  `bluetoothctl`. Headphones and speakers play through PipeWire (SBC codec).
+  `BLUETOOTH=no` in `/etc/jk_os/bluetooth` turns it off.
+- **Cameras**: USB webcams, which laptops' built-in cameras are, through
+  V4L2 (`/dev/video*`); PipeWire offers them to applications too. Cameras
+  behind Intel's IPU6 (some recent thin laptops) are not supported.
+- Access: a user logged in on a console gets the sound and camera devices
+  from elogind; users created by the installer are also in the `audio` and
+  `video` groups.
 
 ## Packages (apt)
 

@@ -26,3 +26,10 @@ driver brcmfmac
 # Board files (NVRAM, per-country tables) brcmfmac picks by board name.
 file brcm/brcmfmac*.txt
 file brcm/brcmfmac*.clm_blob
+
+# Bluetooth adapters (USB, and laptops' combo Wi-Fi/Bluetooth cards): their
+# drivers are modules /etc/init.d/S42bluetooth loads, so the firmware stays
+# out of the initramfs (Intel's alone is tens of MB).
+late btintel
+late btrtl
+late btmtk

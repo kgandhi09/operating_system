@@ -1,0 +1,29 @@
+#!/bin/sh
+# Bluetooth: the adapters' drivers, then BlueZ's bluetoothd (the desktop's
+# Bluetooth applet and settings, bluetoothctl, PipeWire's Bluetooth audio).
+# The drivers are modules, loaded here rather than by the kernel at boot:
+# their firmware is in the image (/lib/firmware), not in the initramfs.
+# Once loaded they also take adapters plugged in later.
+#
+# /etc/jk_os/bluetooth (optional): BLUETOOTH=no leaves it all off.
+
+case "$1" in
+    start)
+        BLUETOOTH=yes
+        [ -f /etc/jk_os/bluetooth ] && . /etc/jk_os/bluetooth
+        [ "$BLUETOOTH" = no ] && exit 0
+        for m in btusb hci_uart; do
+            modprobe "$m" 2>/dev/null
+        done
+        # Unblock the adapters in software (the hardware switch stays in charge).
+        for r in /sys/class/rfkill/rfkill*; do
+            [ "$(cat "$r/type" 2>/dev/null)" = bluetooth ] && echo 0 > "$r/soft" 2>/dev/null
+        done
+        mkdir -p /var/lib/bluetooth
+        chmod 0700 /var/lib/bluetooth
+        /usr/libexec/bluetooth/bluetoothd &
+        ;;
+    stop)
+        pkill -x bluetoothd 2>/dev/null
+        ;;
+esac

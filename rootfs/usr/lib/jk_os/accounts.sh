@@ -59,7 +59,9 @@ accounts_summary() {
 accounts_apply() {
     prefix="$1" homes="$2"
     popt=""; [ "$prefix" = / ] || popt="--prefix $prefix"
-    groups=""; [ "$ACC_ADMIN" = yes ] && groups="-G wheel"
+    # audio, video: sound cards and cameras also outside a console session
+    # (in one, elogind gives the user access anyway).
+    groups="-G audio,video"; [ "$ACC_ADMIN" = yes ] && groups="-G wheel,audio,video"
     # shellcheck disable=SC2086 # $popt and $groups are option lists
     useradd $popt -M -d "/home/$ACC_USER" -s /bin/sh -c "$ACC_FULLNAME" $groups "$ACC_USER" \
         || die "useradd $ACC_USER failed"
