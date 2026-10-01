@@ -219,6 +219,9 @@ chmod 0440 etc/sudoers.d/*
 chmod 1777 tmp
 # setuid helpers the strip above rewrote (strip drops the setuid bit).
 chmod 4755 usr/lib/jk_os/jk-session
+# PAM's password checker: the screen locker's greeter runs as the user and
+# asks it to check the password against /etc/shadow, which only root reads.
+chmod 4755 usr/sbin/unix_chkpwd
 
 log "rootfs: $(du -sh . | cut -f1) in $ROOTFS_DIR"
 
