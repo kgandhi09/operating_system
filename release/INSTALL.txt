@@ -1,0 +1,76 @@
+jk_os 0.1.0 - J.K. Robotics Pvt. Ltd.
+Installing from a USB stick
+=====================================
+
+You need:
+  - jk_os-0.1.0-x86_64.iso (and SHA256SUMS, to check it)
+  - a USB stick of 2 GB or more (everything on it will be erased)
+  - a 64-bit PC or laptop (x86_64), 4 GB of RAM or more for the desktop,
+    about 20 GB of free disk space
+
+The ISO must be written to the stick as a disk image. Copying the file onto
+the stick (drag and drop) does NOT work: use one of the tools below.
+
+
+1. Check the download (recommended)
+-----------------------------------
+Put SHA256SUMS in the same folder as the ISO, then:
+
+  Linux:    sha256sum -c SHA256SUMS
+  macOS:    shasum -a 256 -c SHA256SUMS
+  Windows:  (PowerShell)  Get-FileHash .\jk_os-0.1.0-x86_64.iso
+
+It must print OK, or the hash:
+  baf70d13bab187840789ee79eb8fb5cf850cf8307baad8fb939dce8049494704
+If it doesn't, download the ISO again.
+
+
+2. Write the ISO to the USB stick
+---------------------------------
+
+  Any system: balenaEtcher (easiest) - https://etcher.balena.io
+    1. "Flash from file"  -> choose jk_os-0.1.0-x86_64.iso
+    2. "Select target"    -> choose the USB stick
+    3. "Flash!"           (Etcher checks the stick when it is done)
+
+  Windows: Rufus - https://rufus.ie
+    1. Select the USB stick under "Device" and the ISO under "Boot selection".
+    2. Click "Start". When Rufus asks how to write the image, choose
+       "Write in DD Image mode" (NOT "ISO Image mode", which won't boot).
+
+  Linux: terminal
+    lsblk          (find the stick, e.g. /dev/sdb - check its size!)
+    sudo dd if=jk_os-0.1.0-x86_64.iso of=/dev/sdX bs=4M status=progress conv=fsync
+    Use the whole disk (/dev/sdb), not a partition (/dev/sdb1). dd overwrites
+    the disk you name without asking: make sure it is the USB stick.
+    (GNOME Disks works too: select the stick, menu -> "Restore Disk Image...")
+
+  macOS: terminal
+    diskutil list                     (find the stick, e.g. /dev/disk4)
+    diskutil unmountDisk /dev/disk4
+    sudo dd if=jk_os-0.1.0-x86_64.iso of=/dev/rdisk4 bs=4m
+    diskutil eject /dev/disk4
+    ("rdisk" instead of "disk" makes it much faster.)
+
+
+3. Boot from the USB stick and install
+--------------------------------------
+  1. Turn Secure Boot off in the PC's firmware settings (usually F2 or Del at
+     power-on). jk_os is not signed for Secure Boot.
+  2. Plug in the stick, start the PC and open its boot menu (usually F12, F11,
+     F8 or Esc; on ASUS laptops F8 or Esc). Choose the USB stick.
+  3. The jk_os menu appears. Choose "Install" and follow the steps: the disk
+     to install on (the whole disk, or free space next to another Linux), and
+     your user name and password.
+  4. When it is done, remove the stick and reboot.
+
+
+4. First steps
+--------------
+  Log in on the console with your user name and password, then:
+    jk-dev    the dev session: a full-screen terminal for Neovim, herdr, ...
+    jk-gui    the desktop (KDE Plasma)
+  Ctrl+Alt+F1 ... F6 switch between the six consoles.
+  Wi-Fi:  nmcli device wifi connect "<network>" --ask
+
+J.K. Robotics Pvt. Ltd. - https://jkrobotics.tech
