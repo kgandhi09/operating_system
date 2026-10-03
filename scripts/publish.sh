@@ -130,6 +130,10 @@ old_versions() {
         d=\${d%/}; [ -d \"\$d\" ] && [ \"\$d\" != '.upload-$ver' ] && [ \"\$d\" != '${1:-}' ] && echo \"\$d\"; done; true"
 }
 remote "mkdir -p '$REMOTE_ROOT/$OS_NAME'"
+# The SSH user must own the release folder: it renames and deletes releases
+# there (no sudo). Check before anything is deleted.
+remote "test -w '$REMOTE_ROOT/$OS_NAME' && test -w '$REMOTE_ROOT'" \
+    || die "$HOST cannot write to $REMOTE_ROOT/$OS_NAME: run there: sudo chown -R \$(id -un) $REMOTE_ROOT"
 need_kb=$(( $(du -sLk "$stage" | cut -f1) + 102400 ))     # and 100 MB to spare
 free_kb() { remote "df -Pk '$REMOTE_ROOT' | awk 'NR==2 {print \$4}'"; }
 if (( $(free_kb) < need_kb )); then

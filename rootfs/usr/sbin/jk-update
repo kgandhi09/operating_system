@@ -1,0 +1,247 @@
+#!/bin/sh
+# jk-update: update an installed jk_os to the newest published release.
+#
+#   sudo jk-update               check, and install the update if there is one
+#   jk-update --check            only say whether there is one (any user)
+#   sudo jk-update --rollback    go back to the release before the last update
+#   options: --yes (don't ask), --url <base URL>
+#
+# A jk_os release is two files, published together by scripts/publish.sh: the
+# OS image (/data/system/jk_os.squashfs) and the kernel (the EFI file in
+# /boot/EFI/BOOT). This reads <url>/jk_os/latest-<arch>.json, downloads both
+# into /data/system/update (resuming an interrupted download), checks their
+# sizes and SHA-256s, and swaps them in: the running image and kernel are
+# kept as /data/system/jk_os.squashfs.old and /data/system/kernel.old, for
+# --rollback. The new release starts at the next reboot. Everything on /data
+# stays: home, users, settings, what you installed.
+#
+# A file you changed that the image also ships (say /etc/profile) keeps your
+# copy (/data/system/root/upper), also over the update's: jk-update lists the
+# ones the update changes, so they don't silently stay old.
+#
+# /etc/jk_os/update (optional): JK_UPDATE_URL=<base URL of the downloads>.
+
+set -u
+name=${0##*/}
+URL=http://13.62.226.224/downloads
+[ -f /etc/jk_os/update ] && . /etc/jk_os/update
+URL=${JK_UPDATE_URL:-$URL}
+
+SYS=/data/system
+IMAGE=$SYS/jk_os.squashfs
+WORK=$SYS/update
+STATE=$SYS/release.json          # what is installed (the release's json)
+
+die() { echo "$name: $*" >&2; exit 1; }
+say() { echo "$*"; }
+usage() { sed -n '2,/^set -u/p' "$0" | sed '$d; s/^# \{0,1\}//'; exit "${1:-0}"; }
+
+# Everything but --check and --help changes the system: run as root.
+case " $* " in
+    *" --check "*|*" -h "*|*" --help "*) ;;
+    *) [ "$(id -u)" = 0 ] || exec sudo "$0" "$@" ;;
+esac
+
+action=update yes=0
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --check) action=check ;;
+        --rollback) action=rollback ;;
+        --yes|-y) yes=1 ;;
+        --url) [ $# -ge 2 ] || usage 1; URL=$2; shift ;;
+        -h|--help) usage ;;
+        *) usage 1 ;;
+    esac
+    shift
+done
+
+[ "$(cat /run/jk-mode 2>/dev/null)" = installed ] \
+    || die "updates are for an installed jk_os (this is the $(cat /run/jk-mode 2>/dev/null || echo unknown) system)"
+[ -f "$IMAGE" ] || die "no $IMAGE"
+
+case "$(uname -m)" in
+    x86_64) arch=x86_64 efi=BOOTX64.EFI ;;
+    aarch64) arch=aarch64 efi=BOOTAA64.EFI ;;
+    *) die "unsupported machine $(uname -m)" ;;
+esac
+KERNEL=/boot/EFI/BOOT/$efi
+
+confirm() {   # confirm <question>: yes unless the user says no
+    [ "$yes" = 1 ] && return 0
+    printf '%s [Y/n] ' "$1"
+    read -r a || return 1
+    case "$a" in ""|y|Y|yes|Yes) return 0 ;; *) return 1 ;; esac
+}
+sha() { sha256sum "$1" | cut -d' ' -f1; }
+field() { jq -r "$1" "$2"; }
+
+# installed_sha: the SHA-256 of the installed image, from what the last
+# jk-update recorded, or computed (and recorded) for a system installed from
+# the USB stick.
+installed_sha() {
+    s=$(jq -r '.files.image.sha256 // empty' "$STATE" 2>/dev/null)
+    if [ -n "$s" ] && [ "$(stat -c %s "$IMAGE")" = "$(jq -r '.files.image.size' "$STATE")" ]; then
+        echo "$s"; return
+    fi
+    s=$(sha "$IMAGE")
+    if [ "$(id -u)" = 0 ]; then
+        printf '{"name": "jk_os", "version": "%s", "files": {"image": {"size": %s, "sha256": "%s"}}}\n' \
+            "$(. /etc/os-release; echo "$VERSION_ID")" "$(stat -c %s "$IMAGE")" "$s" > "$STATE"
+    fi
+    echo "$s"
+}
+
+# ---------------------------------------------------------------- rollback
+if [ "$action" = rollback ]; then
+    [ -f "$IMAGE.old" ] && [ -f "$SYS/kernel.old" ] \
+        || die "nothing to roll back to (no $IMAGE.old and $SYS/kernel.old: no update was installed)"
+    mountpoint -q /boot || die "/boot is not mounted"
+    say "Rolling back to the release before the last update$( [ -f "$STATE.old" ] && printf ' (%s)' "$(jq -r .version "$STATE.old")")."
+    confirm "Continue?" || exit 1
+    # Swap: the current pair becomes .old, so a second --rollback undoes this.
+    cp "$KERNEL" "$SYS/kernel.cur" && cp "$SYS/kernel.old" "$KERNEL.new" && sync \
+        || die "cannot write the kernel to /boot"
+    mv "$IMAGE" "$IMAGE.cur" && mv "$IMAGE.old" "$IMAGE" && mv "$IMAGE.cur" "$IMAGE.old"
+    mv "$KERNEL.new" "$KERNEL"
+    mv "$SYS/kernel.cur" "$SYS/kernel.old"
+    [ -f "$STATE.old" ] && { mv "$STATE" "$STATE.cur" 2>/dev/null; mv "$STATE.old" "$STATE"; mv "$STATE.cur" "$STATE.old" 2>/dev/null; }
+    sync
+    say "Done. Reboot to start it: sudo reboot"
+    exit 0
+fi
+
+# ---------------------------------------------------------------- check
+tmpd=$(mktemp -d) || die "cannot make a temporary directory"
+trap 'rm -rf "$tmpd"' EXIT INT TERM
+curl -fsSL --retry 3 --connect-timeout 15 "$URL/jk_os/latest-$arch.json" -o "$tmpd/latest.json" \
+    || die "cannot reach the update server ($URL/jk_os/latest-$arch.json)"
+L=$tmpd/latest.json
+new_ver=$(field .version "$L")
+new_sha=$(field .files.image.sha256 "$L")
+[ -n "$new_ver" ] && [ "$new_sha" != null ] && [ "$(field .files.kernel.sha256 "$L")" != null ] \
+    || die "the server's release description is incomplete"
+cur_ver=$(. /etc/os-release; echo "$VERSION_ID")
+
+if [ "$(id -u)" != 0 ] && [ ! -f "$STATE" ]; then
+    # Without a record of the installed release only root may compute (and
+    # record) it; a check by version alone is the best a user can do.
+    [ "$new_ver" = "$cur_ver" ] && { say "jk_os $cur_ver is up to date (for a full check: sudo jk-update --check)"; exit 0; }
+    cur_sha=unknown
+else
+    say "Checking the installed release..."
+    cur_sha=$(installed_sha)
+fi
+if [ "$cur_sha" = "$new_sha" ]; then
+    say "jk_os $cur_ver is up to date."
+    exit 0
+fi
+size_mb=$(( ($(field .files.image.size "$L") + $(field .files.kernel.size "$L")) / 1048576 ))
+say "jk_os $new_ver is available (installed: $cur_ver$( [ "$new_ver" = "$cur_ver" ] && echo ', a newer build')): ${size_mb} MB to download."
+[ "$action" = check ] && exit 0
+
+# ---------------------------------------------------------------- download
+mountpoint -q /boot || die "/boot (the EFI system partition) is not mounted"
+[ -f "$KERNEL" ] || die "no kernel at $KERNEL"
+confirm "Download and install it?" || exit 1
+
+mkdir -p "$WORK"
+# A download for another release is of no use.
+if [ -f "$WORK/release.json" ] && [ "$(jq -r .files.image.sha256 "$WORK/release.json")" != "$new_sha" ]; then
+    rm -f "$WORK"/*
+fi
+cp "$L" "$WORK/release.json"
+# Room on /data: the new image and kernel (beside the running ones), less
+# what an earlier update's backups give back.
+need_kb=$(( ($(field .files.image.size "$L") + $(field .files.kernel.size "$L")) / 1024 + 102400 ))
+have_kb=$(df -Pk "$SYS" | awk 'NR==2 {print $4}')
+for f in "$WORK"/*.part; do
+    [ -f "$f" ] && have_kb=$((have_kb + $(du -k "$f" | cut -f1)))
+done
+if [ "$have_kb" -lt "$need_kb" ]; then
+    # The previous update's backups make way (this update replaces them anyway).
+    for f in "$IMAGE.old" "$SYS/kernel.old"; do
+        [ -f "$f" ] && { have_kb=$((have_kb + $(du -k "$f" | cut -f1))); rm -f "$f"; }
+    done
+fi
+[ "$have_kb" -ge "$need_kb" ] || die "not enough space on /data: $((need_kb / 1024)) MB needed, $((have_kb / 1024)) MB available"
+
+base=$(field .url "$L")
+for role in image kernel; do
+    file=$(field ".files.$role.file" "$L")
+    size=$(field ".files.$role.size" "$L")
+    want=$(field ".files.$role.sha256" "$L")
+    out="$WORK/$role"
+    if [ -f "$out" ] && [ "$(stat -c %s "$out")" = "$size" ] && [ "$(sha "$out")" = "$want" ]; then
+        say "  $file: already downloaded"
+        continue
+    fi
+    say "  downloading $file ($((size / 1048576)) MB)"
+    # -C -: resume what an interrupted run left in $out.part.
+    curl -fL --retry 5 --retry-delay 3 --connect-timeout 15 -C - -o "$out.part" "$base$file" \
+        || die "the download of $file failed: run jk-update again to resume it"
+    [ "$(stat -c %s "$out.part")" = "$size" ] || { rm -f "$out.part"; die "$file has the wrong size: run jk-update again"; }
+    [ "$(sha "$out.part")" = "$want" ] || { rm -f "$out.part"; die "$file is damaged (SHA-256 mismatch): run jk-update again"; }
+    mv "$out.part" "$out"
+done
+say "  both files verified"
+
+# ---------------------------------------------------------------- files the update can't change
+# Files in the writable layer (your changes) that the new image also
+# changes: your copy keeps hiding the new one. Accounts are merged at boot.
+mnt=$tmpd/mnt
+mkdir -p "$mnt/old" "$mnt/new"
+if mount -t squashfs -o loop,ro "$IMAGE" "$mnt/old" 2>/dev/null &&
+   mount -t squashfs -o loop,ro "$WORK/image" "$mnt/new" 2>/dev/null; then
+    up=$SYS/root/upper
+    (cd "$up" 2>/dev/null && find . -type f ! -path './data/*' ! -path './home/*' ! -path './root/*' \
+        ! -path './tmp/*' ! -path './var/*' 2>/dev/null) | sed 's|^\./||' |
+    while read -r f; do
+        case "$f" in etc/passwd|etc/group|etc/shadow|etc/gshadow|etc/hostname|etc/machine-id) continue ;; esac
+        [ -f "$mnt/new/$f" ] || continue
+        cmp -s "$mnt/old/$f" "$mnt/new/$f" && continue
+        echo "/$f"
+    done > "$tmpd/shadowed"
+    umount "$mnt/new" "$mnt/old"
+    if [ -s "$tmpd/shadowed" ]; then
+        say ""
+        say "These files you changed are also updated in jk_os $new_ver; your copies stay in use:"
+        sed 's/^/    /' "$tmpd/shadowed"
+        say "To take the new version of one: sudo rm /data/system/root/upper<path>, then reboot."
+        say ""
+    fi
+else
+    umount "$mnt/new" "$mnt/old" 2>/dev/null
+fi
+
+# ---------------------------------------------------------------- install
+# The running image stays usable (the system keeps it open) when it is
+# renamed; the kernel on the FAT partition is written beside the old one when
+# there is room, else over it (the old one is backed up on /data first).
+say "Installing jk_os $new_ver..."
+cp "$KERNEL" "$SYS/kernel.old" || die "cannot back up the kernel"
+sync
+boot_free_kb=$(df -Pk /boot | awk 'NR==2 {print $4}')
+kernel_kb=$(du -k "$WORK/kernel" | cut -f1)
+if [ "$boot_free_kb" -gt $((kernel_kb + 1024)) ]; then
+    cp "$WORK/kernel" "$KERNEL.new" && sync || { rm -f "$KERNEL.new"; die "cannot write the kernel to /boot"; }
+    new_kernel_ready=1
+else
+    new_kernel_ready=0
+fi
+mv "$IMAGE" "$IMAGE.old" && mv "$WORK/image" "$IMAGE" || die "cannot put the new image in place"
+sync
+if [ "$new_kernel_ready" = 1 ]; then
+    mv "$KERNEL.new" "$KERNEL"
+else
+    cp "$WORK/kernel" "$KERNEL" || {
+        cp "$SYS/kernel.old" "$KERNEL"; mv "$IMAGE" "$WORK/image"; mv "$IMAGE.old" "$IMAGE"
+        die "cannot write the kernel to /boot (nothing was changed)"; }
+fi
+sync
+[ -f "$STATE" ] && cp "$STATE" "$STATE.old"
+cp "$WORK/release.json" "$STATE"
+rm -f "$WORK/kernel" "$WORK/release.json"
+rmdir "$WORK" 2>/dev/null
+sync
+say "jk_os $new_ver is installed. Reboot to start it: sudo reboot"
+say "(The previous release is kept: sudo jk-update --rollback.)"
