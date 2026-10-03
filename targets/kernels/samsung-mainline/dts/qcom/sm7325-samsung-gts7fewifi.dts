@@ -16,8 +16,13 @@
 /dts-v1/;
 
 #include <dt-bindings/arm/qcom,ids.h>
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
+#include <dt-bindings/pinctrl/qcom,pmic-gpio.h>
 
 #include "sm7325.dtsi"
+#include "pm7325.dtsi"
+#include "pmk8350.dtsi" /* PMK7325 */
 
 / {
 	model = "Samsung Galaxy Tab S7 FE Wi-Fi (SM-T733)";
@@ -62,6 +67,24 @@
 			fstab {
 				compatible = "android,fstab";
 			};
+		};
+	};
+
+	/*
+	 * Volume up, as stock has it (Samsung's gpio_keys: PM7325 GPIO 6,
+	 * active low). Volume down and power are the PMIC's own keys (PON
+	 * resin and pwrkey, below). U-Boot's menu uses all three.
+	 */
+	gpio-keys {
+		compatible = "gpio-keys";
+		pinctrl-0 = <&vol_up_n>;
+		pinctrl-names = "default";
+
+		key-volume-up {
+			label = "Volume Up";
+			gpios = <&pm7325_gpios 6 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_VOLUMEUP>;
+			debounce-interval = <15>;
 		};
 	};
 
@@ -173,6 +196,25 @@
 			pmsg-size = <0x40000>;
 		};
 	};
+};
+
+&pm7325_gpios {
+	vol_up_n: vol-up-n-state {
+		pins = "gpio6";
+		function = PMIC_GPIO_FUNC_NORMAL;
+		bias-pull-up;
+		input-enable;
+		power-source = <1>;
+	};
+};
+
+&pon_pwrkey {
+	status = "okay";
+};
+
+&pon_resin {
+	linux,code = <KEY_VOLUMEDOWN>;
+	status = "okay";
 };
 
 /* Stock xbl_uefi region starts 16 KiB lower than kodiak.dtsi's. */
