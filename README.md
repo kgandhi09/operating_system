@@ -214,9 +214,19 @@ If it finds neither, it opens a rescue shell on the console.
   menu: it writes an entry to that GRUB's `custom.cfg` (`/boot/grub/custom.cfg` on Ubuntu), which GRUB reads at every start and
   `update-grub` leaves alone, and makes the menu show if it was hidden. Reinstalling replaces the entry; delete the `jk_os` block
   there to remove it. GRUB starts jk_os only with Secure Boot off (the installer warns if it is on).
-- **Updating.** A new jk_os version is a new kernel file and a new image. Put them
-  at `/boot/EFI/BOOT/BOOT*.EFI` and `/data/system/jk_os.squashfs` (or reinstall
-  and keep `/data`). Your changes in `/data/system/root` stay on top of the new image.
+- **Updating.** A new jk_os version is a new kernel file and a new image.
+  `sudo jk-update` fetches the newest published release
+  (`<server>/downloads/jk_os/latest-<arch>.json`), checks its SHA-256s, swaps
+  both files in and keeps the previous pair (`/data/system/jk_os.squashfs.old`,
+  `/data/system/kernel.old`) for `sudo jk-update --rollback`; the new release
+  starts at the next reboot. `jk-update --check` only says whether there is one.
+  It lists the files you changed that the update also changes (your copies win).
+  The server is set in `/etc/jk_os/update` (`JK_UPDATE_URL=`). Releases are
+  published with `scripts/publish.sh` (image, kernel, ISO, `INSTALL.txt`,
+  `SHA256SUMS`, `release.json`; only the newest is kept on the server). By hand:
+  put the files at `/boot/EFI/BOOT/BOOT*.EFI` and `/data/system/jk_os.squashfs`
+  (or reinstall and keep `/data`). Your changes in `/data/system/root` stay on
+  top of the new image.
 - **Reinstalling.** Boot the USB stick again. As root on an installed system,
   `jk-install` can install to another disk, but not to the one it runs from, or to
   the installer medium. It installs the kernel and image of the installer medium, or

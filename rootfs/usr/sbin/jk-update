@@ -132,7 +132,12 @@ else
     cur_sha=$(installed_sha)
 fi
 if [ "$cur_sha" = "$new_sha" ]; then
-    say "jk_os $cur_ver is up to date."
+    inst_ver=$(jq -r '.version // empty' "$STATE" 2>/dev/null)
+    if [ -n "$inst_ver" ] && [ "$inst_ver" != "$cur_ver" ]; then
+        say "jk_os $inst_ver is installed and starts at the next reboot (running: $cur_ver)."
+    else
+        say "jk_os $cur_ver is up to date."
+    fi
     exit 0
 fi
 size_mb=$(( ($(field .files.image.size "$L") + $(field .files.kernel.size "$L")) / 1048576 ))
@@ -177,8 +182,15 @@ for role in image kernel; do
     fi
     say "  downloading $file ($((size / 1048576)) MB)"
     # -C -: resume what an interrupted run left in $out.part.
-    curl -fL --retry 5 --retry-delay 3 --connect-timeout 15 -C - -o "$out.part" "$base$file" \
-        || die "the download of $file failed: run jk-update again to resume it"
+    curl -fL --progress-bar --retry 5 --retry-delay 3 --connect-timeout 15 -C - -o "$out.part" "$base$file"
+    rc=$?
+    if [ "$rc" = 33 ]; then
+        # The server can't resume: start the file over.
+        rm -f "$out.part"
+        curl -fL --progress-bar --retry 5 --retry-delay 3 --connect-timeout 15 -o "$out.part" "$base$file"
+        rc=$?
+    fi
+    [ "$rc" = 0 ] || die "the download of $file failed: run jk-update again to resume it"
     [ "$(stat -c %s "$out.part")" = "$size" ] || { rm -f "$out.part"; die "$file has the wrong size: run jk-update again"; }
     [ "$(sha "$out.part")" = "$want" ] || { rm -f "$out.part"; die "$file is damaged (SHA-256 mismatch): run jk-update again"; }
     mv "$out.part" "$out"
