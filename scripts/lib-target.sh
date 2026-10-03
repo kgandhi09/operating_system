@@ -20,6 +20,15 @@
 #   DEVICE_CMDLINE               kernel command line in the boot image
 #   DEVICE_INITRAMFS_FIRMWARE    no: leave the network firmware out of the
 #                                initramfs (default: in it)
+#   DEVICE_KERNEL_IMAGE          android-bootimg: Image (uncompressed) or
+#                                Image.gz (default)
+#   DEVICE_ABL_DTB               android-uboot: the device tree the device's
+#                                bootloader is given (it starts U-Boot with
+#                                it), a path (glob) under the repo
+#   DEVICE_BOOTIMG_SEANDROID     yes: end boot.img with Samsung's
+#                                "SEANDROIDENFORCE" marker
+#   DEVICE_AVB_FOOTERS           android-bootimg: images that need a signed
+#                                AVB footer, as <partition>:<partition size>
 #   DEVICE_MKBOOTIMG_ARGS        android-bootimg: header version, page size,
 #                                base, offsets, os version and patch level,
 #                                as scripts/inspect-stock.sh prints them
@@ -43,7 +52,10 @@ BUILD_CONF="${BUILD_CONF:-$ROOT_DIR/build.conf}"
 #   efi-iso          hybrid ISO: GRUB (x86_64) or the EFI stub (aarch64)
 #   android-bootimg  Android boot.img + vbmeta.img + dtbo.img, and an Odin tar
 #                    for Samsung devices (build-bootimg.sh)
-BOOT_FORMATS="efi-iso android-bootimg"
+#   android-uboot    the same, but the bootloader starts U-Boot (build-uboot.sh),
+#                    which starts jk_os's kernel from a FIT image: for
+#                    bootloaders that refuse a mainline device tree
+BOOT_FORMATS="efi-iso android-bootimg android-uboot"
 
 in_list() { [[ " $2 " == *" $1 "* ]]; }   # in_list <word> <space-separated list>
 
@@ -72,6 +84,8 @@ load_category() {
 load_device() {   # load_device <category> <device>
     DEVICE_DESC= DEVICE_ARCHS= DEVICE_KERNELS= DEVICE_BOOT= DEVICE_STATUS=
     DEVICE_DTB= DEVICE_CMDLINE= DEVICE_MKBOOTIMG_ARGS= DEVICE_INITRAMFS_FIRMWARE=
+    DEVICE_AVB_FOOTERS= DEVICE_BOOTIMG_SEANDROID= DEVICE_KERNEL_IMAGE=
+    DEVICE_ABL_DTB=
     DEVICE_DIR="$TARGETS_DIR/devices/$1/$2"
     [[ -f "$DEVICE_DIR/device.env" ]] || return 1
     # shellcheck source=/dev/null

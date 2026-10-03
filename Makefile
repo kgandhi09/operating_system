@@ -12,7 +12,7 @@
 #   make deps                    install host build dependencies (sudo)
 #
 # Steps can be run on their own: busybox, tools, network, toolchain, desktop,
-# binaries, rootfs (the OS image), initramfs, kernel, iso, bootimg.
+# binaries, rootfs (the OS image), initramfs, kernel, uboot, iso, bootimg.
 #   make binaries [UPDATE=1]     pull configs/binaries/*.list from GitHub
 #   make menuconfig              the kernel's own config menu (after make kernel)
 #   make BUILD_CONF=<file> ...   use another saved target than build.conf
@@ -31,7 +31,7 @@ export NOWARN_CFLAGS
 SHELL := /bin/bash
 S := scripts
 
-.PHONY: all check image iso bootimg kernel nvidia initramfs rootfs busybox tools network toolchain desktop binaries run flash deps config showconfig menuconfig clean distclean help
+.PHONY: all check image iso bootimg uboot kernel nvidia initramfs rootfs busybox tools network toolchain desktop binaries run flash deps config showconfig menuconfig clean distclean help
 
 all: image
 
@@ -74,10 +74,10 @@ kernel: initramfs
 
 # The bootable image in the device's boot format (DEVICE_BOOT, make config):
 # the installer ISO, or an Android boot image (bootimg) for Odin.
-image: kernel rootfs
+image: kernel uboot rootfs
 	@. $(S)/common.sh && case "$$DEVICE_BOOT" in \
 	    efi-iso) $(S)/build-iso.sh ;; \
-	    android-bootimg) $(S)/build-bootimg.sh ;; \
+	    android-*) $(S)/build-bootimg.sh ;; \
 	esac
 
 iso: kernel rootfs
@@ -85,8 +85,13 @@ iso: kernel rootfs
 
 # Only the kernel and its device tree, in an Android boot image: enough to
 # bring up a new device before the whole OS image is built.
-bootimg: kernel
+bootimg: kernel uboot
 	$(S)/build-bootimg.sh
+
+# U-Boot, for a device that boots through it (DEVICE_BOOT=android-uboot);
+# nothing for the others.
+uboot: kernel
+	$(S)/build-uboot.sh
 
 run:
 	$(S)/run-qemu.sh

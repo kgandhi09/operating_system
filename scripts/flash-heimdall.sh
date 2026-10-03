@@ -14,7 +14,7 @@
 source "$(dirname "$0")/common.sh"
 need heimdall
 
-[[ "$DEVICE_BOOT" == android-bootimg ]] || die "$JK_DEVICE isn't flashed with Heimdall (see make flash)"
+[[ "$DEVICE_BOOT" == android-* ]] || die "$JK_DEVICE isn't flashed with Heimdall (see make flash)"
 
 heimdall detect >/dev/null 2>&1 \
     || die "no Samsung device in Download mode on USB (power off, hold Vol Up + Vol Down, plug in the cable, press Vol Up)"
@@ -55,5 +55,15 @@ echo "Download mode with jk_os's ($JK_NAME). The bootloader must be unlocked."
 read -r -p "Type 'flash' to continue: " reply
 [[ "$reply" == flash ]] || die "aborted"
 
-heimdall flash --resume "${args[@]}"
+# Some bootloaders reboot before confirming the reboot request: Heimdall
+# then fails although every image went in. Only that is not an error.
+out=$(heimdall flash --resume "${args[@]}" 2>&1 | tee /dev/stderr) && status=0 || status=$?
+if (( status )); then
+    if grep -q 'Failed to receive reboot confirmation' <<< "$out" \
+        && (( $(grep -c 'upload successful' <<< "$out") == ${#args[@]} / 2 )); then
+        warn "the device didn't confirm the reboot, but every image was written"
+    else
+        die "flashing failed (see above)"
+    fi
+fi
 log "flashed: the device reboots into jk_os"

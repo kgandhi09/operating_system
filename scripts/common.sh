@@ -61,8 +61,13 @@ case "$ARCH" in
         CROSS_DEFAULT=aarch64-linux-gnu-
         ;;
 esac
-# An Android bootloader takes the gzip-compressed kernel from the boot image.
-[[ "$DEVICE_BOOT" == android-bootimg ]] && KIMAGE=arch/arm64/boot/Image.gz
+# An Android bootloader takes the kernel from the boot image, gzip-compressed
+# unless the device says otherwise (DEVICE_KERNEL_IMAGE=Image); through
+# U-Boot it is gzip-compressed in a FIT image.
+case "$DEVICE_BOOT" in
+    android-bootimg) KIMAGE=arch/arm64/boot/${DEVICE_KERNEL_IMAGE:-Image.gz} ;;
+    android-uboot)   KIMAGE=arch/arm64/boot/Image.gz ;;
+esac
 
 if [[ -z "${CROSS_COMPILE+set}" ]]; then
     if [[ "$ARCH" == "$HOST_ARCH" ]]; then CROSS_COMPILE=""; else CROSS_COMPILE="$CROSS_DEFAULT"; fi
@@ -81,6 +86,7 @@ MODULES_OUT="$TARGET_OUT/modules"   # the kernel's loadable modules (lib/modules
 NVIDIA_OUT="$TARGET_OUT/nvidia"     # NVIDIA's driver, built for that kernel
 DTB_OUT="$TARGET_OUT/dtbs"          # the device's tree (DEVICE_DTB), build-dtbs.sh
 BOOTIMG_DIR="$TARGET_OUT/bootimg"   # boot.img and friends, build-bootimg.sh
+UBOOT_OUT="$TARGET_OUT/u-boot"      # U-Boot for android-uboot, build-uboot.sh
 # Kernel config fragments, general to specific, and rootfs overlays.
 KERNEL_FRAGMENTS=("$ROOT_DIR/configs/kernel/common.config" "$ROOT_DIR/configs/kernel/$ARCH.config")
 ROOTFS_OVERLAYS=()
@@ -172,7 +178,7 @@ if [[ "$JK_DEVICE" == generic && "$JK_NAME" == generic ]]; then
 else
     ISO="$IMAGE_DIR/$OS_NAME-$OS_VERSION-$JK_NAME-$ARCH.iso"
 fi
-# android-bootimg: boot.img, vbmeta.img and dtbo.img for Odin (build-bootimg.sh).
+# android-*: boot.img, vbmeta.img and dtbo.img for Odin (build-bootimg.sh).
 BOOT_TAR="$IMAGE_DIR/$OS_NAME-$OS_VERSION-$JK_NAME-$ARCH.tar.md5"
 
 export ARCH CROSS_COMPILE

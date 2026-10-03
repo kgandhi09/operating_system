@@ -27,7 +27,7 @@ need tar sha256sum
 SOURCES="kernel busybox util-linux e2fsprogs shadow libxcrypt sudo zlib libffi pcre2 glib
 expat dbus eudev libndp libnl openssl wpa_supplicant ncurses readline networkmanager
 gcc binutils gdb gmp mpfr mpc llvm cmake ninja make m4 flex bison perl autoconf automake bash python sqlite bzip2
-curl cacert openssh git"
+curl cacert openssh git u-boot"
 source_spec() {
     local v="$2"
     case "$1" in
@@ -101,6 +101,7 @@ source_spec() {
         sqlite)    tree=$SQLITE_TREE    kind=manual url="https://www.sqlite.org/download.html" ;;
         bzip2)     tree=$BZIP2_TREE     kind=manual url="https://sourceware.org/pub/bzip2/bzip2-$v.tar.gz (.sig)" ;;
         ninja)     tree=$NINJA_TREE     kind=git url=https://github.com/ninja-build/ninja.git tag="v$v" ;;
+        u-boot)    tree=$UBOOT_TREE     kind=git url=https://source.denx.de/u-boot/u-boot.git tag="v$v" ;;
         dbus)      tree=$DBUS_TREE      kind=git url=https://gitlab.freedesktop.org/dbus/dbus.git tag="dbus-$v" ;;
         eudev)     tree=$EUDEV_TREE     kind=git url=https://github.com/eudev-project/eudev.git   tag="v$v" ;;
         libndp)    tree=$LIBNDP_TREE    kind=git url=https://github.com/jpirko/libndp.git         tag="v$v" ;;

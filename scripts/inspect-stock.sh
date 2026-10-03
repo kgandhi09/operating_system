@@ -139,12 +139,13 @@ for img in boot vendor_boot; do
 done | python3 -c '
 import shlex, sys
 keep = ["--header_version", "--os_version", "--os_patch_level", "--pagesize", "--base",
-        "--kernel_offset", "--ramdisk_offset", "--second_offset", "--tags_offset", "--dtb_offset"]
+        "--kernel_offset", "--ramdisk_offset", "--second_offset", "--tags_offset", "--dtb_offset",
+        "--board"]
 seen = {}
 for line in sys.stdin:
     a = shlex.split(line)
     for i, x in enumerate(a[:-1]):
-        if x in keep: seen.setdefault(x, a[i + 1])
+        if x in keep and a[i + 1]: seen.setdefault(x, a[i + 1])
 print("  DEVICE_MKBOOTIMG_ARGS=\"" + " ".join(f"{k} {seen[k]}" for k in keep if k in seen) + "\"")'
 echo
 

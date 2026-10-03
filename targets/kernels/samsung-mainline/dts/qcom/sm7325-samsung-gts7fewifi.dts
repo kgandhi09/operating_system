@@ -28,10 +28,42 @@
 	 * The bootloader picks the tree by these. The same as the stock base
 	 * tree ("Yupik SoC"): SM7325 and SoC id 0x203, a variant mainline's
 	 * qcom,ids.h has no name for; board-id 0 0 as the base tree has (the
-	 * stock overlays carry <0x22 rev>, but jk_os flashes an empty dtbo).
+	 * board's own <0x22 rev> are in the dtbo overlays, which jk_os keeps
+	 * empty: targets/devices/tablet/samsung-gts7fe/dtbo). dtbo-version, as
+	 * the stock base tree has it, matches the overlays'.
 	 */
 	qcom,msm-id = <QCOM_ID_SM7325 0x10000>, <0x203 0x10000>;
 	qcom,board-id = <0 0>;
+	dtbo-version = <0>;
+
+	/*
+	 * Nodes Samsung's bootloader updates before starting the kernel, under
+	 * the names it looks them up by (its strings: "/memory",
+	 * "/firmware/android/fstab"), as stock's tree has them. With
+	 * mainline's (memory@80000000, no android node) our tree fell back to
+	 * Download mode where stock's didn't. It fills in the memory size.
+	 */
+	/delete-node/ memory@80000000;
+
+	memory {
+		device_type = "memory";
+		reg = <0x0 0x0 0x0 0x0>;
+	};
+
+	firmware {
+		android {
+			compatible = "android,firmware";
+
+			vbmeta {
+				compatible = "android,vbmeta";
+				parts = "vbmeta,boot,system,vendor,dtbo";
+			};
+
+			fstab {
+				compatible = "android,fstab";
+			};
+		};
+	};
 
 	chosen {
 		#address-cells = <2>;
@@ -50,14 +82,12 @@
 			height = <2560>;
 			stride = <(1600 * 4)>;
 			format = "a8r8g8b8";
-
-			clocks = <&gcc GCC_DISP_HF_AXI_CLK>,
-				 <&dispcc DISP_CC_MDSS_MDP_CLK>,
-				 <&dispcc DISP_CC_MDSS_BYTE0_CLK>,
-				 <&dispcc DISP_CC_MDSS_BYTE0_INTF_CLK>,
-				 <&dispcc DISP_CC_MDSS_PCLK0_CLK>,
-				 <&dispcc DISP_CC_MDSS_VSYNC_CLK>;
-			power-domains = <&dispcc DISP_CC_MDSS_CORE_GDSC>;
+			/*
+			 * No clocks or power domain: simpledrm would wait for the
+			 * display clock driver to probe before showing anything.
+			 * clk_ignore_unused / pd_ignore_unused (DEVICE_CMDLINE)
+			 * keep them on meanwhile.
+			 */
 		};
 	};
 
@@ -113,7 +143,12 @@
 			no-map;
 		};
 
-		cont_splash_mem: cont-splash@e1000000 {
+		/*
+		 * Named as stock names it: Samsung's bootloader keeps the display
+		 * running for the kernel only if this region is called exactly
+		 * splash_region (see sm8450-samsung-r0q.dts).
+		 */
+		splash_region: splash_region {
 			reg = <0x0 0xe1000000 0x0 0x2300000>;
 			no-map;
 		};

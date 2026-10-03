@@ -6,7 +6,7 @@
 # holding the running system, mounted devices, and partitions.
 source "$(dirname "$0")/common.sh"
 # A device with an Android bootloader is flashed over USB in Download mode.
-[[ "$DEVICE_BOOT" == android-bootimg ]] && exec "$ROOT_DIR/scripts/flash-heimdall.sh"
+[[ "$DEVICE_BOOT" == android-* ]] && exec "$ROOT_DIR/scripts/flash-heimdall.sh"
 need lsblk findmnt dd
 
 dev="${1:-}"

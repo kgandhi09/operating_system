@@ -1,0 +1,35 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * An overlay that changes nothing, for the dtbo partition: Samsung's
+ * Download mode refused an empty dtbo image (SECURE CHECK FAIL: dtbo), and
+ * the bootloader looks for one matching the board (qcom,board-id <0x22 rev>, Samsung's
+ * dtbo-hw_rev range), as stock's "Samsung GTS7FEWIFI PROJECT (board-id,01)".
+ */
+
+/dts-v1/;
+/plugin/;
+
+/ {
+	model = "jk_os: no overlay (board-id,01)";
+	qcom,msm-id = <0x1db 0x10000 0x203 0x10000>;
+	qcom,board-id = <0x22 0x01>;
+	dtbo-version = <0x00>;
+	compatible = "qcom,yupik-idp", "qcom,yupik", "qcom,idp";
+	dtbo-hw_rev = <0x01>;
+	dtbo-hw_rev_end = <0x01>;
+
+	/*
+	 * Through a label, not target-path: the bootloader's overlay code
+	 * (libufdt) refuses an overlay without __fixups__. hyp_mem (the
+	 * hypervisor's reserved memory) is a label both mainline's tree and
+	 * Samsung's have, so the overlay applies to either; it only adds an
+	 * unused property there.
+	 */
+	fragment@0 {
+		target = <&hyp_mem>;
+
+		__overlay__ {
+			jk_os,dtbo-rev = <0x01>;
+		};
+	};
+};

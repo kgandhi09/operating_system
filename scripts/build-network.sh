@@ -182,13 +182,16 @@ b_openssh() {
 # git: its own Makefile, told about the target instead of asking uname. No
 # Perl, Python or Tcl in jk_os, so without the few commands written in them
 # (send-email, svn, p4, gitk, git gui). Its pager is jk_os's "pager" (pages
-# only output taller than the screen; BusyBox less can't tell).
+# only output taller than the screen; BusyBox less can't tell). No Rust
+# either (optional until git 3.0, with C versions of the same code): git
+# builds it with whatever cargo the build machine has, for the build
+# machine's arch, which breaks a cross build and isn't part of make deps.
 b_git() {
     copy_tree "$1" "$2"
     local mk=(-C "$2" prefix=/usr gitexecdir=/usr/lib/git-core sysconfdir=/etc
               CC="$CC" AR="$AR" CFLAGS="-O2 $CPPFLAGS ${NOWARN_CFLAGS:-}" LDFLAGS="$LDFLAGS"
               uname_S=Linux uname_M="$ARCH" uname_O=GNU/Linux uname_R=7 uname_P=unknown uname_V=1
-              NO_PERL=YesPlease NO_PYTHON=YesPlease NO_TCLTK=YesPlease NO_GETTEXT=YesPlease
+              NO_PERL=YesPlease NO_PYTHON=YesPlease NO_TCLTK=YesPlease NO_GETTEXT=YesPlease NO_RUST=YesPlease
               USE_LIBPCRE2=YesPlease CURL_CFLAGS= CURL_LDFLAGS=-lcurl
               INSTALL_SYMLINKS=YesPlease DEFAULT_PAGER=pager DEFAULT_EDITOR=vi)
     make "${mk[@]}" -j"$JOBS" all

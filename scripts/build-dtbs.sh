@@ -34,7 +34,9 @@ vendor_dir=$(dirname "$name")
     -I "$(dirname "$src")" -I "$kdts/$vendor_dir" -I "$kdts" \
     -I "$KERNEL_SRC/scripts/dtc/include-prefixes" \
     -o "$out.pre" "$src"
-"$dtc" -O dtb -o "$out" -b 0 \
+# -@ keeps the labels (__symbols__), as kbuild does for trees overlays apply
+# to: a bootloader applying dtbo overlays may need them.
+"$dtc" -O dtb -o "$out" -b 0 -@ -a 8 \
     -i "$(dirname "$src")" -i "$kdts/$vendor_dir" -i "$KERNEL_SRC/scripts/dtc/include-prefixes" \
     -Wno-unique_unit_address -Wno-unit_address_vs_reg -Wno-avoid_unnecessary_addr_size \
     -Wno-alias_paths -Wno-interrupt_map -Wno-simple_bus_reg \
