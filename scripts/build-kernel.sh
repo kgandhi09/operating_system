@@ -33,12 +33,14 @@ if (( reconfigure )); then
     # chose becomes "y", until nothing changes.
     asked_m=$(grep -hE '^CONFIG_[A-Za-z0-9_]+=m$' "${frags[@]}" | cut -d= -f1 || true)
     for _ in 1 2 3 4 5; do
-        grep -E '^CONFIG_[A-Za-z0-9_]+=m$' "$KERNEL_OUT/.config" | cut -d= -f1 | sort > "$KERNEL_OUT/.m.before"
+        # (grep finds nothing once every option is built in, or without
+        # CONFIG_MODULES at all, as on aarch64: not an error.)
+        { grep -E '^CONFIG_[A-Za-z0-9_]+=m$' "$KERNEL_OUT/.config" || true; } | cut -d= -f1 | sort > "$KERNEL_OUT/.m.before"
         while read -r opt; do
             grep -qxF "$opt" <<< "$asked_m" || "$KERNEL_SRC/scripts/config" --file "$KERNEL_OUT/.config" --enable "${opt#CONFIG_}"
         done < "$KERNEL_OUT/.m.before"
         k_make olddefconfig >/dev/null
-        grep -E '^CONFIG_[A-Za-z0-9_]+=m$' "$KERNEL_OUT/.config" | cut -d= -f1 | sort > "$KERNEL_OUT/.m.after"
+        { grep -E '^CONFIG_[A-Za-z0-9_]+=m$' "$KERNEL_OUT/.config" || true; } | cut -d= -f1 | sort > "$KERNEL_OUT/.m.after"
         cmp -s "$KERNEL_OUT/.m.before" "$KERNEL_OUT/.m.after" && break
     done
     rm -f "$KERNEL_OUT/.m.before" "$KERNEL_OUT/.m.after"
@@ -60,8 +62,12 @@ while IFS= read -r line; do
     if [[ "$line" =~ ^#\ (CONFIG_[A-Za-z0-9_]+)\ is\ not\ set$ ]]; then unset "wanted[${BASH_REMATCH[1]}]"
     else wanted[${line%%=*}]=$line; fi
 done < <(cat "${frags[@]}" | grep -E '^CONFIG_[A-Za-z0-9_]+=|^# CONFIG_[A-Za-z0-9_]+ is not set$')
+# Without module support (aarch64), an option asked for as a module is built in.
+modules=0
+grep -q '^CONFIG_MODULES=y' "$KERNEL_OUT/.config" && modules=1
 missing=0
 for line in "${wanted[@]}"; do
+    (( modules )) || [[ "$line" != *=m ]] || line=${line%=m}=y
     grep -qxF "$line" "$KERNEL_OUT/.config" || { warn "kernel option not applied: $line"; missing=1; }
 done
 (( missing == 0 )) || warn "some requested kernel options were dropped (unmet dependencies?)"

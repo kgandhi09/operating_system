@@ -18,6 +18,8 @@
 #   DEVICE_DTB                   its device tree, as built from the kernel
 #                                profile's dts/ (e.g. qcom/<board>.dtb)
 #   DEVICE_CMDLINE               kernel command line in the boot image
+#   DEVICE_INITRAMFS_FIRMWARE    no: leave the network firmware out of the
+#                                initramfs (default: in it)
 #   DEVICE_MKBOOTIMG_ARGS        android-bootimg: header version, page size,
 #                                base, offsets, os version and patch level,
 #                                as scripts/inspect-stock.sh prints them
@@ -69,7 +71,7 @@ load_category() {
 }
 load_device() {   # load_device <category> <device>
     DEVICE_DESC= DEVICE_ARCHS= DEVICE_KERNELS= DEVICE_BOOT= DEVICE_STATUS=
-    DEVICE_DTB= DEVICE_CMDLINE= DEVICE_MKBOOTIMG_ARGS=
+    DEVICE_DTB= DEVICE_CMDLINE= DEVICE_MKBOOTIMG_ARGS= DEVICE_INITRAMFS_FIRMWARE=
     DEVICE_DIR="$TARGETS_DIR/devices/$1/$2"
     [[ -f "$DEVICE_DIR/device.env" ]] || return 1
     # shellcheck source=/dev/null

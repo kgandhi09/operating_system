@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Flash an Android-bootloader Samsung device (DEVICE_BOOT=android-bootimg)
 # from Linux with Heimdall, Odin's open-source counterpart: the boot.img,
-# vbmeta.img and dtbo.img that make bootimg made. make flash runs this for
-# such a device.
+# vendor_boot.img (header v3/v4), vbmeta.img and dtbo.img that make bootimg
+# made. make flash runs this for such a device.
 #
 #   scripts/flash-heimdall.sh            flash, then the device reboots
 #   scripts/flash-heimdall.sh --pit      only show the device's partitions
@@ -40,8 +40,9 @@ partition_for() {
 }
 
 args=()
-for f in boot.img vbmeta.img dtbo.img; do
-    [[ -f "$BOOTIMG_DIR/$f" ]] || die "no $BOOTIMG_DIR/$f (run: make bootimg)"
+[[ -f "$BOOTIMG_DIR/boot.img" ]] || die "no $BOOTIMG_DIR/boot.img (run: make bootimg)"
+for f in boot.img vendor_boot.img vbmeta.img dtbo.img; do
+    [[ -f "$BOOTIMG_DIR/$f" ]] || continue
     p=$(partition_for "$f")
     [[ -n "$p" ]] || die "the device's partition table has no partition for $f (see $pit)"
     args+=("--$p" "$BOOTIMG_DIR/$f")
@@ -49,7 +50,7 @@ for f in boot.img vbmeta.img dtbo.img; do
 done
 
 echo
-echo "This replaces the boot, vbmeta and dtbo partitions of the device in"
+echo "This replaces the partitions above on the device in"
 echo "Download mode with jk_os's ($JK_NAME). The bootloader must be unlocked."
 read -r -p "Type 'flash' to continue: " reply
 [[ "$reply" == flash ]] || die "aborted"

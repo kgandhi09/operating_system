@@ -128,6 +128,26 @@ if [[ -f images/vendor_boot.img ]]; then
     echo
 fi
 
+# ---------------------------------------------------------------- for device.env
+# The boot image format, from boot.img and vendor_boot.img together: only
+# the header, version and load address fields; jk_os gives its own files.
+echo "== DEVICE_MKBOOTIMG_ARGS"
+for img in boot vendor_boot; do
+    [[ -f "images/$img.img" ]] || continue
+    python3 "$AND/unpack_bootimg.py" --boot_img "images/$img.img" --out "$img" --format=mkbootimg 2>/dev/null || true
+    echo
+done | python3 -c '
+import shlex, sys
+keep = ["--header_version", "--os_version", "--os_patch_level", "--pagesize", "--base",
+        "--kernel_offset", "--ramdisk_offset", "--second_offset", "--tags_offset", "--dtb_offset"]
+seen = {}
+for line in sys.stdin:
+    a = shlex.split(line)
+    for i, x in enumerate(a[:-1]):
+        if x in keep: seen.setdefault(x, a[i + 1])
+print("  DEVICE_MKBOOTIMG_ARGS=\"" + " ".join(f"{k} {seen[k]}" for k in keep if k in seen) + "\"")'
+echo
+
 # ---------------------------------------------------------------- device trees
 srcs=()
 for f in boot/dtb vendor_boot/dtb boot/appended-*.dtb; do [[ -f "$f" ]] && srcs+=("$f"); done

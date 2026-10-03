@@ -26,8 +26,12 @@ install -m 0755 "$ROOT_DIR/initramfs/init" init
 # Drivers built into the kernel (Wi-Fi, some Ethernet) ask for firmware while
 # the kernel starts, before jk_os.squashfs is mounted. The image has the same
 # files for devices plugged in later.
+# A device can leave them out (DEVICE_INITRAMFS_FIRMWARE=no) when its boot
+# image has no room for them and its drivers don't need them that early.
 FW_SRC="$ROOT_DIR/userspace/firmware"
-if [[ -f "$FW_SRC/$ARCH.files" ]]; then
+if [[ "$DEVICE_INITRAMFS_FIRMWARE" == no ]]; then
+    log "no firmware in the initramfs for $JK_DEVICE (the OS image still has it)"
+elif [[ -f "$FW_SRC/$ARCH.files" ]]; then
     while IFS= read -r f; do
         [[ -f "$FW_SRC/$f" ]] || die "userspace/firmware/$f missing (run scripts/update-firmware.sh)"
         mkdir -p "lib/firmware/$(dirname "$f")"

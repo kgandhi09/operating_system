@@ -12,6 +12,9 @@
 #                  stays usable while jk_os builds.
 
 set -euo pipefail
+# set -e stops a script at the first failing command, often one whose output
+# went to /dev/null: say where.
+trap 'echo "error: ${0##*/} line $LINENO: \"$BASH_COMMAND\" failed (exit $?)" >&2' ERR
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=../versions.env

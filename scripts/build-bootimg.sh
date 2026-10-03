@@ -9,8 +9,10 @@
 #                a kernel Samsung didn't sign
 #   dtbo.img     no overlays, so the bootloader applies none of Samsung's to
 #                jk_os's device tree
+#   vendor_boot.img  (header v3/v4) the device tree, which moved out of
+#                boot.img in those versions
 #
-# and, for Samsung's Odin, the three in out/jk_os-<ver>-<name>-<arch>.tar.md5,
+# and, for Samsung's Odin, all of them in out/jk_os-<ver>-<name>-<arch>.tar.md5,
 # to flash in the AP slot.
 source "$(dirname "$0")/common.sh"
 need python3 tar md5sum cpio
@@ -34,17 +36,21 @@ rm -rf "$BOOTIMG_DIR"
 mkdir -p "$BOOTIMG_DIR" "$IMAGE_DIR"
 cd "$BOOTIMG_DIR"
 
+# The ramdisks are empty archives: the initramfs is in the kernel, and some
+# bootloaders reject a boot image without one.
+cpio -o -H newc --quiet < /dev/null > ramdisk.cpio
+
 # Header v0/v1 have no place for a device tree: it follows the kernel
-# (Image.gz-dtb). v2 has its own section. v3/v4 move it to vendor_boot.
+# (Image.gz-dtb). v2 has its own section. v3/v4 move it, with the load
+# addresses, into vendor_boot.img.
+images=(boot.img vbmeta.img dtbo.img)
 case "$hv" in
     0|1) cat "$kernel" "$dtb" > Image.gz-dtb; kargs=(--kernel Image.gz-dtb) ;;
     2)   kargs=(--kernel "$kernel" --dtb "$dtb") ;;
-    *)   die "boot image header v$hv (vendor_boot) isn't supported yet" ;;
+    3|4) kargs=(--kernel "$kernel" --vendor_boot vendor_boot.img --vendor_ramdisk ramdisk.cpio --dtb "$dtb")
+         images+=(vendor_boot.img) ;;
+    *)   die "boot image header v$hv isn't supported" ;;
 esac
-
-# The ramdisk is an empty archive: the initramfs is in the kernel, and some
-# bootloaders reject a boot image without one.
-cpio -o -H newc --quiet < /dev/null > ramdisk.cpio
 
 python3 "$AND/mkbootimg.py" "${kargs[@]}" --ramdisk ramdisk.cpio \
     --cmdline "$DEVICE_CMDLINE" "${args[@]}" --output boot.img
@@ -59,7 +65,7 @@ python3 -c 'import struct, sys; sys.stdout.buffer.write(struct.pack(">8I", 0xd7b
 # Odin: a ustar tar of images named after their partitions, with its MD5
 # appended as "<md5>  <name>.tar".
 tarname="$(basename "$BOOT_TAR" .md5)"
-tar -H ustar -cf "$tarname" boot.img vbmeta.img dtbo.img
+tar -H ustar -cf "$tarname" "${images[@]}"
 md5sum -t "$tarname" >> "$tarname"
 mv "$tarname" "$BOOT_TAR"
 
