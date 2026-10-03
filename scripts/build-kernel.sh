@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
-# Configure and build the Linux kernel for $ARCH with the small early-boot
-# initramfs (build-initramfs.sh) built in.
+# Configure and build the Linux kernel for the build target (device, kernel
+# tree, arch: see make config) with the small early-boot initramfs
+# (build-initramfs.sh) built in.
 source "$(dirname "$0")/common.sh"
 need make flex bison bc "${CROSS_COMPILE}gcc"
 
-[[ -f "$KERNEL_SRC/Makefile" ]] || die "no kernel source at $KERNEL_TREE (see KERNEL_TREE_$ARCH in versions.env)"
+[[ -f "$KERNEL_SRC/Makefile" ]] || die "no kernel source at $KERNEL_TREE (see targets/kernels/$JK_KERNEL/kernel.env)"
 
 [[ -x "$INITRAMFS_DIR/init" ]] || die "initramfs not assembled yet (run: make initramfs)"
 
-frags=("$ROOT_DIR/configs/kernel/common.config" "$ROOT_DIR/configs/kernel/$ARCH.config")
+frags=("${KERNEL_FRAGMENTS[@]}")
 mkdir -p "$KERNEL_OUT"
 k_make() { make -C "$KERNEL_SRC" O="$KERNEL_OUT" ARCH="$KARCH" CROSS_COMPILE="$CROSS_COMPILE" "$@"; }
 
@@ -17,12 +18,14 @@ k_make() { make -C "$KERNEL_SRC" O="$KERNEL_OUT" ARCH="$KARCH" CROSS_COMPILE="$C
 stamp="$KERNEL_OUT/.jk_os-configured"
 reconfigure=0
 [[ -f "$stamp" && -f "$KERNEL_OUT/.config" ]] || reconfigure=1
+# Also when the list of fragments changes (a profile gained or lost one).
+[[ "$(cat "$stamp" 2>/dev/null)" == "${frags[*]}" ]] || reconfigure=1
 for f in "${frags[@]}"; do
     [[ "$f" -nt "$stamp" ]] && reconfigure=1
 done
 
 if (( reconfigure )); then
-    log "configuring linux $(tree_version "$KERNEL_SRC") from $KERNEL_TREE ($ARCH)"
+    log "configuring linux $(tree_version "$KERNEL_SRC") from $KERNEL_TREE ($JK_DEVICE, $ARCH)"
     k_make defconfig >/dev/null
     (cd "$KERNEL_OUT" && "$KERNEL_SRC/scripts/kconfig/merge_config.sh" -m -O "$KERNEL_OUT" .config "${frags[@]}" >/dev/null)
     # Everything is built in, except what the fragments ask for as a module
@@ -39,7 +42,7 @@ if (( reconfigure )); then
         cmp -s "$KERNEL_OUT/.m.before" "$KERNEL_OUT/.m.after" && break
     done
     rm -f "$KERNEL_OUT/.m.before" "$KERNEL_OUT/.m.after"
-    touch "$stamp"
+    echo "${frags[*]}" > "$stamp"
 fi
 
 # Paths depend on where the repo is checked out, so set them on every build.

@@ -2,7 +2,10 @@
 # Shared settings for every jk_os build step. Source it, don't run it.
 #
 # Inputs (environment):
-#   ARCH           x86_64 | aarch64 (aliases: amd64, arm64). Default: host arch.
+#   BUILD_CONF     the build target chosen with `make config`. Default:
+#                  build.conf; without one, the generic PC (see lib-target.sh).
+#   ARCH           x86_64 | aarch64 (aliases: amd64, arm64), without a
+#                  build.conf. Default: host arch.
 #   CROSS_COMPILE  toolchain prefix. Default: none when building for the host
 #                  arch, otherwise x86_64-linux-gnu- / aarch64-linux-gnu-.
 #   JOBS           parallel build jobs. Default: half the CPUs, so the machine
@@ -33,7 +36,13 @@ normalize_arch() {
 }
 
 HOST_ARCH="$(normalize_arch "$(uname -m)")"
-ARCH="$(normalize_arch "${ARCH:-$HOST_ARCH}")"
+
+# shellcheck source=lib-target.sh
+source "$ROOT_DIR/scripts/lib-target.sh"
+# configure.sh only needs the helpers above: build.conf may not exist yet.
+[[ -n "${JK_CONFIGURE:-}" ]] && return 0
+load_target
+ARCH="$JK_ARCH"
 
 case "$ARCH" in
     x86_64)
@@ -54,14 +63,24 @@ if [[ -z "${CROSS_COMPILE+set}" ]]; then
 fi
 JOBS="${JOBS:-$(( $(nproc) > 1 ? $(nproc) / 2 : 1 ))}"
 
+# Userspace is the same for every device of an arch: build/<arch>. What
+# depends on the device or kernel goes in build/<arch>/<device>-<kernel>.
 OUT_DIR="$ROOT_DIR/build/$ARCH"
+TARGET_OUT="$OUT_DIR/$JK_DEVICE-$JK_KERNEL"
 
-tree_var="KERNEL_TREE_$ARCH"
-[[ -n "${!tree_var:-}" ]] || die "$tree_var is not set in versions.env"
-KERNEL_TREE="${!tree_var}"
+# The kernel tree comes from the kernel profile (targets/kernels/<kernel>).
 KERNEL_SRC="$ROOT_DIR/$KERNEL_TREE"
-KERNEL_OUT="$OUT_DIR/linux"
-MODULES_OUT="$OUT_DIR/modules"   # the kernel's loadable modules (lib/modules/<release>)
+KERNEL_OUT="$TARGET_OUT/linux"
+MODULES_OUT="$TARGET_OUT/modules"   # the kernel's loadable modules (lib/modules/<release>)
+NVIDIA_OUT="$TARGET_OUT/nvidia"     # NVIDIA's driver, built for that kernel
+# Kernel config fragments, general to specific, and rootfs overlays.
+KERNEL_FRAGMENTS=("$ROOT_DIR/configs/kernel/common.config" "$ROOT_DIR/configs/kernel/$ARCH.config")
+ROOTFS_OVERLAYS=()
+for d in "$KERNEL_DIR" "$CATEGORY_DIR" "$DEVICE_DIR"; do
+    [[ -f "$d/kernel.config" ]] && KERNEL_FRAGMENTS+=("$d/kernel.config")
+    [[ "$d" != "$KERNEL_DIR" && -d "$d/rootfs" ]] && ROOTFS_OVERLAYS+=("$d/rootfs")
+done
+unset d
 BUSYBOX_SRC="$ROOT_DIR/$BUSYBOX_TREE"
 BUSYBOX_OUT="$OUT_DIR/busybox"
 UTIL_LINUX_SRC="$ROOT_DIR/$UTIL_LINUX_TREE"
@@ -84,13 +103,13 @@ done
 unset t v
 # Disk tools (util-linux, e2fsprogs) are installed here, then into the rootfs.
 TOOLS_OUT="$OUT_DIR/tools"
-ROOTFS_DIR="$OUT_DIR/rootfs"
+ROOTFS_DIR="$TARGET_OUT/rootfs"
 # The OS image made from it, and the small initramfs built into the kernel.
-SQUASHFS_IMG="$OUT_DIR/jk_os.squashfs"
-INITRAMFS_DIR="$OUT_DIR/initramfs"
+SQUASHFS_IMG="$TARGET_OUT/jk_os.squashfs"
+INITRAMFS_DIR="$TARGET_OUT/initramfs"
 # Prebuilt binaries from GitHub releases (scripts/fetch-binaries.sh).
 BINARIES_DIR="$ROOT_DIR/userspace/binaries/$ARCH"
-ISO_DIR="$OUT_DIR/iso"
+ISO_DIR="$TARGET_OUT/iso"
 
 # tree_version <dir>: "7.2", "1.37.0", ... Autotools release tarballs record
 # it in .tarball-version (util-linux), version.h (e2fsprogs) or configure's
@@ -139,7 +158,12 @@ tree_version() {
 }
 
 IMAGE_DIR="$ROOT_DIR/out"
-ISO="$IMAGE_DIR/$OS_NAME-$OS_VERSION-$ARCH.iso"
+# jk_os-<ver>-<arch>.iso for the generic PC, else jk_os-<ver>-<name>-<arch>.iso.
+if [[ "$JK_DEVICE" == generic && "$JK_NAME" == generic ]]; then
+    ISO="$IMAGE_DIR/$OS_NAME-$OS_VERSION-$ARCH.iso"
+else
+    ISO="$IMAGE_DIR/$OS_NAME-$OS_VERSION-$JK_NAME-$ARCH.iso"
+fi
 
 export ARCH CROSS_COMPILE
 

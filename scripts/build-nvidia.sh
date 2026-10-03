@@ -2,12 +2,12 @@
 # NVIDIA's driver for jk_os (userspace/nvidia/<arch>, see update-nvidia.sh):
 # its open kernel modules built against jk_os's kernel, and its libraries,
 # tools, GSP firmware and configuration files laid out as installed, in
-# build/<arch>/nvidia. build-rootfs.sh copies that tree into the image;
+# build/<arch>/<device>-<kernel>/nvidia. build-rootfs.sh copies that tree into the image;
 # /etc/init.d/S11gpu loads the modules when an NVIDIA GPU is present.
 source "$(dirname "$0")/common.sh"
 
 NV_SRC="$ROOT_DIR/userspace/nvidia/$ARCH"
-NV_OUT="$OUT_DIR/nvidia"
+NV_OUT="$NVIDIA_OUT"
 if [[ ! -f "$NV_SRC/VERSION" ]]; then
     warn "no userspace/nvidia/$ARCH: the image gets no NVIDIA driver (scripts/update-nvidia.sh adds one)"
     rm -rf "$NV_OUT"
@@ -29,7 +29,7 @@ rm -rf "$NV_OUT" "$stamp"
 
 # ---------------------------------------------------------------- kernel modules
 log "building NVIDIA $ver kernel modules for linux $krel ($ARCH)"
-work="$OUT_DIR/nvidia-kernel"
+work="$TARGET_OUT/nvidia-kernel"
 rm -rf "$work"
 cp -a "$NV_SRC/kernel-open" "$work"
 make -C "$work" -j"$JOBS" modules SYSSRC="$KERNEL_SRC" SYSOUT="$KERNEL_OUT" \

@@ -1,7 +1,11 @@
 # jk_os — a minimal 64-bit Linux system built from source.
 #
-#   make                         build the ISO for the host arch
-#   make ARCH=aarch64            ... or for another arch (x86_64, aarch64)
+#   make config                  choose what to build for: device category,
+#                                device, kernel, arch and a name (build.conf)
+#   make showconfig              show the chosen target
+#   make                         build it (without build.conf: the generic PC
+#                                for the host arch)
+#   make ARCH=aarch64            ... the generic PC for another arch
 #   make run [UEFI=1]            boot the ISO in QEMU (Ctrl-A X quits)
 #   make flash DEVICE=/dev/sdX   write the ISO to a USB stick / SD card
 #   make deps                    install host build dependencies (sudo)
@@ -9,11 +13,10 @@
 # Steps can be run on their own: busybox, tools, network, toolchain, desktop,
 # binaries, rootfs (the OS image), initramfs, kernel, iso.
 #   make binaries [UPDATE=1]     pull configs/binaries/*.list from GitHub
+#   make menuconfig              the kernel's own config menu (after make kernel)
+#   make BUILD_CONF=<file> ...   use another saved target than build.conf
 # Everything builds from what is in this repo: no network, no git (except
 # `make binaries` for a binary that is listed but not fetched yet).
-
-ARCH ?= $(shell uname -m)
-export ARCH
 
 # Warnings the vendored C code (BusyBox) triggers with current GCC: unchecked
 # write/chown results, const dropped from strchr() results, sprintf/snprintf size
@@ -27,17 +30,22 @@ export NOWARN_CFLAGS
 SHELL := /bin/bash
 S := scripts
 
-.PHONY: all iso kernel nvidia initramfs rootfs busybox tools network toolchain desktop binaries run flash deps menuconfig clean distclean help
+.PHONY: all check iso kernel nvidia initramfs rootfs busybox tools network toolchain desktop binaries run flash deps config showconfig menuconfig clean distclean help
 
 all: iso
 
-busybox:
+# The chosen target (build.conf) must be one jk_os can build. Every build
+# chain starts at one of the steps that depend on this.
+check:
+	@$(S)/configure.sh --check
+
+busybox: check
 	$(S)/build-busybox.sh
 
-tools:
+tools: check
 	$(S)/build-tools.sh
 
-network:
+network: check
 	$(S)/build-network.sh
 
 toolchain: network
@@ -47,7 +55,7 @@ toolchain: network
 desktop: toolchain network
 	$(S)/build-desktop.sh
 
-binaries:
+binaries: check
 	$(S)/fetch-binaries.sh
 
 # NVIDIA's driver, built against the kernel (userspace/nvidia/<arch>).
@@ -76,7 +84,13 @@ flash:
 deps:
 	$(S)/install-deps.sh
 
-# Interactive kernel config for the current arch (after one `make kernel`).
+config:
+	$(S)/configure.sh
+
+showconfig:
+	$(S)/configure.sh --show
+
+# Interactive kernel config for the current target (after one `make kernel`).
 # Copy options you want to keep into configs/kernel/*.config.
 menuconfig:
 	. $(S)/common.sh && make -C "$$KERNEL_SRC" O="$$KERNEL_OUT" ARCH="$$KARCH" \
@@ -89,4 +103,4 @@ distclean:
 	rm -rf build out
 
 help:
-	@sed -n '1,13p' Makefile | sed 's/^# \{0,1\}//'
+	@sed -n '1,19p' Makefile | sed 's/^# \{0,1\}//'

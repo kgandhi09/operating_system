@@ -41,7 +41,7 @@ fi
 # BOOT=disk leaves the ISO out. The installed system boots through UEFI, so
 # with a disk x86_64 boots through UEFI too.
 disk=() iso=()
-DISK="${DISK:-$OUT_DIR/disk.qcow2}"
+DISK="${DISK:-$TARGET_OUT/disk.qcow2}"
 if [[ "$DISK" != none ]]; then
     if [[ ! -f "$DISK" ]]; then
         need qemu-img
@@ -89,7 +89,7 @@ x86_64)
                 /usr/share/qemu/edk2-x86_64-code.fd)" || die "OVMF firmware not found (install ovmf)"
         vars_src="$(first_file "${code/CODE/VARS}" /usr/share/OVMF/OVMF_VARS_4M.fd /usr/share/OVMF/OVMF_VARS.fd)" \
             || die "OVMF variable store not found"
-        vars="$OUT_DIR/ovmf-vars.fd"
+        vars="$TARGET_OUT/ovmf-vars.fd"
         [[ -f "$vars" ]] || cp "$vars_src" "$vars"
         fw=(-machine q35
             -drive "if=pflash,format=raw,readonly=on,file=$code"

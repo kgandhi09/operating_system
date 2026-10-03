@@ -33,7 +33,36 @@ install to a disk, or try the live system (a root shell; changes are kept in RAM
 and lost on reboot). See [Installing to a disk](#installing-to-a-disk).
 
 
+### Choosing a target device
+
+`make config` asks what to build for and saves the answers in `build.conf`;
+`make` then builds that, with no questions. The device comes first, and each
+later list shows only what fits it:
+
+1. **device category**: `pc`, `tablet`, `robotics-hpc`, ...
+2. **device**: `generic` (any PC or VM), `jetson-orin-nx`, `samsung-gts7fe`, ...
+3. **kernel**: the kernels that device uses, e.g. `mainline`, or
+   `samsung-mainline` (mainline plus Samsung device trees)
+4. **arch**: what both the device and the kernel support
+5. **name**: your own, for the output file, e.g. `asus-laptop`
+   gives `out/jk_os-<ver>-asus-laptop-x86_64.iso`
+
+```sh
+make config               # choose from menus (arrow keys, Enter)
+make showconfig           # what build.conf says
+make                      # build it
+make BUILD_CONF=jetson.conf   # build from another saved target
+```
+
+Without `build.conf`, `make` builds the generic PC for the host arch, as
+before. The choices are defined in [`targets/`](#build-targets). A device
+whose boot format jk_os can't make yet (the Samsung tablet's Android
+`boot.img`) can be chosen, but `make` refuses it.
+
 ### Other architecture
+
+Without a `build.conf`, `ARCH` picks the arch of the generic PC build (with
+one, `make config` does):
 
 ```sh
 make ARCH=aarch64         # cross-compiles with aarch64-linux-gnu-gcc
@@ -98,29 +127,57 @@ configs/busybox/          BusyBox config fragments merged over defconfig
 configs/binaries/         GitHub binaries: common.list (every arch) + <arch>.list
 initramfs/init            early boot: find and mount jk_os.squashfs, switch into it
 configs/initramfs.list    device nodes added to the initramfs
+targets/kernels/<name>/   kernel profiles: which tree, which archs (make config)
+targets/devices/<category>/<device>/  device profiles: archs, kernels, boot format
+build.conf                (generated) the target make config chose
 userspace/binaries/<arch>/ fetched binaries (bin/) and what they came from (sources.lock)
 rootfs/                   files copied verbatim into the root filesystem
 boot/grub.cfg             x86_64 GRUB menu
 scripts/                  one script per build step
-build/                    (generated) per-arch build trees
+build/                    (generated) build trees: build/<arch>/ (userspace),
+                          build/<arch>/<device>-<kernel>/ (kernel, image)
 out/                      (generated) ISO images
 ```
 
 Build steps can run individually: `make busybox | tools | binaries | rootfs | kernel | iso`.
-The kernel and BusyBox build out of tree under `build/<arch>/`. The source
-trees stay pristine, and both architectures can build side by side from the
-same source.
+The kernel and BusyBox build out of tree under `build/`. The source trees
+stay pristine, and both architectures can build side by side from the same
+source. Userspace (BusyBox, toolchain, network stack, desktop) is the same for
+every device of an arch and builds once in `build/<arch>/`; the kernel,
+initramfs, rootfs and ISO depend on the device and kernel and go in
+`build/<arch>/<device>-<kernel>/`.
+
+## Build targets
+
+`make config` offers what `targets/` defines. Each profile is a plain
+`KEY=value` file:
+
+```
+targets/kernels/mainline/kernel.env              KERNEL_TREE, KERNEL_ARCHS
+targets/devices/pc/category.env                  CATEGORY_DESC
+targets/devices/pc/generic/device.env            DEVICE_ARCHS, DEVICE_KERNELS, DEVICE_BOOT
+```
+
+A kernel, category or device directory can also hold a `kernel.config`
+fragment, merged after `configs/kernel/common.config` and `<arch>.config` in
+the order kernel, category, device. A category or device directory can hold a
+`rootfs/` overlay, copied over the root filesystem. The image records its
+target in `/etc/jk_os/target` and its device as `VARIANT_ID` in
+`/etc/os-release`.
+
+To add a device, create `targets/devices/<category>/<device>/device.env`
+(device names are unique across categories). To add a kernel, create
+`targets/kernels/<name>/kernel.env` and list it in the device's
+`DEVICE_KERNELS`. `scripts/lib-target.sh` describes every field.
+
+Releases (`scripts/publish.sh`, `jk-update`) are still per arch, so only the
+generic PC build can be published for now.
 
 ## Sources
 
-`versions.env` chooses the kernel tree for each architecture:
-
-```sh
-KERNEL_TREE_x86_64=kernel/mainline
-KERNEL_TREE_aarch64=kernel/mainline
-BUSYBOX_TREE=userspace/busybox
-```
-
+`versions.env` chooses the userspace trees (`BUSYBOX_TREE=userspace/busybox`,
+...); the kernel profile chosen with `make config` chooses the kernel tree
+(`KERNEL_TREE=kernel/mainline` in `targets/kernels/mainline/kernel.env`).
 Both x86_64 and aarch64 are fully supported by Torvalds' mainline kernel, so
 they share `kernel/mainline` (currently Linux 7.2). A tree's version is just
 what it contains; the build reads it from the tree's `Makefile`.
@@ -140,10 +197,11 @@ scripts/update-source.sh kernel ./linux-7.3.tar.xz  # offline, from a tarball yo
 make clean && make
 ```
 
-**Add a different kernel for an arch** that mainline can't boot, such as a
-vendor tree for a specific board. Unpack it as `kernel/<name>`, or use
-`scripts/update-source.sh kernel <tarball> kernel/<name>`, then set
-`KERNEL_TREE_<arch>=kernel/<name>`.
+**Add a different kernel tree** that a device needs, such as a vendor tree
+for a specific board. Unpack it as `kernel/<name>`, or use
+`scripts/update-source.sh kernel <tarball> kernel/<name>`, then add a kernel
+profile `targets/kernels/<name>/kernel.env` with `KERNEL_TREE=kernel/<name>`
+(see [Build targets](#build-targets)).
 
 **Committing a tree.** Use `git add -f kernel/<tree>`. The kernel's own
 `.gitignore` matches a few files that upstream ships anyway (for example
@@ -534,7 +592,7 @@ fetched (tag, asset, sha256) goes into `userspace/binaries/<arch>/sources.lock`.
 - **Branding**: the desktop's logo, launcher icon (`jk-os`), wallpaper (`jk_os`), splash screen and the Global Themes' previews come from `J.K. Logo.png`. After changing the logo, run `scripts/make-branding.py` (needs Python with Pillow and NumPy) to regenerate the images under `rootfs/usr/share/`, then `make`.
 - **The desktop's look**: two Global Themes, **jk_os Light** (`org.jk_os.desktop`, the default) and **jk_os Dark** (`org.jk_os.desktop.dark`), set as the light/dark pair in `rootfs/etc/xdg/kdeglobals` (System Settings → Global Theme switches between them, or follows the time of day). Both have a menu bar along the top (the J.K. Robotics menu, the active application and its menus, tray, clock) and a floating dock, in glass: KWin blurs and saturates what is behind panels, pop-ups, title bars and menus. Title bars have red, yellow and green buttons on the left and rounded corners (Aurorae, with `configs/desktop/patches/aurorae`); the fonts are Inter and FiraCode Nerd Font Mono; Konsole opens a translucent profile, *JK Glass*. The colour schemes, title bars and Plasma style are generated by `scripts/make-theme.py`; KWin's settings are in `rootfs/etc/xdg/kwinrc`. The panel layout is set up on a user's first desktop; for an existing one, apply the Global Theme with *Desktop and window layout* ticked.
 - **Kernel options**: `make menuconfig` to explore, then put the options you want to keep in `configs/kernel/common.config` or `configs/kernel/<arch>.config`. Fragments are re-applied whenever they change. The build warns if an option you asked for was dropped.
-- **Clean**: `make clean` (current arch) or `make distclean` (all of `build/` and `out/`; source trees are left alone).
+- **Clean**: `make clean` (the current target's arch) or `make distclean` (all of `build/` and `out/`; source trees are left alone).
 
 ## Host requirements
 

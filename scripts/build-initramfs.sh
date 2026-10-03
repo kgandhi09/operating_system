@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Assemble the small initramfs built into the kernel (build/<arch>/initramfs):
+# Assemble the small initramfs built into the kernel
+# (build/<arch>/<device>-<kernel>/initramfs):
 # BusyBox, e2fsck, the early-boot /init (initramfs/init), and the firmware
 # network drivers load before the real root exists. /init mounts the OS image
 # (jk_os.squashfs) and switches into it; see initramfs/init.

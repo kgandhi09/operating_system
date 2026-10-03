@@ -43,7 +43,7 @@ aarch64)
     cp "$kernel" "$ISO_DIR/boot/Image"
 
     # EFI system partition image: kernel size + 8 MiB of slack, in KiB.
-    esp="$OUT_DIR/efiboot.img"
+    esp="$TARGET_OUT/efiboot.img"
     size_kb=$(( ($(stat -c %s "$kernel") / 1024) + 8192 ))
     rm -f "$esp"
     mkfs.fat -C -n JK_OS_EFI "$esp" "$size_kb" >/dev/null

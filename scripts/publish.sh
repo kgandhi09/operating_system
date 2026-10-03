@@ -50,6 +50,10 @@ for arg do
     esac
 done
 
+# Releases are per arch (latest-<arch>.json), which every installed system
+# reads, so only the generic PC build is published for now.
+[[ "$JK_DEVICE" == generic ]] || die "only the generic PC build can be published yet (this is $JK_DEVICE, see make showconfig)"
+
 ver="$OS_VERSION"
 base="$OS_NAME-$ver-$ARCH"
 kernel="$KERNEL_OUT/$KIMAGE"

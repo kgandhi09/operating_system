@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Assemble the root filesystem tree in build/<arch>/rootfs, and pack it into
-# the OS image build/<arch>/jk_os.squashfs. At boot the kernel's small
+# Assemble the root filesystem tree in build/<arch>/<device>-<kernel>/rootfs,
+# and pack it into the OS image jk_os.squashfs next to it. At boot the kernel's small
 # initramfs (build-initramfs.sh) mounts that image read-only, with a writable
 # layer on top (RAM on the live medium, /data on an installed system).
 source "$(dirname "$0")/common.sh"
@@ -14,7 +14,7 @@ TC="$OUT_DIR/toolchain"
 [[ -x "$TC/usr/bin/gcc" && -x "$TC/usr/bin/clang" ]] || die "toolchain not built yet (run: make toolchain)"
 [[ -x "$DYN/usr/bin/startplasma-wayland" ]] || die "desktop not built yet (run: make desktop)"
 
-log "assembling rootfs ($ARCH)"
+log "assembling rootfs ($JK_DEVICE, $ARCH)"
 rm -rf "$ROOTFS_DIR"
 mkdir -p "$ROOTFS_DIR"
 
@@ -151,11 +151,11 @@ if [[ -d "$MODULES_OUT/lib/modules" ]]; then
     mkdir -p usr/lib/modules
     cp -a "$MODULES_OUT/lib/modules/." usr/lib/modules/
 fi
-if [[ -d "$OUT_DIR/nvidia" ]]; then
-    cp -a "$OUT_DIR/nvidia/." .
+if [[ -d "$NVIDIA_OUT" ]]; then
+    cp -a "$NVIDIA_OUT/." .
     # Its libraries (relative to /usr/lib), which /usr/lib/jk_os/apt shares
     # with programs from apt. Not the OpenCL loader: Debian has its own.
-    (cd "$OUT_DIR/nvidia/usr/lib" && find . -maxdepth 2 \( -type f -o -type l \) -name '*.so*' \
+    (cd "$NVIDIA_OUT/usr/lib" && find . -maxdepth 2 \( -type f -o -type l \) -name '*.so*' \
         ! -name 'libOpenCL.so*' ! -path './modules/*' | sed 's|^\./||' | sort) > usr/share/nvidia/libraries
 fi
 for d in usr/lib/modules/*/; do
@@ -168,6 +168,14 @@ if compgen -G "$BINARIES_DIR/bin/*" >/dev/null; then
     cp -a "$BINARIES_DIR/bin/." usr/local/bin/
 fi
 cp -a "$ROOT_DIR/rootfs/." "$ROOTFS_DIR/"
+# The device category's and device's own files (targets/devices/...) win.
+for o in "${ROOTFS_OVERLAYS[@]}"; do
+    cp -a "$o/." "$ROOTFS_DIR/"
+done
+# What this image was built for (make config).
+mkdir -p etc/jk_os
+printf 'JK_CATEGORY=%s\nJK_DEVICE=%s\nJK_KERNEL=%s\nJK_ARCH=%s\nJK_NAME=%s\n' \
+    "$JK_CATEGORY" "$JK_DEVICE" "$JK_KERNEL" "$JK_ARCH" "$JK_NAME" > etc/jk_os/target
 # The Debian base system apt-setup unpacks into /data/apt when apt is
 # chosen (scripts/update-debian-rootfs.sh).
 DEB_SRC="$ROOT_DIR/userspace/debian/$ARCH"
@@ -184,6 +192,7 @@ ID=$OS_NAME
 VERSION="$OS_VERSION"
 VERSION_ID=$OS_VERSION
 PRETTY_NAME="$OS_NAME $OS_VERSION ($ARCH)"
+VARIANT_ID=$JK_DEVICE
 LOGO=jk-os
 OSR
 

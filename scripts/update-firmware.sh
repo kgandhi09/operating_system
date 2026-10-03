@@ -13,9 +13,10 @@
 #
 # What is kept, per arch, comes from configs/firmware/{common,<arch>}.list:
 #   driver <name>   every file that driver may load, as the kernel build
-#                   lists it (build/<arch>/linux/modules.builtin.modinfo, or
-#                   the module in build/<arch>/modules; run `make kernel` for
-#                   each arch first)
+#                   lists it (the generic PC's kernel build: build/<arch>/
+#                   generic-mainline/linux/modules.builtin.modinfo, or the
+#                   module in .../modules; run `make kernel` for each arch
+#                   first, without a build.conf)
 #   late <name>     like driver, for a loadable module that /etc/init.d loads
 #                   once the root is mounted (btusb's helpers): its files go
 #                   into the image only, not the kernel's initramfs
@@ -106,7 +107,7 @@ resolve() {
 
 rm -rf "$DEST.new"; mkdir -p "$DEST.new"
 for arch in x86_64 aarch64; do
-    modinfo="$ROOT_DIR/build/$arch/linux/modules.builtin.modinfo"
+    modinfo="$ROOT_DIR/build/$arch/generic-mainline/linux/modules.builtin.modinfo"
     : > "$tmp/$arch.files"; : > "$tmp/$arch.skip"; : > "$tmp/$arch.linkpat"; : > "$tmp/$arch.linked"
     if [[ ! -f "$modinfo" && -f "$DEST/$arch.files" ]]; then
         warn "$arch: no kernel built (make kernel ARCH=$arch); keeping its current firmware lists"
@@ -127,9 +128,9 @@ for arch in x86_64 aarch64; do
                         continue
                     fi
                     names=$(tr '\0' '\n' < "$modinfo" | sed -n "s/^$what\.firmware=//p")
-                    # Or a loadable module (nouveau), from build/<arch>/modules.
+                    # Or a loadable module (nouveau), from build/<arch>/generic-mainline/modules.
                     if [[ -z "$names" ]]; then
-                        ko=$(find "$ROOT_DIR/build/$arch/modules/lib/modules" -name "$what.ko*" 2>/dev/null | head -n1)
+                        ko=$(find "$ROOT_DIR/build/$arch/generic-mainline/modules/lib/modules" -name "$what.ko*" 2>/dev/null | head -n1)
                         [[ -n "$ko" ]] && names=$(modinfo -F firmware "$ko")
                     fi
                     [[ -n "$names" ]] || warn "$arch: driver $what is not built in, or declares no firmware"
