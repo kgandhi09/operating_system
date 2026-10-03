@@ -101,6 +101,9 @@ export PATH="$HOSTDIR/wbin:$PATH"
 # cmakepkg <src> <out> <cmake options...>
 # $DYN/usr/include is searched like /usr/include would be (<libmount/libmount.h>
 # with only .../include/libmount from pkg-config).
+# The build machine's pkg-config (with the sysroot settings above): CMake
+# would otherwise pick $DYN's own, built for jk_os, from CMAKE_PREFIX_PATH.
+HOST_PKG_CONFIG="$(command -v pkg-config)"
 cmakepkg() {
     local src="$1" out="$2"; shift 2
     cmake -G Ninja -S "$src" -B "$out" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr \
@@ -110,7 +113,8 @@ cmakepkg() {
         -DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=ONLY -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY \
         -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=ONLY -DBUILD_TESTING=OFF \
         -DCMAKE_C_STANDARD_INCLUDE_DIRECTORIES="$DYN/usr/include" \
-        -DCMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES="$DYN/usr/include" "$@"
+        -DCMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES="$DYN/usr/include" \
+        -DPKG_CONFIG_EXECUTABLE="$HOST_PKG_CONFIG" "$@"
     ninja -C "$out" -j"$JOBS"
     DESTDIR="$DYN" ninja -C "$out" -j"$JOBS" install
 }
@@ -739,6 +743,12 @@ done
 pkg kfilemetadata    kfpkg
 pkg konsole          kfpkg -DBUILD_DOC=OFF -DWITH_LIBSSH=OFF
 pkg dolphin          kfpkg -DBUILD_DOC=OFF
+# jk-viz (src/jk-viz): the system map (Qt Quick) and its collector jk-vizd
+# (/usr/sbin, started by /etc/init.d/S50jk-vizd). Rebuilt when the sources
+# change: their checksum is part of the options.
+b_jk_viz() { qtpkg "$1" "$2"; }
+step jk-viz "$ROOT_DIR/src/jk-viz" b_jk_viz \
+    "$(cd "$ROOT_DIR/src/jk-viz" && find . -type f | LC_ALL=C sort | xargs cat | sha256sum | cut -c1-16)"
 
 # ---------------------------------------------------------------- Phase F
 # The dev session (jk-dev, on tty1): one terminal, foot, full screen in the

@@ -1,0 +1,24 @@
+#!/bin/sh
+# jk-vizd: the collector behind jk-viz (the system map). It runs as root to
+# see every process's files, sockets, I/O and network traffic and the energy
+# counters, and serves them on /run/jk-viz.sock to root and group wheel. It
+# only samples while a jk-viz is open.
+#
+# /etc/jk_os/jk-viz (optional): JK_VIZD=no leaves it off.
+
+case "$1" in
+    start)
+        JK_VIZD=yes
+        [ -f /etc/jk_os/jk-viz ] && . /etc/jk_os/jk-viz
+        [ "$JK_VIZD" = no ] && exit 0
+        /usr/sbin/jk-vizd >> /var/log/jk-vizd.log 2>&1 &
+        ;;
+    stop)
+        pkill -x jk-vizd 2>/dev/null
+        ;;
+    restart)
+        "$0" stop
+        sleep 1
+        "$0" start
+        ;;
+esac

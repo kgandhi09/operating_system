@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=jk-viz
+GenericName=System Map
+Comment=Every process and what it uses, from the silicon to the applications
+Exec=jk-viz
+Icon=utilities-system-monitor
+Terminal=false
+Categories=System;Monitor;
+Keywords=process;task;monitor;cpu;memory;gpu;network;power;sockets;dbus;

@@ -374,6 +374,42 @@ is built in.
   from elogind; users created by the installer are also in the `audio` and
   `video` groups.
 
+## jk-viz: the system map
+
+`jk-viz` (in the desktop's menu, or `jk-viz` in a terminal) shows the whole
+machine live, in layers from the top down: **0 Silicon** (CPU packages and
+cores, memory, PCI and USB devices, disks, network interfaces), **1 Firmware**
+(UEFI/BIOS, CPU microcode), **2 Kernel** (the kernel, the drivers each device
+uses, the kernel's threads in groups, its memory), **3 System services** (init
+and what it starts), **4 Sessions** (getty, login, the desktop's compositor,
+shell, session bus and audio) and **5 Applications**. Lines join parents to
+children, and, each switchable in the bottom bar: Unix sockets, D-Bus
+connections (labelled with the bus names), pipes (writer → reader), local TCP
+connections, network use, the devices processes have open, and the driver of
+each device.
+
+Pick a resource at the top (CPU, memory, GPU, video memory, disk I/O,
+network, power): every node shows its **share of 100%** of it, and a bar.
+Everything adds up to 100%: the processes, the kernel, *idle / free*, and
+*unattributed* (time of processes that ended during the second, kernel
+writeback, network traffic no socket matches, ...). "% of what's used" leaves
+the idle part out. Devices show their own load instead. Click a node for its
+details and connections, double-click (or right-click) to fold what is under
+it (folded, it shows the total under it, Σ), drag to move, wheel to zoom;
+the side panel lists the top consumers.
+
+Where the numbers come from: `/proc` (CPU time, PSS memory, disk I/O, open
+files), sock_diag (which socket is connected to which), `/proc/net` and a
+packet socket that counts the bytes of each local port (headers only; nothing
+is kept), the kernel's DRM usage counters and NVIDIA's NVML (GPU, video
+memory), and the CPU's energy counters (RAPL). Power per process is an
+estimate: the package's power shared out by CPU time, each GPU's by its load.
+
+The collector, `jk-vizd`, runs as root (`/etc/init.d/S50jk-vizd`) and
+samples only while a jk-viz is open; it serves administrators (root and
+group `wheel`) on `/run/jk-viz.sock`. `sudo jk-vizd --dump` prints one
+sample as JSON. `JK_VIZD=no` in `/etc/jk_os/jk-viz` turns it off.
+
 ## Packages (apt)
 
 The installer asks for a **package management** choice after the accounts:
