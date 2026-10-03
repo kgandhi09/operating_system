@@ -14,7 +14,7 @@
 #   scripts/configure.sh --show   print the current target
 #   scripts/configure.sh --check  fail unless jk_os can build it (make runs
 #                                 this before any build step)
-JK_CONFIGURE=1
+JK_NO_TARGET=1
 source "$(dirname "$0")/common.sh"
 
 case "${1:-}" in

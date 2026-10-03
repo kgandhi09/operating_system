@@ -8,10 +8,11 @@
 #   make ARCH=aarch64            ... the generic PC for another arch
 #   make run [UEFI=1]            boot the ISO in QEMU (Ctrl-A X quits)
 #   make flash DEVICE=/dev/sdX   write the ISO to a USB stick / SD card
+#                                (Android devices: flash over USB, no DEVICE)
 #   make deps                    install host build dependencies (sudo)
 #
 # Steps can be run on their own: busybox, tools, network, toolchain, desktop,
-# binaries, rootfs (the OS image), initramfs, kernel, iso.
+# binaries, rootfs (the OS image), initramfs, kernel, iso, bootimg.
 #   make binaries [UPDATE=1]     pull configs/binaries/*.list from GitHub
 #   make menuconfig              the kernel's own config menu (after make kernel)
 #   make BUILD_CONF=<file> ...   use another saved target than build.conf
@@ -30,9 +31,9 @@ export NOWARN_CFLAGS
 SHELL := /bin/bash
 S := scripts
 
-.PHONY: all check iso kernel nvidia initramfs rootfs busybox tools network toolchain desktop binaries run flash deps config showconfig menuconfig clean distclean help
+.PHONY: all check image iso bootimg kernel nvidia initramfs rootfs busybox tools network toolchain desktop binaries run flash deps config showconfig menuconfig clean distclean help
 
-all: iso
+all: image
 
 # The chosen target (build.conf) must be one jk_os can build. Every build
 # chain starts at one of the steps that depend on this.
@@ -71,14 +72,28 @@ initramfs: busybox tools
 kernel: initramfs
 	$(S)/build-kernel.sh
 
+# The bootable image in the device's boot format (DEVICE_BOOT, make config):
+# the installer ISO, or an Android boot image (bootimg) for Odin.
+image: kernel rootfs
+	@. $(S)/common.sh && case "$$DEVICE_BOOT" in \
+	    efi-iso) $(S)/build-iso.sh ;; \
+	    android-bootimg) $(S)/build-bootimg.sh ;; \
+	esac
+
 iso: kernel rootfs
 	$(S)/build-iso.sh
+
+# Only the kernel and its device tree, in an Android boot image: enough to
+# bring up a new device before the whole OS image is built.
+bootimg: kernel
+	$(S)/build-bootimg.sh
 
 run:
 	$(S)/run-qemu.sh
 
+# A disk (DEVICE=/dev/sdX) for the ISO; a Samsung device in Download mode
+# over USB (Heimdall) for an Android boot image.
 flash:
-	@test -n "$(DEVICE)" || { echo "usage: make flash DEVICE=/dev/sdX [ARCH=...]"; exit 1; }
 	$(S)/flash.sh $(DEVICE)
 
 deps:

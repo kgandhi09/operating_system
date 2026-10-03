@@ -13,7 +13,7 @@ if command -v apt-get >/dev/null; then
           cpio bzip2 xz-utils zstd curl jq unzip file rsync
           meson ninja-build pkg-config gperf autoconf automake libtool python3-packaging squashfs-tools
           python3-mako python3-yaml python3-ply glslang-tools gettext xsltproc docbook-xsl
-          grub-common xorriso mtools dosfstools
+          grub-common xorriso mtools dosfstools lz4 device-tree-compiler heimdall-flash
           qemu-system-x86 qemu-system-arm qemu-utils qemu-efi-aarch64 ovmf)
     case "$host" in
         x86_64)  pkgs+=(grub-pc-bin grub-efi-amd64-bin gcc-aarch64-linux-gnu libc6-dev-arm64-cross) ;;
@@ -25,7 +25,7 @@ elif command -v pacman >/dev/null; then
     pkgs=(base-devel bc cpio bzip2 xz zstd curl jq unzip file rsync libelf openssl
           meson ninja pkgconf gperf autoconf automake libtool python-packaging squashfs-tools
           python-mako python-yaml python-ply glslang gettext libxslt docbook-xsl
-          grub libisoburn mtools dosfstools
+          grub libisoburn mtools dosfstools lz4 dtc heimdall
           qemu-system-x86 qemu-system-aarch64 edk2-ovmf edk2-aarch64)
     [[ "$host" == x86_64 ]] && pkgs+=(aarch64-linux-gnu-gcc aarch64-linux-gnu-glibc)
     "${sudo[@]}" pacman -S --needed --noconfirm "${pkgs[@]}"

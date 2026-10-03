@@ -54,10 +54,16 @@ fi
 k_make olddefconfig >/dev/null
 
 # merge_config.sh only warns when an option doesn't stick; fail loudly instead.
-missing=0
+# A later fragment overrides an earlier one (a device turning an option off).
+declare -A wanted=()
 while IFS= read -r line; do
+    if [[ "$line" =~ ^#\ (CONFIG_[A-Za-z0-9_]+)\ is\ not\ set$ ]]; then unset "wanted[${BASH_REMATCH[1]}]"
+    else wanted[${line%%=*}]=$line; fi
+done < <(cat "${frags[@]}" | grep -E '^CONFIG_[A-Za-z0-9_]+=|^# CONFIG_[A-Za-z0-9_]+ is not set$')
+missing=0
+for line in "${wanted[@]}"; do
     grep -qxF "$line" "$KERNEL_OUT/.config" || { warn "kernel option not applied: $line"; missing=1; }
-done < <(grep -hE '^CONFIG_[A-Za-z0-9_]+=' "${frags[@]}")
+done
 (( missing == 0 )) || warn "some requested kernel options were dropped (unmet dependencies?)"
 
 log "building linux ($ARCH) with $JOBS jobs — this takes a while"
@@ -73,3 +79,6 @@ if grep -q '^CONFIG_MODULES=y' "$KERNEL_OUT/.config"; then
 fi
 
 log "kernel: $KERNEL_OUT/$KIMAGE ($(du -h "$KERNEL_OUT/$KIMAGE" | cut -f1))"
+
+# The device's tree, for a bootloader that doesn't bring its own (DEVICE_DTB).
+[[ -z "$DEVICE_DTB" ]] || "$ROOT_DIR/scripts/build-dtbs.sh"

@@ -173,6 +173,30 @@ To add a device, create `targets/devices/<category>/<device>/device.env`
 Releases (`scripts/publish.sh`, `jk-update`) are still per arch, so only the
 generic PC build can be published for now.
 
+### Android-bootloader devices (Samsung Galaxy Tab S7 FE)
+
+A device with `DEVICE_BOOT=android-bootimg` boots mainline Linux with a device
+tree jk_os adds (`targets/kernels/<kernel>/dts/`, built against the kernel
+tree by `scripts/build-dtbs.sh`, so the tree stays pristine) from an Android
+`boot.img` that its bootloader loads:
+
+```sh
+scripts/inspect-stock.sh AP_*.tar.md5 BL_*.tar.md5   # read the stock firmware: build/stock/...
+make bootimg              # kernel + device tree -> build/.../bootimg, and an Odin tar in out/
+make flash                # write them with Heimdall, the tablet in Download mode
+```
+
+`inspect-stock.sh` prints what the device profile needs from the stock
+firmware: the boot image format (`DEVICE_MKBOOTIMG_ARGS`), and the stock device
+trees' `qcom,msm-id` / `qcom,board-id`, memory map and hardware (decompiled
+into `dtb/*.dts`). `make bootimg` makes `boot.img` (kernel with jk_os's
+initramfs, device tree, `DEVICE_CMDLINE`), `vbmeta.img` (verified boot off)
+and an empty `dtbo.img`, and packs them as an Odin tar for the AP slot.
+`make flash` writes the three with Heimdall from Linux, each to the partition
+the device's own partition table names for it (`scripts/flash-heimdall.sh
+--pit` only lists the partitions). The
+AOSP tools this uses are vendored in `scripts/android/`.
+
 ## Sources
 
 `versions.env` chooses the userspace trees (`BUSYBOX_TREE=userspace/busybox`,

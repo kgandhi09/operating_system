@@ -1,0 +1,72 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Samsung Galaxy Tab S7 FE Wi-Fi (SM-T733, "gts7fewifi"), Snapdragon 778G.
+ *
+ * Bring-up stage 1: just enough to see the kernel log on the display the
+ * bootloader left on (simple-framebuffer) and keep the log across a reboot
+ * (ramoops). Everything else in sm7325.dtsi stays disabled until its board
+ * wiring is known.
+ *
+ * Values marked TODO(stock) are placeholders, taken from the Nothing Phone (1)
+ * (sm7325-nothing-spacewar.dts). Replace them with the stock firmware's
+ * (scripts/inspect-stock.sh: dtb/*.dts) before flashing: the bootloader
+ * picks the tree by qcom,msm-id / qcom,board-id, and a wrong framebuffer
+ * address or reserved region can hang the boot without a word on screen.
+ */
+
+/dts-v1/;
+
+#include <dt-bindings/arm/qcom,ids.h>
+
+#include "sm7325.dtsi"
+
+/ {
+	model = "Samsung Galaxy Tab S7 FE Wi-Fi (SM-T733)";
+	compatible = "samsung,gts7fewifi", "qcom,sm7325";
+	chassis-type = "tablet";
+
+	/* TODO(stock): Samsung's values for this board. */
+	qcom,msm-id = <QCOM_ID_SM7325 0x10000>;
+	qcom,board-id = <0 0>;
+
+	chosen {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		/* TODO(stock): address, size and panel resolution. */
+		framebuffer0: framebuffer@e1000000 {
+			compatible = "simple-framebuffer";
+			reg = <0x0 0xe1000000 0x0 (1600 * 2560 * 4)>;
+			width = <1600>;
+			height = <2560>;
+			stride = <(1600 * 4)>;
+			format = "a8r8g8b8";
+
+			clocks = <&gcc GCC_DISP_HF_AXI_CLK>,
+				 <&dispcc DISP_CC_MDSS_MDP_CLK>,
+				 <&dispcc DISP_CC_MDSS_BYTE0_CLK>,
+				 <&dispcc DISP_CC_MDSS_BYTE0_INTF_CLK>,
+				 <&dispcc DISP_CC_MDSS_PCLK0_CLK>,
+				 <&dispcc DISP_CC_MDSS_VSYNC_CLK>;
+			power-domains = <&dispcc DISP_CC_MDSS_CORE_GDSC>;
+		};
+	};
+
+	reserved-memory {
+		/* TODO(stock): Samsung's ramoops region. */
+		ramoops_mem: ramoops@83a00000 {
+			compatible = "ramoops";
+			reg = <0x0 0x83a00000 0x0 0x400000>;
+			pmsg-size = <0x200000>;
+			mem-type = <2>;
+			console-size = <0x200000>;
+		};
+
+		/* TODO(stock): the bootloader's splash buffer (cont_splash). */
+		cont_splash_mem: cont-splash@e1000000 {
+			reg = <0x0 0xe1000000 0x0 (1600 * 2560 * 4)>;
+			no-map;
+		};
+	};
+};

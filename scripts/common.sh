@@ -39,8 +39,9 @@ HOST_ARCH="$(normalize_arch "$(uname -m)")"
 
 # shellcheck source=lib-target.sh
 source "$ROOT_DIR/scripts/lib-target.sh"
-# configure.sh only needs the helpers above: build.conf may not exist yet.
-[[ -n "${JK_CONFIGURE:-}" ]] && return 0
+# Scripts that don't build (configure.sh: build.conf may not exist yet;
+# inspect-stock.sh) only need the helpers above.
+[[ -n "${JK_NO_TARGET:-}" ]] && return 0
 load_target
 ARCH="$JK_ARCH"
 
@@ -57,6 +58,8 @@ case "$ARCH" in
         CROSS_DEFAULT=aarch64-linux-gnu-
         ;;
 esac
+# An Android bootloader takes the gzip-compressed kernel from the boot image.
+[[ "$DEVICE_BOOT" == android-bootimg ]] && KIMAGE=arch/arm64/boot/Image.gz
 
 if [[ -z "${CROSS_COMPILE+set}" ]]; then
     if [[ "$ARCH" == "$HOST_ARCH" ]]; then CROSS_COMPILE=""; else CROSS_COMPILE="$CROSS_DEFAULT"; fi
@@ -73,6 +76,8 @@ KERNEL_SRC="$ROOT_DIR/$KERNEL_TREE"
 KERNEL_OUT="$TARGET_OUT/linux"
 MODULES_OUT="$TARGET_OUT/modules"   # the kernel's loadable modules (lib/modules/<release>)
 NVIDIA_OUT="$TARGET_OUT/nvidia"     # NVIDIA's driver, built for that kernel
+DTB_OUT="$TARGET_OUT/dtbs"          # the device's tree (DEVICE_DTB), build-dtbs.sh
+BOOTIMG_DIR="$TARGET_OUT/bootimg"   # boot.img and friends, build-bootimg.sh
 # Kernel config fragments, general to specific, and rootfs overlays.
 KERNEL_FRAGMENTS=("$ROOT_DIR/configs/kernel/common.config" "$ROOT_DIR/configs/kernel/$ARCH.config")
 ROOTFS_OVERLAYS=()
@@ -164,6 +169,8 @@ if [[ "$JK_DEVICE" == generic && "$JK_NAME" == generic ]]; then
 else
     ISO="$IMAGE_DIR/$OS_NAME-$OS_VERSION-$JK_NAME-$ARCH.iso"
 fi
+# android-bootimg: boot.img, vbmeta.img and dtbo.img for Odin (build-bootimg.sh).
+BOOT_TAR="$IMAGE_DIR/$OS_NAME-$OS_VERSION-$JK_NAME-$ARCH.tar.md5"
 
 export ARCH CROSS_COMPILE
 

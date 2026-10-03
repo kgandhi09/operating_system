@@ -11,7 +11,20 @@
 #   JK_ARCH      x86_64 | aarch64
 #   JK_NAME      your name for this build (output file name), e.g. asus-laptop
 #
+# device.env fields:
+#   DEVICE_DESC, DEVICE_STATUS   shown by make config
+#   DEVICE_ARCHS, DEVICE_KERNELS what the device can be built with
+#   DEVICE_BOOT                  boot format (BOOT_FORMATS below)
+#   DEVICE_DTB                   its device tree, as built from the kernel
+#                                profile's dts/ (e.g. qcom/<board>.dtb)
+#   DEVICE_CMDLINE               kernel command line in the boot image
+#   DEVICE_MKBOOTIMG_ARGS        android-bootimg: header version, page size,
+#                                base, offsets, os version and patch level,
+#                                as scripts/inspect-stock.sh prints them
+#
 # Each profile directory may also hold:
+#   dts/            (kernel) device trees that aren't in the kernel tree,
+#                   built against it by build-dtbs.sh
 #   kernel.config   a kernel config fragment, merged after configs/kernel/
 #                   common.config and <arch>.config, in the order kernel,
 #                   category, device
@@ -24,8 +37,11 @@ TARGETS_DIR="$ROOT_DIR/targets"
 BUILD_CONF="${BUILD_CONF:-$ROOT_DIR/build.conf}"
 [[ "$BUILD_CONF" == /* ]] || BUILD_CONF="$PWD/$BUILD_CONF"
 
-# Boot formats the image steps know how to make (DEVICE_BOOT).
-BOOT_FORMATS="efi-iso"
+# Boot formats the image steps know how to make (DEVICE_BOOT):
+#   efi-iso          hybrid ISO: GRUB (x86_64) or the EFI stub (aarch64)
+#   android-bootimg  Android boot.img + vbmeta.img + dtbo.img, and an Odin tar
+#                    for Samsung devices (build-bootimg.sh)
+BOOT_FORMATS="efi-iso android-bootimg"
 
 in_list() { [[ " $2 " == *" $1 "* ]]; }   # in_list <word> <space-separated list>
 
@@ -53,6 +69,7 @@ load_category() {
 }
 load_device() {   # load_device <category> <device>
     DEVICE_DESC= DEVICE_ARCHS= DEVICE_KERNELS= DEVICE_BOOT= DEVICE_STATUS=
+    DEVICE_DTB= DEVICE_CMDLINE= DEVICE_MKBOOTIMG_ARGS=
     DEVICE_DIR="$TARGETS_DIR/devices/$1/$2"
     [[ -f "$DEVICE_DIR/device.env" ]] || return 1
     # shellcheck source=/dev/null
