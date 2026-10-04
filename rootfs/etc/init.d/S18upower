@@ -1,0 +1,16 @@
+#!/bin/sh
+# UPower: batteries and chargers (/sys/class/power_supply) for the desktop's
+# battery indicator and power management (Plasma's PowerDevil, which also
+# handles the power button through it). Started here: jk_os's D-Bus has no
+# setuid launch helper to start system services on demand.
+
+case "$1" in
+    start)
+        [ -x /usr/libexec/upowerd ] || exit 0
+        mkdir -p /var/lib/upower
+        /usr/libexec/upowerd >/dev/null 2>&1 &
+        ;;
+    stop)
+        pkill -x upowerd 2>/dev/null
+        ;;
+esac

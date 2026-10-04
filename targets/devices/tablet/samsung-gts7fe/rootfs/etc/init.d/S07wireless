@@ -9,7 +9,7 @@
 #   S07wireless start | stop
 
 WIFI=17a10040.wifi
-ATH11K=/sys/bus/platform/drivers/ath11k_ahb
+ATH11K=/sys/bus/platform/drivers/ath11k
 
 # wpss: the remoteproc directory of the WPSS.
 wpss() {

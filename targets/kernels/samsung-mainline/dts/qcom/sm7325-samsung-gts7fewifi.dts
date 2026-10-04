@@ -57,6 +57,16 @@
 	 */
 	/delete-node/ memory@80000000;
 
+	/*
+	 * Bluetooth's UART needs a line number, which qcom_geni_serial takes
+	 * from its serial alias ("Invalid line -19" without it).
+	 */
+	aliases {
+		bluetooth0 = &bluetooth;
+		serial1 = &uart7;
+		wifi0 = &wifi;
+	};
+
 	memory {
 		device_type = "memory";
 		reg = <0x0 0x0 0x0 0x0>;

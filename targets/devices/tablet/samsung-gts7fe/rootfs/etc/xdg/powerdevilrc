@@ -1,8 +1,8 @@
 # Plasma's power management on the tablet: the screen stays on and the
 # tablet never suspends by itself. Switching the display off (DPMS) can hang
 # the DSI link on this panel and let the watchdog reset the tablet (seen on
-# the SM-T735), and suspend isn't brought up yet. Brightness keys and the
-# brightness slider work.
+# the SM-T735), and suspend isn't brought up yet. The power button locks the
+# screen (32). Brightness keys and the brightness slider work.
 [AC][Display]
 DimDisplayWhenIdle=false
 TurnOffDisplayWhenIdle=false
@@ -11,7 +11,7 @@ LockBeforeTurnOffDisplay=false
 [AC][SuspendAndShutdown]
 AutoSuspendAction=0
 LidAction=0
-PowerButtonAction=16
+PowerButtonAction=32
 
 [Battery][Display]
 DimDisplayWhenIdle=false
@@ -21,7 +21,7 @@ LockBeforeTurnOffDisplay=false
 [Battery][SuspendAndShutdown]
 AutoSuspendAction=0
 LidAction=0
-PowerButtonAction=16
+PowerButtonAction=32
 
 [LowBattery][Display]
 DimDisplayWhenIdle=false
@@ -31,4 +31,4 @@ LockBeforeTurnOffDisplay=false
 [LowBattery][SuspendAndShutdown]
 AutoSuspendAction=0
 LidAction=0
-PowerButtonAction=16
+PowerButtonAction=32
