@@ -53,6 +53,7 @@ echo "$$ ${tty:-console}" > "$LOCK/owner"
 trap release EXIT
 
 ACC_HOSTNAME=$(cat /etc/hostname)
+ACC_REPLACE_LEFTOVER=yes
 accounts_ask
 head_line "Summary"
 accounts_summary
@@ -63,6 +64,7 @@ ask "Create them now? (yes/no)" yes
 # /etc is the overlay on /data/system/etc, so the changes are kept.
 accounts_apply / /home
 hostname -F /etc/hostname
+mkdir -p "${SETUP_DONE%/*}"
 : > "$SETUP_DONE"
 sync
 echo installed > /run/jk-mode

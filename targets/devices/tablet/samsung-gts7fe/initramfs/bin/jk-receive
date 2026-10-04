@@ -33,7 +33,9 @@ put)
     mnt=/run/jk/install
     mkdir -p "$mnt"
     mountpoint -q "$mnt" || mount -t ext4 "$dev" "$mnt" || err "cannot mount $dev"
-    mkdir -p "$mnt/system"
+    # The layout jk-install gives /data: the system, its settings (etc:
+    # fstab, the setup's done mark) and the home directories.
+    mkdir -p "$mnt/system" "$mnt/etc" "$mnt/home"
     head -c "$a" > "$mnt/system/jk_os.squashfs.part"
     got=$(stat -c %s "$mnt/system/jk_os.squashfs.part")
     [ "$got" = "$a" ] || { umount "$mnt"; err "got $got of $a bytes"; }
@@ -43,6 +45,8 @@ put)
     # What is installed, as jk-update records it.
     printf '{"name": "jk_os", "version": "%s", "files": {"image": {"size": %s, "sha256": "%s"}}}\n' \
         "$c" "$a" "$b" > "$mnt/system/release.json"
+    printf 'OS=jk_os\nVERSION=%s\nARCH=%s\nDISK=%s\nDATE=%s\n' "$c" "$(uname -m)" "$dev" \
+        "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$mnt/etc/jk_os-install"
     sync
     umount "$mnt"
     echo "ok: jk_os $c installed on $dev" ;;

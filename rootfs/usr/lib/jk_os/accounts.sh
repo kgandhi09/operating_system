@@ -7,6 +7,7 @@
 #       with the home directory under <home-root>
 #
 # ACC_FULLNAME ACC_USER ACC_PASS ACC_ADMIN (yes/no) ACC_ROOTPASS ACC_HOSTNAME
+# ACC_REPLACE_LEFTOVER=yes (jk-setup): reuse a regular account's name
 
 # ask_secret <prompt>: read a password twice, without echo, into $secret.
 ask_secret() {
@@ -30,7 +31,19 @@ accounts_ask() {
         ACC_USER="$ans"
         echo "$ACC_USER" | grep -qE '^[a-z_][a-z0-9_-]{0,31}$' \
             || { warn "use lowercase letters, digits, - and _, starting with a letter"; continue; }
-        grep -q "^$ACC_USER:" /etc/passwd && { warn "$ACC_USER is a system account"; continue; }
+        ACC_LEFTOVER=no
+        if grep -q "^$ACC_USER:" /etc/passwd; then
+            # jk-setup (ACC_REPLACE_LEFTOVER=yes): a regular account (uid
+            # 1000 and up) before the setup is done is what an interrupted
+            # run left behind; it is created again from scratch.
+            uid=$(awk -F: -v u="$ACC_USER" '$1 == u { print $3 }' /etc/passwd)
+            if [ "${ACC_REPLACE_LEFTOVER:-no}" = yes ] && [ "$uid" -ge 1000 ]; then
+                warn "$ACC_USER is left from an interrupted setup; it is created again"
+                ACC_LEFTOVER=yes
+            else
+                warn "$ACC_USER is a system account"; continue
+            fi
+        fi
         break
     done
     ask_secret "  Password for $ACC_USER"; ACC_PASS="$secret"
@@ -63,6 +76,8 @@ accounts_apply() {
     # (in one, elogind gives the user access anyway).
     groups="-G audio,video"; [ "$ACC_ADMIN" = yes ] && groups="-G wheel,audio,video"
     # shellcheck disable=SC2086 # $popt and $groups are option lists
+    [ "${ACC_LEFTOVER:-no}" = yes ] && { userdel $popt "$ACC_USER" || die "userdel $ACC_USER failed"; }
+    # shellcheck disable=SC2086
     useradd $popt -M -d "/home/$ACC_USER" -s /bin/sh -c "$ACC_FULLNAME" $groups "$ACC_USER" \
         || die "useradd $ACC_USER failed"
     # One chpasswd per account: it picks a single salt per run.
