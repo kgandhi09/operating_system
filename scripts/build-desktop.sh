@@ -181,14 +181,27 @@ case "$ARCH" in
         MESA_VULKAN=broadcom,freedreno,panfrost,amd,swrast ;;
 esac
 b_mesa() {
-    # LLVM (radeonsi, llvmpipe) from the toolchain; its llvm-config can only
-    # run on an x86_64 host, so for aarch64 Mesa finds it through CMake.
+    # LLVM (radeonsi, llvmpipe) from the toolchain. Mesa asks llvm-config only
+    # (never CMake), and a cross-built toolchain's llvm-config doesn't run
+    # here: then the build host's (the same LLVM version, built the same way,
+    # build/<host arch>/toolchain) answers instead, its paths rewritten to the
+    # target toolchain's and its host triple to the target's.
     local llvm=(-Dllvm=enabled -Dshared-llvm=enabled)
     if [[ -n "$TC_RUN" ]]; then
         printf '[binaries]\nllvm-config = [%s]\n' \
             "'env', 'LD_LIBRARY_PATH=$TC/usr/lib', '$TC/usr/bin/llvm-config'" > "$2.llvm.ini"
     else
-        printf '[properties]\ncmake_prefix_path = [%s]\n' "'$TC/usr'" > "$2.llvm.ini"
+        local hv tv
+        hv=$(LD_LIBRARY_PATH="$HOST_TC/usr/lib" "$HOST_TC/usr/bin/llvm-config" --version)
+        tv=$(sed -n 's/^#define LLVM_VERSION_STRING "\(.*\)"/\1/p' "$TC/usr/include/llvm/Config/llvm-config.h")
+        [[ "$hv" == "$tv" ]] || die "the build host's LLVM ($hv) and the target's ($tv) differ: rebuild one (make toolchain)"
+        cat > "$2.llvm-config" <<CFG
+#!/bin/sh
+case " \$* " in *" --host-target "*) echo $TRIPLE; exit 0 ;; esac
+LD_LIBRARY_PATH="$HOST_TC/usr/lib" "$HOST_TC/usr/bin/llvm-config" "\$@" | sed "s|$HOST_TC|$TC|g"
+CFG
+        chmod +x "$2.llvm-config"
+        printf '[binaries]\nllvm-config = [%s]\n' "'$2.llvm-config'" > "$2.llvm.ini"
     fi
     env -u PKG_CONFIG_SYSROOT_DIR -u PKG_CONFIG_LIBDIR \
     $MESON setup "$2" "$1" --cross-file "$CROSS_FILE" --cross-file "$2.llvm.ini" \

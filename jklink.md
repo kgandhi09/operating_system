@@ -22,15 +22,15 @@ Uses:
 
 ## What it has to cover
 
-| Need | Desktop use | Robotics use |
-|---|---|---|
-| Discovery | Which jk_os machines are around? | Which robots and nodes are up? |
-| Identity & trust | Only my machines can send me files | Only my fleet can drive my robot |
-| Pub/sub | Clipboard, notifications, status | Sensor streams, telemetry, commands |
-| Request/reply | "Run this", "battery level?" | Services and actions (plan a path, calibrate) |
-| Bulk transfer | Files and folders | Maps, logs, model files, recordings |
-| Quality of service | Hardly matters | Reliable vs latest-only, low latency, big messages (images, point clouds) |
-| Cross-arch | x86 PC ↔ aarch64 tablet | Jetson ↔ PC ↔ microcontrollers |
+| Need               | Desktop use                        | Robotics use                                                              |
+| ------------------ | ---------------------------------- | ------------------------------------------------------------------------- |
+| Discovery          | Which jk_os machines are around?   | Which robots and nodes are up?                                            |
+| Identity & trust   | Only my machines can send me files | Only my fleet can drive my robot                                          |
+| Pub/sub            | Clipboard, notifications, status   | Sensor streams, telemetry, commands                                       |
+| Request/reply      | "Run this", "battery level?"       | Services and actions (plan a path, calibrate)                             |
+| Bulk transfer      | Files and folders                  | Maps, logs, model files, recordings                                       |
+| Quality of service | Hardly matters                     | Reliable vs latest-only, low latency, big messages (images, point clouds) |
+| Cross-arch         | x86 PC ↔ aarch64 tablet            | Jetson ↔ PC ↔ microcontrollers                                            |
 
 ## Architecture
 
@@ -66,11 +66,11 @@ Uses:
 - One key pair per machine (Ed25519), created at first boot.
 - All traffic encrypted and authenticated, also on "our own" network.
 - Trust modes:
-  - **pairing** (desktops): the other machine shows a 6-digit code to confirm;
-  - **fleet key** (robots): machines provisioned with the same fleet
-    certificate trust each other;
-  - **open** (lab bench): trust everything on the network, explicit opt-in,
-    off by default.
+    - **pairing** (desktops): the other machine shows a 6-digit code to confirm;
+    - **fleet key** (robots): machines provisioned with the same fleet
+      certificate trust each other;
+    - **open** (lab bench): trust everything on the network, explicit opt-in,
+      off by default.
 - Per-peer permissions, e.g. the tablet may send files but not publish to
   `/robot/cmd_vel`.
 
@@ -103,13 +103,13 @@ Uses:
 
 ## Wire protocol: build or adopt
 
-| Option | Pros | Cons |
-|---|---|---|
-| Fully custom | Total control | Years to get discovery, congestion control, security and QoS right; security mistakes likely; no interoperability |
-| **Zenoh** (Eclipse) | Built for this: zero-config discovery, pub/sub + queries + storage, shared memory, efficient on Wi-Fi; official ROS 2 transport (`rmw_zenoh`); pure-C zenoh-pico for microcontrollers | Core is Rust: jk_os's offline source build would need a Rust toolchain |
-| Cyclone DDS | Plain C, mature, ROS 2's classic middleware, strong QoS | Heavy, discovery scales poorly on Wi-Fi, complex security, no natural file transfer |
-| MQTT / NATS | Simple, popular | Central broker, not peer-to-peer zero-config, weak for real-time robotics |
-| gRPC / QUIC | Good request/reply and streaming | No discovery or pub/sub; we'd build most of it |
+| Option              | Pros                                                                                                                                                                                  | Cons                                                                                                              |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Fully custom        | Total control                                                                                                                                                                         | Years to get discovery, congestion control, security and QoS right; security mistakes likely; no interoperability |
+| **Zenoh** (Eclipse) | Built for this: zero-config discovery, pub/sub + queries + storage, shared memory, efficient on Wi-Fi; official ROS 2 transport (`rmw_zenoh`); pure-C zenoh-pico for microcontrollers | Core is Rust: jk_os's offline source build would need a Rust toolchain                                            |
+| Cyclone DDS         | Plain C, mature, ROS 2's classic middleware, strong QoS                                                                                                                               | Heavy, discovery scales poorly on Wi-Fi, complex security, no natural file transfer                               |
+| MQTT / NATS         | Simple, popular                                                                                                                                                                       | Central broker, not peer-to-peer zero-config, weak for real-time robotics                                         |
+| gRPC / QUIC         | Good request/reply and streaming                                                                                                                                                      | No discovery or pub/sub; we'd build most of it                                                                    |
 
 **Leaning:** jk-link = jk_os's identity, trust, naming, daemon, tools and API,
 with **Zenoh** underneath (fallback: Cyclone DDS if Rust in the build is not
@@ -151,13 +151,13 @@ peer-to-peer; jk-link runs on top.
 WireGuard is in the mainline kernel (one option); the coordination layer is
 the work:
 
-| Option | Fit | Notes |
-|---|---|---|
-| **Tailscale client + self-hosted Headscale** | Headscale = the master on our server; Tailscale client on each machine | Best NAT traversal and relays, mature; client is Go but ships static binaries (fits jk_os's prebuilt-binaries mechanism); no multicast, so discovery via the peer list |
-| NetBird (self-hosted) | Management/signal/relay servers = master, kernel WireGuard | BSD-3, web dashboard, Go |
-| Nebula | Lighthouse = master, certificate identity | Simple, group firewall rules, Go static binary, fewer management tools |
-| ZeroTier (self-hosted controller) | Virtual Ethernet: multicast works, LAN discovery unchanged | Recent versions source-available (BSL): check for a product |
-| Our own (kernel WireGuard + jk control server) | Full control, integrated with jk-link identity | Most work: NAT traversal and relaying |
+| Option                                         | Fit                                                                    | Notes                                                                                                                                                                  |
+| ---------------------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Tailscale client + self-hosted Headscale**   | Headscale = the master on our server; Tailscale client on each machine | Best NAT traversal and relays, mature; client is Go but ships static binaries (fits jk_os's prebuilt-binaries mechanism); no multicast, so discovery via the peer list |
+| NetBird (self-hosted)                          | Management/signal/relay servers = master, kernel WireGuard             | BSD-3, web dashboard, Go                                                                                                                                               |
+| Nebula                                         | Lighthouse = master, certificate identity                              | Simple, group firewall rules, Go static binary, fewer management tools                                                                                                 |
+| ZeroTier (self-hosted controller)              | Virtual Ethernet: multicast works, LAN discovery unchanged             | Recent versions source-available (BSL): check for a product                                                                                                            |
+| Our own (kernel WireGuard + jk control server) | Full control, integrated with jk-link identity                         | Most work: NAT traversal and relaying                                                                                                                                  |
 
 **Leaning:** Headscale (master) + Tailscale client to start, wrapped in jk_os's
 enrollment and jk-link identity; replaceable later.
