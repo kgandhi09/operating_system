@@ -305,8 +305,12 @@ copy_src() { rm -rf "$2"; mkdir -p "$2"; cp -a "$1/." "$2/"; }
 b_make() { autotools_tc "$@" --without-guile; ln -sf make "$TC/usr/bin/gmake"; }
 b_m4()   { autotools_tc "$@"; }
 b_bison() { M4=/usr/bin/m4 autotools_tc "$@"; }
+# Cross-built, configure can't run its malloc(0)/realloc(0) test and assumes
+# the worst: flex then compiles its own rpl_malloc, whose old-style
+# "void *malloc ();" C23 (GCC 15 and later) rejects. glibc's are fine.
 b_flex() {
-    M4=/usr/bin/m4 autotools_tc "$@" --disable-bootstrap
+    M4=/usr/bin/m4 autotools_tc "$@" --disable-bootstrap \
+        ac_cv_func_malloc_0_nonnull=yes ac_cv_func_realloc_0_nonnull=yes
     ln -sf flex "$TC/usr/bin/lex"
 }
 # Perl: its own Configure. Native builds only (cross-building Perl needs

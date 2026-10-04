@@ -219,6 +219,20 @@ Back up the partitions before anything writes to the tablet's storage:
 `efs`, `sec_efs`, `persist` and the modem's calibration are unique to the
 unit. The Book Cover Keyboard (pogo pins) works on the console too.
 
+To install jk_os on the tablet, with it at that console (no system yet):
+
+```sh
+make                                # the OS image (and the boot images)
+scripts/tablet-install.sh           # format userdata as JK_DATA, copy the image, reboot
+```
+
+`tablet-install.sh` refuses to run without a backup, and formats only the
+`userdata` partition, after you type its name. The tablet then boots jk_os
+from its storage and starts the first-boot setup on its screen; the
+installed system serves the PC on the USB cable too (`telnet 172.16.42.1`
+or `/dev/ttyACM0`, with a login). `jk-update` writes a new kernel to the
+`vendor_boot` partition (keeping the old one for `--rollback`).
+
 ## Sources
 
 `versions.env` chooses the userspace trees (`BUSYBOX_TREE=userspace/busybox`,

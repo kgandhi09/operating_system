@@ -1,0 +1,53 @@
+#!/bin/sh
+# Installs jk_os on the tablet for scripts/tablet-install.sh on the PC, over
+# the USB network. Not running by default: the PC starts it (over telnet) as
+#   setsid nc -lk -s 172.16.42.1 -p 5001 -e /bin/jk-receive &
+# One request per connection, a first line of:
+#   format <dev> userdata          make /dev/<dev>, which must be the partition
+#                                  named userdata, ext4 labeled JK_DATA (erases it)
+#   put <size> <sha256> <version>  store the rest of the connection (<size>
+#                                  bytes) as JK_DATA's system/jk_os.squashfs,
+#                                  once its SHA-256 matches
+#   reboot
+# The answer is a line starting with "ok" or "error".
+read -r cmd a b c
+err() { echo "error: $*"; exit 1; }
+
+case "$cmd" in
+format)
+    case "$a" in ""|*[!a-z0-9]*) err "bad device '$a'" ;; esac
+    [ "$b" = userdata ] || err "only the userdata partition is formatted here"
+    name=$(sed -n 's/^PARTNAME=//p' "/sys/class/block/$a/uevent" 2>/dev/null)
+    [ "$name" = userdata ] || err "/dev/$a is '$name', not userdata"
+    grep -q "^/dev/$a " /proc/mounts && err "/dev/$a is mounted"
+    # lazy_*_init: seconds instead of minutes on 112 GB; the kernel finishes
+    # initializing in the background.
+    mke2fs -t ext4 -F -q -L JK_DATA -E lazy_itable_init=1,lazy_journal_init=1 "/dev/$a" \
+        || err "mke2fs failed on /dev/$a"
+    echo "ok: /dev/$a is ext4 JK_DATA" ;;
+put)
+    case "$a" in ""|*[!0-9]*) err "bad size '$a'" ;; esac
+    dev=$(findfs LABEL=JK_DATA 2>/dev/null) || err "no JK_DATA partition (format first)"
+    mnt=/run/jk/install
+    mkdir -p "$mnt"
+    mountpoint -q "$mnt" || mount -t ext4 "$dev" "$mnt" || err "cannot mount $dev"
+    mkdir -p "$mnt/system"
+    head -c "$a" > "$mnt/system/jk_os.squashfs.part"
+    got=$(stat -c %s "$mnt/system/jk_os.squashfs.part")
+    [ "$got" = "$a" ] || { umount "$mnt"; err "got $got of $a bytes"; }
+    sum=$(sha256sum "$mnt/system/jk_os.squashfs.part" | cut -d' ' -f1)
+    [ "$sum" = "$b" ] || { umount "$mnt"; err "SHA-256 mismatch: $sum"; }
+    mv "$mnt/system/jk_os.squashfs.part" "$mnt/system/jk_os.squashfs"
+    # What is installed, as jk-update records it.
+    printf '{"name": "jk_os", "version": "%s", "files": {"image": {"size": %s, "sha256": "%s"}}}\n' \
+        "$c" "$a" "$b" > "$mnt/system/release.json"
+    sync
+    umount "$mnt"
+    echo "ok: jk_os $c installed on $dev" ;;
+reboot)
+    echo "ok: rebooting"
+    ( sleep 1; sync; reboot -f ) &
+    ;;
+*)
+    err "unknown request '$cmd'" ;;
+esac

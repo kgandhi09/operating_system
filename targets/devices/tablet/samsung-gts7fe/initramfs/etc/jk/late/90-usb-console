@@ -1,0 +1,8 @@
+# Sourced by /init just before it switches into the installed system: stop
+# the initramfs's USB console (10-usb-console), which runs as root without a
+# login. The USB link (the gadget, the address) stays up for the system's
+# own /etc/init.d/S39usb-console.
+[ -f /run/jk/usb-console.pid ] && kill "$(cat /run/jk/usb-console.pid)" 2>/dev/null
+killall -q telnetd udhcpd nc 2>/dev/null
+pkill -f ttyGS0 2>/dev/null
+rm -f /run/jk/usb-console.pid

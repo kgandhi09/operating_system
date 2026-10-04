@@ -65,6 +65,11 @@ export PKG_CONFIG_PATH_FOR_BUILD="$HOSTDIR/lib/pkgconfig:$HOSTDIR/share/pkgconfi
 # The build host's own LLVM and Clang: the toolchain built for it
 # (build/<host arch>/toolchain). Its programs need its libraries.
 HOST_TC="$ROOT_DIR/build/$HOST_ARCH/toolchain"
+# Cross-building needs it too: the same LLVM version as the target's, which a
+# distribution's LLVM rarely is. Build it with the host arch's toolchain
+# (without a build.conf, so ARCH picks the arch).
+[[ -x "$HOST_TC/usr/bin/llvm-config" ]] \
+    || die "no LLVM for the build host at build/$HOST_ARCH/toolchain: run BUILD_CONF=none make ARCH=$HOST_ARCH toolchain"
 HOST_ENV=(env -u CC -u CXX -u AR -u RANLIB -u STRIP -u CPPFLAGS -u LDFLAGS -u PKG_CONFIG_SYSROOT_DIR
           -u PKG_CONFIG_LIBDIR "PKG_CONFIG_PATH=$HOSTDIR/lib/pkgconfig:$HOSTDIR/share/pkgconfig"
           "LD_LIBRARY_PATH=$HOSTDIR/lib:$HOST_TC/usr/lib")
@@ -104,9 +109,13 @@ export PATH="$HOSTDIR/wbin:$PATH"
 # The build machine's pkg-config (with the sysroot settings above): CMake
 # would otherwise pick $DYN's own, built for jk_os, from CMAKE_PREFIX_PATH.
 HOST_PKG_CONFIG="$(command -v pkg-config)"
+# CMAKE_POSITION_INDEPENDENT_CODE: static pieces a project links into its
+# own shared library (libjpeg-turbo's spng) must be PIC. Distribution
+# compilers default to PIE, which hides this; jk_os's cross compiler doesn't.
 cmakepkg() {
     local src="$1" out="$2"; shift 2
     cmake -G Ninja -S "$src" -B "$out" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
         -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_C_COMPILER="$CC" -DCMAKE_CXX_COMPILER="$CXX" \
         -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR="$ARCH" -DCMAKE_SYSROOT="$TC" \
         "-DCMAKE_FIND_ROOT_PATH=$DYN" -DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER \

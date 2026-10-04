@@ -20,6 +20,8 @@
 #   DEVICE_CMDLINE               kernel command line in the boot image
 #   DEVICE_INITRAMFS_FIRMWARE    no: leave the network firmware out of the
 #                                initramfs (default: in it)
+#   DEVICE_INITRAMFS_TOOLS       more disk tools in the initramfs (from
+#                                build/<arch>/tools/sbin), e.g. mke2fs
 #   DEVICE_KERNEL_IMAGE          android-bootimg: Image (uncompressed) or
 #                                Image.gz (default)
 #   DEVICE_ABL_DTB               android-uboot: the device tree the device's
@@ -90,7 +92,7 @@ load_device() {   # load_device <category> <device>
     DEVICE_DESC= DEVICE_ARCHS= DEVICE_KERNELS= DEVICE_BOOT= DEVICE_STATUS=
     DEVICE_DTB= DEVICE_CMDLINE= DEVICE_MKBOOTIMG_ARGS= DEVICE_INITRAMFS_FIRMWARE=
     DEVICE_AVB_FOOTERS= DEVICE_BOOTIMG_SEANDROID= DEVICE_KERNEL_IMAGE=
-    DEVICE_ABL_DTB=
+    DEVICE_ABL_DTB= DEVICE_INITRAMFS_TOOLS=
     DEVICE_DIR="$TARGETS_DIR/devices/$1/$2"
     [[ -f "$DEVICE_DIR/device.env" ]] || return 1
     # shellcheck source=/dev/null

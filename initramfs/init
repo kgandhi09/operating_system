@@ -118,6 +118,11 @@ else
 fi
 
 echo "$mode" > /run/jk-mode
+# Device hooks to undo before the switch (etc/jk/late), e.g. stopping what an
+# early hook started that the real system runs itself.
+for hook in /etc/jk/late/*; do
+    [ -f "$hook" ] && . "$hook"
+done
 # Hand the kernel filesystems (and, under /run/jk, the image and medium
 # mounts) to the real system, then replace this initramfs with it.
 for m in /run /dev /proc /sys; do

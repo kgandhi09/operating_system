@@ -17,6 +17,8 @@
 ::respawn:/sbin/jk-getty ttyS0
 ::respawn:/sbin/jk-getty ttyAMA0
 ::respawn:/sbin/jk-getty hvc0
+# USB serial console (USB device mode, e.g. a tablet's link to a PC)
+::respawn:/sbin/jk-getty ttyGS0
 
 ::ctrlaltdel:/sbin/reboot
 ::shutdown:/etc/init.d/rcK

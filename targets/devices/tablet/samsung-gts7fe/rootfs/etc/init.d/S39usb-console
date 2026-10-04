@@ -1,0 +1,30 @@
+#!/bin/sh
+# The USB console of the tablet, in the installed system: the PC on the USB
+# cable reaches the tablet at 172.16.42.1 (and gets 172.16.42.2 by DHCP),
+# with a login on telnet and on the USB serial port (/dev/ttyACM0 on the PC;
+# inittab's ttyGS0 getty). The initramfs set the USB link up
+# (etc/jk/early/10-usb-console) and left it running.
+#
+#   S39usb-console start | stop
+
+G=/sys/kernel/config/usb_gadget/jk_os
+
+start() {
+    if [ ! -d "$G" ] || [ -z "$(cat "$G/UDC" 2>/dev/null)" ]; then
+        echo "usb-console: the initramfs didn't set up the USB link; no USB console"
+        return 0
+    fi
+    ifname=$(cat "$G/functions/ncm.usb0/ifname")
+    ip link set "$ifname" up
+    ip addr show dev "$ifname" | grep -q 172.16.42.1 || ip addr add 172.16.42.1/24 dev "$ifname"
+    mkdir -p /run/jk
+    sed "s/@IF@/$ifname/" /etc/jk/udhcpd.conf > /run/jk/udhcpd.conf
+    udhcpd /run/jk/udhcpd.conf
+    telnetd -b 172.16.42.1
+    echo "usb-console: telnet 172.16.42.1 or /dev/ttyACM0 on the PC"
+}
+
+case "$1" in
+    start) start ;;
+    stop)  killall -q telnetd udhcpd ;;
+esac

@@ -7,8 +7,11 @@
 #   options: --yes (don't ask), --url <base URL>
 #
 # A jk_os release is two files, published together by scripts/publish.sh: the
-# OS image (/data/system/jk_os.squashfs) and the kernel (the EFI file in
-# /boot/EFI/BOOT). This reads <url>/jk_os/latest-<arch>.json, downloads both
+# OS image (/data/system/jk_os.squashfs) and the kernel: the EFI file in
+# /boot/EFI/BOOT, or, on a tablet whose Android bootloader starts U-Boot, the
+# vendor_boot partition (jk_os's kernel and device tree for U-Boot to start).
+# This reads <url>/jk_os/latest-<arch>.json (latest-<device>-<arch>.json for
+# such a device), downloads both
 # into /data/system/update (resuming an interrupted download), checks their
 # sizes and SHA-256s, and swaps them in: the running image and kernel are
 # kept as /data/system/jk_os.squashfs.old and /data/system/kernel.old, for
@@ -66,6 +69,36 @@ case "$(uname -m)" in
 esac
 KERNEL=/boot/EFI/BOOT/$efi
 
+# Where the kernel goes: the EFI file, or a partition (kpart) on a device
+# booted through U-Boot (/etc/jk_os/target, written when the image is built).
+JK_BOOT=efi-iso JK_DEVICE=generic
+[ -f /etc/jk_os/target ] && . /etc/jk_os/target
+channel=$arch kpart=""
+if [ "$JK_BOOT" = android-uboot ]; then
+    kpart=vendor_boot
+    channel=$JK_DEVICE-$arch
+fi
+
+# part_dev <name>: the block device of the partition named <name>.
+part_dev() {
+    for u in /sys/class/block/*/uevent; do
+        grep -qx "PARTNAME=$1" "$u" || continue
+        echo "/dev/$(sed -n 's/^DEVNAME=//p' "$u")"
+        return 0
+    done
+    return 1
+}
+# kernel_save <file> / kernel_write <file>: copy the installed kernel to a
+# file, or a file over it.
+kernel_save() {
+    if [ -n "$kpart" ]; then dd if="$(part_dev "$kpart")" of="$1" bs=1M 2>/dev/null
+    else cp "$KERNEL" "$1"; fi
+}
+kernel_write() {
+    if [ -n "$kpart" ]; then dd if="$1" of="$(part_dev "$kpart")" bs=1M conv=fsync 2>/dev/null
+    else cp "$1" "$KERNEL"; fi
+}
+
 confirm() {   # confirm <question>: yes unless the user says no
     [ "$yes" = 1 ] && return 0
     printf '%s [Y/n] ' "$1"
@@ -95,14 +128,22 @@ installed_sha() {
 if [ "$action" = rollback ]; then
     [ -f "$IMAGE.old" ] && [ -f "$SYS/kernel.old" ] \
         || die "nothing to roll back to (no $IMAGE.old and $SYS/kernel.old: no update was installed)"
-    mountpoint -q /boot || die "/boot is not mounted"
+    if [ -n "$kpart" ]; then
+        part_dev "$kpart" >/dev/null || die "no $kpart partition"
+    else
+        mountpoint -q /boot || die "/boot is not mounted"
+    fi
     say "Rolling back to the release before the last update$( [ -f "$STATE.old" ] && printf ' (%s)' "$(jq -r .version "$STATE.old")")."
     confirm "Continue?" || exit 1
     # Swap: the current pair becomes .old, so a second --rollback undoes this.
-    cp "$KERNEL" "$SYS/kernel.cur" && cp "$SYS/kernel.old" "$KERNEL.new" && sync \
-        || die "cannot write the kernel to /boot"
+    kernel_save "$SYS/kernel.cur" && sync || die "cannot back up the kernel"
+    if [ -n "$kpart" ]; then
+        kernel_write "$SYS/kernel.old" || { kernel_write "$SYS/kernel.cur"; die "cannot write the kernel to $kpart"; }
+    else
+        cp "$SYS/kernel.old" "$KERNEL.new" && sync || die "cannot write the kernel to /boot"
+    fi
     mv "$IMAGE" "$IMAGE.cur" && mv "$IMAGE.old" "$IMAGE" && mv "$IMAGE.cur" "$IMAGE.old"
-    mv "$KERNEL.new" "$KERNEL"
+    [ -n "$kpart" ] || mv "$KERNEL.new" "$KERNEL"
     mv "$SYS/kernel.cur" "$SYS/kernel.old"
     [ -f "$STATE.old" ] && { mv "$STATE" "$STATE.cur" 2>/dev/null; mv "$STATE.old" "$STATE"; mv "$STATE.cur" "$STATE.old" 2>/dev/null; }
     sync
@@ -113,8 +154,8 @@ fi
 # ---------------------------------------------------------------- check
 tmpd=$(mktemp -d) || die "cannot make a temporary directory"
 trap 'rm -rf "$tmpd"' EXIT INT TERM
-curl -fsSL --retry 3 --connect-timeout 15 "$URL/jk_os/latest-$arch.json" -o "$tmpd/latest.json" \
-    || die "cannot reach the update server ($URL/jk_os/latest-$arch.json)"
+curl -fsSL --retry 3 --connect-timeout 15 "$URL/jk_os/latest-$channel.json" -o "$tmpd/latest.json" \
+    || die "cannot reach the update server, or no release for this device ($URL/jk_os/latest-$channel.json)"
 L=$tmpd/latest.json
 new_ver=$(field .version "$L")
 new_sha=$(field .files.image.sha256 "$L")
@@ -145,8 +186,12 @@ say "jk_os $new_ver is available (installed: $cur_ver$( [ "$new_ver" = "$cur_ver
 [ "$action" = check ] && exit 0
 
 # ---------------------------------------------------------------- download
-mountpoint -q /boot || die "/boot (the EFI system partition) is not mounted"
-[ -f "$KERNEL" ] || die "no kernel at $KERNEL"
+if [ -n "$kpart" ]; then
+    part_dev "$kpart" >/dev/null || die "no $kpart partition"
+else
+    mountpoint -q /boot || die "/boot (the EFI system partition) is not mounted"
+    [ -f "$KERNEL" ] || die "no kernel at $KERNEL"
+fi
 confirm "Download and install it?" || exit 1
 
 mkdir -p "$WORK"
@@ -230,24 +275,34 @@ fi
 # renamed; the kernel on the FAT partition is written beside the old one when
 # there is room, else over it (the old one is backed up on /data first).
 say "Installing jk_os $new_ver..."
-cp "$KERNEL" "$SYS/kernel.old" || die "cannot back up the kernel"
+kernel_save "$SYS/kernel.old" || die "cannot back up the kernel"
 sync
-boot_free_kb=$(df -Pk /boot | awk 'NR==2 {print $4}')
-kernel_kb=$(du -k "$WORK/kernel" | cut -f1)
-if [ "$boot_free_kb" -gt $((kernel_kb + 1024)) ]; then
-    cp "$WORK/kernel" "$KERNEL.new" && sync || { rm -f "$KERNEL.new"; die "cannot write the kernel to /boot"; }
-    new_kernel_ready=1
+if [ -n "$kpart" ]; then
+    # The partition is written in place, after the image: a failure puts
+    # both back.
+    mv "$IMAGE" "$IMAGE.old" && mv "$WORK/image" "$IMAGE" || die "cannot put the new image in place"
+    sync
+    kernel_write "$WORK/kernel" || {
+        kernel_write "$SYS/kernel.old"; mv "$IMAGE" "$WORK/image"; mv "$IMAGE.old" "$IMAGE"
+        die "cannot write the kernel to $kpart (nothing was changed)"; }
 else
-    new_kernel_ready=0
-fi
-mv "$IMAGE" "$IMAGE.old" && mv "$WORK/image" "$IMAGE" || die "cannot put the new image in place"
-sync
-if [ "$new_kernel_ready" = 1 ]; then
-    mv "$KERNEL.new" "$KERNEL"
-else
-    cp "$WORK/kernel" "$KERNEL" || {
-        cp "$SYS/kernel.old" "$KERNEL"; mv "$IMAGE" "$WORK/image"; mv "$IMAGE.old" "$IMAGE"
-        die "cannot write the kernel to /boot (nothing was changed)"; }
+    boot_free_kb=$(df -Pk /boot | awk 'NR==2 {print $4}')
+    kernel_kb=$(du -k "$WORK/kernel" | cut -f1)
+    if [ "$boot_free_kb" -gt $((kernel_kb + 1024)) ]; then
+        cp "$WORK/kernel" "$KERNEL.new" && sync || { rm -f "$KERNEL.new"; die "cannot write the kernel to /boot"; }
+        new_kernel_ready=1
+    else
+        new_kernel_ready=0
+    fi
+    mv "$IMAGE" "$IMAGE.old" && mv "$WORK/image" "$IMAGE" || die "cannot put the new image in place"
+    sync
+    if [ "$new_kernel_ready" = 1 ]; then
+        mv "$KERNEL.new" "$KERNEL"
+    else
+        cp "$WORK/kernel" "$KERNEL" || {
+            cp "$SYS/kernel.old" "$KERNEL"; mv "$IMAGE" "$WORK/image"; mv "$IMAGE.old" "$IMAGE"
+            die "cannot write the kernel to /boot (nothing was changed)"; }
+    fi
 fi
 sync
 [ -f "$STATE" ] && cp "$STATE" "$STATE.old"

@@ -174,8 +174,8 @@ for o in "${ROOTFS_OVERLAYS[@]}"; do
 done
 # What this image was built for (make config).
 mkdir -p etc/jk_os
-printf 'JK_CATEGORY=%s\nJK_DEVICE=%s\nJK_KERNEL=%s\nJK_ARCH=%s\nJK_NAME=%s\n' \
-    "$JK_CATEGORY" "$JK_DEVICE" "$JK_KERNEL" "$JK_ARCH" "$JK_NAME" > etc/jk_os/target
+printf 'JK_CATEGORY=%s\nJK_DEVICE=%s\nJK_KERNEL=%s\nJK_ARCH=%s\nJK_NAME=%s\nJK_BOOT=%s\n' \
+    "$JK_CATEGORY" "$JK_DEVICE" "$JK_KERNEL" "$JK_ARCH" "$JK_NAME" "$DEVICE_BOOT" > etc/jk_os/target
 # The Debian base system apt-setup unpacks into /data/apt when apt is
 # chosen (scripts/update-debian-rootfs.sh).
 DEB_SRC="$ROOT_DIR/userspace/debian/$ARCH"

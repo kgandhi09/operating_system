@@ -6,7 +6,10 @@
 #                  (DHCP); telnet 172.16.42.1 gives a root shell, port 5000
 #                  serves partitions to scripts/tablet-backup.sh (jk-serve)
 #   serial (ACM)   /dev/ttyACM0 on the PC: a root shell (screen /dev/ttyACM0)
-# These keep running in the rescue shell. A full system replaces them.
+# These keep running in the rescue shell. Before the switch into an
+# installed system, etc/jk/late/90-usb-console stops them (the USB link
+# itself stays up) and the system's own /etc/init.d/S39usb-console serves
+# the PC instead, with a login.
 
 usb_console() {
     local g=/sys/kernel/config/usb_gadget/jk_os udc="" i=0 serial ifname
@@ -50,6 +53,7 @@ usb_console() {
 
     # A shell on the serial port, again whenever it exits.
     ( while :; do setsid sh -c 'exec sh -i </dev/ttyGS0 >/dev/ttyGS0 2>&1'; sleep 1; done ) &
+    echo $! > /run/jk/usb-console.pid
 
     say "USB console: telnet 172.16.42.1, or the serial port (/dev/ttyACM0) on the PC"
 }

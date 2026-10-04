@@ -1,0 +1,39 @@
+#!/bin/sh
+# The tablet's own firmware partitions, read-only, for the drivers that will
+# load from them (signed per device, so not shipped in jk_os): apnhlos
+# (NON-HLOS: the DSPs and the Wi-Fi subsystem) and modem, mounted under
+# /lib/firmware/qcom/sm7325/samsung/gts7fewifi/. Nothing is written to them.
+#
+#   S06firmware start | stop
+
+DIR=/lib/firmware/qcom/sm7325/samsung/gts7fewifi
+
+# part <name>: the block device of the partition named <name>.
+part() {
+    for u in /sys/class/block/*/uevent; do
+        grep -qx "PARTNAME=$1" "$u" || continue
+        echo "/dev/$(sed -n 's/^DEVNAME=//p' "$u")"
+        return 0
+    done
+    return 1
+}
+
+start() {
+    for p in apnhlos modem; do
+        dev=$(part "$p") || { echo "firmware: no $p partition"; continue; }
+        mkdir -p "$DIR/$p"
+        mountpoint -q "$DIR/$p" || mount -t vfat -o ro,shortname=lower "$dev" "$DIR/$p" \
+            || echo "firmware: cannot mount $p ($dev)"
+    done
+}
+
+stop() {
+    for p in modem apnhlos; do
+        mountpoint -q "$DIR/$p" && umount "$DIR/$p"
+    done
+}
+
+case "$1" in
+    start) start ;;
+    stop)  stop ;;
+esac
