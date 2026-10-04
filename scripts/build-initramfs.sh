@@ -41,5 +41,11 @@ else
     warn "no userspace/firmware/$ARCH.files: Wi-Fi and some Ethernet chips will lack firmware"
 fi
 
+# The device category's and device's own files (targets/devices/.../initramfs),
+# e.g. /etc/jk/early hooks /init runs.
+for d in "$CATEGORY_DIR" "$DEVICE_DIR"; do
+    [[ -d "$d/initramfs" ]] && cp -a "$d/initramfs/." .
+done
+
 chmod -R go-w .
 log "initramfs: $(du -sh . | cut -f1) in $INITRAMFS_DIR"

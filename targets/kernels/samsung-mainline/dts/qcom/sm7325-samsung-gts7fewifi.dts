@@ -3,10 +3,10 @@
  * Samsung Galaxy Tab S7 FE Wi-Fi (SM-T733, "gts7fewifi"), Snapdragon 778G
  * (SM7325, Qualcomm's "yupik").
  *
- * Bring-up stage 1: just enough to see the kernel log on the display the
- * bootloader left on (simple-framebuffer) and keep the log across a reboot
- * (ramoops). Everything else in sm7325.dtsi stays disabled until its board
- * wiring is known.
+ * Bring-up: the kernel log on the display the bootloader left on
+ * (simple-framebuffer, ramoops), the buttons, and (stage 2) the regulators,
+ * UFS storage, USB in device mode and the Book Cover Keyboard. Everything
+ * else in sm7325.dtsi stays disabled until its board wiring is known.
  *
  * Values come from the stock firmware T733XXS9DYF1 (scripts/inspect-stock.sh):
  * the base tree in vendor_boot.img and Samsung's board overlay in dtbo.img
@@ -19,6 +19,7 @@
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/input/input.h>
 #include <dt-bindings/pinctrl/qcom,pmic-gpio.h>
+#include <dt-bindings/regulator/qcom,rpmh-regulator.h>
 
 #include "sm7325.dtsi"
 #include "pm7325.dtsi"
@@ -249,6 +250,196 @@
 &pon_resin {
 	linux,code = <KEY_VOLUMEDOWN>;
 	status = "okay";
+};
+
+/*
+ * The RPMh regulators stage 2 uses, at the voltages stock sets them to
+ * (Samsung's rpmh-regulator nodes, qcom,init-voltage): fixed, so the
+ * regulator core applies them as it registers each one.
+ */
+&apps_rsc {
+	regulators-0 {
+		compatible = "qcom,pm7325-rpmh-regulators";
+		qcom,pmic-id = "b";
+
+		/* USB 2.0 PHY, 3.1 V */
+		vreg_l2b_3p072: ldo2 {
+			regulator-name = "vreg_l2b_3p072";
+			regulator-min-microvolt = <3072000>;
+			regulator-max-microvolt = <3072000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		};
+
+		/* UFS PHY PLL */
+		vreg_l6b_1p2: ldo6 {
+			regulator-name = "vreg_l6b_1p2";
+			regulator-min-microvolt = <1200000>;
+			regulator-max-microvolt = <1200000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+			regulator-allow-set-load;
+			regulator-allowed-modes = <RPMH_REGULATOR_MODE_LPM
+						   RPMH_REGULATOR_MODE_HPM>;
+		};
+
+		/* UFS VCC (and the SD card slot, not used yet) */
+		vreg_l7b_2p952: ldo7 {
+			regulator-name = "vreg_l7b_2p952";
+			regulator-min-microvolt = <2952000>;
+			regulator-max-microvolt = <2952000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+			regulator-allow-set-load;
+			regulator-allowed-modes = <RPMH_REGULATOR_MODE_LPM
+						   RPMH_REGULATOR_MODE_HPM>;
+		};
+
+		/* UFS VCCQ */
+		vreg_l9b_1p2: ldo9 {
+			regulator-name = "vreg_l9b_1p2";
+			regulator-min-microvolt = <1200000>;
+			regulator-max-microvolt = <1200000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+			regulator-allow-set-load;
+			regulator-allowed-modes = <RPMH_REGULATOR_MODE_LPM
+						   RPMH_REGULATOR_MODE_HPM>;
+		};
+	};
+
+	regulators-1 {
+		compatible = "qcom,pm8350c-rpmh-regulators";
+		qcom,pmic-id = "c";
+
+		/* USB 2.0 PHY, 1.8 V */
+		vreg_l1c_1p8: ldo1 {
+			regulator-name = "vreg_l1c_1p8";
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1800000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		};
+
+		/* The keyboard MCU (stock: stm32_vddo-supply) */
+		vreg_l3c_2p8: ldo3 {
+			regulator-name = "vreg_l3c_2p8";
+			regulator-min-microvolt = <2800000>;
+			regulator-max-microvolt = <2800000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		};
+
+		/* USB 2.0 PHY core and UFS PHY, 0.88 V */
+		vreg_l10c_0p88: ldo10 {
+			regulator-name = "vreg_l10c_0p88";
+			regulator-min-microvolt = <880000>;
+			regulator-max-microvolt = <880000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+			regulator-allow-set-load;
+			regulator-allowed-modes = <RPMH_REGULATOR_MODE_LPM
+						   RPMH_REGULATOR_MODE_HPM>;
+		};
+	};
+};
+
+/* UFS storage, wired as stock has it (reset on GPIO 175). */
+&ufs_mem_hc {
+	reset-gpios = <&tlmm 175 GPIO_ACTIVE_LOW>;
+
+	vcc-supply = <&vreg_l7b_2p952>;
+	vcc-max-microamp = <800000>;
+	vccq-supply = <&vreg_l9b_1p2>;
+	vccq-max-microamp = <900000>;
+
+	status = "okay";
+};
+
+&ufs_mem_phy {
+	vdda-phy-supply = <&vreg_l10c_0p88>;
+	vdda-pll-supply = <&vreg_l6b_1p2>;
+
+	status = "okay";
+};
+
+/*
+ * USB-C in device mode only, USB 2.0: the PC on the other end of the cable
+ * gets jk_os's USB network and serial console. Host mode and the role
+ * switching that goes with it need the Type-C controller (Samsung's
+ * SM5714), which has no mainline driver yet.
+ */
+&usb_1 {
+	dr_mode = "peripheral";
+	maximum-speed = "high-speed";
+	/* No USB 3 PHY: the controller takes its pipe clock from UTMI. */
+	qcom,select-utmi-as-pipe-clk;
+	phys = <&usb_1_hsphy>;
+	phy-names = "usb2-phy";
+	/delete-property/ usb-role-switch;
+
+	status = "okay";
+};
+
+&usb_1_hsphy {
+	vdda-pll-supply = <&vreg_l10c_0p88>;
+	vdda18-supply = <&vreg_l1c_1p8>;
+	vdda33-supply = <&vreg_l2b_3p072>;
+
+	status = "okay";
+};
+
+/*
+ * The Book Cover Keyboard: the pogo pins end at an STM32 MCU in the tablet,
+ * on QUP SE4's I2C bus at 0x2a (stock: stm32@2a on qupv3_se4_i2c). conn
+ * (GPIO 21) goes high when a keyboard is attached, the MCU signals events
+ * on attn (GPIO 51, level low), nrst (GPIO 45) resets it.
+ */
+&qupv3_id_0 {
+	status = "okay";
+};
+
+&i2c4 {
+	status = "okay";
+
+	keyboard@2a {
+		compatible = "samsung,stm32-pogo";
+		reg = <0x2a>;
+
+		vdd-supply = <&vreg_l3c_2p8>;
+		conn-gpios = <&tlmm 21 GPIO_ACTIVE_HIGH>;
+		attn-gpios = <&tlmm 51 GPIO_ACTIVE_HIGH>;
+		nrst-gpios = <&tlmm 45 GPIO_ACTIVE_HIGH>;
+
+		pinctrl-0 = <&pogo_attn>, <&pogo_conn>, <&pogo_swclk>, <&pogo_nrst>;
+		pinctrl-names = "default";
+	};
+};
+
+&tlmm {
+	pogo_attn: pogo-attn-state {
+		pins = "gpio51";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	pogo_conn: pogo-conn-state {
+		pins = "gpio21";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	/* The MCU's debug clock, held low as stock does. */
+	pogo_swclk: pogo-swclk-state {
+		pins = "gpio46";
+		function = "gpio";
+		drive-strength = <2>;
+		output-low;
+		bias-disable;
+	};
+
+	pogo_nrst: pogo-nrst-state {
+		pins = "gpio45";
+		function = "gpio";
+		drive-strength = <2>;
+		output-high;
+		bias-disable;
+	};
 };
 
 /* Stock xbl_uefi region starts 16 KiB lower than kodiak.dtsi's. */

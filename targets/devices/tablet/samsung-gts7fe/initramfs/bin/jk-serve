@@ -1,0 +1,25 @@
+#!/bin/sh
+# Serves the tablet's partitions to scripts/tablet-backup.sh on the PC, over
+# the USB network (nc -lk ... -e jk-serve: one request per connection). The
+# request is one line:
+#   list           every partition: block device, name, size in bytes
+#   sha256 <dev>   the SHA-256 of /dev/<dev> (e.g. sda5)
+#   read <dev>     the contents of /dev/<dev>
+# Read-only: nothing here writes to the storage.
+read -r cmd dev
+case "$dev" in
+    *[!a-z0-9]*) exit 1 ;;
+esac
+case "$cmd" in
+    list)
+        for u in /sys/class/block/*/uevent; do
+            name=$(sed -n 's/^PARTNAME=//p' "$u")
+            [ -n "$name" ] || continue
+            d=${u%/uevent}
+            echo "${d##*/} $name $(( $(cat "$d/size") * 512 ))"
+        done ;;
+    sha256)
+        [ -b "/dev/$dev" ] && sha256sum < "/dev/$dev" | cut -d' ' -f1 ;;
+    read)
+        [ -b "/dev/$dev" ] && cat "/dev/$dev" ;;
+esac

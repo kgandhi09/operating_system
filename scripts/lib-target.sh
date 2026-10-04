@@ -36,10 +36,15 @@
 # Each profile directory may also hold:
 #   dts/            (kernel) device trees that aren't in the kernel tree,
 #                   built against it by build-dtbs.sh
+#   patches/        (kernel) patches for the kernel tree, applied to a copy
+#                   of it (prepare-kernel.sh)
 #   kernel.config   a kernel config fragment, merged after configs/kernel/
 #                   common.config and <arch>.config, in the order kernel,
 #                   category, device
 #   rootfs/         files copied over the root filesystem (category, device)
+#   initramfs/      files copied into the initramfs (category, device); its
+#                   etc/jk/early/* are sourced by /init before it looks for
+#                   the system
 #
 # Device names are unique across categories: build/<arch>/<device>-<kernel>
 # holds what is built for one device and kernel.

@@ -21,7 +21,7 @@ done
 [[ -n "$src" ]] || die "no $name.dts in targets/kernels/$JK_KERNEL/dts or the kernel tree"
 
 # The kernel's own dtc, built from the kernel tree.
-make -C "$KERNEL_SRC" O="$KERNEL_OUT" ARCH="$KARCH" CROSS_COMPILE="$CROSS_COMPILE" scripts_dtc >/dev/null
+make -C "$KERNEL_SRC" O="$KERNEL_OUT" ARCH="$KARCH" CROSS_COMPILE="$CROSS_COMPILE" scripts_dtc >/dev/null </dev/null
 dtc="$KERNEL_OUT/scripts/dtc/dtc"
 
 out="$DTB_OUT/$DEVICE_DTB"

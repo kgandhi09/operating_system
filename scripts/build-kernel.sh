@@ -5,13 +5,16 @@
 source "$(dirname "$0")/common.sh"
 need make flex bison bc "${CROSS_COMPILE}gcc"
 
-[[ -f "$KERNEL_SRC/Makefile" ]] || die "no kernel source at $KERNEL_TREE (see targets/kernels/$JK_KERNEL/kernel.env)"
+[[ -f "$KERNEL_TREE_SRC/Makefile" ]] || die "no kernel source at $KERNEL_TREE (see targets/kernels/$JK_KERNEL/kernel.env)"
+"$ROOT_DIR/scripts/prepare-kernel.sh"
 
 [[ -x "$INITRAMFS_DIR/init" ]] || die "initramfs not assembled yet (run: make initramfs)"
 
 frags=("${KERNEL_FRAGMENTS[@]}")
 mkdir -p "$KERNEL_OUT"
-k_make() { make -C "$KERNEL_SRC" O="$KERNEL_OUT" ARCH="$KARCH" CROSS_COMPILE="$CROSS_COMPILE" "$@"; }
+# </dev/null: a new Kconfig option would otherwise make make stop and ask, on
+# a terminal nobody watches when the output goes to /dev/null.
+k_make() { make -C "$KERNEL_SRC" O="$KERNEL_OUT" ARCH="$KARCH" CROSS_COMPILE="$CROSS_COMPILE" "$@" </dev/null; }
 
 # The stamp is written only after a complete configure, so an interrupted
 # one is redone rather than leaving a half-merged .config behind.

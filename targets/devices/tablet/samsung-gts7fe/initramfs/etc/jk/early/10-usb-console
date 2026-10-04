@@ -1,0 +1,57 @@
+# Sourced by /init (jk_os's initramfs) before it looks for the system.
+#
+# The tablet has no serial port, so the PC on the other end of the USB
+# cable gets the console instead, through USB device mode (configfs):
+#   network (NCM)  the tablet is 172.16.42.1, and hands the PC 172.16.42.2
+#                  (DHCP); telnet 172.16.42.1 gives a root shell, port 5000
+#                  serves partitions to scripts/tablet-backup.sh (jk-serve)
+#   serial (ACM)   /dev/ttyACM0 on the PC: a root shell (screen /dev/ttyACM0)
+# These keep running in the rescue shell. A full system replaces them.
+
+usb_console() {
+    local g=/sys/kernel/config/usb_gadget/jk_os udc="" i=0 serial ifname
+
+    # Every BusyBox applet (telnetd, udhcpd, nc, ip, dd, ...), not only the
+    # few /init uses.
+    /bin/busybox --install -s /bin 2>/dev/null
+    mkdir -p /dev/pts
+    mount -t devpts devpts /dev/pts
+    mount -t configfs configfs /sys/kernel/config
+
+    # The USB controller may still be probing.
+    while [ $i -lt 40 ]; do
+        udc=$(ls /sys/class/udc 2>/dev/null | head -n1)
+        [ -n "$udc" ] && break
+        sleep 0.25; i=$((i + 1))
+    done
+    [ -n "$udc" ] || { say "no USB device controller: no USB console"; return 1; }
+
+    serial=$(cat /sys/devices/soc0/serial_number 2>/dev/null)
+    mkdir -p "$g/strings/0x409" "$g/functions/ncm.usb0" "$g/functions/acm.GS0" \
+             "$g/configs/c.1/strings/0x409"
+    echo 0x1d6b > "$g/idVendor"      # Linux Foundation
+    echo 0x0104 > "$g/idProduct"     # Multifunction Composite Gadget
+    echo 0x0200 > "$g/bcdUSB"
+    echo "J.K. Robotics" > "$g/strings/0x409/manufacturer"
+    echo "jk_os console ($(tr -d '\0' < /sys/firmware/devicetree/base/model))" > "$g/strings/0x409/product"
+    echo "${serial:-jk_os}" > "$g/strings/0x409/serialnumber"
+    echo "network + serial console" > "$g/configs/c.1/strings/0x409/configuration"
+    ln -s "$g/functions/ncm.usb0" "$g/configs/c.1/"
+    ln -s "$g/functions/acm.GS0" "$g/configs/c.1/"
+    echo "$udc" > "$g/UDC" || { say "cannot start USB device mode on $udc"; return 1; }
+
+    ifname=$(cat "$g/functions/ncm.usb0/ifname")
+    ip link set "$ifname" up
+    ip addr add 172.16.42.1/24 dev "$ifname"
+    sed "s/@IF@/$ifname/" /etc/jk/udhcpd.conf > /run/jk/udhcpd.conf
+    udhcpd /run/jk/udhcpd.conf
+    telnetd -b 172.16.42.1 -l /bin/sh
+    nc -lk -s 172.16.42.1 -p 5000 -e /bin/jk-serve &
+
+    # A shell on the serial port, again whenever it exits.
+    ( while :; do setsid sh -c 'exec sh -i </dev/ttyGS0 >/dev/ttyGS0 2>&1'; sleep 1; done ) &
+
+    say "USB console: telnet 172.16.42.1, or the serial port (/dev/ttyACM0) on the PC"
+}
+
+usb_console

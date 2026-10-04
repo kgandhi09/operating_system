@@ -80,7 +80,16 @@ OUT_DIR="$ROOT_DIR/build/$ARCH"
 TARGET_OUT="$OUT_DIR/$JK_DEVICE-$JK_KERNEL"
 
 # The kernel tree comes from the kernel profile (targets/kernels/<kernel>).
-KERNEL_SRC="$ROOT_DIR/$KERNEL_TREE"
+# With patches (the profile's patches/*.patch, e.g. drivers not upstream
+# yet) it is built from a patched copy, build/<arch>/<device>-<kernel>/
+# linux-src (prepare-kernel.sh), so kernel/<tree> itself stays untouched.
+KERNEL_TREE_SRC="$ROOT_DIR/$KERNEL_TREE"
+KERNEL_PATCHES=()
+for p in "$KERNEL_DIR"/patches/*.patch; do
+    [[ -f "$p" ]] && KERNEL_PATCHES+=("$p")
+done
+unset p
+if (( ${#KERNEL_PATCHES[@]} )); then KERNEL_SRC="$TARGET_OUT/linux-src"; else KERNEL_SRC="$KERNEL_TREE_SRC"; fi
 KERNEL_OUT="$TARGET_OUT/linux"
 MODULES_OUT="$TARGET_OUT/modules"   # the kernel's loadable modules (lib/modules/<release>)
 NVIDIA_OUT="$TARGET_OUT/nvidia"     # NVIDIA's driver, built for that kernel

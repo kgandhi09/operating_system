@@ -177,8 +177,10 @@ generic PC build can be published for now.
 
 A device with `DEVICE_BOOT=android-bootimg` boots mainline Linux with a device
 tree jk_os adds (`targets/kernels/<kernel>/dts/`, built against the kernel
-tree by `scripts/build-dtbs.sh`, so the tree stays pristine) from an Android
-`boot.img` that its bootloader loads:
+tree by `scripts/build-dtbs.sh`) from an Android `boot.img` its bootloader
+loads. Drivers not in the kernel yet are patches in the kernel profile
+(`targets/kernels/<kernel>/patches/`), applied to a hard-linked copy of the
+tree (`scripts/prepare-kernel.sh`); either way `kernel/<tree>` stays untouched.
 
 ```sh
 scripts/inspect-stock.sh AP_*.tar.md5 BL_*.tar.md5   # read the stock firmware: build/stock/...
@@ -189,13 +191,33 @@ make flash                # write them with Heimdall, the tablet in Download mod
 `inspect-stock.sh` prints what the device profile needs from the stock
 firmware: the boot image format (`DEVICE_MKBOOTIMG_ARGS`), and the stock device
 trees' `qcom,msm-id` / `qcom,board-id`, memory map and hardware (decompiled
-into `dtb/*.dts`). `make bootimg` makes `boot.img` (kernel with jk_os's
-initramfs, device tree, `DEVICE_CMDLINE`), `vbmeta.img` (verified boot off)
-and an empty `dtbo.img`, and packs them as an Odin tar for the AP slot.
-`make flash` writes the three with Heimdall from Linux, each to the partition
-the device's own partition table names for it (`scripts/flash-heimdall.sh
---pit` only lists the partitions). The
-AOSP tools this uses are vendored in `scripts/android/`.
+into `dtb/*.dts`). `make bootimg` makes `boot.img`, `vendor_boot.img`,
+`vbmeta.img` (verified boot off) and `dtbo.img`, and an Odin tar of them;
+`make flash` writes them with Heimdall from Linux, each to the partition the
+device's own partition table names for it (`scripts/flash-heimdall.sh --pit`
+only lists the partitions). The AOSP tools this uses are vendored in
+`scripts/android/`.
+
+The Tab S7 FE's bootloader refuses mainline device trees, so it boots
+through U-Boot (`DEVICE_BOOT=android-uboot`, `bootloader/u-boot`,
+`scripts/build-uboot.sh`): the bootloader starts U-Boot with Samsung's own
+tree, and U-Boot starts jk_os's kernel with jk_os's tree, both in a FIT image
+in `vendor_boot`. U-Boot shows its messages on the display; volume keys move
+in its menu, power selects (hold volume down while it starts to open it).
+
+On the tablet, jk_os's initramfs gives the PC on the USB cable a console
+(`targets/devices/tablet/samsung-gts7fe/initramfs`): the tablet is
+172.16.42.1 and hands the PC 172.16.42.2.
+
+```sh
+telnet 172.16.42.1                  # a root shell (or: screen /dev/ttyACM0)
+scripts/tablet-backup.sh --list     # the tablet's partitions
+scripts/tablet-backup.sh            # copy them to ~/jk_os-backups/..., checked by SHA-256
+```
+
+Back up the partitions before anything writes to the tablet's storage:
+`efs`, `sec_efs`, `persist` and the modem's calibration are unique to the
+unit. The Book Cover Keyboard (pogo pins) works on the console too.
 
 ## Sources
 
