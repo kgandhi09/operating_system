@@ -1,26 +1,71 @@
 #!/bin/sh
-# Wi-Fi on the tablet: the WCN6750 runs on the WPSS remote processor, whose
-# firmware is in the system image (/lib/firmware/qcom/sm7325/samsung/
-# gts7fewifi/wpss.*, from the stock vendor partition). The kernel tries to
-# start it, and the Wi-Fi driver (ath11k) to use it, while it boots, before
-# the system is mounted: both fail for want of the files. This starts the
-# processor and binds the driver again now that they are there.
+# Wi-Fi and Bluetooth on the tablet (the WCN6750).
+#
+# Wi-Fi runs on the WPSS remote processor, whose firmware is in the system
+# image (/lib/firmware/qcom/sm7325/samsung/gts7fewifi/wpss.*, from the stock
+# vendor partition). The kernel tries to start it, and the Wi-Fi driver
+# (ath11k) to use it, while it boots, before the system is mounted: both fail
+# for want of the files. This starts the processor and binds the driver again
+# now that they are there.
+#
+# Both radios come up with Qualcomm's placeholder addresses (Wi-Fi
+# 00:03:7f:..., Bluetooth none at all, so BlueZ sees no controller). The
+# tablet's own addresses are on its EFS partition, where Android kept them
+# (bluetooth/bt_addr, wifi/.mac.info); it is mounted read-only just to read
+# them. Without it, addresses are made from the SoC's serial number.
 #
 #   S07wireless start | stop
 
 WIFI=17a10040.wifi
 ATH11K=/sys/bus/platform/drivers/ath11k
+EFS=/run/jk/efs
+
+# part <name>: the block device of the partition named <name>.
+part() {
+    for u in /sys/class/block/*/uevent; do
+        grep -qx "PARTNAME=$1" "$u" || continue
+        echo "/dev/$(sed -n 's/^DEVNAME=//p' "$u")"
+        return 0
+    done
+    return 1
+}
+
+# mac_ok <address>: a unicast address in the usual notation.
+mac_ok() {
+    echo "$1" | grep -qiE '^[0-9a-f]{2}(:[0-9a-f]{2}){5}$'
+}
+
+# serial_mac <last byte>: a locally administered address from the serial.
+serial_mac() {
+    s=$(cat /sys/devices/soc0/serial_number 2>/dev/null || echo 0)
+    printf '02:%02x:%02x:%02x:%02x:%02x\n' $(( (s >> 24) & 255 )) $(( (s >> 16) & 255 )) \
+        $(( (s >> 8) & 255 )) $(( s & 255 )) "$1"
+}
+
+read_addresses() {
+    BT_ADDR= WIFI_ADDR=
+    if dev=$(part efs); then
+        mkdir -p "$EFS"
+        # noload: no journal replay, nothing written to the partition.
+        if mount -t ext4 -o ro,noload "$dev" "$EFS" 2>/dev/null; then
+            BT_ADDR=$(head -n1 "$EFS/bluetooth/bt_addr" 2>/dev/null | tr -d ' \r')
+            WIFI_ADDR=$(head -n1 "$EFS/wifi/.mac.info" 2>/dev/null | tr -d ' \r')
+            umount "$EFS"
+        fi
+    fi
+    mac_ok "$BT_ADDR" || BT_ADDR=$(serial_mac 1)
+    mac_ok "$WIFI_ADDR" || WIFI_ADDR=$(serial_mac 2)
+}
 
 # wpss: the remoteproc directory of the WPSS.
 wpss() {
     for r in /sys/class/remoteproc/remoteproc*; do
-        [ "$(cat "$r/name" 2>/dev/null)" = 8a00000.remoteproc ] && { echo "$r"; return 0; }
         case "$(cat "$r/firmware" 2>/dev/null)" in */wpss.mdt) echo "$r"; return 0 ;; esac
     done
     return 1
 }
 
-start() {
+wifi() {
     r=$(wpss) || { echo "wireless: no WPSS remote processor"; return 0; }
     if [ "$(cat "$r/state")" != running ]; then
         echo start > "$r/state" 2>/dev/null || echo "wireless: the WPSS did not start ($(cat "$r/state"))"
@@ -28,13 +73,28 @@ start() {
     if [ -d "$ATH11K" ] && [ ! -e "$ATH11K/$WIFI" ]; then
         echo "$WIFI" > "$ATH11K/bind" 2>/dev/null || echo "wireless: ath11k did not take $WIFI (dmesg | grep ath11k)"
     fi
+    # The interface appears once the firmware has answered.
+    i=0
+    while [ ! -d /sys/class/net/wlan0 ] && [ $i -lt 50 ]; do sleep 0.2; i=$((i + 1)); done
+    if [ -d /sys/class/net/wlan0 ]; then
+        ip link set wlan0 down
+        ip link set wlan0 address "$WIFI_ADDR" || echo "wireless: cannot set the Wi-Fi address"
+    else
+        echo "wireless: no wlan0"
+    fi
 }
 
-stop() {
-    :
+bluetooth() {
+    [ -d /sys/class/bluetooth/hci0 ] || { echo "wireless: no Bluetooth controller (hci0)"; return 0; }
+    btmgmt --index 0 public-addr "$BT_ADDR" >/dev/null 2>&1 \
+        || echo "wireless: cannot set the Bluetooth address"
 }
 
 case "$1" in
-    start) start ;;
-    stop)  stop ;;
+    start)
+        read_addresses
+        wifi
+        bluetooth
+        ;;
+    stop) ;;
 esac

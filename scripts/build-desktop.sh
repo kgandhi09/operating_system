@@ -498,7 +498,10 @@ pkg alsa-utils       autotools --disable-alsamixer --disable-xmlto --disable-rst
 pkg libsndfile       cmakepkg -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DBUILD_SHARED_LIBS=ON -DENABLE_EXTERNAL_LIBS=OFF -DENABLE_MPEG=OFF \
                          -DBUILD_PROGRAMS=OFF -DBUILD_EXAMPLES=OFF -DENABLE_CPACK=OFF -DINSTALL_MANPAGES=OFF
 pkg sbc              autotools --disable-tools --disable-tester
-pkg bluez            autotools --disable-systemd --disable-cups --disable-obex --disable-mesh \
+# btmgmt too (built, but not installed by default): setting a controller's
+# address, which some (the Galaxy Tab S7 FE's) come up without.
+b_bluez() { autotools "$@"; install -m 0755 "$2/tools/btmgmt" "$DYN/usr/bin/btmgmt"; }
+pkg bluez            b_bluez --disable-systemd --disable-cups --disable-obex --disable-mesh \
                          --disable-midi --disable-manpages --disable-test --enable-library \
                          --with-dbusconfdir=/usr/share --with-dbussystembusdir=/usr/share/dbus-1/system-services \
                          --with-dbussessionbusdir=/usr/share/dbus-1/services --with-udevdir=/usr/lib/udev
