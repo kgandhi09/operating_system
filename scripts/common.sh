@@ -180,6 +180,34 @@ tree_version() {
     ' "$1/Makefile"
 }
 
+# copy_stock_firmware <firmware dir> <file>...: files from the stock vendor
+# partition's /firmware, as scripts/inspect-stock.sh extracted it, each
+# <name> or <name>:<path under firmware dir> (globs allowed in <name> without
+# a path: wpss.*).
+copy_stock_firmware() {
+    local dest=$1 stock f s src to n
+    shift
+    (( $# )) || return 0
+    stock=$(compgen -G "$ROOT_DIR/$DEVICE_STOCK" | head -n1 || true)
+    [[ -n "$DEVICE_STOCK" && -d "$stock/vendor/firmware" ]] \
+        || die "no stock vendor firmware (DEVICE_STOCK=$DEVICE_STOCK): read the stock firmware first (scripts/inspect-stock.sh)"
+    for f in "$@"; do
+        src=${f%%:*} to=${f#*:}
+        if [[ "$f" != *:* ]]; then
+            n=0
+            for s in "$stock/vendor/firmware/"$src; do
+                [[ -f "$s" ]] || continue
+                install -D -m 0644 "$s" "$dest/${s#"$stock/vendor/firmware/"}"
+                n=$(( n + 1 ))
+            done
+            (( n )) || die "$src not in the stock vendor partition's /firmware"
+        else
+            [[ -f "$stock/vendor/firmware/$src" ]] || die "$src not in the stock vendor partition's /firmware"
+            install -D -m 0644 "$stock/vendor/firmware/$src" "$dest/$to"
+        fi
+    done
+}
+
 IMAGE_DIR="$ROOT_DIR/out"
 # jk_os-<ver>-<arch>.iso for the generic PC, else jk_os-<ver>-<name>-<arch>.iso.
 if [[ "$JK_DEVICE" == generic && "$JK_NAME" == generic ]]; then

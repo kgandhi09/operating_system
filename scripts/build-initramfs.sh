@@ -48,6 +48,11 @@ else
     warn "no userspace/firmware/$ARCH.files: Wi-Fi and some Ethernet chips will lack firmware"
 fi
 
+# Firmware from the device's stock vendor partition for its drivers that
+# start before the system is mounted (DEVICE_STOCK_FIRMWARE_EARLY).
+# shellcheck disable=SC2086
+copy_stock_firmware lib/firmware $DEVICE_STOCK_FIRMWARE_EARLY
+
 # The device category's and device's own files (targets/devices/.../initramfs),
 # e.g. /etc/jk/early hooks /init runs.
 for d in "$CATEGORY_DIR" "$DEVICE_DIR"; do

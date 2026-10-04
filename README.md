@@ -191,7 +191,12 @@ make flash                # write them with Heimdall, the tablet in Download mod
 `inspect-stock.sh` prints what the device profile needs from the stock
 firmware: the boot image format (`DEVICE_MKBOOTIMG_ARGS`), and the stock device
 trees' `qcom,msm-id` / `qcom,board-id`, memory map and hardware (decompiled
-into `dtb/*.dts`). `make bootimg` makes `boot.img`, `vendor_boot.img`,
+into `dtb/*.dts`). It also takes the vendor partition's `/firmware` out of
+`super.img` (`vendor/firmware/`, via `scripts/android/lpextract.py`): the
+firmware of the device's chips, which jk_os doesn't redistribute; the device
+profile lists what the build copies from there (`DEVICE_STOCK_FIRMWARE`,
+`DEVICE_STOCK_FIRMWARE_EARLY` for the initramfs). `make bootimg` makes
+`boot.img`, `vendor_boot.img`,
 `vbmeta.img` (verified boot off) and `dtbo.img`, and an Odin tar of them;
 `make flash` writes them with Heimdall from Linux, each to the partition the
 device's own partition table names for it (`scripts/flash-heimdall.sh --pit`
@@ -245,6 +250,21 @@ echo 'ATTRS{idVendor}=="1d6b", ATTRS{idProduct}=="0104", ENV{ID_MM_DEVICE_IGNORE
     sudo tee /etc/udev/rules.d/70-jk-os-tablet.rules
 sudo udevadm control --reload
 ```
+
+What works on the tablet, and where it comes from (kernel patches in
+`targets/kernels/samsung-mainline/patches/`, wiring in its device tree):
+
+| Hardware | Driver | Notes |
+| --- | --- | --- |
+| Display (TS124QDM, FocalTech FT8203, DSC) | msm + `panel-samsung-ts124qdm-ft8203` (0002-0004) | brightness in `/sys/class/backlight`; the desktop never switches it off (DPMS hangs the link on the SM-T735) |
+| Touchscreen (FT8203 touch, SPI) | `focaltech-ft8203` (0005) | firmware from the stock vendor partition, loaded at every power-up |
+| Battery, charging (SM5714) | `sm5714_charger` (0006) | charges at 1.5 A from plain 5 V; `sm5714_charger.enable_charging=0` on the kernel command line leaves the charger alone |
+| S Pen (Wacom W9021) | `samsung-w90xx` (0007) | |
+| Wi-Fi, Bluetooth (WCN6750) | ath11k, hci_qca | WPSS firmware and board data from the stock vendor partition; `/etc/init.d/S07wireless` starts Wi-Fi once the system is mounted |
+| GPU (Adreno 642L) | msm, Mesa freedreno | zap shader from the stock apnhlos partition |
+| Book Cover keyboard, cover magnet | `samsung-stm32-pogo` (0001), gpio-keys | closing the cover doesn't suspend (suspend isn't brought up) |
+| UFS, USB device mode | mainline | USB console and network to a PC |
+| Not yet: audio, sensors (rotation), USB host, cameras, suspend | | audio and sensors run on the ADSP; USB host needs the SM5714's Type-C side |
 
 ## Sources
 

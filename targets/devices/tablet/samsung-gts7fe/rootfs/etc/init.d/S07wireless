@@ -1,0 +1,40 @@
+#!/bin/sh
+# Wi-Fi on the tablet: the WCN6750 runs on the WPSS remote processor, whose
+# firmware is in the system image (/lib/firmware/qcom/sm7325/samsung/
+# gts7fewifi/wpss.*, from the stock vendor partition). The kernel tries to
+# start it, and the Wi-Fi driver (ath11k) to use it, while it boots, before
+# the system is mounted: both fail for want of the files. This starts the
+# processor and binds the driver again now that they are there.
+#
+#   S07wireless start | stop
+
+WIFI=17a10040.wifi
+ATH11K=/sys/bus/platform/drivers/ath11k_ahb
+
+# wpss: the remoteproc directory of the WPSS.
+wpss() {
+    for r in /sys/class/remoteproc/remoteproc*; do
+        [ "$(cat "$r/name" 2>/dev/null)" = 8a00000.remoteproc ] && { echo "$r"; return 0; }
+        case "$(cat "$r/firmware" 2>/dev/null)" in */wpss.mdt) echo "$r"; return 0 ;; esac
+    done
+    return 1
+}
+
+start() {
+    r=$(wpss) || { echo "wireless: no WPSS remote processor"; return 0; }
+    if [ "$(cat "$r/state")" != running ]; then
+        echo start > "$r/state" 2>/dev/null || echo "wireless: the WPSS did not start ($(cat "$r/state"))"
+    fi
+    if [ -d "$ATH11K" ] && [ ! -e "$ATH11K/$WIFI" ]; then
+        echo "$WIFI" > "$ATH11K/bind" 2>/dev/null || echo "wireless: ath11k did not take $WIFI (dmesg | grep ath11k)"
+    fi
+}
+
+stop() {
+    :
+}
+
+case "$1" in
+    start) start ;;
+    stop)  stop ;;
+esac

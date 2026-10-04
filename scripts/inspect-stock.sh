@@ -13,6 +13,9 @@
 #   boot/             unpack_bootimg's output: kernel, ramdisk, dtb, ...
 #   dtb/NN.dts        every device tree in boot / vendor_boot, decompiled
 #   dtbo/NN.dts       every overlay in dtbo.img, decompiled
+#   vendor/firmware/  the vendor partition's /firmware, from super.img: the
+#                     firmware of the device's chips, for its device.env's
+#                     DEVICE_STOCK_FIRMWARE
 #   summary.txt       what device.env and the board's .dts need: boot image
 #                     header version, page size, base and offsets, command
 #                     line, kernel version, and each tree's model,
@@ -52,6 +55,31 @@ for t in "${tars[@]}"; do
 done
 ls images/*.img >/dev/null 2>&1 || die "no boot, dtbo or vbmeta image in ${tars[*]}"
 log "images: $(cd images && echo *.img)"
+
+# ---------------------------------------------------------------- vendor
+# The vendor partition's /firmware, out of super.img in one pass over the tar
+# (the image is several GB; only the vendor partition is written, then only
+# /firmware kept).
+for t in "${tars[@]}"; do
+    super=$(tar -tf "$t" | grep -m1 -E '^super\.img(\.lz4)?$' || true)
+    [[ -n "$super" ]] || continue
+    need debugfs
+    log "vendor partition: extracting /firmware from $super"
+    if [[ "$super" == *.lz4 ]]; then
+        need lz4
+        tar -xOf "$t" "$super" | lz4 -dc | python3 "$AND/lpextract.py" - vendor:vendor.img
+    else
+        tar -xOf "$t" "$super" | python3 "$AND/lpextract.py" - vendor:vendor.img
+    fi
+    mkdir -p vendor
+    if debugfs -R "rdump /firmware vendor" vendor.img >/dev/null 2>&1 && [[ -d vendor/firmware ]]; then
+        log "vendor/firmware: $(find vendor/firmware -type f | wc -l) files"
+    else
+        warn "could not read the vendor partition (not ext4?): no vendor/firmware"
+    fi
+    rm -f vendor.img
+    break
+done
 
 # split_dtbs <file> <prefix>: write each flattened device tree found in a file
 # (Qualcomm boot images concatenate several, one per board revision).

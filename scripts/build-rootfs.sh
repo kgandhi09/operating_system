@@ -145,6 +145,11 @@ if [[ -f "$FW_SRC/$ARCH.linked" ]]; then
     done < "$FW_SRC/$ARCH.linked"
 fi
 
+# Firmware from the device's stock vendor partition (DEVICE_STOCK_FIRMWARE
+# and, again, DEVICE_STOCK_FIRMWARE_EARLY).
+# shellcheck disable=SC2086
+copy_stock_firmware usr/lib/firmware $DEVICE_STOCK_FIRMWARE_EARLY $DEVICE_STOCK_FIRMWARE
+
 # The kernel's loadable modules (nouveau) and NVIDIA's driver
 # (build-nvidia.sh): modules, libraries, tools and GSP firmware.
 if [[ -d "$MODULES_OUT/lib/modules" ]]; then

@@ -20,9 +20,12 @@ rm -rf "$KERNEL_SRC"
 mkdir -p "$(dirname "$KERNEL_SRC")"
 cp -al "$KERNEL_TREE_SRC" "$KERNEL_SRC"
 for p in "${KERNEL_PATCHES[@]}"; do
-    # Break the links of the files this patch changes (new files have none).
+    # Break the links of the files this patch changes (new files have none,
+    # and a file an earlier patch changed is a real copy already: copying
+    # the tree's over it would undo that patch).
     sed -n 's|^+++ [^/]*/\([^[:space:]]*\).*|\1|p' "$p" | while IFS= read -r f; do
         [[ -f "$KERNEL_SRC/$f" ]] || continue
+        (( $(stat -c %h "$KERNEL_SRC/$f") > 1 )) || continue
         cp --remove-destination "$KERNEL_TREE_SRC/$f" "$KERNEL_SRC/$f"
     done
     patch -d "$KERNEL_SRC" -p1 -s --no-backup-if-mismatch < "$p" \

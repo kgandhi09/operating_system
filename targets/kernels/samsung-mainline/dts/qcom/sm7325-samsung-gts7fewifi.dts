@@ -4,9 +4,15 @@
  * (SM7325, Qualcomm's "yupik").
  *
  * Bring-up: the kernel log on the display the bootloader left on
- * (simple-framebuffer, ramoops), the buttons, and (stage 2) the regulators,
- * UFS storage, USB in device mode and the Book Cover Keyboard. Everything
- * else in sm7325.dtsi stays disabled until its board wiring is known.
+ * (simple-framebuffer, ramoops), the buttons, (stage 2) the regulators,
+ * UFS storage, USB in device mode and the Book Cover Keyboard, and (stage 4)
+ * the display driven by msm (its panel, a TS124QDM with a FocalTech FT8203,
+ * and the brightness) and the touchscreen, (stage 6) Wi-Fi and Bluetooth
+ * (WCN6750), (stage 5) battery and charging, (stage 7) the GPU and
+ * (stage 8) the S Pen and the cover's hall sensor.
+ * Everything else in sm7325.dtsi stays disabled until its board wiring is
+ * known. The Wi-Fi/Bluetooth and GPU wiring is the same as on the other
+ * SM7325/QCM6490 devices (Nothing Phone (1), Fairphone 5).
  *
  * Values come from the stock firmware T733XXS9DYF1 (scripts/inspect-stock.sh):
  * the base tree in vendor_boot.img and Samsung's board overlay in dtbo.img
@@ -78,7 +84,7 @@
 	 */
 	gpio-keys {
 		compatible = "gpio-keys";
-		pinctrl-0 = <&vol_up_n>;
+		pinctrl-0 = <&vol_up_n>, <&hall_sensor>;
 		pinctrl-names = "default";
 
 		key-volume-up {
@@ -87,6 +93,64 @@
 			linux,code = <KEY_VOLUMEUP>;
 			debounce-interval = <15>;
 		};
+
+		/*
+		 * The Book Cover's magnet (stock: hall_ic's hall, GPIO 101,
+		 * active low, event 0x15 = SW_LID).
+		 */
+		switch-cover {
+			label = "Cover";
+			gpios = <&tlmm 101 GPIO_ACTIVE_LOW>;
+			linux,input-type = <EV_SW>;
+			linux,code = <SW_LID>;
+			linux,can-disable;
+			debounce-interval = <150>;
+			wakeup-source;
+		};
+	};
+
+	/*
+	 * The panel's bias rails (stock: Samsung's fixed_regulator nodes, GPIO
+	 * enables): panel_buck_en and panel_buck_en2 switch the ISL98608 that
+	 * makes the TFT's positive and negative supplies, panel_boost_en the
+	 * MAX77816 behind the backlight. The bootloader sets those chips up
+	 * over I2C and switches the rails on; switching them off would lose
+	 * that setup (msm's display off then hangs the DSI link), so they stay
+	 * on, and the panel only sleeps when the display is off.
+	 */
+	panel_avdd: regulator-panel-avdd {
+		compatible = "regulator-fixed";
+		regulator-name = "panel_avdd";
+		gpio = <&tlmm 96 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		regulator-boot-on;
+		regulator-always-on;
+	};
+
+	panel_avee: regulator-panel-avee {
+		compatible = "regulator-fixed";
+		regulator-name = "panel_avee";
+		gpio = <&tlmm 97 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		regulator-boot-on;
+		regulator-always-on;
+	};
+
+	panel_boost: regulator-panel-boost {
+		compatible = "regulator-fixed";
+		regulator-name = "panel_boost";
+		gpio = <&tlmm 98 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		regulator-boot-on;
+		regulator-always-on;
+	};
+
+	/* Stock sm5714-fuelgauge / sec-battery values. */
+	battery: battery {
+		compatible = "simple-battery";
+		device-chemistry = "lithium-ion";
+		charge-full-design-microamp-hours = <10090000>;
+		constant-charge-voltage-max-microvolt = <4380000>;
 	};
 
 	chosen {
@@ -97,7 +161,8 @@
 		/*
 		 * The bootloader's splash buffer (stock splash_region), which it
 		 * keeps scanning out to the panel: 1600x2560 portrait (Samsung's
-		 * ss_dsi_panel_*_WQXGA, 0x640 x 0xa00).
+		 * ss_dsi_panel_*_WQXGA, 0x640 x 0xa00). The kernel log shows here
+		 * until msm takes the display over.
 		 */
 		framebuffer0: framebuffer@e1000000 {
 			compatible = "simple-framebuffer";
@@ -200,16 +265,6 @@
 };
 
 /*
- * Bring-up: the display clock controller stays off until the panel has a
- * driver. Its driver reprograms the display PLL as it starts, which stops
- * the picture the bootloader left running for simple-framebuffer (the
- * screen went grey).
- */
-&dispcc {
-	status = "disabled";
-};
-
-/*
  * GCC clocks the firmware keeps for itself (modem, Wi-Fi subsystem, QSPI,
  * security): touching their registers freezes the CPU. The kernel hung
  * registering GCC's clocks without this; the same list as the other
@@ -262,6 +317,37 @@
 		compatible = "qcom,pm7325-rpmh-regulators";
 		qcom,pmic-id = "b";
 
+		/*
+		 * The WCN6750's supplies (stock: its bt_wcn6750 and qcom,wcn6750
+		 * nodes): S1B 1.872 V, S7B 0.972 V, S8B 1.27 V, L19B 1.8 V;
+		 * ranges as on the Fairphone 5.
+		 */
+		vreg_s1b_1p872: smps1 {
+			regulator-name = "vreg_s1b_1p872";
+			regulator-min-microvolt = <1840000>;
+			regulator-max-microvolt = <2040000>;
+		};
+
+		vreg_s7b_0p972: smps7 {
+			regulator-name = "vreg_s7b_0p972";
+			regulator-min-microvolt = <535000>;
+			regulator-max-microvolt = <1120000>;
+		};
+
+		vreg_s8b_1p272: smps8 {
+			regulator-name = "vreg_s8b_1p272";
+			regulator-min-microvolt = <1200000>;
+			regulator-max-microvolt = <1500000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_RET>;
+		};
+
+		vreg_l19b_1p8: ldo19 {
+			regulator-name = "vreg_l19b_1p8";
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <2000000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		};
+
 		/* USB 2.0 PHY, 3.1 V */
 		vreg_l2b_3p072: ldo2 {
 			regulator-name = "vreg_l2b_3p072";
@@ -272,12 +358,12 @@
 
 		/*
 		 * UFS PHY PLL, and the display's DSI controller (stock:
-		 * vdda-1p2-supply). Always on while the display runs only on
-		 * the bootloader's setup (simple-framebuffer): once UFS or USB
-		 * let go of it, the regulator core would switch it off, and the
-		 * screen with it (it flickered and went black). Fixed in high
-		 * power mode too: with UFS's load allowed to set it, it dropped
-		 * to low power mode whenever the UFS PHY was idle.
+		 * vdda-1p2-supply). Always on: while the display ran on the
+		 * bootloader's setup alone, the regulator core switched it off
+		 * once UFS or USB let go of it (the screen flickered and went
+		 * black). Fixed in high power mode too: with UFS's load allowed
+		 * to set it, it dropped to low power mode whenever the UFS PHY
+		 * was idle.
 		 */
 		vreg_l6b_1p2: ldo6 {
 			regulator-name = "vreg_l6b_1p2";
@@ -315,6 +401,34 @@
 		compatible = "qcom,pm8350c-rpmh-regulators";
 		qcom,pmic-id = "c";
 
+		/* The WCN6750's 2.2 V (stock pm8350c_s1) and 2.8 V (pm8350c_l11). */
+		vreg_s1c_2p2: smps1 {
+			regulator-name = "vreg_s1c_2p2";
+			regulator-min-microvolt = <2190000>;
+			regulator-max-microvolt = <2210000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		};
+
+		vreg_l11c_2p8: ldo11 {
+			regulator-name = "vreg_l11c_2p8";
+			regulator-min-microvolt = <2800000>;
+			regulator-max-microvolt = <3544000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		};
+
+		/*
+		 * The S Pen digitizer (stock: pm8350c_l13, 3.3 V). The PLDO steps
+		 * are 1.504 V + n * 8 mV, so 3.3 V itself can't be set (and a
+		 * value off the grid fails the whole PMIC's regulators): 3.304 V.
+		 */
+		vreg_l13c_3p3: ldo13 {
+			regulator-name = "vreg_l13c_3p3";
+			regulator-min-microvolt = <3304000>;
+			regulator-max-microvolt = <3304000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+			regulator-boot-on;
+		};
+
 		/* USB 2.0 PHY, 1.8 V */
 		vreg_l1c_1p8: ldo1 {
 			regulator-name = "vreg_l1c_1p8";
@@ -332,9 +446,21 @@
 		};
 
 		/*
+		 * The panel's I/O supply (stock: panel_ldo_en, 1.904 V). On for
+		 * good, like the bias rails.
+		 */
+		vreg_l8c_1p904: ldo8 {
+			regulator-name = "vreg_l8c_1p904";
+			regulator-min-microvolt = <1904000>;
+			regulator-max-microvolt = <1904000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+			regulator-always-on;
+			regulator-boot-on;
+		};
+
+		/*
 		 * USB 2.0 PHY core, UFS PHY, and the display's DSI PHY (stock:
-		 * vdda-0p9-supply): always on and in high power mode, like L6B,
-		 * until the display has its own driver.
+		 * vdda-0p9-supply): always on and in high power mode, like L6B.
 		 */
 		vreg_l10c_0p88: ldo10 {
 			regulator-name = "vreg_l10c_0p88";
@@ -349,12 +475,220 @@
 
 /*
  * The reference voltage of the display's DSI controller (its refgen-supply),
- * which the bootloader left on. Nothing claims it while the display runs only
- * on the bootloader's setup (simple-framebuffer), so the regulator core
- * switched it off 30 s after boot as unused: the screen went black.
+ * which the bootloader left on. While nothing claimed it (the display on the
+ * bootloader's setup alone), the regulator core switched it off 30 s after
+ * boot as unused: the screen went black. Kept on in case msm doesn't come up.
  */
 &refgen {
 	regulator-always-on;
+};
+
+/*
+ * The display: one DSI link, 4 lanes, to the 12.4" 1600x2560 TS124QDM panel
+ * with a FocalTech FT8203 (Samsung: ss_dsi_panel_FT8203_TS124QDM_WQXGA), as
+ * on the Fairphone 5 (same SoC family, same supplies and reset GPIO). The
+ * stock overlay also lists a CSOT panel with a Himax HX83121; GPIO 80 tells
+ * them apart (stock: vendor_check-gpio) and reads high, FocalTech, here.
+ */
+&mdss {
+	status = "okay";
+};
+
+&mdss_dsi {
+	vdda-supply = <&vreg_l6b_1p2>;
+
+	status = "okay";
+
+	panel: panel@0 {
+		compatible = "samsung,ts124qdm-ft8203";
+		reg = <0>;
+
+		reset-gpios = <&tlmm 44 GPIO_ACTIVE_LOW>;
+
+		vddi-supply = <&vreg_l8c_1p904>;
+		avdd-supply = <&panel_avdd>;
+		avee-supply = <&panel_avee>;
+
+		/*
+		 * Mounted portrait; the tablet is used landscape with the
+		 * Book Cover Keyboard below the screen, which puts the panel's
+		 * top on the left (fbcon=rotate:1 before this).
+		 */
+		rotation = <270>;
+
+		port {
+			panel_in: endpoint {
+				remote-endpoint = <&mdss_dsi0_out>;
+			};
+		};
+	};
+};
+
+&mdss_dsi0_out {
+	data-lanes = <0 1 2 3>;
+	remote-endpoint = <&panel_in>;
+};
+
+&mdss_dsi_phy {
+	vdds-supply = <&vreg_l10c_0p88>;
+
+	status = "okay";
+};
+
+/*
+ * The GPU, Adreno 642L. Its firmware: a660_sqe.fw and a660_gmu.bin from the
+ * stock vendor partition (DEVICE_STOCK_FIRMWARE), the zap shader from the
+ * stock apnhlos partition, which the system mounts (S06firmware) before
+ * anything opens the GPU.
+ */
+&gpu {
+	status = "okay";
+};
+
+&gpu_zap_shader {
+	firmware-name = "qcom/sm7325/samsung/gts7fewifi/apnhlos/image/a660_zap.mdt";
+};
+
+/*
+ * Wi-Fi: the WCN6750, run by the WPSS remote processor (firmware from the
+ * stock vendor partition). The system loads it once its files are there
+ * (/etc/init.d/S07wireless): at boot, before the system is mounted, they
+ * aren't.
+ */
+&remoteproc_wpss {
+	firmware-name = "qcom/sm7325/samsung/gts7fewifi/wpss.mdt";
+	status = "okay";
+};
+
+&wifi {
+	status = "okay";
+};
+
+/*
+ * Bluetooth: the WCN6750's, on QUP SE7's UART (stock: bt_wcn6750, enable
+ * GPIO 85, sw_ctrl GPIO 86), as on the Nothing Phone (1).
+ */
+&qupv3_id_0 {
+	status = "okay";
+};
+
+&uart7 {
+	/delete-property/ interrupts;
+	interrupts-extended = <&intc GIC_SPI 608 IRQ_TYPE_LEVEL_HIGH>,
+			      <&tlmm 31 IRQ_TYPE_EDGE_FALLING>;
+
+	pinctrl-1 = <&bt_uart_sleep_cts>, <&bt_uart_sleep_rts>,
+		    <&bt_uart_sleep_txd>, <&bt_uart_sleep_rxd>;
+	pinctrl-names = "default", "sleep";
+
+	status = "okay";
+
+	bluetooth: bluetooth {
+		compatible = "qcom,wcn6750-bt";
+
+		pinctrl-0 = <&bt_en>, <&bt_sw_ctrl>;
+		pinctrl-names = "default";
+
+		enable-gpios = <&tlmm 85 GPIO_ACTIVE_HIGH>;
+		swctrl-gpios = <&tlmm 86 GPIO_ACTIVE_HIGH>;
+
+		vddio-supply = <&vreg_l19b_1p8>;
+		vddaon-supply = <&vreg_s7b_0p972>;
+		vddbtcxmx-supply = <&vreg_s7b_0p972>;
+		vddrfacmn-supply = <&vreg_s7b_0p972>;
+		vddrfa0p8-supply = <&vreg_s7b_0p972>;
+		vddrfa1p7-supply = <&vreg_s1b_1p872>;
+		vddrfa1p2-supply = <&vreg_s8b_1p272>;
+		vddrfa2p2-supply = <&vreg_s1c_2p2>;
+		vddasd-supply = <&vreg_l11c_2p8>;
+		max-speed = <3200000>;
+	};
+};
+
+/*
+ * The touchscreen: the FT8203's touch half, on QUP SE14's SPI bus (stock:
+ * focaltech@1 on qupv3_se16_spi, pins GPIO 56-59), interrupt on GPIO 81,
+ * reset on GPIO 50. It has no flash: the driver loads its firmware (from the
+ * stock vendor partition, DEVICE_STOCK_FIRMWARE) every time the panel powers
+ * up, so it follows the panel.
+ */
+&gpi_dma1 {
+	status = "okay";
+};
+
+&qupv3_id_1 {
+	status = "okay";
+};
+
+&spi14 {
+	status = "okay";
+
+	touchscreen@0 {
+		compatible = "focaltech,ft8203-ts";
+		reg = <0>;
+		spi-max-frequency = <6000000>;
+
+		interrupts-extended = <&tlmm 81 IRQ_TYPE_EDGE_FALLING>;
+		reset-gpios = <&tlmm 50 GPIO_ACTIVE_LOW>;
+
+		firmware-name = "tsp_focaltech/ft8203_gts7xllite.bin";
+		panel = <&panel>;
+
+		pinctrl-0 = <&ts_int>, <&ts_reset>;
+		pinctrl-names = "default";
+
+		touchscreen-size-x = <1600>;
+		touchscreen-size-y = <2560>;
+	};
+};
+
+/*
+ * Battery and charging: Silicon Mitus SM5714 (stock: sm5714@49 on
+ * qupv3_se3_i2c, interrupt GPIO 54), charger at 0x49, fuel gauge at 0x71
+ * (reached by the same driver, patches/0006). Its USB-PD/Type-C block
+ * (usbpd-sm5714@33 on i2c8) has no driver yet: charging is plain 5 V.
+ */
+&i2c3 {
+	clock-frequency = <400000>;
+	status = "okay";
+
+	charger@49 {
+		compatible = "siliconmitus,sm5714";
+		reg = <0x49>;
+
+		interrupts-extended = <&tlmm 54 IRQ_TYPE_LEVEL_LOW>;
+		pinctrl-0 = <&if_pmic_irq>;
+		pinctrl-names = "default";
+
+		monitored-battery = <&battery>;
+	};
+};
+
+/*
+ * The S Pen digitizer, a Wacom W9021 (stock: wacom@56, "wacom,w90xx", on
+ * qupv3_se13_i2c), interrupt on GPIO 39, firmware-update enable on GPIO 38.
+ * Stock wacom,invert = <1 0 1>: the chip's x inverted, then x and y swapped.
+ */
+&i2c13 {
+	clock-frequency = <400000>;
+	status = "okay";
+
+	digitizer@56 {
+		compatible = "samsung,w90xx";
+		reg = <0x56>;
+
+		interrupts-extended = <&tlmm 39 IRQ_TYPE_LEVEL_LOW>;
+		fwe-gpios = <&tlmm 38 GPIO_ACTIVE_HIGH>;
+		avdd-supply = <&vreg_l13c_3p3>;
+
+		pinctrl-0 = <&pen_int>;
+		pinctrl-names = "default";
+
+		touchscreen-inverted-x;
+		touchscreen-swapped-x-y;
+		touchscreen-x-mm = <166>;
+		touchscreen-y-mm = <266>;
+	};
 };
 
 /* UFS storage, wired as stock has it (reset on GPIO 175). */
@@ -404,14 +738,11 @@
 
 /*
  * The Book Cover Keyboard: the pogo pins end at an STM32 MCU in the tablet,
- * on QUP SE4's I2C bus at 0x2a (stock: stm32@2a on qupv3_se4_i2c). conn
+ * on QUP SE4's I2C bus at 0x2a (stock: stm32@2a on qupv3_se4_i2c; the QUP
+ * is enabled with Bluetooth's UART above). conn
  * (GPIO 21) goes high when a keyboard is attached, the MCU signals events
  * on attn (GPIO 51, level low), nrst (GPIO 45) resets it.
  */
-&qupv3_id_0 {
-	status = "okay";
-};
-
 &i2c4 {
 	status = "okay";
 
@@ -450,6 +781,79 @@
 		function = "gpio";
 		drive-strength = <2>;
 		output-low;
+		bias-disable;
+	};
+
+	/* Bluetooth's UART while asleep, and its GPIOs (as the Nothing Phone (1)). */
+	bt_uart_sleep_cts: bt-uart-sleep-cts-state {
+		pins = "gpio28";
+		function = "gpio";
+		bias-bus-hold;
+	};
+
+	bt_uart_sleep_rts: bt-uart-sleep-rts-state {
+		pins = "gpio29";
+		function = "gpio";
+		bias-pull-down;
+	};
+
+	bt_uart_sleep_txd: bt-uart-sleep-txd-state {
+		pins = "gpio30";
+		function = "gpio";
+		bias-pull-up;
+	};
+
+	bt_uart_sleep_rxd: bt-uart-sleep-rxd-state {
+		pins = "gpio31";
+		function = "gpio";
+		bias-pull-up;
+	};
+
+	bt_en: bt-en-state {
+		pins = "gpio85";
+		function = "gpio";
+		output-low;
+		bias-disable;
+	};
+
+	bt_sw_ctrl: bt-sw-ctrl-state {
+		pins = "gpio86";
+		function = "gpio";
+		bias-pull-down;
+	};
+
+	hall_sensor: hall-sensor-state {
+		pins = "gpio101";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	if_pmic_irq: if-pmic-irq-state {
+		pins = "gpio54";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	pen_int: pen-int-state {
+		pins = "gpio39";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	ts_int: ts-int-state {
+		pins = "gpio81";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	ts_reset: ts-reset-state {
+		pins = "gpio50";
+		function = "gpio";
+		drive-strength = <2>;
 		bias-disable;
 	};
 

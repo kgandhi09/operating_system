@@ -23,7 +23,8 @@ reconfigure=0
 [[ -f "$stamp" && -f "$KERNEL_OUT/.config" ]] || reconfigure=1
 # Also when the list of fragments changes (a profile gained or lost one).
 [[ "$(cat "$stamp" 2>/dev/null)" == "${frags[*]}" ]] || reconfigure=1
-for f in "${frags[@]}"; do
+# And when a patch changes: it may add the options a fragment asks for.
+for f in "${frags[@]}" "${KERNEL_PATCHES[@]}"; do
     [[ "$f" -nt "$stamp" ]] && reconfigure=1
 done
 

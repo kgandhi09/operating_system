@@ -27,6 +27,16 @@
 #   DEVICE_ABL_DTB               android-uboot: the device tree the device's
 #                                bootloader is given (it starts U-Boot with
 #                                it), a path (glob) under the repo
+#   DEVICE_STOCK                 the stock firmware as scripts/inspect-stock.sh
+#                                read it, a directory (glob) under the repo
+#   DEVICE_STOCK_FIRMWARE        files from the stock vendor partition's
+#                                /firmware (DEVICE_STOCK/vendor/firmware) for
+#                                the image's /lib/firmware, as <name> (globs
+#                                allowed) or <name>:<path there> (not
+#                                redistributed: each build takes them from the
+#                                stock firmware)
+#   DEVICE_STOCK_FIRMWARE_EARLY  the same, in the initramfs too: for drivers
+#                                that start before the system is mounted
 #   DEVICE_BOOTIMG_SEANDROID     yes: end boot.img with Samsung's
 #                                "SEANDROIDENFORCE" marker
 #   DEVICE_AVB_FOOTERS           android-bootimg: images that need a signed
@@ -92,7 +102,7 @@ load_device() {   # load_device <category> <device>
     DEVICE_DESC= DEVICE_ARCHS= DEVICE_KERNELS= DEVICE_BOOT= DEVICE_STATUS=
     DEVICE_DTB= DEVICE_CMDLINE= DEVICE_MKBOOTIMG_ARGS= DEVICE_INITRAMFS_FIRMWARE=
     DEVICE_AVB_FOOTERS= DEVICE_BOOTIMG_SEANDROID= DEVICE_KERNEL_IMAGE=
-    DEVICE_ABL_DTB= DEVICE_INITRAMFS_TOOLS=
+    DEVICE_ABL_DTB= DEVICE_INITRAMFS_TOOLS= DEVICE_STOCK= DEVICE_STOCK_FIRMWARE= DEVICE_STOCK_FIRMWARE_EARLY=
     DEVICE_DIR="$TARGETS_DIR/devices/$1/$2"
     [[ -f "$DEVICE_DIR/device.env" ]] || return 1
     # shellcheck source=/dev/null

@@ -1,0 +1,1032 @@
+From: jk_os <jk_os@jkrobotics.tech>
+Subject: [PATCH] power: supply: add Silicon Mitus SM5714 charger and fuel gauge driver
+
+The SM5714 interface PMIC of the Samsung Galaxy Tab S7 FE (and other
+Samsung devices) holds a USB switching charger (I2C 0x49) and a fuel
+gauge (I2C 0x71). Mainline has no driver for it, so the battery level is
+invisible and the charger watchdog the bootloader leaves running is never
+fed, which stops charging shortly after boot.
+
+This driver binds to the charger address, reaches the fuel gauge at its
+fixed address, and registers two power supplies: "battery" (capacity,
+voltage, current, temperature from the gauge, read exactly as Samsung's
+driver does) and "sm5714-charger" (online, status, health, current
+limits). It only reads the gauge and never reloads its battery model.
+Unless enable_charging=0, on VBUS it programs what Samsung's driver does
+on cable attach, with conservative 1500 mA input/charge currents and the
+stock 4.38 V float voltage, and kicks the watchdog every 30 s.
+
+Register layout, encodings and sequences come from Samsung's GPL
+sm5714 MFD, charger and fuel gauge drivers (SM-T735 kernel source).
+
+---
+--- a/drivers/power/supply/Kconfig	2026-10-04 23:53:02.948137419 +0530
++++ b/drivers/power/supply/Kconfig	2026-10-04 23:53:19.997098249 +0530
+@@ -866,6 +866,21 @@
+ 	  devices provide USB power supply information and also required
+ 	  for USB OTG role switching.
+ 
++config CHARGER_SM5714
++	tristate "Silicon Mitus SM5714 charger and fuel gauge"
++	depends on I2C
++	select REGMAP_I2C
++	help
++	  Say Y to include support for the switching charger and fuel gauge
++	  of the Silicon Mitus SM5714 interface PMIC, found in Samsung
++	  Galaxy devices such as the Galaxy Tab S7 FE. The driver reports
++	  the battery state of charge, voltage, current and temperature,
++	  and by default enables charging at conservative currents while
++	  a charger is attached.
++
++	  To compile this driver as a module, choose M here: the
++	  module will be called sm5714_charger.
++
+ config CHARGER_SMB347
+ 	tristate "Summit Microelectronics SMB3XX Battery Charger"
+ 	depends on I2C
+--- a/drivers/power/supply/Makefile	2026-10-04 23:53:02.948283922 +0530
++++ b/drivers/power/supply/Makefile	2026-10-04 23:53:19.997135154 +0530
+@@ -108,6 +108,7 @@
+ obj-$(CONFIG_CHARGER_BQ256XX)	+= bq256xx_charger.o
+ obj-$(CONFIG_CHARGER_RK817)	+= rk817_charger.o
+ obj-$(CONFIG_CHARGER_S2M)	+= s2m-charger.o
++obj-$(CONFIG_CHARGER_SM5714)	+= sm5714_charger.o
+ obj-$(CONFIG_CHARGER_SMB347)	+= smb347-charger.o
+ obj-$(CONFIG_CHARGER_TPS65090)	+= tps65090-charger.o
+ obj-$(CONFIG_CHARGER_TPS65217)	+= tps65217_charger.o
+--- /dev/null
++++ b/drivers/power/supply/sm5714_charger.c	2026-10-04 23:53:20.000138033 +0530
+@@ -0,0 +1,973 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Silicon Mitus SM5714 switching charger and fuel gauge
++ *
++ * The SM5714 is an interface PMIC with a USB switching charger, a fuel
++ * gauge, a MUIC and a flash LED driver. Its blocks answer at separate I2C
++ * addresses: charger at 0x49 (the device this driver binds to), fuel
++ * gauge at 0x71, MUIC at 0x25. This driver exposes the charger and the
++ * fuel gauge as power supplies.
++ *
++ * Register layout, encodings and the charge enable sequence come from
++ * Samsung's GPL drivers (drivers/mfd/sm/sm5714, drivers/battery/charger/
++ * sm5714_charger, drivers/battery/fuelgauge/sm5714_fuelgauge).
++ *
++ * The fuel gauge keeps its battery model and state for as long as the
++ * battery is connected; Samsung's bootloader and kernel load the model
++ * and set an "init done" flag. This driver only reads the gauge and never
++ * writes its battery tables, it warns if the flag is missing.
++ *
++ * Unless the enable_charging module parameter is cleared, the driver
++ * also does what Samsung's driver does when a cable is attached: set
++ * conservative input/charge currents and the stock float voltage, enable
++ * charging and keep the charger's watchdog fed. The bootloader leaves
++ * the watchdog running, so without this charging stops shortly after
++ * boot.
++ */
++
++#include <linux/bitfield.h>
++#include <linux/bits.h>
++#include <linux/delay.h>
++#include <linux/devm-helpers.h>
++#include <linux/i2c.h>
++#include <linux/minmax.h>
++#include <linux/mod_devicetable.h>
++#include <linux/module.h>
++#include <linux/mutex.h>
++#include <linux/power_supply.h>
++#include <linux/property.h>
++#include <linux/regmap.h>
++#include <linux/workqueue.h>
++
++#define SM5714_FG_I2C_ADDR		0x71
++
++/* Charger block (8-bit registers) */
++#define SM5714_CHG_REG_STATUS1		0x0d
++#define  SM5714_STATUS1_VBUSPOK		BIT(0)
++#define  SM5714_STATUS1_VBUSUVLO	BIT(1)
++#define  SM5714_STATUS1_VBUSOVP		BIT(2)
++#define SM5714_CHG_REG_STATUS2		0x0e
++#define  SM5714_STATUS2_AICL		BIT(0)
++#define  SM5714_STATUS2_BATOVP		BIT(1)
++#define  SM5714_STATUS2_NOBAT		BIT(2)
++#define  SM5714_STATUS2_CHGON		BIT(3)
++#define  SM5714_STATUS2_TOPOFF		BIT(5)
++#define  SM5714_STATUS2_DONE		BIT(6)
++#define  SM5714_STATUS2_WDTMROFF	BIT(7)
++#define SM5714_CHG_REG_STATUS3		0x0f
++#define  SM5714_STATUS3_THEMSHDN	BIT(1)
++#define  SM5714_STATUS3_TRICKLETMROFF	BIT(4)
++#define  SM5714_STATUS3_FASTTMROFF	BIT(5)
++#define  SM5714_STATUS3_VSYSOVP		BIT(7)
++#define SM5714_CHG_REG_CNTL1		0x13
++#define  SM5714_CNTL1_ENQ4FET		BIT(3)
++#define  SM5714_CNTL1_AICLEN_VBUS	BIT(6)
++#define SM5714_CHG_REG_CNTL2		0x14
++#define  SM5714_CNTL2_OP_MODE		GENMASK(3, 0)
++#define  SM5714_OP_MODE_CHG_ON_VBUS	0x5
++#define SM5714_CHG_REG_VBUSCNTL		0x15
++#define  SM5714_VBUSCNTL_LIMIT		GENMASK(6, 0)
++#define SM5714_CHG_REG_CHGCNTL2		0x18
++#define SM5714_CHG_REG_CHGCNTL4		0x1a
++#define  SM5714_CHGCNTL4_BATREG		GENMASK(5, 0)
++#define  SM5714_CHGCNTL4_AUTOSTOP	BIT(6)
++#define SM5714_CHG_REG_WDTCNTL		0x22
++#define  SM5714_WDTCNTL_EN		BIT(0)
++#define  SM5714_WDTCNTL_TIME		GENMASK(2, 1)
++#define  SM5714_WDT_TIME_90S		0x2
++#define  SM5714_WDTCNTL_KICK		BIT(3)
++#define  SM5714_WDTCNTL_CLEAR		BIT(6)
++#define SM5714_CHG_REG_FACTORY1		0x25
++#define  SM5714_FACTORY1_NOZX		BIT(0)
++#define  SM5714_FACTORY1_ENBYPASS	BIT(1)
++#define SM5714_CHG_REG_CHGCNTL11	0x46
++#define  SM5714_CHGCNTL11_AICL_TH	GENMASK(7, 6)
++#define  SM5714_AICL_TH_4_5V		0x2
++#define SM5714_CHG_REG_DEVICEID		0x50
++#define  SM5714_DEVICEID_VENDOR		GENMASK(2, 0)
++
++/* Fuel gauge block (8-bit addresses, 16-bit little-endian registers) */
++#define SM5714_FG_REG_DEVICE_ID		0x00
++#define SM5714_FG_REG_SYSTEM_STATUS	0x10
++#define  SM5714_FG_SYS_INIT_DONE	BIT(12)
++#define  SM5714_FG_SYS_NENQ4		BIT(15)
++#define SM5714_FG_REG_AUX_STAT		0x22
++#define  SM5714_FG_AUX_CHG_DETECT	BIT(5)
++#define  SM5714_FG_AUX_CURR_X2_5	BIT(10)
++#define SM5714_FG_REG_SRAM_RADDR	0x8c
++#define SM5714_FG_REG_SRAM_RDATA	0x8d
++
++/* Fuel gauge SRAM words, read through RADDR/RDATA */
++#define SM5714_FG_SRAM_SOC		0x00
++#define SM5714_FG_SRAM_OCV		0x01
++#define SM5714_FG_SRAM_VBAT		0x03
++#define SM5714_FG_SRAM_CURRENT		0x05
++#define SM5714_FG_SRAM_TEMPERATURE	0x07
++#define SM5714_FG_SRAM_VBAT_AVG		0x08
++#define SM5714_FG_SRAM_CURRENT_AVG	0x09
++
++#define SM5714_SIGN			BIT(15)
++#define SM5714_MAGNITUDE		GENMASK(14, 0)
++
++/* Stock board values (sec-battery node of the SM-T733 device tree) */
++#define SM5714_FLOAT_MV_MAX		4380	/* battery,chg_float_voltage */
++#define SM5714_RECHARGE_MV		4310	/* battery,recharge_condition_vcell */
++#define SM5714_FULL_SOC			93	/* battery,full_condition_soc */
++
++/* Charge only between these battery temperatures (0.1 degC) */
++#define SM5714_TEMP_MIN			0
++#define SM5714_TEMP_MIN_RESUME		30
++#define SM5714_TEMP_MAX			500
++#define SM5714_TEMP_MAX_RESUME		450
++
++#define SM5714_POLL_MS			30000	/* well under the 90 s watchdog */
++
++static bool enable_charging = true;
++module_param(enable_charging, bool, 0444);
++MODULE_PARM_DESC(enable_charging,
++		 "Configure and enable charging when VBUS is present (default: true)");
++
++static uint input_current_ma = 1500;
++module_param(input_current_ma, uint, 0444);
++MODULE_PARM_DESC(input_current_ma, "VBUS input current limit in mA (default: 1500)");
++
++static uint charge_current_ma = 1500;
++module_param(charge_current_ma, uint, 0444);
++MODULE_PARM_DESC(charge_current_ma, "Fast charge current in mA (default: 1500)");
++
++struct sm5714 {
++	struct device *dev;
++	struct regmap *chg;
++	struct regmap *fg;
++	struct mutex lock; /* SRAM address/data pairs, charger updates */
++	struct power_supply *bat_psy;
++	struct power_supply *chg_psy;
++	struct power_supply_battery_info *bat_info;
++	struct delayed_work work;
++
++	unsigned int float_mv;
++	bool configured;	/* charging set up by us for the current cable */
++	bool too_hot_or_cold;
++	bool too_cold;
++	bool warned_bypass;
++	bool fg_init_done;
++
++	/* last reported state, to emit power_supply_changed() */
++	bool last_online;
++	bool last_chgon;
++	int last_capacity;
++};
++
++/* ---- fuel gauge ---- */
++
++static int sm5714_fg_sram_read(struct sm5714 *sm, u8 addr, unsigned int *val)
++{
++	int ret;
++
++	mutex_lock(&sm->lock);
++	ret = regmap_write(sm->fg, SM5714_FG_REG_SRAM_RADDR, addr);
++	if (!ret)
++		ret = regmap_read(sm->fg, SM5714_FG_REG_SRAM_RDATA, val);
++	mutex_unlock(&sm->lock);
++
++	return ret;
++}
++
++/* SOC word is percent in 8.8 fixed point; returns per mille */
++static int sm5714_fg_get_soc(struct sm5714 *sm, int *permille)
++{
++	unsigned int raw;
++	int ret;
++
++	ret = sm5714_fg_sram_read(sm, SM5714_FG_SRAM_SOC, &raw);
++	if (ret)
++		return ret;
++
++	*permille = min((raw * 10) >> 8, 1000U);
++	return 0;
++}
++
++static int sm5714_fg_get_capacity(struct sm5714 *sm, int *percent)
++{
++	int permille, ret;
++
++	ret = sm5714_fg_get_soc(sm, &permille);
++	if (ret)
++		return ret;
++
++	*percent = permille / 10;
++	return 0;
++}
++
++/* VBAT words: 2.7 V offset, 1/109 * 10 mV per LSB, sign-magnitude */
++static int sm5714_fg_get_vbat(struct sm5714 *sm, u8 addr, int *uv)
++{
++	unsigned int raw;
++	int mv, ret;
++
++	ret = sm5714_fg_sram_read(sm, addr, &raw);
++	if (ret)
++		return ret;
++
++	mv = ((raw & SM5714_MAGNITUDE) * 10) / 109;
++	mv = (raw & SM5714_SIGN) ? 2700 - mv : 2700 + mv;
++	*uv = mv * 1000;
++	return 0;
++}
++
++static int sm5714_fg_get_ocv(struct sm5714 *sm, int *uv)
++{
++	unsigned int raw;
++	int ret;
++
++	ret = sm5714_fg_sram_read(sm, SM5714_FG_SRAM_OCV, &raw);
++	if (ret)
++		return ret;
++
++	*uv = ((raw * 1000) >> 11) * 1000;
++	return 0;
++}
++
++static bool sm5714_chg_is_charging(struct sm5714 *sm)
++{
++	unsigned int st2;
++
++	if (regmap_read(sm->chg, SM5714_CHG_REG_STATUS2, &st2))
++		return false;
++
++	return st2 & SM5714_STATUS2_CHGON;
++}
++
++/*
++ * Current words: 1/2.044 mA per LSB, sign-magnitude, negative while
++ * discharging; scaled by 2.5 in the gauge's high range. Like Samsung's
++ * driver, report 0 while the gauge sees nENQ4 high (factory jig) and
++ * suppress small positive readings when nothing is charging.
++ */
++static int sm5714_fg_get_current(struct sm5714 *sm, u8 addr, int *ua)
++{
++	unsigned int raw, sys, aux;
++	int ma, ret;
++
++	ret = sm5714_fg_sram_read(sm, addr, &raw);
++	if (ret)
++		return ret;
++	ret = regmap_read(sm->fg, SM5714_FG_REG_SYSTEM_STATUS, &sys);
++	if (ret)
++		return ret;
++	ret = regmap_read(sm->fg, SM5714_FG_REG_AUX_STAT, &aux);
++	if (ret)
++		return ret;
++
++	ma = ((raw & SM5714_MAGNITUDE) * 1000) / 2044;
++	if (raw & SM5714_SIGN)
++		ma = -ma;
++	else if (!(aux & SM5714_FG_AUX_CHG_DETECT) && !sm5714_chg_is_charging(sm))
++		ma = 0;
++
++	if (aux & SM5714_FG_AUX_CURR_X2_5)
++		ma = ma * 25 / 10;
++
++	if (sys & SM5714_FG_SYS_NENQ4)
++		ma = 0;
++
++	*ua = ma * 1000;
++	return 0;
++}
++
++/* Temperature word, in 0.1 degC */
++static int sm5714_fg_get_temp(struct sm5714 *sm, int *decidegc)
++{
++	unsigned int raw;
++	int t, ret;
++
++	ret = sm5714_fg_sram_read(sm, SM5714_FG_SRAM_TEMPERATURE, &raw);
++	if (ret)
++		return ret;
++
++	t = (((raw & SM5714_MAGNITUDE) * 10) * 2989) >> 19;
++	*decidegc = (raw & SM5714_SIGN) ? -t : t;
++	return 0;
++}
++
++/* ---- charger ---- */
++
++static int sm5714_chg_get_status(struct sm5714 *sm, int *status)
++{
++	unsigned int st1, st2;
++	int ret;
++
++	ret = regmap_read(sm->chg, SM5714_CHG_REG_STATUS1, &st1);
++	if (ret)
++		return ret;
++	ret = regmap_read(sm->chg, SM5714_CHG_REG_STATUS2, &st2);
++	if (ret)
++		return ret;
++
++	if (st2 & SM5714_STATUS2_TOPOFF)
++		*status = POWER_SUPPLY_STATUS_FULL;
++	else if (st2 & SM5714_STATUS2_CHGON)
++		*status = POWER_SUPPLY_STATUS_CHARGING;
++	else if (st1 & SM5714_STATUS1_VBUSPOK)
++		*status = POWER_SUPPLY_STATUS_NOT_CHARGING;
++	else
++		*status = POWER_SUPPLY_STATUS_DISCHARGING;
++
++	return 0;
++}
++
++static int sm5714_chg_get_health(struct sm5714 *sm, int *health)
++{
++	unsigned int st1, st2, st3;
++	int ret;
++
++	ret = regmap_read(sm->chg, SM5714_CHG_REG_STATUS1, &st1);
++	if (!ret)
++		ret = regmap_read(sm->chg, SM5714_CHG_REG_STATUS2, &st2);
++	if (!ret)
++		ret = regmap_read(sm->chg, SM5714_CHG_REG_STATUS3, &st3);
++	if (ret)
++		return ret;
++
++	if (st1 & SM5714_STATUS1_VBUSOVP)
++		*health = POWER_SUPPLY_HEALTH_OVERVOLTAGE;
++	else if (st2 & SM5714_STATUS2_BATOVP)
++		*health = POWER_SUPPLY_HEALTH_OVERVOLTAGE;
++	else if (st3 & SM5714_STATUS3_THEMSHDN)
++		*health = POWER_SUPPLY_HEALTH_OVERHEAT;
++	else if (st3 & (SM5714_STATUS3_FASTTMROFF | SM5714_STATUS3_TRICKLETMROFF))
++		*health = POWER_SUPPLY_HEALTH_SAFETY_TIMER_EXPIRE;
++	else if (st2 & SM5714_STATUS2_WDTMROFF)
++		*health = POWER_SUPPLY_HEALTH_WATCHDOG_TIMER_EXPIRE;
++	else if (sm->too_hot_or_cold)
++		*health = sm->too_cold ? POWER_SUPPLY_HEALTH_COLD :
++					 POWER_SUPPLY_HEALTH_HOT;
++	else
++		*health = POWER_SUPPLY_HEALTH_GOOD;
++
++	return 0;
++}
++
++/* VBUS_LIMIT: 100 mA + 25 mA per step */
++static unsigned int sm5714_input_limit_to_reg(unsigned int ma)
++{
++	return ma < 100 ? 0 : min((ma - 100) / 25, 0x7fU);
++}
++
++/* Fast charge current: 109.375 mA at 0x07, 15.625 mA per step */
++static unsigned int sm5714_charge_current_to_reg(unsigned int ma)
++{
++	unsigned int ua = ma * 1000;
++
++	if (ua < 109375)
++		return 0x07;
++	if (ua > 3500000)
++		return 0xe0;
++	return 7 + (ua - 109375) / 15625;
++}
++
++static int sm5714_charge_current_from_reg(unsigned int reg)
++{
++	if (reg <= 0x07)
++		return 109000;
++	if (reg >= 0xe0)
++		return 3500000;
++	return 109375 + (reg - 7) * 15625;
++}
++
++/* BATREG: 3.70-3.85 V in 50 mV, 3.9/4.0 V, then 4.05-4.62 V in 10 mV */
++static unsigned int sm5714_batreg_to_reg(unsigned int mv)
++{
++	if (mv <= 3700)
++		return 0;
++	if (mv < 3900)
++		return (mv - 3700) / 50;
++	if (mv < 4050)
++		return (mv - 3900) / 100 + 4;
++	return min((mv - 4050) / 10 + 6, 0x3fU);
++}
++
++static int sm5714_batreg_from_reg(unsigned int reg)
++{
++	reg &= SM5714_CHGCNTL4_BATREG;
++	if (reg <= 0x03)
++		return 3700 + reg * 50;
++	if (reg <= 0x05)
++		return 3900 + (reg - 4) * 100;
++	return 4050 + (reg - 6) * 10;
++}
++
++static int sm5714_chg_update(struct sm5714 *sm, unsigned int reg,
++			     unsigned int mask, unsigned int val)
++{
++	int ret;
++
++	mutex_lock(&sm->lock);
++	ret = regmap_update_bits(sm->chg, reg, mask, val);
++	mutex_unlock(&sm->lock);
++
++	return ret;
++}
++
++static int sm5714_wdt_kick(struct sm5714 *sm)
++{
++	return sm5714_chg_update(sm, SM5714_CHG_REG_WDTCNTL,
++				 SM5714_WDTCNTL_KICK, SM5714_WDTCNTL_KICK);
++}
++
++static int sm5714_set_q4fet(struct sm5714 *sm, bool on)
++{
++	return sm5714_chg_update(sm, SM5714_CHG_REG_CNTL1, SM5714_CNTL1_ENQ4FET,
++				 on ? SM5714_CNTL1_ENQ4FET : 0);
++}
++
++/*
++ * What Samsung's driver programs on cable attach: sm5714_chg_init()
++ * (AICL at 4.5 V, float voltage, 90 s watchdog, auto-stop), the
++ * CHG_ON_VBUS operating mode, input and charge currents, then
++ * sm5714_chg_charging(): clear an expired watchdog, ENQ4FET with the
++ * input limit dropped to 500 mA meanwhile, watchdog on and kicked.
++ */
++static int sm5714_charging_enable(struct sm5714 *sm, unsigned int st2)
++{
++	unsigned int ilim = clamp(input_current_ma, 100U, 3000U);
++	unsigned int ichg = clamp(charge_current_ma, 100U, 3000U);
++	unsigned int mode;
++	int ret;
++
++	if (st2 & SM5714_STATUS2_WDTMROFF) {
++		ret = sm5714_chg_update(sm, SM5714_CHG_REG_WDTCNTL,
++					SM5714_WDTCNTL_CLEAR, SM5714_WDTCNTL_CLEAR);
++		if (ret)
++			return ret;
++	}
++
++	ret = sm5714_chg_update(sm, SM5714_CHG_REG_WDTCNTL, SM5714_WDTCNTL_TIME,
++				FIELD_PREP(SM5714_WDTCNTL_TIME, SM5714_WDT_TIME_90S));
++	if (!ret)
++		ret = sm5714_chg_update(sm, SM5714_CHG_REG_CHGCNTL11,
++					SM5714_CHGCNTL11_AICL_TH,
++					FIELD_PREP(SM5714_CHGCNTL11_AICL_TH,
++						   SM5714_AICL_TH_4_5V));
++	if (!ret)
++		ret = sm5714_chg_update(sm, SM5714_CHG_REG_CNTL1,
++					SM5714_CNTL1_AICLEN_VBUS,
++					SM5714_CNTL1_AICLEN_VBUS);
++	if (!ret)
++		ret = sm5714_chg_update(sm, SM5714_CHG_REG_CHGCNTL4,
++					SM5714_CHGCNTL4_BATREG | SM5714_CHGCNTL4_AUTOSTOP,
++					sm5714_batreg_to_reg(sm->float_mv) |
++					SM5714_CHGCNTL4_AUTOSTOP);
++	if (!ret)
++		ret = sm5714_chg_update(sm, SM5714_CHG_REG_CHGCNTL2, 0xff,
++					sm5714_charge_current_to_reg(ichg));
++	if (ret)
++		return ret;
++
++	ret = regmap_read(sm->chg, SM5714_CHG_REG_CNTL2, &mode);
++	if (ret)
++		return ret;
++	if (FIELD_GET(SM5714_CNTL2_OP_MODE, mode) != SM5714_OP_MODE_CHG_ON_VBUS) {
++		dev_info(sm->dev, "operating mode %lu -> charger on VBUS\n",
++			 FIELD_GET(SM5714_CNTL2_OP_MODE, mode));
++		ret = sm5714_chg_update(sm, SM5714_CHG_REG_CNTL2,
++					SM5714_CNTL2_OP_MODE,
++					SM5714_OP_MODE_CHG_ON_VBUS);
++		if (ret)
++			return ret;
++		usleep_range(10000, 11000); /* buck start-up */
++	}
++
++	ret = sm5714_chg_update(sm, SM5714_CHG_REG_VBUSCNTL, SM5714_VBUSCNTL_LIMIT,
++				sm5714_input_limit_to_reg(min(ilim, 500U)));
++	if (!ret && !sm->too_hot_or_cold) {
++		ret = sm5714_set_q4fet(sm, true);
++		usleep_range(5000, 6000);
++	}
++	if (!ret)
++		ret = sm5714_chg_update(sm, SM5714_CHG_REG_VBUSCNTL,
++					SM5714_VBUSCNTL_LIMIT,
++					sm5714_input_limit_to_reg(ilim));
++	if (!ret)
++		ret = sm5714_chg_update(sm, SM5714_CHG_REG_WDTCNTL,
++					SM5714_WDTCNTL_EN | SM5714_WDTCNTL_KICK,
++					SM5714_WDTCNTL_EN | SM5714_WDTCNTL_KICK);
++	if (ret)
++		return ret;
++
++	dev_info(sm->dev, "charging enabled: input %u mA, charge %u mA, float %u mV\n",
++		 ilim, ichg, sm->float_mv);
++	sm->configured = true;
++	return 0;
++}
++
++/* Cable gone: as Samsung's driver, charging off, watchdog off, 500 mA. */
++static void sm5714_charging_disable(struct sm5714 *sm)
++{
++	sm5714_set_q4fet(sm, false);
++	sm5714_chg_update(sm, SM5714_CHG_REG_WDTCNTL, SM5714_WDTCNTL_EN, 0);
++	sm5714_chg_update(sm, SM5714_CHG_REG_VBUSCNTL, SM5714_VBUSCNTL_LIMIT,
++			  sm5714_input_limit_to_reg(500));
++	sm->configured = false;
++}
++
++static void sm5714_check_temp(struct sm5714 *sm)
++{
++	int t;
++
++	if (sm5714_fg_get_temp(sm, &t))
++		return;
++
++	if (!sm->too_hot_or_cold && (t < SM5714_TEMP_MIN || t > SM5714_TEMP_MAX)) {
++		dev_warn(sm->dev, "battery at %d.%d degC, pausing charging\n",
++			 t / 10, abs(t % 10));
++		sm->too_hot_or_cold = true;
++		sm->too_cold = t < SM5714_TEMP_MIN;
++		sm5714_set_q4fet(sm, false);
++	} else if (sm->too_hot_or_cold && t >= SM5714_TEMP_MIN_RESUME &&
++		   t <= SM5714_TEMP_MAX_RESUME) {
++		dev_info(sm->dev, "battery at %d.%d degC, resuming charging\n",
++			 t / 10, abs(t % 10));
++		sm->too_hot_or_cold = false;
++		sm5714_set_q4fet(sm, true);
++	}
++}
++
++static void sm5714_charge_control(struct sm5714 *sm, unsigned int st1,
++				  unsigned int st2, unsigned int st3)
++{
++	unsigned int f1, cntl1;
++	int uv;
++
++	if (!(st1 & SM5714_STATUS1_VBUSPOK)) {
++		if (sm->configured) {
++			sm5714_charging_disable(sm);
++			sm->too_hot_or_cold = false;
++		}
++		return;
++	}
++
++	if (regmap_read(sm->chg, SM5714_CHG_REG_FACTORY1, &f1))
++		return;
++	if (f1 & (SM5714_FACTORY1_NOZX | SM5714_FACTORY1_ENBYPASS)) {
++		if (!sm->warned_bypass)
++			dev_warn(sm->dev, "factory/bypass mode set (0x%02x), not touching the charger\n",
++				 f1);
++		sm->warned_bypass = true;
++		return;
++	}
++
++	if (st2 & SM5714_STATUS2_NOBAT)
++		return;
++
++	sm5714_check_temp(sm);
++
++	if (!sm->configured || (st2 & SM5714_STATUS2_WDTMROFF)) {
++		if (sm5714_charging_enable(sm, st2))
++			dev_err(sm->dev, "failed to enable charging\n");
++		return;
++	}
++
++	sm5714_wdt_kick(sm);
++
++	/*
++	 * Samsung's driver re-cycles ENQ4FET when the charger reports done;
++	 * do it only once the cell has relaxed below the stock recharge
++	 * voltage, never after a safety timer expired.
++	 */
++	if (sm->too_hot_or_cold || (st2 & SM5714_STATUS2_CHGON) ||
++	    !(st2 & (SM5714_STATUS2_DONE | SM5714_STATUS2_TOPOFF)) ||
++	    (st3 & (SM5714_STATUS3_FASTTMROFF | SM5714_STATUS3_TRICKLETMROFF)))
++		return;
++	if (regmap_read(sm->chg, SM5714_CHG_REG_CNTL1, &cntl1) ||
++	    !(cntl1 & SM5714_CNTL1_ENQ4FET))
++		return;
++	if (sm5714_fg_get_vbat(sm, SM5714_FG_SRAM_VBAT, &uv) ||
++	    uv >= SM5714_RECHARGE_MV * 1000)
++		return;
++
++	dev_info(sm->dev, "battery at %d mV, restarting charge\n", uv / 1000);
++	sm5714_set_q4fet(sm, false);
++	msleep(10);
++	sm5714_set_q4fet(sm, true);
++}
++
++static void sm5714_work(struct work_struct *work)
++{
++	struct sm5714 *sm = container_of(work, struct sm5714, work.work);
++	unsigned int st1, st2, st3, sys;
++	bool online, chgon, changed;
++	int capacity = -1;
++
++	if (regmap_read(sm->chg, SM5714_CHG_REG_STATUS1, &st1) ||
++	    regmap_read(sm->chg, SM5714_CHG_REG_STATUS2, &st2) ||
++	    regmap_read(sm->chg, SM5714_CHG_REG_STATUS3, &st3))
++		goto out;
++
++	if (enable_charging)
++		sm5714_charge_control(sm, st1, st2, st3);
++
++	if (!regmap_read(sm->fg, SM5714_FG_REG_SYSTEM_STATUS, &sys)) {
++		bool done = sys & SM5714_FG_SYS_INIT_DONE;
++
++		if (done != sm->fg_init_done)
++			dev_warn(sm->dev, "fuel gauge init flag %s (0x%04x)%s\n",
++				 done ? "set" : "cleared", sys,
++				 done ? "" : ": battery model not loaded, capacity may be wrong");
++		sm->fg_init_done = done;
++	}
++
++	sm5714_fg_get_capacity(sm, &capacity);
++	regmap_read(sm->chg, SM5714_CHG_REG_STATUS2, &st2);
++
++	online = st1 & SM5714_STATUS1_VBUSPOK;
++	chgon = st2 & SM5714_STATUS2_CHGON;
++	changed = online != sm->last_online || chgon != sm->last_chgon ||
++		  capacity != sm->last_capacity;
++	sm->last_online = online;
++	sm->last_chgon = chgon;
++	sm->last_capacity = capacity;
++
++	if (changed) {
++		power_supply_changed(sm->chg_psy);
++		power_supply_changed(sm->bat_psy);
++	}
++out:
++	schedule_delayed_work(&sm->work, msecs_to_jiffies(SM5714_POLL_MS));
++}
++
++/* ---- power supplies ---- */
++
++static int sm5714_bat_get_status(struct sm5714 *sm, int *status)
++{
++	int ret, capacity;
++
++	ret = sm5714_chg_get_status(sm, status);
++	if (ret)
++		return ret;
++
++	/* top-off can show before the gauge reaches the stock full SOC */
++	if (*status == POWER_SUPPLY_STATUS_FULL &&
++	    !sm5714_fg_get_capacity(sm, &capacity) && capacity < SM5714_FULL_SOC)
++		*status = sm5714_chg_is_charging(sm) ?
++			  POWER_SUPPLY_STATUS_CHARGING :
++			  POWER_SUPPLY_STATUS_NOT_CHARGING;
++
++	return 0;
++}
++
++static int sm5714_bat_get_property(struct power_supply *psy,
++				   enum power_supply_property psp,
++				   union power_supply_propval *val)
++{
++	struct sm5714 *sm = power_supply_get_drvdata(psy);
++	unsigned int st2;
++	int ret = 0;
++
++	switch (psp) {
++	case POWER_SUPPLY_PROP_STATUS:
++		ret = sm5714_bat_get_status(sm, &val->intval);
++		break;
++	case POWER_SUPPLY_PROP_PRESENT:
++		ret = regmap_read(sm->chg, SM5714_CHG_REG_STATUS2, &st2);
++		val->intval = !(st2 & SM5714_STATUS2_NOBAT);
++		break;
++	case POWER_SUPPLY_PROP_TECHNOLOGY:
++		val->intval = POWER_SUPPLY_TECHNOLOGY_LION;
++		break;
++	case POWER_SUPPLY_PROP_CAPACITY:
++		ret = sm5714_fg_get_capacity(sm, &val->intval);
++		break;
++	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
++		ret = sm5714_fg_get_vbat(sm, SM5714_FG_SRAM_VBAT, &val->intval);
++		break;
++	case POWER_SUPPLY_PROP_VOLTAGE_AVG:
++		ret = sm5714_fg_get_vbat(sm, SM5714_FG_SRAM_VBAT_AVG, &val->intval);
++		break;
++	case POWER_SUPPLY_PROP_VOLTAGE_OCV:
++		ret = sm5714_fg_get_ocv(sm, &val->intval);
++		break;
++	case POWER_SUPPLY_PROP_CURRENT_NOW:
++		ret = sm5714_fg_get_current(sm, SM5714_FG_SRAM_CURRENT, &val->intval);
++		break;
++	case POWER_SUPPLY_PROP_CURRENT_AVG:
++		ret = sm5714_fg_get_current(sm, SM5714_FG_SRAM_CURRENT_AVG, &val->intval);
++		break;
++	case POWER_SUPPLY_PROP_TEMP:
++		ret = sm5714_fg_get_temp(sm, &val->intval);
++		break;
++	case POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
++		if (!sm->bat_info || sm->bat_info->charge_full_design_uah <= 0)
++			return -ENODATA;
++		val->intval = sm->bat_info->charge_full_design_uah;
++		break;
++	case POWER_SUPPLY_PROP_VOLTAGE_MAX_DESIGN:
++		val->intval = sm->float_mv * 1000;
++		break;
++	default:
++		return -EINVAL;
++	}
++
++	return ret;
++}
++
++static const enum power_supply_property sm5714_bat_props[] = {
++	POWER_SUPPLY_PROP_STATUS,
++	POWER_SUPPLY_PROP_PRESENT,
++	POWER_SUPPLY_PROP_TECHNOLOGY,
++	POWER_SUPPLY_PROP_CAPACITY,
++	POWER_SUPPLY_PROP_VOLTAGE_NOW,
++	POWER_SUPPLY_PROP_VOLTAGE_AVG,
++	POWER_SUPPLY_PROP_VOLTAGE_OCV,
++	POWER_SUPPLY_PROP_CURRENT_NOW,
++	POWER_SUPPLY_PROP_CURRENT_AVG,
++	POWER_SUPPLY_PROP_TEMP,
++	POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN,
++	POWER_SUPPLY_PROP_VOLTAGE_MAX_DESIGN,
++};
++
++static const struct power_supply_desc sm5714_bat_desc = {
++	.name		= "battery",
++	.type		= POWER_SUPPLY_TYPE_BATTERY,
++	.properties	= sm5714_bat_props,
++	.num_properties	= ARRAY_SIZE(sm5714_bat_props),
++	.get_property	= sm5714_bat_get_property,
++};
++
++static int sm5714_chg_get_property(struct power_supply *psy,
++				   enum power_supply_property psp,
++				   union power_supply_propval *val)
++{
++	struct sm5714 *sm = power_supply_get_drvdata(psy);
++	unsigned int reg;
++	int ret = 0;
++
++	switch (psp) {
++	case POWER_SUPPLY_PROP_ONLINE:
++		ret = regmap_read(sm->chg, SM5714_CHG_REG_STATUS1, &reg);
++		val->intval = !!(reg & SM5714_STATUS1_VBUSPOK);
++		break;
++	case POWER_SUPPLY_PROP_STATUS:
++		ret = sm5714_chg_get_status(sm, &val->intval);
++		break;
++	case POWER_SUPPLY_PROP_HEALTH:
++		ret = sm5714_chg_get_health(sm, &val->intval);
++		break;
++	case POWER_SUPPLY_PROP_CHARGE_TYPE:
++		ret = regmap_read(sm->chg, SM5714_CHG_REG_STATUS2, &reg);
++		if (reg & SM5714_STATUS2_CHGON)
++			val->intval = POWER_SUPPLY_CHARGE_TYPE_FAST;
++		else
++			val->intval = POWER_SUPPLY_CHARGE_TYPE_NONE;
++		break;
++	case POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
++		ret = regmap_read(sm->chg, SM5714_CHG_REG_VBUSCNTL, &reg);
++		val->intval = ((reg & SM5714_VBUSCNTL_LIMIT) * 25 + 100) * 1000;
++		break;
++	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT:
++		ret = regmap_read(sm->chg, SM5714_CHG_REG_CHGCNTL2, &reg);
++		val->intval = sm5714_charge_current_from_reg(reg);
++		break;
++	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
++		ret = regmap_read(sm->chg, SM5714_CHG_REG_CHGCNTL4, &reg);
++		val->intval = sm5714_batreg_from_reg(reg) * 1000;
++		break;
++	default:
++		return -EINVAL;
++	}
++
++	return ret;
++}
++
++static const enum power_supply_property sm5714_chg_props[] = {
++	POWER_SUPPLY_PROP_ONLINE,
++	POWER_SUPPLY_PROP_STATUS,
++	POWER_SUPPLY_PROP_HEALTH,
++	POWER_SUPPLY_PROP_CHARGE_TYPE,
++	POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT,
++	POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT,
++	POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE,
++};
++
++static const struct power_supply_desc sm5714_chg_desc = {
++	.name		= "sm5714-charger",
++	.type		= POWER_SUPPLY_TYPE_USB,
++	.properties	= sm5714_chg_props,
++	.num_properties	= ARRAY_SIZE(sm5714_chg_props),
++	.get_property	= sm5714_chg_get_property,
++};
++
++static char *sm5714_chg_supplied_to[] = { "battery" };
++
++/* ---- probe ---- */
++
++static const struct regmap_config sm5714_chg_regmap_config = {
++	.name		= "charger",
++	.reg_bits	= 8,
++	.val_bits	= 8,
++	.max_register	= SM5714_CHG_REG_DEVICEID,
++	.cache_type	= REGCACHE_NONE,
++};
++
++static const struct regmap_config sm5714_fg_regmap_config = {
++	.name			= "fuel-gauge",
++	.reg_bits		= 8,
++	.val_bits		= 16,
++	.val_format_endian	= REGMAP_ENDIAN_LITTLE,
++	.max_register		= SM5714_FG_REG_SRAM_RDATA,
++	.cache_type		= REGCACHE_NONE,
++};
++
++/* Don't leave a fed-by-nobody watchdog behind for the next kernel. */
++static void sm5714_release_wdt(struct sm5714 *sm)
++{
++	cancel_delayed_work_sync(&sm->work);
++	if (sm->configured)
++		sm5714_chg_update(sm, SM5714_CHG_REG_WDTCNTL, SM5714_WDTCNTL_EN, 0);
++}
++
++static void sm5714_release_wdt_action(void *data)
++{
++	sm5714_release_wdt(data);
++}
++
++static int sm5714_probe(struct i2c_client *client)
++{
++	struct device *dev = &client->dev;
++	struct power_supply_config psy_cfg = {};
++	struct i2c_client *fg_client;
++	unsigned int id, fg_id, sys;
++	struct sm5714 *sm;
++	int ret;
++
++	sm = devm_kzalloc(dev, sizeof(*sm), GFP_KERNEL);
++	if (!sm)
++		return -ENOMEM;
++
++	sm->dev = dev;
++	sm->last_capacity = -1;
++	i2c_set_clientdata(client, sm);
++
++	ret = devm_mutex_init(dev, &sm->lock);
++	if (ret)
++		return ret;
++
++	sm->chg = devm_regmap_init_i2c(client, &sm5714_chg_regmap_config);
++	if (IS_ERR(sm->chg))
++		return dev_err_probe(dev, PTR_ERR(sm->chg), "charger regmap\n");
++
++	ret = regmap_read(sm->chg, SM5714_CHG_REG_DEVICEID, &id);
++	if (ret)
++		return dev_err_probe(dev, ret, "failed to read device ID\n");
++	if (FIELD_GET(SM5714_DEVICEID_VENDOR, id) != 0x1)
++		return dev_err_probe(dev, -ENODEV, "unexpected device ID 0x%02x\n", id);
++
++	fg_client = devm_i2c_new_dummy_device(dev, client->adapter, SM5714_FG_I2C_ADDR);
++	if (IS_ERR(fg_client))
++		return dev_err_probe(dev, PTR_ERR(fg_client), "fuel gauge I2C client\n");
++
++	sm->fg = devm_regmap_init_i2c(fg_client, &sm5714_fg_regmap_config);
++	if (IS_ERR(sm->fg))
++		return dev_err_probe(dev, PTR_ERR(sm->fg), "fuel gauge regmap\n");
++
++	ret = regmap_read(sm->fg, SM5714_FG_REG_DEVICE_ID, &fg_id);
++	if (ret)
++		return dev_err_probe(dev, ret, "failed to read fuel gauge ID\n");
++	if (fg_id > 0xff)
++		return dev_err_probe(dev, -ENODEV, "unexpected fuel gauge ID 0x%04x\n", fg_id);
++
++	ret = regmap_read(sm->fg, SM5714_FG_REG_SYSTEM_STATUS, &sys);
++	if (ret)
++		return ret;
++	sm->fg_init_done = sys & SM5714_FG_SYS_INIT_DONE;
++	if (!sm->fg_init_done)
++		dev_warn(dev, "fuel gauge not initialised (status 0x%04x): battery model not loaded, capacity may be wrong\n",
++			 sys);
++
++	dev_info(dev, "SM5714 rev %u, fuel gauge ID 0x%02x, status 0x%04x\n",
++		 id >> 3, fg_id, sys);
++
++	psy_cfg.drv_data = sm;
++	psy_cfg.fwnode = dev_fwnode(dev);
++	sm->bat_psy = devm_power_supply_register(dev, &sm5714_bat_desc, &psy_cfg);
++	if (IS_ERR(sm->bat_psy))
++		return dev_err_probe(dev, PTR_ERR(sm->bat_psy), "battery power supply\n");
++
++	sm->float_mv = SM5714_FLOAT_MV_MAX;
++	if (!power_supply_get_battery_info(sm->bat_psy, &sm->bat_info)) {
++		int uv = sm->bat_info->constant_charge_voltage_max_uv;
++
++		if (uv > 0)
++			sm->float_mv = min(uv / 1000, SM5714_FLOAT_MV_MAX);
++	} else {
++		sm->bat_info = NULL;
++	}
++
++	psy_cfg.fwnode = NULL;
++	psy_cfg.supplied_to = sm5714_chg_supplied_to;
++	psy_cfg.num_supplicants = ARRAY_SIZE(sm5714_chg_supplied_to);
++	sm->chg_psy = devm_power_supply_register(dev, &sm5714_chg_desc, &psy_cfg);
++	if (IS_ERR(sm->chg_psy))
++		return dev_err_probe(dev, PTR_ERR(sm->chg_psy), "charger power supply\n");
++
++	ret = devm_delayed_work_autocancel(dev, &sm->work, sm5714_work);
++	if (ret)
++		return ret;
++
++	ret = devm_add_action(dev, sm5714_release_wdt_action, sm);
++	if (ret)
++		return ret;
++
++	schedule_delayed_work(&sm->work, 0);
++	return 0;
++}
++
++static void sm5714_shutdown(struct i2c_client *client)
++{
++	sm5714_release_wdt(i2c_get_clientdata(client));
++}
++
++static int sm5714_suspend(struct device *dev)
++{
++	struct sm5714 *sm = dev_get_drvdata(dev);
++
++	cancel_delayed_work_sync(&sm->work);
++	return 0;
++}
++
++static int sm5714_resume(struct device *dev)
++{
++	struct sm5714 *sm = dev_get_drvdata(dev);
++
++	schedule_delayed_work(&sm->work, 0);
++	return 0;
++}
++
++static DEFINE_SIMPLE_DEV_PM_OPS(sm5714_pm_ops, sm5714_suspend, sm5714_resume);
++
++static const struct of_device_id sm5714_of_match[] = {
++	{ .compatible = "siliconmitus,sm5714" },
++	{ }
++};
++MODULE_DEVICE_TABLE(of, sm5714_of_match);
++
++static const struct i2c_device_id sm5714_id[] = {
++	{ "sm5714" },
++	{ }
++};
++MODULE_DEVICE_TABLE(i2c, sm5714_id);
++
++static struct i2c_driver sm5714_driver = {
++	.driver = {
++		.name		= "sm5714-charger",
++		.of_match_table	= sm5714_of_match,
++		.pm		= pm_sleep_ptr(&sm5714_pm_ops),
++	},
++	.probe		= sm5714_probe,
++	.shutdown	= sm5714_shutdown,
++	.id_table	= sm5714_id,
++};
++module_i2c_driver(sm5714_driver);
++
++MODULE_DESCRIPTION("Silicon Mitus SM5714 charger and fuel gauge driver");
++MODULE_LICENSE("GPL");
