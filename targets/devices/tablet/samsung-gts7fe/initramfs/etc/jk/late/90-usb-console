@@ -4,5 +4,11 @@
 # own /etc/init.d/S39usb-console.
 [ -f /run/jk/usb-console.pid ] && kill "$(cat /run/jk/usb-console.pid)" 2>/dev/null
 killall -q telnetd udhcpd nc 2>/dev/null
-pkill -f ttyGS0 2>/dev/null
+# The serial port's shell: its command line no longer names ttyGS0 (exec), so
+# find it by its terminal. An interactive shell ignores SIGTERM. Left
+# running, it would be a root shell without a login next to the system's own
+# getty on ttyGS0, the two splitting what the PC types between them.
+for p in /proc/[0-9]*; do
+    [ "$(readlink "$p/fd/0" 2>/dev/null)" = /dev/ttyGS0 ] && kill -9 "${p#/proc/}" 2>/dev/null
+done
 rm -f /run/jk/usb-console.pid

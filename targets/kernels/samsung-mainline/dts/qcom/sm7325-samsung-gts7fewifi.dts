@@ -270,12 +270,20 @@
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 		};
 
-		/* UFS PHY PLL */
+		/*
+		 * UFS PHY PLL, and the display's DSI controller (stock:
+		 * vdda-1p2-supply). Always on while the display runs only on
+		 * the bootloader's setup (simple-framebuffer): once UFS or USB
+		 * let go of it, the regulator core would switch it off, and the
+		 * screen with it (it flickered and went black).
+		 */
 		vreg_l6b_1p2: ldo6 {
 			regulator-name = "vreg_l6b_1p2";
 			regulator-min-microvolt = <1200000>;
 			regulator-max-microvolt = <1200000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+			regulator-always-on;
+			regulator-boot-on;
 			regulator-allow-set-load;
 			regulator-allowed-modes = <RPMH_REGULATOR_MODE_LPM
 						   RPMH_REGULATOR_MODE_HPM>;
@@ -324,12 +332,18 @@
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 		};
 
-		/* USB 2.0 PHY core and UFS PHY, 0.88 V */
+		/*
+		 * USB 2.0 PHY core, UFS PHY, and the display's DSI PHY (stock:
+		 * vdda-0p9-supply): always on, like L6B, until the display has
+		 * its own driver.
+		 */
 		vreg_l10c_0p88: ldo10 {
 			regulator-name = "vreg_l10c_0p88";
 			regulator-min-microvolt = <880000>;
 			regulator-max-microvolt = <880000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+			regulator-always-on;
+			regulator-boot-on;
 			regulator-allow-set-load;
 			regulator-allowed-modes = <RPMH_REGULATOR_MODE_LPM
 						   RPMH_REGULATOR_MODE_HPM>;

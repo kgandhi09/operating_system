@@ -231,6 +231,21 @@ installed system serves the PC on the USB cable too (`telnet 172.16.42.1`
 or `/dev/ttyACM0`, with a login). `jk-update` writes a new kernel to the
 `vendor_boot` partition (keeping the old one for `--rollback`).
 
+To reinstall over an installed system, choose "Rescue shell (reinstall over
+USB)" in U-Boot's menu (hold volume down while it starts): the initramfs
+then stays at its USB console (kernel option `jk.rescue`), and
+`scripts/tablet-install.sh --no-format` copies the new image.
+
+On the PC, keep ModemManager off the tablet's serial port: it takes
+`/dev/ttyACM0` for a modem and types AT commands into the tablet's console.
+Once:
+
+```sh
+echo 'ATTRS{idVendor}=="1d6b", ATTRS{idProduct}=="0104", ENV{ID_MM_DEVICE_IGNORE}="1"' |
+    sudo tee /etc/udev/rules.d/70-jk-os-tablet.rules
+sudo udevadm control --reload
+```
+
 ## Sources
 
 `versions.env` chooses the userspace trees (`BUSYBOX_TREE=userspace/busybox`,

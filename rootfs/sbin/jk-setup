@@ -9,7 +9,7 @@
 C_B=$(printf '\033[1m'); C_N=$(printf '\033[0m'); C_R=$(printf '\033[1;31m')
 say()  { printf '%s\n' "$*"; }
 warn() { printf '%swarning:%s %s\n' "$C_R" "$C_N" "$*" >&2; }
-die()  { printf '%serror:%s %s\n' "$C_R" "$C_N" "$*" >&2; rmdir "$LOCK" 2>/dev/null; printf 'Press Enter. '; read -r _; exit 1; }
+die()  { printf '%serror:%s %s\n' "$C_R" "$C_N" "$*" >&2; release; printf 'Press Enter. '; read -r _; exit 1; }
 head_line() { printf '\n%s== %s ==%s\n\n' "$C_B" "$*" "$C_N"; }
 ask() {
     if [ -n "${2:-}" ]; then printf '%s [%s]: ' "$1" "$2"; else printf '%s: ' "$1"; fi
@@ -18,6 +18,10 @@ ask() {
 }
 
 LOCK=/run/jk-setup.lock
+# release: drop the lock, unless another console took it over meanwhile.
+release() {
+    [ "$(cut -d' ' -f1 "$LOCK/owner" 2>/dev/null)" = "$$" ] && rm -rf "$LOCK"
+}
 SETUP_DONE=/data/etc/jk_os-setup-done
 
 clear
@@ -28,12 +32,25 @@ say "  This computer has no user yet. Create one to finish the setup."
 printf '\n  Press Enter to start. '
 read -r _ || exit 0
 
-if ! mkdir "$LOCK" 2>/dev/null; then
-    say "  The setup is already running on another console."
-    printf '  Press Enter to go back. '; read -r _
-    exit 0
-fi
-trap 'rmdir "$LOCK" 2>/dev/null' EXIT
+# One console at a time. The lock names the console that has it, which this
+# one can take over: whoever started it may have walked away, or it wasn't a
+# person (on the tablet, the PC's ModemManager probing the USB serial port
+# answers the prompt above on ttyGS0).
+tty=$(tty 2>/dev/null); tty=${tty#/dev/}
+while ! mkdir "$LOCK" 2>/dev/null; do
+    holder= holder_tty=
+    read -r holder holder_tty 2>/dev/null < "$LOCK/owner"
+    if [ -n "$holder" ] && ! kill -0 "$holder" 2>/dev/null; then
+        rm -rf "$LOCK"; continue        # left behind by a setup that died
+    fi
+    say "  The setup is already running on ${holder_tty:-another console}."
+    ask "  Take it over here? (yes/no)" yes
+    [ "$ans" = yes ] || exit 0
+    [ -n "$holder" ] && kill "$holder" 2>/dev/null
+    rm -rf "$LOCK"
+done
+echo "$$ ${tty:-console}" > "$LOCK/owner"
+trap release EXIT
 
 ACC_HOSTNAME=$(cat /etc/hostname)
 accounts_ask

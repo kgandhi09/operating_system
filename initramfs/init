@@ -41,6 +41,14 @@ rescue() {
     exec /init
 }
 
+# jk.rescue on the command line: the shell first, even with a system to start
+# (e.g. on the tablet, to reinstall over the USB console). Once: exiting it
+# boots as usual.
+case " $(cat /proc/cmdline) " in
+    *" jk.rescue "*)
+        [ -e /run/jk/rescued ] || { : > /run/jk/rescued; rescue "jk.rescue: not starting the system yet"; } ;;
+esac
+
 # find_labels: set $live and $data to the devices labeled JK_OS / JK_DATA.
 # The label alone is not enough for the medium: GRUB's hybrid ISO also carries
 # an HFS+ partition (for Macs) named JK_OS, so on a USB stick sdX3 matches
