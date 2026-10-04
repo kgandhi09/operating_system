@@ -275,7 +275,9 @@
 		 * vdda-1p2-supply). Always on while the display runs only on
 		 * the bootloader's setup (simple-framebuffer): once UFS or USB
 		 * let go of it, the regulator core would switch it off, and the
-		 * screen with it (it flickered and went black).
+		 * screen with it (it flickered and went black). Fixed in high
+		 * power mode too: with UFS's load allowed to set it, it dropped
+		 * to low power mode whenever the UFS PHY was idle.
 		 */
 		vreg_l6b_1p2: ldo6 {
 			regulator-name = "vreg_l6b_1p2";
@@ -284,9 +286,6 @@
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 			regulator-always-on;
 			regulator-boot-on;
-			regulator-allow-set-load;
-			regulator-allowed-modes = <RPMH_REGULATOR_MODE_LPM
-						   RPMH_REGULATOR_MODE_HPM>;
 		};
 
 		/* UFS VCC (and the SD card slot, not used yet) */
@@ -334,8 +333,8 @@
 
 		/*
 		 * USB 2.0 PHY core, UFS PHY, and the display's DSI PHY (stock:
-		 * vdda-0p9-supply): always on, like L6B, until the display has
-		 * its own driver.
+		 * vdda-0p9-supply): always on and in high power mode, like L6B,
+		 * until the display has its own driver.
 		 */
 		vreg_l10c_0p88: ldo10 {
 			regulator-name = "vreg_l10c_0p88";
@@ -344,11 +343,18 @@
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 			regulator-always-on;
 			regulator-boot-on;
-			regulator-allow-set-load;
-			regulator-allowed-modes = <RPMH_REGULATOR_MODE_LPM
-						   RPMH_REGULATOR_MODE_HPM>;
 		};
 	};
+};
+
+/*
+ * The reference voltage of the display's DSI controller (its refgen-supply),
+ * which the bootloader left on. Nothing claims it while the display runs only
+ * on the bootloader's setup (simple-framebuffer), so the regulator core
+ * switched it off 30 s after boot as unused: the screen went black.
+ */
+&refgen {
+	regulator-always-on;
 };
 
 /* UFS storage, wired as stock has it (reset on GPIO 175). */
