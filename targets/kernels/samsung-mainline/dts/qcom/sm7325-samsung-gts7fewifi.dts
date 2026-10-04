@@ -198,6 +198,40 @@
 	};
 };
 
+/*
+ * Bring-up: the display clock controller stays off until the panel has a
+ * driver. Its driver reprograms the display PLL as it starts, which stops
+ * the picture the bootloader left running for simple-framebuffer (the
+ * screen went grey).
+ */
+&dispcc {
+	status = "disabled";
+};
+
+/*
+ * GCC clocks the firmware keeps for itself (modem, Wi-Fi subsystem, QSPI,
+ * security): touching their registers freezes the CPU. The kernel hung
+ * registering GCC's clocks without this; the same list as the other
+ * SM7325/QCM6490 phones (the Fairphone 5's, the longest).
+ */
+&gcc {
+	protected-clocks = <GCC_CFG_NOC_LPASS_CLK>,
+			   <GCC_EDP_CLKREF_EN>,
+			   <GCC_MSS_CFG_AHB_CLK>,
+			   <GCC_MSS_GPLL0_MAIN_DIV_CLK_SRC>,
+			   <GCC_MSS_OFFLINE_AXI_CLK>,
+			   <GCC_MSS_Q6SS_BOOT_CLK_SRC>,
+			   <GCC_MSS_Q6_MEMNOC_AXI_CLK>,
+			   <GCC_MSS_SNOC_AXI_CLK>,
+			   <GCC_QSPI_CNOC_PERIPH_AHB_CLK>,
+			   <GCC_QSPI_CORE_CLK>,
+			   <GCC_QSPI_CORE_CLK_SRC>,
+			   <GCC_SEC_CTRL_CLK_SRC>,
+			   <GCC_WPSS_AHB_BDG_MST_CLK>,
+			   <GCC_WPSS_AHB_CLK>,
+			   <GCC_WPSS_RSCP_CLK>;
+};
+
 &pm7325_gpios {
 	vol_up_n: vol-up-n-state {
 		pins = "gpio6";
