@@ -109,6 +109,9 @@ export PATH="$HOSTDIR/wbin:$PATH"
 # The build machine's pkg-config (with the sysroot settings above): CMake
 # would otherwise pick $DYN's own, built for jk_os, from CMAKE_PREFIX_PATH.
 HOST_PKG_CONFIG="$(command -v pkg-config)"
+# WaylandScanner_EXECUTABLE: the build host's wayland-scanner (Qt's and
+# ECM's FindWaylandScanner would otherwise take the target's from $DYN, which
+# doesn't run here when cross-building).
 # CMAKE_POSITION_INDEPENDENT_CODE: static pieces a project links into its
 # own shared library (libjpeg-turbo's spng) must be PIC. Distribution
 # compilers default to PIE, which hides this; jk_os's cross compiler doesn't.
@@ -116,6 +119,7 @@ cmakepkg() {
     local src="$1" out="$2"; shift 2
     cmake -G Ninja -S "$src" -B "$out" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr \
         -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+        -DWaylandScanner_EXECUTABLE="$HOSTDIR/bin/wayland-scanner" \
         -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_C_COMPILER="$CC" -DCMAKE_CXX_COMPILER="$CXX" \
         -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR="$ARCH" -DCMAKE_SYSROOT="$TC" \
         "-DCMAKE_FIND_ROOT_PATH=$DYN" -DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER \
@@ -282,13 +286,20 @@ hostcmake_libclc() {   # hostcmake_libclc <src> <out>: the spirv64 OpenCL librar
     printf 'prefix=%s\nlibexecdir=${prefix}/share/clc\n\nName: libclc\nDescription: OpenCL builtins\nVersion: %s\n' \
         "$HOSTDIR" "$(tree_version "$1")" > "$HOSTDIR/share/pkgconfig/libclc.pc"
 }
+# The precompilers of the drivers being built for the target run on the
+# build host too: panfrost's (panfrost_compile) comes with Mesa's panfrost
+# tools (no driver needed on the host).
 b_host_mesa_clc() {
+    local tools=""
+    [[ ",$MESA_GALLIUM,$MESA_VULKAN," == *,panfrost,* ]] && tools=panfrost
     hostmeson "$1" "$2" -Dgallium-drivers= -Dvulkan-drivers= -Dplatforms= -Dglx=disabled \
         -Degl=disabled -Dgbm=disabled -Dopengl=false -Dgles1=disabled -Dgles2=disabled \
         -Dllvm=enabled -Dshared-llvm=enabled -Dcpp_rtti=false -Dmesa-clc=enabled \
         -Dinstall-mesa-clc=true -Dprecomp-compiler=enabled -Dinstall-precomp-compiler=true \
+        -Dtools="$tools" \
         -Dbuild-tests=false -Dvalgrind=disabled -Dlibunwind=disabled -Dlmsensors=disabled -Dzstd=disabled
     host_wrap mesa_clc vtn_bindgen2
+    [[ -z "$tools" ]] || host_wrap panfrost_compile
 }
 step host-spirv-headers "$SRC/spirv-headers" hostcmake
 step host-spirv-tools "$SRC/spirv-tools" hostcmake -DSPIRV-Headers_SOURCE_DIR="$SRC/spirv-headers" \
@@ -315,8 +326,10 @@ b_libglvnd() {
     rm -f "$DYN"/usr/lib/libEGL.so.1.0.0 "$DYN"/usr/lib/libGL.so.1.2.0 "$DYN"/usr/lib/libGLESv2.so.2.0.0
     mesonpkg "$@"
 }
+# headers=true: the Khronos EGL/GL/GLES headers (EGL/egl.h, eglplatform.h,
+# ...). Mesa doesn't install them any more, and libepoxy and Qt need them.
 pkg libglvnd         b_libglvnd -Dx11=enabled -Dglx=enabled -Degl=true -Dgles1=true -Dgles2=true \
-                         -Dheaders=false -Dhgl=false
+                         -Dheaders=true -Dhgl=false
 pkg mesa             b_mesa -Dglvnd=enabled
 # libepoxy compiles against Mesa's EGL and GL headers.
 pkg libepoxy         mesonpkg -Dtests=false -Degl=yes -Dglx=yes -Dx11=true
@@ -523,31 +536,9 @@ Cflags: -I\${includedir}
 PC
 }
 pkg lua              b_lua
-pkg pipewire         mesonpkg -Dsession-managers=[] -Dexamples=disabled -Dtests=disabled \
-                         -Dinstalled_tests=disabled -Dman=disabled -Ddocs=disabled -Dgstreamer=disabled \
-                         -Dgstreamer-device-provider=disabled -Dlibsystemd=disabled -Dlogind=enabled \
-                         -Dlogind-provider=libelogind -Dsystemd-system-service=disabled \
-                         -Dsystemd-user-service=disabled -Dselinux=disabled -Dpipewire-alsa=enabled \
-                         -Dpipewire-jack=disabled -Djack=disabled -Djack-devel=false -Dpipewire-v4l2=disabled \
-                         -Dalsa=enabled -Dbluez5=enabled -Dbluez5-backend-native-mm=disabled \
-                         -Dbluez5-backend-ofono=disabled -Dbluez5-backend-hsphfpd=disabled \
-                         -Dbluez5-codec-aptx=disabled -Dbluez5-codec-ldac=disabled -Dbluez5-codec-aac=disabled \
-                         -Dbluez5-codec-lc3plus=disabled -Dbluez5-codec-opus=disabled -Dbluez5-codec-lc3=disabled \
-                         -Dbluez5-codec-g722=disabled -Dbluez5-plc-spandsp=disabled -Dv4l2=enabled \
-                         -Dlibcamera=disabled -Dffmpeg=disabled -Dpw-cat-ffmpeg=disabled -Dvulkan=disabled \
-                         -Dsdl2=disabled -Dsndfile=enabled -Dlibmysofa=disabled -Dlibpulse=disabled \
-                         -Droc=disabled -Davahi=disabled -Decho-cancel-webrtc=disabled -Dlibusb=disabled \
-                         -Draop=disabled -Dlv2=disabled -Dx11=disabled -Dx11-xfixes=disabled \
-                         -Dlibcanberra=disabled -Dlegacy-rtkit=false -Davb=disabled -Dflatpak=disabled \
-                         -Dreadline=disabled -Dgsettings=disabled -Dcompress-offload=disabled -Dopus=disabled \
-                         -Dlibffado=disabled -Dgsettings-pulse-schema=disabled -Dsnap=disabled -Debur128=disabled \
-                         -Dfftw=disabled -Donnxruntime=disabled -Dudev=enabled -Dudevrulesdir=/usr/lib/udev/rules.d \
-                         -Devl=disabled -Dtest=disabled -Dvideotestsrc=disabled -Daudiotestsrc=disabled \
-                         -Dpam-defaults-install=false -Drlimits-install=false
-pkg wireplumber      mesonpkg -Dsystem-lua=true -Dsystem-lua-version=5.4 -Dintrospection=disabled \
-                         -Ddoc=disabled -Delogind=enabled -Dsystemd=disabled -Dsystemd-system-service=false \
-                         -Dsystemd-user-service=false -Dtests=false -Ddbus-tests=false
 
+# GUdev (GLib's view of udev): ModemManager and UPower need it.
+pkg libgudev         mesonpkg -Dintrospection=disabled -Dvapi=disabled -Dtests=disabled
 # ModemManager (mobile broadband), for ModemManagerQt; AT-command modems only
 # (no MBIM/QMI libraries yet).
 pkg ModemManager     mesonpkg -Dmbim=false -Dqmi=false -Dqrtr=false -Dpolkit=no -Dintrospection=false \
@@ -563,6 +554,19 @@ b_host_breeze_tools() {
     install -m 0755 "$2/bin/generate-symbolic-dark" "$2/bin/qrcAlias" "$QT_HOST/bin/"
 }
 step host-breeze-icons-tools "$SRC/breeze-icons" b_host_breeze_tools
+# KSyntaxHighlighting indexes its syntax definitions at build time with
+# katehighlightingindexer, so that runs on the build host: built here against
+# the host Qt (cross-building, its own fallback leaks the cross compiler).
+b_host_ksyntax_indexer() {
+    "${HOST_ENV[@]}" cmake -G Ninja -S "$1" -B "$2" -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_PREFIX_PATH="$QT_HOST" -DCMAKE_C_COMPILER="$(command -v gcc)" \
+        -DCMAKE_CXX_COMPILER="$(command -v g++)" -DKSYNTAXHIGHLIGHTING_USE_GUI=OFF \
+        -DBUILD_TESTING=OFF -DBUILD_QCH=OFF -DKDE_CLANG_FORMAT_EXECUTABLE=OFF \
+        -DCMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES="$HOSTDIR/include"
+    "${HOST_ENV[@]}" ninja -C "$2" -j"$JOBS" katehighlightingindexer
+    install -Dm755 "$2/bin/katehighlightingindexer" "$QT_HOST/bin/katehighlightingindexer"
+}
+step host-ksyntax-indexer "$SRC/syntax-highlighting" b_host_ksyntax_indexer
 
 pkg extra-cmake-modules       cmakepkg -DBUILD_DOC=OFF
 pkg plasma-wayland-protocols  cmakepkg -DCMAKE_PREFIX_PATH="$DYN/usr"
@@ -584,6 +588,8 @@ for kf in kconfig kcoreaddons ki18n kwidgetsaddons kguiaddons kitemmodels kitemv
         breeze-icons) pkg breeze-icons kfpkg -DBINARY_ICONS_RESOURCE=OFF \
                           -DGENERATE_SYMBOLIC_DARK="$QT_HOST/bin/generate-symbolic-dark" \
                           -DQRC_ALIAS="$QT_HOST/bin/qrcAlias" ;;
+        syntax-highlighting) pkg syntax-highlighting kfpkg \
+                          -DKATEHIGHLIGHTINGINDEXER_EXECUTABLE="$QT_HOST/bin/katehighlightingindexer" ;;
         # gzip, xz and zstd archives; bzip2 left out.
         karchive)    pkg karchive kfpkg -DWITH_BZIP2=OFF ;;
         # No spell-check dictionaries (Hunspell, ...) in jk_os yet.
@@ -691,6 +697,32 @@ pkg bubblewrap       mesonpkg -Dman=disabled -Dselinux=disabled -Dtests=false \
 pkg attr             autotools --disable-nls
 pkg acl              autotools --disable-nls
 pkg elogind          b_elogind
+# PipeWire and WirePlumber here, after elogind: they take the seat and
+# session from libelogind (a clean build failed with them before it).
+pkg pipewire         mesonpkg -Dsession-managers=[] -Dexamples=disabled -Dtests=disabled \
+                         -Dinstalled_tests=disabled -Dman=disabled -Ddocs=disabled -Dgstreamer=disabled \
+                         -Dgstreamer-device-provider=disabled -Dlibsystemd=disabled -Dlogind=enabled \
+                         -Dlogind-provider=libelogind -Dsystemd-system-service=disabled \
+                         -Dsystemd-user-service=disabled -Dselinux=disabled -Dpipewire-alsa=enabled \
+                         -Dpipewire-jack=disabled -Djack=disabled -Djack-devel=false -Dpipewire-v4l2=disabled \
+                         -Dalsa=enabled -Dbluez5=enabled -Dbluez5-backend-native-mm=disabled \
+                         -Dbluez5-backend-ofono=disabled -Dbluez5-backend-hsphfpd=disabled \
+                         -Dbluez5-codec-aptx=disabled -Dbluez5-codec-ldac=disabled -Dbluez5-codec-aac=disabled \
+                         -Dbluez5-codec-lc3plus=disabled -Dbluez5-codec-opus=disabled -Dbluez5-codec-lc3=disabled \
+                         -Dbluez5-codec-g722=disabled -Dbluez5-plc-spandsp=disabled -Dv4l2=enabled \
+                         -Dlibcamera=disabled -Dffmpeg=disabled -Dpw-cat-ffmpeg=disabled -Dvulkan=disabled \
+                         -Dsdl2=disabled -Dsndfile=enabled -Dlibmysofa=disabled -Dlibpulse=disabled \
+                         -Droc=disabled -Davahi=disabled -Decho-cancel-webrtc=disabled -Dlibusb=disabled \
+                         -Draop=disabled -Dlv2=disabled -Dx11=disabled -Dx11-xfixes=disabled \
+                         -Dlibcanberra=disabled -Dlegacy-rtkit=false -Davb=disabled -Dflatpak=disabled \
+                         -Dreadline=disabled -Dgsettings=disabled -Dcompress-offload=disabled -Dopus=disabled \
+                         -Dlibffado=disabled -Dgsettings-pulse-schema=disabled -Dsnap=disabled -Debur128=disabled \
+                         -Dfftw=disabled -Donnxruntime=disabled -Dudev=enabled -Dudevrulesdir=/usr/lib/udev/rules.d \
+                         -Devl=disabled -Dtest=disabled -Dvideotestsrc=disabled -Daudiotestsrc=disabled \
+                         -Dpam-defaults-install=false -Drlimits-install=false
+pkg wireplumber      mesonpkg -Dsystem-lua=true -Dsystem-lua-version=5.4 -Dintrospection=disabled \
+                         -Ddoc=disabled -Delogind=enabled -Dsystemd=disabled -Dsystemd-system-service=false \
+                         -Dsystemd-user-service=false -Dtests=false -Ddbus-tests=false
 # jk-session (src/jk-session): opens the elogind session jk-gui's desktop runs in.
 b_jk_session() {
     $CC $CPPFLAGS ${CFLAGS:-} -O2 -Wall -Wextra -o "$2/jk-session" "$1/jk-session.c" $LDFLAGS -lpam
@@ -699,7 +731,6 @@ b_jk_session() {
 # (Rebuilt when the source changes: its checksum is part of the options.)
 step jk-session "$ROOT_DIR/src/jk-session" b_jk_session \
     "$(cat "$ROOT_DIR"/src/jk-session/* | sha256sum | cut -c1-16)"
-pkg libgudev         mesonpkg -Dintrospection=disabled -Dvapi=disabled -Dtests=disabled
 pkg upower           mesonpkg -Dintrospection=disabled -Dgtk-doc=false -Dman=false \
                          -Didevice=disabled -Dsystemdsystemunitdir=no -Dudevrulesdir=/usr/lib/udev/rules.d \
                          -Dudevhwdbdir=/usr/lib/udev/hwdb.d -Dos_backend=linux
@@ -730,6 +761,16 @@ b_no_users_kcm() {
     rm -f "$DYN/usr/lib/qt6/plugins/plasma/kcms/systemsettings/kcm_users.so" \
           "$DYN/usr/share/applications/kcm_users.desktop" "$DYN"/usr/share/locale/*/LC_MESSAGES/kcm_users.mo
 }
+# KWin generates its Wayland protocol code with its own qtwaylandscanner_kde,
+# which runs on the build host: built here against the host Qt, like the
+# syntax indexer (KWin's fallback for cross builds leaks the cross compiler).
+b_host_kwin_scanner() {
+    "${HOST_ENV[@]}" cmake -G Ninja -S "$1/src/wayland/tools" -B "$2" -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_PREFIX_PATH="$QT_HOST" -DCMAKE_CXX_COMPILER="$(command -v g++)" -DQT_MAJOR_VERSION=6
+    "${HOST_ENV[@]}" ninja -C "$2" -j"$JOBS" qtwaylandscanner_kde
+    install -Dm755 "$2/qtwaylandscanner_kde" "$QT_HOST/bin/qtwaylandscanner_kde"
+}
+step host-kwin-scanner "$SRC/kwin" b_host_kwin_scanner
 for p in kdecoration layer-shell-qt kwayland plasma-activities plasma-activities-stats \
          kactivitymanagerd libplasma plasma5support kglobalacceld knighttime libkscreen \
          libksysguard kscreenlocker breeze kwin aurorae plasma-integration plasma-workspace milou \
@@ -737,6 +778,7 @@ for p in kdecoration layer-shell-qt kwayland plasma-activities plasma-activities
          qqc2-breeze-style ocean-sound-theme pulseaudio-qt plasma-pa bluedevil; do
     case "$p" in
         breeze)             pkg breeze kfpkg -DBUILD_QT5=OFF -DBUILD_QT6=ON ;;
+        kwin)               pkg kwin kfpkg -DQTWAYLANDSCANNER_KDE_EXECUTABLE="$QT_HOST/bin/qtwaylandscanner_kde" ;;
         aurorae)            pkg aurorae b_aurorae \
                                 "patches=$(cat "$ROOT_DIR"/configs/desktop/patches/aurorae/*.patch | sha256sum | cut -c1-16)" ;;
         plasma-nm)          pkg plasma-nm kfpkg -DBUILD_OPENCONNECT=OFF ;;
@@ -815,16 +857,22 @@ pkg foot             mesonpkg -Ddocs=disabled -Dtests=false -Dterminfo=disabled 
 # ---------------------------------------------------------------- Firefox
 # Mozilla's own release build, on the GTK 3 libraries built here.
 
-# GTK's build runs GLib and gdk-pixbuf tools (resource and schema compilers).
-# The ones built here run on the build host when it is the same arch; a
-# cross build would need them built for the host first.
-[[ "$ARCH" == "$HOST_ARCH" ]] || die "Firefox's GTK 3 needs GLib tools for the build host; cross builds of it are not set up yet"
+# GTK's build runs GLib and gdk-pixbuf tools (resource and schema compilers,
+# image to C converters). On the same arch the ones built here run on the
+# build host; cross-building, the build host's own do (make deps:
+# libglib2.0-bin, libgio-2.0-dev-bin, libgdk-pixbuf2.0-bin), their output
+# formats being stable across versions.
 dyn_tool() {    # dyn_tool <program>...: run $DYN's program on the build host
     mkdir -p "$HOSTDIR/wbin"
-    local p
+    local p host
     for p in "$@"; do
-        printf '#!/bin/sh\nexec %s --library-path %s %s "$@"\n' "$TC/usr/lib/ld-linux-x86-64.so.2" \
-            "$DYN/usr/lib:$TC/usr/lib" "$DYN/usr/bin/$p" > "$HOSTDIR/wbin/$p"
+        if [[ "$ARCH" == "$HOST_ARCH" ]]; then
+            printf '#!/bin/sh\nexec %s --library-path %s %s "$@"\n' "$TC/usr/lib/ld-linux-x86-64.so.2" \
+                "$DYN/usr/lib:$TC/usr/lib" "$DYN/usr/bin/$p" > "$HOSTDIR/wbin/$p"
+        else
+            host=$(PATH=/usr/bin:/bin command -v "$p") || die "no $p on the build host (run: make deps)"
+            printf '#!/bin/sh\nexec %s "$@"\n' "$host" > "$HOSTDIR/wbin/$p"
+        fi
         chmod +x "$HOSTDIR/wbin/$p"
     done
 }

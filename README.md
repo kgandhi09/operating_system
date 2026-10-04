@@ -212,12 +212,10 @@ On the tablet, jk_os's initramfs gives the PC on the USB cable a console
 ```sh
 telnet 172.16.42.1                  # a root shell (or: screen /dev/ttyACM0)
 scripts/tablet-backup.sh --list     # the tablet's partitions
-scripts/tablet-backup.sh            # copy them to ~/jk_os-backups/..., checked by SHA-256
+scripts/tablet-backup.sh            # optional: copy them to ~/jk_os-backups/..., checked by SHA-256
 ```
 
-Back up the partitions before anything writes to the tablet's storage:
-`efs`, `sec_efs`, `persist` and the modem's calibration are unique to the
-unit. The Book Cover Keyboard (pogo pins) works on the console too.
+The Book Cover Keyboard (pogo pins) works on the console too.
 
 To install jk_os on the tablet, with it at that console (no system yet):
 
@@ -226,8 +224,8 @@ make                                # the OS image (and the boot images)
 scripts/tablet-install.sh           # format userdata as JK_DATA, copy the image, reboot
 ```
 
-`tablet-install.sh` refuses to run without a backup, and formats only the
-`userdata` partition, after you type its name. The tablet then boots jk_os
+`tablet-install.sh` formats only the `userdata` partition, after you type
+its name. The tablet then boots jk_os
 from its storage and starts the first-boot setup on its screen; the
 installed system serves the PC on the USB cable too (`telnet 172.16.42.1`
 or `/dev/ttyACM0`, with a login). `jk-update` writes a new kernel to the

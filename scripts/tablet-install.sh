@@ -2,18 +2,17 @@
 # Install jk_os on a tablet from the PC, over the USB network of the tablet's
 # jk_os initramfs (172.16.42.1): with the tablet at the initramfs's rescue
 # shell (no system installed yet, or to reinstall), this
-#   1. checks there is a backup of the tablet's partitions (tablet-backup.sh),
-#   2. formats its userdata partition as ext4 JK_DATA (Android's data: the
+#   1. formats its userdata partition as ext4 JK_DATA (Android's data: the
 #      only partition touched, after you type its name),
-#   3. copies the OS image (make) there as system/jk_os.squashfs, checked by
+#   2. copies the OS image (make) there as system/jk_os.squashfs, checked by
 #      SHA-256 on the tablet, and
-#   4. reboots it into jk_os, which starts with the first-boot setup.
+#   3. reboots it into jk_os, which starts with the first-boot setup.
 #
 #   scripts/tablet-install.sh [--image <jk_os.squashfs>] [--no-format] [--yes]
 #
 #   --no-format  keep JK_DATA as it is (home, settings) and only replace the
 #                image, like jk-update does
-#   --yes        don't ask (the backup check still applies)
+#   --yes        don't ask
 source "$(dirname "$0")/common.sh"
 need telnet sha256sum dd
 
@@ -32,19 +31,14 @@ done
 [[ "$DEVICE_BOOT" == android-* ]] || die "the build target ($JK_DEVICE) isn't a tablet: see make showconfig"
 [[ -f "$image" ]] || die "no OS image at $image (run: make)"
 
-# The partitions that exist only on this unit must be safe first.
-backup=$(ls -d "$HOME"/jk_os-backups/"$JK_DEVICE"-*/ 2>/dev/null | tail -n1)
-[[ -n "$backup" && -f "$backup/SHA256SUMS" ]] && grep -q ' efs.img$' "$backup/SHA256SUMS" \
-    || die "no backup of the tablet in ~/jk_os-backups/$JK_DEVICE-*: run scripts/tablet-backup.sh first"
-log "backup: $backup"
-
 # ask <port> <request> [file]: one request to the tablet, the file (if any)
-# sent after it; prints the answer.
+# sent after it; prints the whole answer (the tablet closes the connection
+# when it is done).
 ask() {
     exec 3<>"/dev/tcp/$HOST/$1"
     printf '%s\n' "$2" >&3
     [[ -n "${3:-}" ]] && dd if="$3" bs=4M status=progress >&3
-    head -n1 <&3
+    cat <&3
     exec 3<&-
 }
 timeout 5 bash -c "exec 3<>/dev/tcp/$HOST/5000" 2>/dev/null \
@@ -72,15 +66,15 @@ if (( format )); then
         [[ "$reply" == userdata ]] || die "aborted"
     fi
     log "formatting /dev/$dev as JK_DATA"
-    out=$(ask 5001 "format $dev userdata")
+    out=$(ask 5001 "format $dev userdata" | head -n1)
     [[ "$out" == ok* ]] || die "${out:-no answer from the tablet}"
     log "$out"
 fi
 
 log "copying the image"
-out=$(ask 5001 "put $size $sum $OS_VERSION" "$image")
+out=$(ask 5001 "put $size $sum $OS_VERSION" "$image" | head -n1)
 [[ "$out" == ok* ]] || die "${out:-no answer from the tablet}"
 log "$out"
 
-out=$(ask 5001 reboot)
+out=$(ask 5001 reboot | head -n1)
 log "${out:-rebooting}: the tablet starts jk_os (first-boot setup on its screen)"
