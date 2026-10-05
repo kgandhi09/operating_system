@@ -170,8 +170,25 @@ To add a device, create `targets/devices/<category>/<device>/device.env`
 `targets/kernels/<name>/kernel.env` and list it in the device's
 `DEVICE_KERNELS`. `scripts/lib-target.sh` describes every field.
 
-Releases (`scripts/publish.sh`, `jk-update`) are still per arch, so only the
-generic PC build can be published for now.
+Every kind of system has its own **update channel**, since each needs its
+own kernel and image: the generic PC's is its arch (`x86_64`, `aarch64`),
+every other device's `<device>-<arch>` (e.g. `samsung-gts7fe-aarch64`,
+`jetson-orin-nx-aarch64`), and `-<kernel>` when built with another kernel
+profile than the device's first (`JK_CHANNEL`, `scripts/common.sh`; the
+image records it in `/etc/jk_os/target`). `scripts/publish.sh` publishes the
+current target's build to its channel, `jk-update` follows the channel of
+the system it runs on:
+
+| Boot format | Kernel in the release | Where `jk-update` puts it | Installer |
+| --- | --- | --- | --- |
+| `efi-iso` (PCs, EFI boards) | `jk_os-<ver>-<channel>.efi` | `/boot/EFI/BOOT/BOOT*.EFI` | the ISO (+ `INSTALL.txt` for x86_64) |
+| `android-uboot` (Tab S7 FE) | `….vendor_boot.img` | the `vendor_boot` partition | the Odin `.tar.md5` |
+| `android-bootimg` | `….boot.img` | the `boot` partition | the Odin `.tar.md5` |
+
+On the server: `<downloads>/jk_os/<channel>/<ver>/`, and
+`<downloads>/jk_os/latest-<channel>.json`, which `jk-update` reads. The
+release names its device, arch and boot format, and `jk-update` refuses one
+made for another kind of system.
 
 ### Android-bootloader devices (Samsung Galaxy Tab S7 FE)
 
@@ -235,8 +252,10 @@ scripts/tablet-install.sh           # format userdata as JK_DATA, copy the image
 its name. The tablet then boots jk_os
 from its storage and starts the first-boot setup on its screen; the
 installed system serves the PC on the USB cable too (`telnet 172.16.42.1`
-or `/dev/ttyACM0`, with a login). `jk-update` writes a new kernel to the
-`vendor_boot` partition (keeping the old one for `--rollback`).
+or `/dev/ttyACM0`, with a login). `jk-update` follows the
+`samsung-gts7fe-aarch64` channel (`scripts/publish.sh` after `make` and
+`make bootimg`) and writes a new kernel to the `vendor_boot` partition
+(keeping the old one for `--rollback`).
 
 To reinstall over an installed system, choose "Rescue shell (reinstall over
 USB)" in U-Boot's menu (hold volume down while it starts): the initramfs
@@ -375,15 +394,19 @@ If it finds neither, it opens a rescue shell on the console.
   `update-grub` leaves alone, and makes the menu show if it was hidden. Reinstalling replaces the entry; delete the `jk_os` block
   there to remove it. GRUB starts jk_os only with Secure Boot off (the installer warns if it is on).
 - **Updating.** A new jk_os version is a new kernel file and a new image.
-  `sudo jk-update` fetches the newest published release
-  (`<server>/downloads/jk_os/latest-<arch>.json`), checks its SHA-256s, swaps
+  `sudo jk-update` fetches the newest release on the system's update channel
+  (`<server>/downloads/jk_os/latest-<channel>.json`: the arch for a generic
+  PC, `<device>-<arch>` otherwise, see Build targets), checks its SHA-256s, swaps
   both files in and keeps the previous pair (`/data/system/jk_os.squashfs.old`,
   `/data/system/kernel.old`) for `sudo jk-update --rollback`; the new release
   starts at the next reboot. `jk-update --check` only says whether there is one.
   It lists the files you changed that the update also changes (your copies win).
-  The server is set in `/etc/jk_os/update` (`JK_UPDATE_URL=`). Releases are
-  published with `scripts/publish.sh` (image, kernel, ISO, `INSTALL.txt`,
-  `SHA256SUMS`, `release.json`; only the newest is kept on the server). By hand:
+  The server is set in `/etc/jk_os/update` (`JK_UPDATE_URL=`; `JK_UPDATE_CHANNEL=`
+  follows another channel for the same device). Releases are published with
+  `scripts/publish.sh` for the current target (image, kernel, installer,
+  `SHA256SUMS`, `release.json`; only the newest per channel is kept on the
+  server; `PUBLISH_HOST=local PUBLISH_ROOT=<dir>` publishes into a directory
+  here, for tests). By hand:
   put the files at `/boot/EFI/BOOT/BOOT*.EFI` and `/data/system/jk_os.squashfs`
   (or reinstall and keep `/data`). Your changes in `/data/system/root` stay on
   top of the new image.

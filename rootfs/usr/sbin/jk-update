@@ -8,10 +8,16 @@
 #
 # A jk_os release is two files, published together by scripts/publish.sh: the
 # OS image (/data/system/jk_os.squashfs) and the kernel: the EFI file in
-# /boot/EFI/BOOT, or, on a tablet whose Android bootloader starts U-Boot, the
-# vendor_boot partition (jk_os's kernel and device tree for U-Boot to start).
-# This reads <url>/jk_os/latest-<arch>.json (latest-<device>-<arch>.json for
-# such a device), downloads both
+# /boot/EFI/BOOT (PCs, EFI boards), or a partition on a device with an
+# Android bootloader: vendor_boot when it starts U-Boot (jk_os's kernel and
+# device tree for U-Boot to start), else boot (the boot image).
+#
+# Each kind of system has its own update channel, since each needs its own
+# kernel and image: JK_CHANNEL in /etc/jk_os/target, written when the image
+# was built (the generic PC's: its arch, x86_64 or aarch64; other devices':
+# <device>-<arch>, e.g. samsung-gts7fe-aarch64). This reads
+# <url>/jk_os/latest-<channel>.json, refuses a release made for another
+# device, arch or boot format, downloads both files
 # into /data/system/update (resuming an interrupted download), checks their
 # sizes and SHA-256s, and swaps them in: the running image and kernel are
 # kept as /data/system/jk_os.squashfs.old and /data/system/kernel.old, for
@@ -22,7 +28,9 @@
 # copy (/data/system/root/upper), also over the update's: jk-update lists the
 # ones the update changes, so they don't silently stay old.
 #
-# /etc/jk_os/update (optional): JK_UPDATE_URL=<base URL of the downloads>.
+# /etc/jk_os/update (optional): JK_UPDATE_URL=<base URL of the downloads>,
+# JK_UPDATE_CHANNEL=<channel> (another channel of releases for the same
+# device, e.g. a test one; the device check still applies).
 
 set -u
 name=${0##*/}
@@ -69,15 +77,21 @@ case "$(uname -m)" in
 esac
 KERNEL=/boot/EFI/BOOT/$efi
 
-# Where the kernel goes: the EFI file, or a partition (kpart) on a device
-# booted through U-Boot (/etc/jk_os/target, written when the image is built).
-JK_BOOT=efi-iso JK_DEVICE=generic
+# What this system is (/etc/jk_os/target, written when the image is built):
+# its channel, and where the kernel goes: the EFI file, or a partition
+# (kpart) on a device with an Android bootloader.
+JK_BOOT=efi-iso JK_DEVICE=generic JK_CHANNEL=
 [ -f /etc/jk_os/target ] && . /etc/jk_os/target
-channel=$arch kpart=""
-if [ "$JK_BOOT" = android-uboot ]; then
-    kpart=vendor_boot
-    channel=$JK_DEVICE-$arch
+if [ -z "$JK_CHANNEL" ]; then
+    # Images built before JK_CHANNEL: the same rule (scripts/common.sh).
+    if [ "$JK_DEVICE" = generic ]; then JK_CHANNEL=$arch; else JK_CHANNEL=$JK_DEVICE-$arch; fi
 fi
+channel=${JK_UPDATE_CHANNEL:-$JK_CHANNEL}
+case "$JK_BOOT" in
+    android-uboot)   kpart=vendor_boot ;;
+    android-bootimg) kpart=boot ;;
+    *)               kpart="" ;;
+esac
 
 # part_dev <name>: the block device of the partition named <name>.
 part_dev() {
@@ -152,6 +166,7 @@ if [ "$action" = rollback ]; then
 fi
 
 # ---------------------------------------------------------------- check
+say "Update channel: $channel ($URL)"
 tmpd=$(mktemp -d) || die "cannot make a temporary directory"
 trap 'rm -rf "$tmpd"' EXIT INT TERM
 curl -fsSL --retry 3 --connect-timeout 15 "$URL/jk_os/latest-$channel.json" -o "$tmpd/latest.json" \
@@ -161,6 +176,15 @@ new_ver=$(field .version "$L")
 new_sha=$(field .files.image.sha256 "$L")
 [ -n "$new_ver" ] && [ "$new_sha" != null ] && [ "$(field .files.kernel.sha256 "$L")" != null ] \
     || die "the server's release description is incomplete"
+# A release for another kind of system would not boot here. (Releases from
+# before the channels name only the arch.)
+rel_arch=$(jq -r '.arch // empty' "$L") rel_dev=$(jq -r '.device // empty' "$L") rel_boot=$(jq -r '.boot // empty' "$L")
+[ -z "$rel_arch" ] || [ "$rel_arch" = "$arch" ] || die "the release on channel $channel is for $rel_arch, this is $arch"
+[ -z "$rel_dev" ] || [ "$rel_dev" = "$JK_DEVICE" ] || die "the release on channel $channel is for the $rel_dev, this is a $JK_DEVICE"
+[ -z "$rel_boot" ] || [ "$rel_boot" = "$JK_BOOT" ] || die "the release on channel $channel boots with $rel_boot, this system with $JK_BOOT"
+if [ -z "$rel_dev" ] && [ "$JK_DEVICE" != generic ]; then
+    die "the release on channel $channel names no device: not installing it on a $JK_DEVICE"
+fi
 cur_ver=$(. /etc/os-release; echo "$VERSION_ID")
 
 if [ "$(id -u)" != 0 ] && [ ! -f "$STATE" ]; then

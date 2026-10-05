@@ -218,5 +218,15 @@ fi
 # android-*: boot.img, vbmeta.img and dtbo.img for Odin (build-bootimg.sh).
 BOOT_TAR="$IMAGE_DIR/$OS_NAME-$OS_VERSION-$JK_NAME-$ARCH.tar.md5"
 
+# The update channel: the releases scripts/publish.sh publishes for this
+# target (<downloads>/jk_os/latest-<channel>.json) and jk-update on its
+# installed systems follows (JK_CHANNEL in /etc/jk_os/target). One per kind
+# of system, since each needs its own kernel and image: the generic PC's is
+# its arch alone (x86_64, aarch64: what the first releases used), every
+# other device's <device>-<arch>, and -<kernel> when built with another
+# kernel profile than the device's first.
+if [[ "$JK_DEVICE" == generic ]]; then JK_CHANNEL="$ARCH"; else JK_CHANNEL="$JK_DEVICE-$ARCH"; fi
+[[ "$JK_KERNEL" == "${DEVICE_KERNELS%% *}" ]] || JK_CHANNEL="$JK_CHANNEL-$JK_KERNEL"
+
 export ARCH CROSS_COMPILE
 
