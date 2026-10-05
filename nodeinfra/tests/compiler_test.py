@@ -118,4 +118,19 @@ int main(void) {
     target = root / 'scoped.h'
     run([jkbuf, '-I', str(inc), '-o', str(target), str(src)])
     assert 'jkbuf_outer_Inner' in target.read_text()
+    # .jkbuf is the user-facing extension; legacy RIDL inputs remain accepted.
+    src = root / 'message.jkbuf'
+    src.write_text(source)
+    target, depfile = root / 'message.h', root / 'message.d'
+    run([jkbuf, '--depfile', str(depfile), '-o', str(target), str(src)])
+    assert target.read_bytes() == out.read_bytes()
+    assert str(src) in depfile.read_text()
+    assert str(root / 'common.ridl') in depfile.read_text()
+    assert depfile.read_text().startswith(str(target) + ':')
+    original_schema = (root / 'common.ridl').read_bytes()
+    for destination in (src, root / 'common.ridl', target):
+        run([jkbuf, '--depfile', str(destination), '-o', str(target), str(src)], False)
+    run([jkbuf, '-o', str(root / 'common.ridl'), str(src)], False)
+    assert (root / 'common.ridl').read_bytes() == original_schema
+    assert target.read_bytes() == out.read_bytes()
 print('PASS: parser, includes, diagnostics, bounds, cycles, schema IDs, generated C99/C++20 validation')

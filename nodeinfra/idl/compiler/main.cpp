@@ -11,6 +11,21 @@ namespace fs = std::filesystem;
 using namespace jk_ridl;
 namespace {
 constexpr std::size_t max_payload = 65536;
+constexpr const char *usage =
+    "usage: jkbuf [-I directory] [--depfile output.d] -o output.h input.jkbuf\n";
+std::string depfile_path(const fs::path &path) {
+  std::string escaped;
+  for (char c : fs::absolute(path).generic_string()) {
+    if (c == '\n' || c == '\r')
+      throw std::runtime_error("depfile paths cannot contain newlines");
+    if (c == '$')
+      escaped += '$';
+    else if (c == ' ' || c == '\t' || c == '#' || c == '\\' || c == ':')
+      escaped += '\\';
+    escaped += c;
+  }
+  return escaped;
+}
 std::uint64_t hash(const std::string &s) {
   std::uint64_t h = 14695981039346656037ULL;
   for (unsigned char c : s) {
@@ -39,6 +54,7 @@ class Compiler {
   std::map<std::string, Decl> messages_;
   std::map<std::string, Repr> generated_;
   std::set<std::string> active_files_, loaded_, visiting_, symbols_;
+  std::set<fs::path> inputs_;
   std::vector<fs::path> includes_;
   std::ostringstream body_, traits_;
   std::size_t bytes_ = 0;
@@ -89,6 +105,7 @@ class Compiler {
   }
   void load(const fs::path &input, const std::string &scope) {
     auto path = fs::canonical(input).string();
+    inputs_.insert(path);
     if (active_files_.contains(path))
       throw std::runtime_error(path + ": cyclic include");
     if (active_files_.size() >= 64)
@@ -240,6 +257,7 @@ class Compiler {
   }
 
 public:
+  const std::set<fs::path> &inputs() const { return inputs_; }
   explicit Compiler(std::vector<fs::path> includes)
       : includes_(std::move(includes)) {}
   std::string compile(const fs::path &input) {
@@ -266,17 +284,19 @@ public:
 } // namespace
 int main(int argc, char **argv) {
   try {
-    fs::path input, output;
+    fs::path input, output, depfile;
     std::vector<fs::path> includes;
     for (int i = 1; i < argc; ++i) {
       std::string a = argv[i];
       if (a == "--help") {
-        std::cout << "usage: jkbuf [-I directory] -o output.h input.ridl\n";
+        std::cout << usage;
         return 0;
       }
-      if ((a == "-o" || a == "-I") && i + 1 < argc) {
+      if ((a == "-o" || a == "-I" || a == "--depfile") && i + 1 < argc) {
         if (a == "-o")
           output = argv[++i];
+        else if (a == "--depfile")
+          depfile = argv[++i];
         else
           includes.emplace_back(argv[++i]);
       } else if (!a.empty() && a[0] != '-' && input.empty())
@@ -285,15 +305,32 @@ int main(int argc, char **argv) {
         throw std::runtime_error("invalid arguments (use --help)");
     }
     if (input.empty() || output.empty())
-      throw std::runtime_error(
-          "usage: jkbuf [-I directory] -o output.h input.ridl");
-    if (fs::absolute(input).lexically_normal() ==
-            fs::absolute(output).lexically_normal() ||
-        (fs::exists(output) && fs::equivalent(input, output)))
-      throw std::runtime_error("output must not overwrite input");
-    auto result = Compiler(std::move(includes)).compile(input);
+      throw std::runtime_error(usage);
+    Compiler compiler(std::move(includes));
+    auto result = compiler.compile(input);
+    auto same_file = [](const fs::path &a, const fs::path &b) {
+      return fs::weakly_canonical(a) == fs::weakly_canonical(b) ||
+             (fs::exists(a) && fs::exists(b) && fs::equivalent(a, b));
+    };
+    for (const auto &source : compiler.inputs()) {
+      if (same_file(source, output) ||
+          (!depfile.empty() && same_file(source, depfile)))
+        throw std::runtime_error("output must not overwrite input: " + source.string());
+    }
+    std::string dependencies;
+    if (!depfile.empty()) {
+      if (same_file(output, depfile))
+        throw std::runtime_error("depfile must differ from output header");
+      dependencies = depfile_path(output) + ":";
+      for (const auto &source : compiler.inputs())
+        dependencies += " " + depfile_path(source);
+      dependencies += '\n';
+      std::ofstream deps(depfile);
+      if (!deps || !(deps << dependencies) || !deps.flush())
+        throw std::runtime_error("cannot write " + depfile.string());
+    }
     std::ofstream out(output);
-    if (!out || !(out << result))
+    if (!out || !(out << result) || !out.flush())
       throw std::runtime_error("cannot write " + output.string());
     return 0;
   } catch (const std::exception &e) {

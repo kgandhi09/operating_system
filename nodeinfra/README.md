@@ -73,10 +73,12 @@ namespace robot {
 }
 ```
 
+Save the definition as `reading.jkbuf` (`.ridl` files remain supported).
+
 ```sh
-build/nodeinfra/idl/jkbuf -o reading.h reading.ridl
+build/nodeinfra/idl/jkbuf -o reading.h reading.jkbuf
 # Includes are relative to the including file, then searched through -I paths.
-build/nodeinfra/idl/jkbuf -I schemas -o reading.h reading.ridl
+build/nodeinfra/idl/jkbuf -I schemas -o reading.h reading.jkbuf
 ```
 
 The generated header contains pointer-free C99-compatible message structs,
@@ -92,6 +94,75 @@ and composite types, and comments. It rejects unresolved/recursive types,
 duplicate declarations or fields, invalid bounds, generated-name collisions,
 and messages exceeding 64 KiB. Diagnostics include source locations where
 available. See [the RIDL specification](idl/grammar/ridl_spec.md).
+
+## Message libraries with CMake
+
+Use CMake **3.20 or newer**. In your application's top-level `CMakeLists.txt`,
+load nodeinfra before adding the messages directory:
+
+```cmake
+cmake_minimum_required(VERSION 3.20)
+project(my_robot LANGUAGES C CXX)
+
+find_package(jk_nodeinfra CONFIG REQUIRED)
+# For a source checkout instead: add_subdirectory(path/to/nodeinfra nodeinfra)
+add_subdirectory(messages)
+
+add_executable(my_node main.cpp)
+target_link_libraries(my_node PRIVATE messages jk::jk_nodeinfra)
+```
+
+In `messages/CMakeLists.txt`:
+
+```cmake
+include(BuildJkbuf)
+
+build_jkbuf(NAME test_msg MSG_FILES test/test.jkbuf)
+build_jkbuf(NAME image_msg MSG_FILES image/image.jkbuf)
+build_jkbuf(NAME telemetry_msg MSG_FILES telemetry/telemetry.jkbuf)
+build_jkbuf(NAME bot_registry_msg MSG_FILES registry/bot_registry.jkbuf)
+
+add_library(messages INTERFACE)
+target_link_libraries(messages INTERFACE
+  test_msg image_msg telemetry_msg bot_registry_msg)
+```
+
+Each call creates a **header-only INTERFACE library** and a `<NAME>_generate`
+build target. Linking the library generates the headers before compiling
+consumers and provides the generated include directory and C++ message-trait
+headers automatically. The generated structs and helpers are entirely in the
+headers; there is no separate message `.a` or `.so` to compile. C consumers can
+link the same message target. Link `jk::jk_nodeinfra` as well when using the
+C++ node runtime.
+
+Paths under `MSG_FILES` are relative to the current source directory and must
+stay inside it. Their directory structure is preserved inside
+`${CMAKE_CURRENT_BINARY_DIR}/<NAME>/`: `test/test.jkbuf` generates
+`test_msg/test/test.h`. A consumer simply writes:
+
+```cpp
+#include "test/test.h"
+#include "image/image.h"
+```
+
+One target can contain multiple message files. Use `INCLUDE_DIRS` to find
+shared schemas referenced by `#include "common.jkbuf"`:
+
+```cmake
+build_jkbuf(NAME motion_msg
+  MSG_FILES motion/command.jkbuf motion/state.jkbuf
+  INCLUDE_DIRS shared)
+```
+
+Included schemas, including transitive includes, are tracked automatically:
+editing one regenerates affected headers on the next build. Generation runs
+at build time and supports Ninja and Unix Makefiles with CMake 3.20+. Existing
+`.ridl` inputs also work. Cross builds require a native compiler supplied via
+`-DJKBUF_HOST_EXECUTABLE=/absolute/path/to/native/jkbuf`.
+
+For a complete source-tree example, see
+[examples/messages/CMakeLists.txt](examples/messages/CMakeLists.txt) and
+[sensor.jkbuf](examples/messages/sensor.jkbuf).
 
 ## C++ node API
 

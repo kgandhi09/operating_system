@@ -2,7 +2,8 @@
 
 Version: **0.2 — local shared-memory milestone** (2026-10-05).
 
-RIDL describes bounded message types. `jkbuf` is the C++20 compiler for this
+RIDL describes bounded message types, stored in `.jkbuf` files (legacy `.ridl`
+files are also accepted). `jkbuf` is the C++20 compiler for this
 language. It implements lexing, parsing, semantic validation, and generation
 of C99-compatible native-layout structs with C++ message traits. The local
 C++ node runtime uses those types directly in shared memory. No ROS code or
@@ -18,7 +19,7 @@ Empty files, namespaces, and messages are accepted. There is no trailing
 semicolon after a namespace or message body.
 
 ```ridl
-#include "common/header.ridl"
+#include "common/header.jkbuf"
 namespace robot.motion {
     message MotorState {
         common.Header header;
@@ -99,13 +100,17 @@ Unrecognized characters fail with file/line/column diagnostics.
 ## Compiler interface
 
 ```sh
-jkbuf [-I directory] -o output.h input.ridl
+jkbuf [-I directory] [--depfile output.d] -o output.h input.jkbuf
 ```
 
 An output header contains all transitively included definitions, ordered so
 by-value dependencies are defined first. Output is deterministic for the same
 logical declarations. Compilation validates input before opening output, and
-refuses to overwrite the root input file.
+refuses to overwrite any input file. The optional `--depfile` writes a Make-style
+dependency file listing the root schema and all transitively included files.
+The header and dependency file must be distinct. CMake's `BuildJkbuf` module
+uses this information to regenerate message headers when schemas change;
+see [Message libraries with CMake](../../README.md#message-libraries-with-cmake).
 
 `robot.motion.MotorState` becomes `jkbuf_robot_motion_MotorState`. Field
 `rpm` becomes `f_rpm`. Prefixing fields avoids C/C++ keyword conflicts.
