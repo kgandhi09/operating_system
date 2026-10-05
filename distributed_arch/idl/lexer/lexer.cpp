@@ -165,6 +165,34 @@ Token Lexer::NextToken() {
                      {.start = start, .end = end});
   }
 
+  // Include introducer, and comments (comments are trivia for the parser).
+  if (current == '#') {
+    std::string text;
+    while (IsIdentifierBody(Peek()))
+      text += Advance();
+    return MakeToken(text == "include" ? TokenType::KwInclude
+                                       : TokenType::Unknown,
+                     "#" + text, {start, CurrentLocation()});
+  }
+  if (current == '/' && Peek() == '/') {
+    Advance();
+    while (!IsAtEnd() && Peek() != '\n')
+      Advance();
+    return MakeToken(TokenType::SingleLineComment, "",
+                     {start, CurrentLocation()});
+  }
+  if (current == '/' && Peek() == '*') {
+    Advance();
+    while (!IsAtEnd() && !(Peek() == '*' && PeekNext() == '/'))
+      Advance();
+    if (IsAtEnd())
+      return MakeToken(TokenType::Unknown, "", {start, CurrentLocation()});
+    Advance();
+    Advance();
+    return MakeToken(TokenType::MultiLineComment, "",
+                     {start, CurrentLocation()});
+  }
+
   // Identifier / Keyword
   if (IsIdentifierStart(current)) {
     std::string lexeme;
@@ -197,11 +225,14 @@ Token Lexer::NextToken() {
   // String Literal
   if (current == '"') {
     std::string lexeme;
+    bool valid = true;
     while (!IsAtEnd() && Peek() != '"' && Peek() != '\n') {
-      lexeme += Advance();
+      unsigned char c = static_cast<unsigned char>(Advance());
+      valid = valid && c >= 32 && c <= 126;
+      lexeme += static_cast<char>(c);
     }
 
-    if (IsAtEnd() || Peek() != '"') {
+    if (IsAtEnd() || Peek() != '"' || !valid) {
       const SourceLocation end = CurrentLocation();
       return MakeToken(TokenType::Unknown, std::move(lexeme),
                        {.start = start, .end = end});

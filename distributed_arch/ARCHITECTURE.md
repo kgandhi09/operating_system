@@ -2,10 +2,10 @@
 
 ## nodeinfra — Distributed Robotics Architecture
 
-**Architecture name:** nodeinfra  
-**Document version:** 0.1  
-**Status:** Initial architecture design  
-**Date:** 2026-09-09
+**Architecture name:** nodeinfra
+**Document version:** 0.2
+**Status:** Minimal local C++ implementation; networking pending
+**Date:** 2026-10-05
 
 nodeinfra is a Linux-first publish/subscribe architecture for parallel robotics
 computation. Independent processes exchange immutable messages through shared
@@ -14,9 +14,18 @@ Its central rule is simple: **one published payload, shared by all local
 subscribers, without a payload copy for each subscriber.**
 
 This document is the project-level design baseline. It distinguishes agreed
-requirements from proposed mechanisms and open decisions. It does not claim
-that the runtime exists today. RIDL syntax is specified separately in
+requirements from proposed mechanisms and open decisions. The first local
+runtime now exists: see [README.md](README.md) for build/run instructions and
+[OWNERSHIP.md](OWNERSHIP.md) for the implemented lifetime and recovery contract.
+These define the current implementation where the broader proposals below
+leave alternatives open. RIDL syntax is specified separately in
 [the RIDL specification](idl/grammar/ridl_spec.md).
+
+The compiler (`jkbuf`), nodemaster, transport, and node API are C++20. Local
+payload delivery uses shared memory and metadata handles, with no per-subscriber
+payload copies. No ROS dependency or compatibility layer is used. Future
+JKLink networking will use TCP; generic transport ideas below do not authorize
+UDP/multicast or RF-specific transports for that milestone.
 
 ## 1. Agreed Requirements
 
@@ -64,8 +73,10 @@ do not establish latency or scheduling guarantees.
 The proposed runtime has a control plane for participant registration,
 discovery, configuration, and resource administration, and a data plane for
 payload access and delivery. A host-local runtime manager is the initial
-proposal for control-plane responsibilities. Its restart behavior must be
-defined before implementation.
+implementation for domain initialization, process monitoring, and reclamation.
+Node registration and routing metadata live in the shared region, and clients
+update them under a process-shared mutex. Restart creates a new domain object;
+clients explicitly reconnect (see OWNERSHIP.md).
 
 ```mermaid
 flowchart LR
@@ -91,8 +102,8 @@ flowchart LR
 ```
 
 Local payload delivery should not require the manager to receive and resend
-message bytes. The exact queue topology and placement of routing work remain
-open. The design supports multiple publishers on a topic, but does not grant
+message bytes. The first implementation scans a bounded slot table and uses
+per-slot pending/reader masks for fan-out. The design supports multiple publishers on a topic, but does not grant
 multiple writers simultaneous ownership of one payload.
 
 ## 4. Shared-Memory Model
@@ -186,7 +197,8 @@ also has to finish or be safely cancelled before recycling a buffer.
 
 Manager failure, adapter failure, and host restart need explicit recovery
 rules. Restart may invalidate a whole domain rather than preserve in-flight
-messages in the initial version; that choice is still open.
+messages in the initial version; the implemented contract invalidates the
+domain on metadata-owner death or master restart without reusing old mappings.
 
 ## 6. Topics, Delivery, and Backpressure
 
@@ -206,10 +218,10 @@ are choices to evaluate, not promises that every policy will ship initially.
 Dropping a queued handle releases only that queue's retention; it must never
 invalidate an active reader.
 
-Ordering scope, concurrent publication semantics, late-joiner history,
-acknowledgements, and reliability defaults remain open. The initial design
-does not promise global ordering across publishers or exactly-once delivery.
-Reliable delivery must still respect finite memory and bounded retry policy.
+The first backend orders deliveries by publication commit sequence, including
+concurrent publishers, with no late-joiner history or automatic replay. A full
+pool rejects new loans. It does not promise exactly-once application processing
+or durable delivery. Further delivery policies remain future work.
 
 ## 7. Network Extension
 
@@ -258,7 +270,8 @@ Generated accessors should support construction into a publisher loan and
 read-only subscriber views. The representation must account for bounded
 strings/vectors, nested types, maximum storage size, and invalid or recursive
 type definitions. Whether bounded containers reserve their entire capacity
-inline or use offsets is an open layout decision.
+inline or use offsets was an open layout decision; jkbuf's first generated
+representation reserves bounded capacities inline and validates native size.
 
 The current language uses namespaces, includes, messages, and fields without
 numeric IDs. Field IDs, compatibility rules, and wire encoding must be
@@ -310,17 +323,19 @@ benchmark results.
 
 ## 11. Repository Baseline
 
-At the time of this document:
+Current implementation (2026-10-05):
 
-| Area                                                  | State                                                                                      |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| RIDL grammar and specification                        | Present; specification aligned with grammar and lexer                                      |
-| Lexer                                                 | Basic tokenization implemented; include recognition and strict string validation have gaps |
-| Lexer tests                                           | 12 tests passed during the repository review; root CTest discovery needs enabling          |
-| AST                                                   | Basic declaration hierarchy only; field/type nodes are missing                             |
-| Parser                                                | Empty implementation file with a build target                                              |
-| Semantic validation and code generation               | Not implemented                                                                            |
-| Shared-memory runtime, pub/sub, discovery, transports | Not implemented                                                                            |
+| Area | State |
+| --- | --- |
+| RIDL grammar, lexer, AST, parser | Implemented, including includes and comments |
+| Name/type validation and bounded layout | Implemented; rejects duplicates, recursion, unresolved types, oversized messages |
+| jkbuf generation | C-compatible native structs, validators, schema IDs, C++ traits |
+| Shared-memory runtime | Bounded slots, move-only loans, pending/reader retention, robust mutex |
+| nodemaster | Per-user domain initialization, dead-process reaping, fail-closed restart and stale cleanup |
+| Local pub/sub | Typed endpoints, multiple publishers/subscribers, exact schema matching, explicit exhaustion |
+| Tests | Compiler C99/C++20 fixtures, multiprocess fan-out, retention, concurrency, crashes and restart |
+| TCP transport, controller and JKLink integration | Pending |
+| Portable wire serialization, Python bindings | Pending |
 
 ## 12. Development Sequence
 
@@ -336,10 +351,16 @@ Each stage should end in a reviewable result before expanding the runtime.
 | 6. First network transport    | Defined wire format, adapter contract, bounded send/receive path                                       | Two-host pub/sub with shared local fan-out and disconnect tests  |
 | 7. Robotics hardening         | Measurements, lifecycle tooling, scheduling evaluation, additional adapters                            | Reproducible sensor/control workloads and measured improvements  |
 
-The immediate next design task is **stage 1: the ownership and reclamation
-contract**. Its decisions guide RIDL layout work and the local runtime.
+Stages 1–5 now have a minimal implementation and local validation, as detailed
+in README.md and OWNERSHIP.md. The next extension is a versioned portable wire
+format and TCP adapter connected through JKLink. Larger pools, richer policies,
+performance tuning, and broader deployment validation remain future work.
 
-## 13. Open Decisions
+## 13. Further Decisions
+
+The first version selects fixed slots, inline bounded containers, a robust
+mutex, commit ordering, explicit pool exhaustion, and domain invalidation on
+metadata-owner death. The following concern extensions beyond that baseline:
 
 - Pool organization, allocation sizes, limits, and large sensor-buffer handling.
 - Loan tracking and recovery protocol, including interrupted metadata updates.
@@ -347,7 +368,7 @@ contract**. Its decisions guide RIDL layout work and the local runtime.
 - Queue topology, publication commit point, and partial-delivery behavior.
 - Default delivery policy, ordering, retention, and slow-subscriber handling.
 - Shared-memory ABI, inline versus offset-based containers, and schema identity.
-- First wire format and network transport; required evolution guarantees.
+- Portable wire framing/serialization over the agreed TCP transport; required evolution guarantees.
 - Domain permissions, remote identity, and discovery configuration.
 - Supported Linux/CPU targets, deployment workloads, and performance budgets.
 

@@ -134,3 +134,10 @@ whitespace
     | "\t"
     | "\r"
     | "\n" ;
+
+(* Comments, like whitespace, are skipped between tokens. Block comments
+   are non-nesting; an unterminated comment is a lexical error. *)
+line_comment
+    = "//" { ? any character except newline ? } ;
+block_comment
+    = "/*" { ? any character sequence not containing */ ? } "*/" ;

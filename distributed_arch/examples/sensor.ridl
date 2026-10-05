@@ -1,0 +1,9 @@
+// One schema shared by the publisher and all subscribers.
+namespace demo {
+    message SensorSample {
+        u64 sequence;
+        f64 value;
+        string<32> frame;
+        vector<f32, 8> readings;
+    }
+}

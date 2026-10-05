@@ -1,200 +1,370 @@
-# jk-link: connectivity between jk_os machines
+# JKLink: distributed node infrastructure for jk_os
 
-Status: **concept, parked** (2026-10-04). To be picked up once jk_os runs on
-several machines (PCs, the Galaxy Tab S7 FE, Jetson-class robot computers).
+Status: **local C++ node infrastructure implemented; networking/controller pending** (2026-10-05).
+jk_os is running on an x86 machine and the Samsung tablet. These are the
+initial machines for developing and validating JKLink.
 
-## Goal
+## Goal and decisions
 
-Every jk_os machine can find and talk to other jk_os machines automatically,
-as part of the OS:
+JKLink provides one reusable communication infrastructure for robotics,
+desktop features, and future applications. Applications participate as
+nodes, managed locally by a nodemaster. A controller connects nodemasters
+across machines so their nodes can communicate.
 
-- **on the same network** (zero configuration), and
-- **over the internet**: every machine joins a private overlay network as soon
-  as it is online, is visible to a master, and can discover other machines it
-  is allowed to see.
+- **Our own node infrastructure:** JKLink defines its own node API,
+  lifecycle, discovery, messaging, and permissions. We will not use ROS,
+  ROS 2, or their node infrastructure, and will not build a ROS bridge.
+- **TCP for all JKLink networking:** no UDP discovery, multicast, QUIC,
+  or required VPN overlay. Connections between machines use TLS over TCP.
+- **One nodemaster per machine:** local communication continues without
+  the controller or an internet connection.
+- **Controller-mediated cross-machine communication first:** the
+  controller initially routes application traffic as well as management
+  traffic between nodemasters.
+- **Required identity fields:** machine role, machine name, and username,
+  supplemented by persistent identifiers and authenticated credentials.
+- **Portable controller:** start it on the x86 workstation, then move its
+  configuration and persistent state to a dedicated management machine.
+- **Architecture and language independence:** the wire format must work
+  across x86_64 and aarch64 and support C, C++, Python, and future clients.
 
-Uses:
-
-- **Desktop:** send and receive files and folders, shared clipboard,
-  notifications, "send to device" in the file manager.
-- **Robotics:** nodes on any machine and any arch publish and subscribe to
-  topics, call services on other machines, transfer maps, logs and models.
-
-## What it has to cover
-
-| Need               | Desktop use                        | Robotics use                                                              |
-| ------------------ | ---------------------------------- | ------------------------------------------------------------------------- |
-| Discovery          | Which jk_os machines are around?   | Which robots and nodes are up?                                            |
-| Identity & trust   | Only my machines can send me files | Only my fleet can drive my robot                                          |
-| Pub/sub            | Clipboard, notifications, status   | Sensor streams, telemetry, commands                                       |
-| Request/reply      | "Run this", "battery level?"       | Services and actions (plan a path, calibrate)                             |
-| Bulk transfer      | Files and folders                  | Maps, logs, model files, recordings                                       |
-| Quality of service | Hardly matters                     | Reliable vs latest-only, low latency, big messages (images, point clouds) |
-| Cross-arch         | x86 PC ↔ aarch64 tablet            | Jetson ↔ PC ↔ microcontrollers                                            |
+The local milestone is implemented in [distributed_arch](distributed_arch/README.md):
+`jkbuf`, `nodemaster`, and a near-zero-copy C++ shared-memory publisher/subscriber
+transport. See its README for working commands and current limits. The
+cross-machine architecture below remains planned; its wire format, machine
+identity, trust, and controller APIs still need implementation.
 
 ## Architecture
 
-```
- apps:   jk-link CLI · desktop file sharing · robotics nodes (C/C++/Python)
-            │
- API:    libjklink (C) + Python bindings      ← jk_os's own, stable API
-            │
- daemon: jk-linkd (one per machine, started at boot)
-          ├─ identity: machine key pair, created at first boot (jk-setup)
-          ├─ trust: paired machines / fleet key, per-peer permissions
-          ├─ discovery: mDNS/DNS-SD + multicast on the LAN,
-          │             the master's peer list over the overlay network
-          └─ router: topics, services, transfers
-            │
- wire:   proven protocol: encrypted, multiplexed, UDP + TCP,
-         shared memory between nodes on the same machine
-            │
- network: the LAN directly, or the private overlay network (below)
+```text
+                      JKLink controller
+               registry / permissions / routing
+                      |                 |
+                 TCP + TLS         TCP + TLS
+                      |                 |
+           x86 workstation         Samsung tablet
+           local nodemaster        local nodemaster
+             |    |    |              |         |
+        compute  file  clipboard   dashboard   clipboard
+          node   node     node        node        node
+
+       Each node uses the same JKLink application API.
+       A robot joins through its own local nodemaster in the same way.
 ```
 
-### Discovery
+### Nodes
 
-- Each machine announces itself: name, ID (hash of its public key), arch,
-  device type (PC, tablet, robot-HPC), what it offers.
-- On a LAN: standard mDNS/DNS-SD (`_jklink._udp.local`) plus the wire
-  protocol's multicast scouting.
-- Where multicast is blocked (some Wi-Fi, corporate networks) and over the
-  internet: the master's list of peers, or a manually given address.
+A node performs application work: reading a sensor, controlling an
+actuator, processing data, displaying telemetry, sharing a clipboard, or
+transferring a file. It may be a standalone process or part of a larger
+application. Each logical node registers a distinct identity and its
+offered topics, services, or transfer capabilities with its nodemaster.
 
-### Identity and trust
+Nodes use the JKLink API to publish, subscribe, make requests, respond,
+and transfer data. They do not need to manage controller connections or
+know whether a destination is local or remote.
 
-- One key pair per machine (Ed25519), created at first boot.
-- All traffic encrypted and authenticated, also on "our own" network.
-- Trust modes:
-    - **pairing** (desktops): the other machine shows a 6-digit code to confirm;
-    - **fleet key** (robots): machines provisioned with the same fleet
-      certificate trust each other;
-    - **open** (lab bench): trust everything on the network, explicit opt-in,
-      off by default.
-- Per-peer permissions, e.g. the tablet may send files but not publish to
-  `/robot/cmd_vel`.
+Application behavior belongs in nodes. A file node handles filesystem
+access and receiving-user approval; a clipboard node handles the selected
+user's clipboard and sharing preferences. These are applications of the
+same infrastructure, not separate networking systems.
 
-### Data model
+### Nodemaster
 
-- **Topics:** `/<machine>/<node>/<topic>`, e.g. `/arm-01/lidar/scan`, with
-  wildcards for subscribing.
-- **Services:** `/arm-01/planner/plan_path`.
-- **Queries / state:** latest value of X, optional storage of recent values
-  (like ROS latched topics).
-- **Transfers:** files and blobs, chunked, resumable, checksummed.
-- **Serialization:** compact arch-neutral binary encoding; CBOR for untyped
-  data, an IDL for typed messages so C++, Python and microcontrollers agree.
+One nodemaster runs on each participating machine. It:
 
-### Robotics specifics
+- Registers and authenticates local node sessions and tracks their health.
+- Maintains the local directory of topics, services, and capabilities.
+- Routes local messages directly between local nodes.
+- Enforces local permissions and bounded resource usage.
+- Connects to the configured controller, advertises permitted local
+  capabilities, and forwards authorized cross-machine traffic.
+- Reports machine and node availability and restores registrations and
+  subscriptions after reconnecting.
 
-- QoS: reliable / best-effort, keep last N, latest-only.
-- Zero-copy shared memory between nodes on one machine (camera frames).
-- Time sync between jk_os machines (PTP or chrony between peers).
-- ROS 2 interop if the wire protocol is one ROS 2 supports.
-- Real-time control loops stay on the local network; over the internet
-  jk-link is for monitoring, fleet commands and transfers (tens of ms and up).
+Local nodes now use the in-house shared-memory transport. The nodemaster
+creates the per-user domain and monitors process lifetime; nodes update shared
+registration and routing metadata under a robust mutex. Publishers write
+into loaned slots and subscribers read the same allocations. Local delivery
+opens no network sockets and remains independent of the future controller.
+Domains currently admit cooperating processes with the same effective OS UID;
+stronger per-node permissions and remote user identity binding remain future
+work. All future JKLink network transport remains TCP-based.
 
-### Desktop integration
+Managing registration and health does not automatically grant permission
+to execute programs. Optional process launching or restarting can be
+added later with explicit local configuration.
 
-- `jk-link send <file> <machine>`, receive with confirmation.
-- "Send to jk_os device" in the file manager, notifications, optional shared
-  clipboard.
-- `jk-viz` shows peers and the topic graph.
+### Controller
 
-## Wire protocol: build or adopt
+The controller is the JKLink management server. It:
 
-| Option              | Pros                                                                                                                                                                                  | Cons                                                                                                              |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| Fully custom        | Total control                                                                                                                                                                         | Years to get discovery, congestion control, security and QoS right; security mistakes likely; no interoperability |
-| **Zenoh** (Eclipse) | Built for this: zero-config discovery, pub/sub + queries + storage, shared memory, efficient on Wi-Fi; official ROS 2 transport (`rmw_zenoh`); pure-C zenoh-pico for microcontrollers | Core is Rust: jk_os's offline source build would need a Rust toolchain                                            |
-| Cyclone DDS         | Plain C, mature, ROS 2's classic middleware, strong QoS                                                                                                                               | Heavy, discovery scales poorly on Wi-Fi, complex security, no natural file transfer                               |
-| MQTT / NATS         | Simple, popular                                                                                                                                                                       | Central broker, not peer-to-peer zero-config, weak for real-time robotics                                         |
-| gRPC / QUIC         | Good request/reply and streaming                                                                                                                                                      | No discovery or pub/sub; we'd build most of it                                                                    |
+- Enrolls and authenticates machines and their nodemasters.
+- Maintains the machine registry and a permission-filtered directory of
+  available nodes, topics, services, and capabilities.
+- Enforces cross-machine access rules, including rules based on machine
+  role, user, node, and operation.
+- Routes publications, requests, responses, and transfers between
+  nodemasters in the first implementation.
+- Tracks heartbeats, current sessions, and last-seen information.
+- Provides local administration for enrollment, inspection, role changes,
+  and revocation.
 
-**Leaning:** jk-link = jk_os's identity, trust, naming, daemon, tools and API,
-with **Zenoh** underneath (fallback: Cyclone DDS if Rust in the build is not
-acceptable). The wire protocol can be replaced later without breaking apps.
+Running the controller is a service capability, not a requirement to
+change a machine's role. The x86 PC can retain its workstation role and
+run both its own nodemaster and the controller.
 
-## Over the internet: the private overlay network
+## Routing and discovery
 
-Every jk_os machine joins a private WireGuard mesh network as soon as it has
-internet; a master (coordination server) knows all of them; machines connect
-peer-to-peer; jk-link runs on top.
+Local traffic:
 
-```
-                 ┌──────────────────────────────┐
-                 │ MASTER (coordination server) │  e.g. J.K. Robotics' cloud
-                 │  · registry of all machines  │  server
-                 │  · keys, names, VPN IPs      │
-                 │  · access rules per fleet    │
-                 │  · relay for hard NATs       │
-                 └──────┬──────────┬────────────┘
-        control only    │          │    (no data, unless relaying)
-              ┌─────────┘          └─────────┐
-        ┌─────┴─────┐  encrypted, direct ┌───┴───────┐
-        │ jk_os PC  │◄══════════════════►│ jk_os     │
-        │ 10.42.0.5 │   WireGuard tunnel │ tablet    │
-        └───────────┘   (peer-to-peer)   │ 10.42.0.9 │
-                                         └───────────┘
+```text
+publisher -> local nodemaster -> local subscriber
 ```
 
-1. **First boot** (`jk-setup`): the machine makes its key pair and enrolls with
-   the master (organisation/fleet code or QR), gets a stable private address
-   and name (e.g. `tablet-01.jk`).
-2. **Whenever online**, anywhere (home, office, a robot on 4G), it checks in:
-   the master knows which machines exist and which are online.
-3. **Direct encrypted tunnels** between machines, through NAT; the master
-   relays when no direct path exists.
-4. **jk-link over the overlay:** discovery from the master's peer list,
-   filtered by access rules.
+Cross-machine traffic in the first implementation:
 
-WireGuard is in the mainline kernel (one option); the coordination layer is
-the work:
+```text
+publisher -> local nodemaster -> controller -> remote nodemaster -> subscriber
+```
 
-| Option                                         | Fit                                                                    | Notes                                                                                                                                                                  |
-| ---------------------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Tailscale client + self-hosted Headscale**   | Headscale = the master on our server; Tailscale client on each machine | Best NAT traversal and relays, mature; client is Go but ships static binaries (fits jk_os's prebuilt-binaries mechanism); no multicast, so discovery via the peer list |
-| NetBird (self-hosted)                          | Management/signal/relay servers = master, kernel WireGuard             | BSD-3, web dashboard, Go                                                                                                                                               |
-| Nebula                                         | Lighthouse = master, certificate identity                              | Simple, group firewall rules, Go static binary, fewer management tools                                                                                                 |
-| ZeroTier (self-hosted controller)              | Virtual Ethernet: multicast works, LAN discovery unchanged             | Recent versions source-available (BSL): check for a product                                                                                                            |
-| Our own (kernel WireGuard + jk control server) | Full control, integrated with jk-link identity                         | Most work: NAT traversal and relaying                                                                                                                                  |
+Nodemasters make outbound TCP connections to an explicitly configured
+controller address. Both LAN and internet deployments use this model;
+the controller must be reachable from each machine. No inbound connection
+to a client machine is required for this initial routing model.
 
-**Leaning:** Headscale (master) + Tailscale client to start, wrapped in jk_os's
-enrollment and jk-link identity; replaceable later.
+Local discovery comes from registration with the nodemaster. Remote
+discovery comes from the controller's authorized directory, not multicast
+scouting. Subscriptions and routing information must be withdrawn when
+their sessions expire, so disconnected nodes are not advertised as live.
 
-### To decide carefully
+Later, the controller may authorize direct TCP connections between
+nodemasters where reachable, preserving the same application API. This is
+an optional optimization, not a dependency of the first version.
 
-1. **Consent and disclosure:** for our own machines this is fleet management;
-   for customers' machines, connecting to our server must be disclosed and
-   controllable (shown at setup, can be turned off or pointed at their own
-   master).
-2. **Isolation:** customer A's machines never see customer B's; separate
-   networks or strict rules per organisation.
-3. **Enrollment security:** org code/QR at setup, admin approval of new
-   devices, or factory-provisioned keys for robots.
-4. **Master availability:** existing tunnels survive an outage, but new
-   machines can't join; a backed-up cloud server is fine to start.
-5. **Latency:** control loops local; jk-link prefers direct LAN paths.
+## Identity and trust
 
-## Open questions
+Identity distinguishes a machine from the users and nodes running on it.
 
-1. Scale: how many machines and nodes per network?
-2. Networks: wired, Wi-Fi, both? Is multicast allowed where we deploy?
-3. Security level: trusted lab or locked-down customer sites? Fleet keys for
-   robots?
-4. Heaviest robotics data (images, point clouds) and latency targets?
-5. ROS 2 interop needed, or our own node framework?
-6. Microcontrollers (STM32, ESP32) as nodes?
-7. Rust in the jk_os build acceptable (for Zenoh)?
-8. Only J.K. Robotics' own machines, or customers' too?
-9. Master as a cloud server, a jk_os admin install, or both?
-10. Enrollment: org code/QR, admin approval, or factory provisioning?
+| Field          | Meaning                                                                     |
+| -------------- | --------------------------------------------------------------------------- |
+| Machine ID     | Persistent unique identifier, independent of names and network addresses    |
+| Machine role   | Workstation, tablet, robot, server, or an administrator-defined role        |
+| Machine name   | Human-readable name, such as `warehouse-robot-01`                           |
+| Username       | Authenticated OS user or service account owning a node session              |
+| Node ID        | Identifier for a logical node, scoped to its machine                        |
+| Node name/type | Readable name and application function, such as `front-camera` / `camera`   |
+| Session ID     | Distinguishes a live connection from earlier connections of the same node   |
+| Credentials    | Prove the machine or local user's identity; names alone do not authenticate |
 
-## Phases (once decided)
+Several users may run nodes on one machine. The username therefore belongs
+to the authenticated node session, not a single global machine owner.
+Forwarded messages preserve machine, user, and node identity; a node may
+not impersonate another node by supplying different source fields.
+The nodemaster vouches for its locally authenticated sessions, and the
+controller validates that their machine identity matches its connection.
 
-1. jk-linkd + identity + LAN discovery + `jk-link` CLI (list peers).
-2. Pub/sub and services, C and Python APIs.
-3. File transfer and desktop integration.
-4. Overlay network: master, enrollment, peer discovery over the internet.
-5. Robotics extras: QoS, shared memory, time sync, ROS 2 bridge,
-   microcontroller nodes.
+Machine role supports discovery and policy, but is not proof of trust.
+A machine cannot gain robot-control permissions by announcing `robot` as
+its role. Enrollment and authorized administration establish its role.
+
+Examples of policy:
+
+- A tablet dashboard can subscribe to telemetry from approved robots.
+- Only designated control nodes may send motion commands to a robot.
+- A workstation and tablet may exchange files for an authorized user.
+- Clipboard sharing is opt-in and scoped to permitted user sessions.
+- Machines in different organizations or fleets are isolated unless an
+  explicit policy allows communication.
+
+TLS protects inter-machine TCP connections and authenticates enrolled
+machines. Credential provisioning, controller trust, renewal, and
+revocation must be defined before exposing a deployment to other machines.
+There is no default trust-everyone network mode.
+
+Enrollment policy is still to be selected: short-lived single-use
+administrator-issued credentials, approval of pending requests, or factory
+provisioning for robots. Revocation must terminate active access as well
+as prevent new sessions.
+
+## Shared communication model
+
+### Publish/subscribe
+
+Nodes publish named topics, and authorized subscribers receive updates.
+Readable topic paths can follow `/<machine>/<node>/<topic>`, for example
+`/warehouse-robot-01/front-camera/frame`. Persistent IDs provide the
+underlying identity so a rename does not create a different machine.
+Name resolution and collision rules will be part of the protocol spec.
+
+Discovery can filter by machine role or node capabilities. Wildcard
+subscriptions, if supported, must still apply permissions to each matched
+source; a broad subscription must not bypass access checks.
+
+Uses include sensor readings, robot status, notifications, and clipboard
+change events. Optional retained state can later provide the most recent
+value to a new subscriber, with its timestamp and freshness made explicit.
+
+### Request/reply
+
+Nodes expose named services. Requests carry correlation IDs and deadlines;
+responses identify the request they answer. Examples include querying
+battery status, asking a planner for a route, or requesting a file.
+
+Timeouts and disconnections must surface as errors. Reconnecting must not
+silently replay a motion command or another operation with side effects.
+Retry and deduplication behavior must be explicit; TCP delivery alone does
+not establish that an application completed a request.
+
+### Chunked transfers
+
+Transfer sessions carry files and larger blobs with metadata, bounded
+chunks, integrity checks, and explicit completion. Resume support can
+follow once transfer-state persistence is implemented.
+
+File nodes enforce allowed paths, overwrite policy, and recipient approval.
+The transport itself does not grant remote filesystem access.
+
+### Protocol and API foundation
+
+Define a versioned, length-delimited message envelope with message type,
+request/message identifiers, routing metadata, content type or schema
+identifier, and payload length. Specify byte order, field encoding, size
+limits, version compatibility, and error behavior independently of native
+C/C++ memory layout.
+
+Payloads can represent typed application messages or opaque binary data.
+The exact control-message encoding and typed-schema system remain open.
+The common API must hide routing details without hiding failures or
+application delivery semantics.
+
+The protocol must correctly handle partial reads/writes and multiple
+frames in one TCP read. Validate lengths and limits before allocation,
+reject malformed or incompatible messages, and bound connection counts,
+queued data, subscriptions, and transfer resources.
+
+The intended application interfaces are a C API usable from C++, plus
+Python bindings or an interoperable Python client. Exact library and
+executable names will be finalized during implementation.
+
+## Delivery, performance, and availability
+
+- TCP provides ordered, reliable bytes within a live connection. It does
+  not provide persistence, application acknowledgments, or exactly-once
+  processing across reconnects.
+- Use bounded queues and explicit backpressure. Latest-only topics may
+  replace unsent queued samples; they cannot skip bytes already queued in
+  TCP. Define queue overflow behavior per operation.
+- Put bulk transfers on separate TCP connections from latency-sensitive
+  messaging, with fair scheduling and resource limits at each hop.
+- On controller loss, local nodes continue communicating through their
+  local nodemaster. Cross-machine traffic through the controller becomes
+  unavailable and is reported as such.
+- On reconnect, authenticate again and restore authorized registrations
+  and subscriptions. Stale messages and commands are not replayed by
+  default. Offline durable delivery is a separate future feature.
+- A nodemaster failure interrupts its local node connections. Clients
+  need bounded reconnect behavior and explicit session restoration.
+- TCP, the nodemaster, and controller routing do not guarantee real-time
+  deadlines. Hard real-time and safety-critical loops must remain in an
+  appropriate local execution path independent of controller availability.
+
+The local shared-memory backend is implemented with bounded 64 KiB message
+slots; larger sensor buffers and further performance work remain extensions.
+Clock synchronization requirements and direct nodemaster links are future
+work. These must preserve the public API and the TCP-only networking decision.
+
+## Applications built on the node infrastructure
+
+| Application          | Nodes and communication                                                       |
+| -------------------- | ----------------------------------------------------------------------------- |
+| Robot sensing        | Camera, lidar, and other sensor nodes publish data to processing nodes        |
+| Robot control        | Authorized planning/control nodes send requests or commands to actuator nodes |
+| Monitoring           | Tablet dashboard subscribes to robot telemetry and health                     |
+| File sharing         | File nodes negotiate and transfer files, maps, models, and recordings         |
+| Clipboard            | Per-user clipboard nodes exchange approved updates and avoid echo loops       |
+| Notifications        | Nodes publish events for permitted desktop sessions                           |
+| System visualization | `jk-viz` can later display machines, nodes, and their communication graph     |
+
+Robotics and desktop applications use the same infrastructure and security
+model. JKLink owns the node model; no ROS compatibility layer is planned.
+Microcontroller participation is future work, subject to memory, TCP, and
+authentication constraints.
+
+## Controller deployment and administration
+
+Start with one controller on the x86 workstation and a nodemaster on both
+the workstation and Samsung tablet. The controller service is enabled
+explicitly and integrated with jk_os boot and logging.
+
+Keep persistent registry, policy, and credential state outside the
+replaceable OS image. Live sessions are transient and must be re-established
+after a restart; persisted last-seen data must not imply a machine is online.
+
+Local administrative tools should support machine/session inspection,
+enrollment, authorized name/role updates, and revocation. Remote application
+nodes do not automatically receive administrative rights.
+
+Moving to a dedicated management machine requires transferring the
+controller configuration, database, and credentials securely, then updating
+its address or retaining its DNS name and valid server identity. Enrollment
+should not need to be repeated merely because the controller moved.
+The initial design has one active controller; replication and failover are
+future work.
+
+C++ with OpenSSL and SQLite from the existing jk_os source tree is a
+proposed implementation choice, not a constraint on the public protocol.
+Deployment configuration must make the controller address and participation
+visible and controllable, including for customer-owned machines.
+
+## Implementation phases
+
+1. **Protocol and identity:** specify framing, message types, identity and
+   credential binding, naming, permissions, errors, limits, and node API.
+   Define interoperability fixtures for architecture-independent messages.
+2. **Local nodemaster (minimal implementation complete):** `distributed_arch`
+   supplies per-user domains, local node/topic registration, process monitoring,
+   near-zero-copy publish/subscribe, and example nodes. Fine-grained node
+   authorization and richer directory/health tooling remain to be added.
+3. **Controller and two-machine messaging:** implement persistent machine
+   enrollment, TLS authentication, directory and subscription routing,
+   cross-machine permissions, heartbeats, revocation, and reconnects.
+   Connect the PC and tablet nodemasters through the PC's controller.
+4. **Services and transfers:** add request/reply, deadlines, transfer
+   sessions, checksums, separate bulk connections, and later resume support.
+5. **Application nodes and integration:** build file, clipboard, dashboard,
+   and robotics nodes; expand language interfaces and visualization.
+6. **Deployment and optimization:** move the controller to dedicated
+   hardware; evaluate direct nodemaster links, larger shared pools, and scale
+   improvements without changing application APIs.
+
+### First demonstrable milestone
+
+A publisher on the x86 PC sends messages to a subscriber on the Samsung
+tablet through their nodemasters and the controller. Machine role, machine
+name, username, and node identity are visible and authenticated. Local
+publish/subscribe on each machine continues when the controller stops;
+remote availability recovers after it restarts and sessions reconnect.
+
+### Verification
+
+Test framing under fragmented and combined reads, malformed messages,
+incompatible versions, oversized frames, and slow clients. Verify local
+user isolation, enrollment failures, spoofed identities/roles, denied
+subscriptions and commands, concurrent nodes, reconnects, stale-session
+cleanup, controller restarts, and active-session revocation. Exercise
+cross-architecture interoperability and confirm no JKLink UDP listeners or
+discovery traffic are introduced.
+
+## Remaining design questions
+
+1. Enrollment workflow and local user credential provisioning.
+2. Exact wire encoding, schema evolution, naming, and API signatures.
+3. Default roles and operation-level permission rules.
+4. Expected machine/node counts, sensor bandwidth, and latency targets.
+5. Queue limits, retained-state policy, and transfer-resume requirements.
+6. Whether and when to add process supervision and microcontroller clients.
+7. Controller deployment address, credential lifecycle, and backup policy.
+
+TCP-only networking, our own node infrastructure, the three-layer
+architecture, and the required identity fields are settled requirements.
