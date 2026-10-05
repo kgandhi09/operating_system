@@ -816,6 +816,11 @@ pkg dolphin          kfpkg -DBUILD_DOC=OFF
 b_jk_viz() { qtpkg "$1" "$2"; }
 step jk-viz "$ROOT_DIR/src/jk-viz" b_jk_viz \
     "$(cd "$ROOT_DIR/src/jk-viz" && find . -type f | LC_ALL=C sort | xargs cat | sha256sum | cut -c1-16)"
+# jk-charge-monitor (src/jk-charge-monitor): the battery and its charger in
+# real time (Qt Quick, from /sys/class/power_supply). Rebuilt like jk-viz.
+b_jk_charge_monitor() { qtpkg "$1" "$2"; }
+step jk-charge-monitor "$ROOT_DIR/src/jk-charge-monitor" b_jk_charge_monitor \
+    "$(cd "$ROOT_DIR/src/jk-charge-monitor" && find . -type f | LC_ALL=C sort | xargs cat | sha256sum | cut -c1-16)"
 
 # ---------------------------------------------------------------- Phase F
 # The dev session (jk-dev, on tty1): one terminal, foot, full screen in the

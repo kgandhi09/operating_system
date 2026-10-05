@@ -14,10 +14,14 @@ driver does) and "sm5714-charger" (online, status, health, current
 limits). It only reads the gauge and never reloads its battery model.
 Unless enable_charging=0, on VBUS it programs what Samsung's driver does
 on cable attach, with a 3000 mA input limit (the 5 V default of any
-USB-C source; AICL backs off on weaker ones), a conservative 1500 mA
-charge current and the stock 4.38 V float voltage, and kicks the
-watchdog every 30 s. The watchdog is switched off across suspend, when
-nothing kicks it.
+USB-C source; AICL backs off on weaker ones), the stock 2100 mA charge
+current and 4.38 V float voltage, and kicks the watchdog every 30 s.
+The watchdog is switched off across suspend, when nothing kicks it.
+
+The input limit, charge current and float voltage are writable within
+the stock board's maxima (3000 mA, 3200 mA, 4.38 V), and the battery's
+charge_control_end/start_threshold hold the charge at a level for
+battery care.
 
 Register layout, encodings and sequences come from Samsung's GPL
 sm5714 MFD, charger and fuel gauge drivers (SM-T735 kernel source).
@@ -59,7 +63,7 @@ sm5714 MFD, charger and fuel gauge drivers (SM-T735 kernel source).
  obj-$(CONFIG_CHARGER_TPS65217)	+= tps65217_charger.o
 --- /dev/null
 +++ b/drivers/power/supply/sm5714_charger.c	2026-10-04 23:53:20.000138033 +0530
-@@ -0,0 +1,984 @@
+@@ -0,0 +1,1135 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Silicon Mitus SM5714 switching charger and fuel gauge
@@ -85,6 +89,13 @@ sm5714 MFD, charger and fuel gauge drivers (SM-T735 kernel source).
 + * charging and keep the charger's watchdog fed. The bootloader leaves
 + * the watchdog running, so without this charging stops shortly after
 + * boot.
++ *
++ * The input limit, charge current and float voltage can be changed at run
++ * time (the charger's input_current_limit, constant_charge_current and
++ * constant_charge_voltage), within the stock board's maxima. The battery's
++ * charge_control_end_threshold holds the charge at a level for battery
++ * care: charging pauses there, the system still runs from VBUS, and
++ * resumes below charge_control_start_threshold.
 + */
 +
 +#include <linux/bitfield.h>
@@ -173,8 +184,15 @@ sm5714 MFD, charger and fuel gauge drivers (SM-T735 kernel source).
 +
 +/* Stock board values (sec-battery node of the SM-T733 device tree) */
 +#define SM5714_FLOAT_MV_MAX		4380	/* battery,chg_float_voltage */
++#define SM5714_INPUT_MA_MAX		3000	/* battery,max_input_current */
++#define SM5714_CHARGE_MA_MAX		3200	/* battery,max_charging_current */
 +#define SM5714_RECHARGE_MV		4310	/* battery,recharge_condition_vcell */
 +#define SM5714_FULL_SOC			93	/* battery,full_condition_soc */
++
++/* Lowest values accepted at run time */
++#define SM5714_LIMIT_MA_MIN		100
++#define SM5714_FLOAT_MV_MIN		4000
++#define SM5714_END_PCT_MIN		50
 +
 +/* Charge only between these battery temperatures (0.1 degC) */
 +#define SM5714_TEMP_MIN			0
@@ -196,11 +214,12 @@ sm5714 MFD, charger and fuel gauge drivers (SM-T735 kernel source).
 + */
 +static uint input_current_ma = 3000;
 +module_param(input_current_ma, uint, 0444);
-+MODULE_PARM_DESC(input_current_ma, "VBUS input current limit in mA (default: 3000)");
++MODULE_PARM_DESC(input_current_ma, "VBUS input current limit in mA at boot (default: 3000)");
 +
-+static uint charge_current_ma = 1500;
++/* battery,default_charging_current */
++static uint charge_current_ma = 2100;
 +module_param(charge_current_ma, uint, 0444);
-+MODULE_PARM_DESC(charge_current_ma, "Fast charge current in mA (default: 1500)");
++MODULE_PARM_DESC(charge_current_ma, "Fast charge current in mA at boot (default: 2100)");
 +
 +struct sm5714 {
 +	struct device *dev;
@@ -212,10 +231,18 @@ sm5714 MFD, charger and fuel gauge drivers (SM-T735 kernel source).
 +	struct power_supply_battery_info *bat_info;
 +	struct delayed_work work;
 +
++	/* settings, applied on cable attach and when changed */
++	unsigned int input_ma;
++	unsigned int charge_ma;
 +	unsigned int float_mv;
++	unsigned int float_mv_max;
++	int start_pct;		/* battery care: resume below this */
++	int end_pct;		/* battery care: pause at this (100: off) */
++
 +	bool configured;	/* charging set up by us for the current cable */
 +	bool too_hot_or_cold;
 +	bool too_cold;
++	bool held;		/* paused at end_pct */
 +	bool warned_bypass;
 +	bool fg_init_done;
 +
@@ -433,15 +460,6 @@ sm5714 MFD, charger and fuel gauge drivers (SM-T735 kernel source).
 +	return 7 + (ua - 109375) / 15625;
 +}
 +
-+static int sm5714_charge_current_from_reg(unsigned int reg)
-+{
-+	if (reg <= 0x07)
-+		return 109000;
-+	if (reg >= 0xe0)
-+		return 3500000;
-+	return 109375 + (reg - 7) * 15625;
-+}
-+
 +/* BATREG: 3.70-3.85 V in 50 mV, 3.9/4.0 V, then 4.05-4.62 V in 10 mV */
 +static unsigned int sm5714_batreg_to_reg(unsigned int mv)
 +{
@@ -452,16 +470,6 @@ sm5714 MFD, charger and fuel gauge drivers (SM-T735 kernel source).
 +	if (mv < 4050)
 +		return (mv - 3900) / 100 + 4;
 +	return min((mv - 4050) / 10 + 6, 0x3fU);
-+}
-+
-+static int sm5714_batreg_from_reg(unsigned int reg)
-+{
-+	reg &= SM5714_CHGCNTL4_BATREG;
-+	if (reg <= 0x03)
-+		return 3700 + reg * 50;
-+	if (reg <= 0x05)
-+		return 3900 + (reg - 4) * 100;
-+	return 4050 + (reg - 6) * 10;
 +}
 +
 +static int sm5714_chg_update(struct sm5714 *sm, unsigned int reg,
@@ -488,6 +496,12 @@ sm5714 MFD, charger and fuel gauge drivers (SM-T735 kernel source).
 +				 on ? SM5714_CNTL1_ENQ4FET : 0);
 +}
 +
++/* Charging paused: battery too hot or cold, or held for battery care. */
++static bool sm5714_paused(struct sm5714 *sm)
++{
++	return sm->too_hot_or_cold || sm->held;
++}
++
 +/*
 + * What Samsung's driver programs on cable attach: sm5714_chg_init()
 + * (AICL at 4.5 V, float voltage, 90 s watchdog, auto-stop), the
@@ -497,8 +511,8 @@ sm5714 MFD, charger and fuel gauge drivers (SM-T735 kernel source).
 + */
 +static int sm5714_charging_enable(struct sm5714 *sm, unsigned int st2)
 +{
-+	unsigned int ilim = clamp(input_current_ma, 100U, 3000U);
-+	unsigned int ichg = clamp(charge_current_ma, 100U, 3000U);
++	unsigned int ilim = sm->input_ma;
++	unsigned int ichg = sm->charge_ma;
 +	unsigned int mode;
 +	int ret;
 +
@@ -547,7 +561,7 @@ sm5714 MFD, charger and fuel gauge drivers (SM-T735 kernel source).
 +
 +	ret = sm5714_chg_update(sm, SM5714_CHG_REG_VBUSCNTL, SM5714_VBUSCNTL_LIMIT,
 +				sm5714_input_limit_to_reg(min(ilim, 500U)));
-+	if (!ret && !sm->too_hot_or_cold) {
++	if (!ret && !sm5714_paused(sm)) {
 +		ret = sm5714_set_q4fet(sm, true);
 +		usleep_range(5000, 6000);
 +	}
@@ -596,7 +610,33 @@ sm5714 MFD, charger and fuel gauge drivers (SM-T735 kernel source).
 +		dev_info(sm->dev, "battery at %d.%d degC, resuming charging\n",
 +			 t / 10, abs(t % 10));
 +		sm->too_hot_or_cold = false;
-+		sm5714_set_q4fet(sm, true);
++		if (!sm->held)
++			sm5714_set_q4fet(sm, true);
++	}
++}
++
++/*
++ * Battery care: hold the charge at end_pct (charging paused, the system
++ * running from VBUS) until it drops to start_pct, or below end_pct if
++ * start_pct isn't lower.
++ */
++static void sm5714_check_limit(struct sm5714 *sm)
++{
++	int capacity, resume = min(sm->start_pct, sm->end_pct - 1);
++
++	if (sm5714_fg_get_capacity(sm, &capacity))
++		return;
++
++	if (!sm->held && sm->end_pct < 100 && capacity >= sm->end_pct) {
++		dev_info(sm->dev, "battery at %d%%, holding it there (limit %d%%)\n",
++			 capacity, sm->end_pct);
++		sm->held = true;
++		sm5714_set_q4fet(sm, false);
++	} else if (sm->held && (sm->end_pct >= 100 || capacity <= resume)) {
++		dev_info(sm->dev, "battery at %d%%, charging again\n", capacity);
++		sm->held = false;
++		if (sm->configured && !sm->too_hot_or_cold)
++			sm5714_set_q4fet(sm, true);
 +	}
 +}
 +
@@ -628,6 +668,7 @@ sm5714 MFD, charger and fuel gauge drivers (SM-T735 kernel source).
 +		return;
 +
 +	sm5714_check_temp(sm);
++	sm5714_check_limit(sm);
 +
 +	if (!sm->configured || (st2 & SM5714_STATUS2_WDTMROFF)) {
 +		if (sm5714_charging_enable(sm, st2))
@@ -642,7 +683,7 @@ sm5714 MFD, charger and fuel gauge drivers (SM-T735 kernel source).
 +	 * do it only once the cell has relaxed below the stock recharge
 +	 * voltage, never after a safety timer expired.
 +	 */
-+	if (sm->too_hot_or_cold || (st2 & SM5714_STATUS2_CHGON) ||
++	if (sm5714_paused(sm) || (st2 & SM5714_STATUS2_CHGON) ||
 +	    !(st2 & (SM5714_STATUS2_DONE | SM5714_STATUS2_TOPOFF)) ||
 +	    (st3 & (SM5714_STATUS3_FASTTMROFF | SM5714_STATUS3_TRICKLETMROFF)))
 +		return;
@@ -769,13 +810,52 @@ sm5714 MFD, charger and fuel gauge drivers (SM-T735 kernel source).
 +		val->intval = sm->bat_info->charge_full_design_uah;
 +		break;
 +	case POWER_SUPPLY_PROP_VOLTAGE_MAX_DESIGN:
-+		val->intval = sm->float_mv * 1000;
++		val->intval = sm->float_mv_max * 1000;
++		break;
++	case POWER_SUPPLY_PROP_CHARGE_CONTROL_START_THRESHOLD:
++		val->intval = sm->start_pct;
++		break;
++	case POWER_SUPPLY_PROP_CHARGE_CONTROL_END_THRESHOLD:
++		val->intval = sm->end_pct;
 +		break;
 +	default:
 +		return -EINVAL;
 +	}
 +
 +	return ret;
++}
++
++static int sm5714_bat_set_property(struct power_supply *psy,
++				   enum power_supply_property psp,
++				   const union power_supply_propval *val)
++{
++	struct sm5714 *sm = power_supply_get_drvdata(psy);
++
++	switch (psp) {
++	case POWER_SUPPLY_PROP_CHARGE_CONTROL_START_THRESHOLD:
++		if (val->intval < 0 || val->intval > 100)
++			return -EINVAL;
++		sm->start_pct = val->intval;
++		break;
++	case POWER_SUPPLY_PROP_CHARGE_CONTROL_END_THRESHOLD:
++		if (val->intval < SM5714_END_PCT_MIN || val->intval > 100)
++			return -EINVAL;
++		sm->end_pct = val->intval;
++		break;
++	default:
++		return -EINVAL;
++	}
++
++	/* re-evaluate now rather than at the next poll */
++	mod_delayed_work(system_wq, &sm->work, 0);
++	return 0;
++}
++
++static int sm5714_bat_property_is_writeable(struct power_supply *psy,
++					    enum power_supply_property psp)
++{
++	return psp == POWER_SUPPLY_PROP_CHARGE_CONTROL_START_THRESHOLD ||
++	       psp == POWER_SUPPLY_PROP_CHARGE_CONTROL_END_THRESHOLD;
 +}
 +
 +static const enum power_supply_property sm5714_bat_props[] = {
@@ -791,6 +871,8 @@ sm5714 MFD, charger and fuel gauge drivers (SM-T735 kernel source).
 +	POWER_SUPPLY_PROP_TEMP,
 +	POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN,
 +	POWER_SUPPLY_PROP_VOLTAGE_MAX_DESIGN,
++	POWER_SUPPLY_PROP_CHARGE_CONTROL_START_THRESHOLD,
++	POWER_SUPPLY_PROP_CHARGE_CONTROL_END_THRESHOLD,
 +};
 +
 +static const struct power_supply_desc sm5714_bat_desc = {
@@ -799,6 +881,8 @@ sm5714 MFD, charger and fuel gauge drivers (SM-T735 kernel source).
 +	.properties	= sm5714_bat_props,
 +	.num_properties	= ARRAY_SIZE(sm5714_bat_props),
 +	.get_property	= sm5714_bat_get_property,
++	.set_property	= sm5714_bat_set_property,
++	.property_is_writeable = sm5714_bat_property_is_writeable,
 +};
 +
 +static int sm5714_chg_get_property(struct power_supply *psy,
@@ -827,23 +911,85 @@ sm5714 MFD, charger and fuel gauge drivers (SM-T735 kernel source).
 +		else
 +			val->intval = POWER_SUPPLY_CHARGE_TYPE_NONE;
 +		break;
++	/* the settings, applied while a cable is attached */
 +	case POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
-+		ret = regmap_read(sm->chg, SM5714_CHG_REG_VBUSCNTL, &reg);
-+		val->intval = ((reg & SM5714_VBUSCNTL_LIMIT) * 25 + 100) * 1000;
++		val->intval = sm->input_ma * 1000;
 +		break;
 +	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT:
-+		ret = regmap_read(sm->chg, SM5714_CHG_REG_CHGCNTL2, &reg);
-+		val->intval = sm5714_charge_current_from_reg(reg);
++		val->intval = sm->charge_ma * 1000;
++		break;
++	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT_MAX:
++		val->intval = SM5714_CHARGE_MA_MAX * 1000;
 +		break;
 +	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
-+		ret = regmap_read(sm->chg, SM5714_CHG_REG_CHGCNTL4, &reg);
-+		val->intval = sm5714_batreg_from_reg(reg) * 1000;
++		val->intval = sm->float_mv * 1000;
++		break;
++	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE_MAX:
++		val->intval = sm->float_mv_max * 1000;
 +		break;
 +	default:
 +		return -EINVAL;
 +	}
 +
 +	return ret;
++}
++
++/*
++ * New limits, within the stock board's maxima; written to the charger at
++ * once while it is set up for a cable, else on the next attach.
++ */
++static int sm5714_chg_set_property(struct power_supply *psy,
++				   enum power_supply_property psp,
++				   const union power_supply_propval *val)
++{
++	struct sm5714 *sm = power_supply_get_drvdata(psy);
++	unsigned int v = val->intval < 0 ? 0 : val->intval / 1000;
++	int ret = 0;
++
++	switch (psp) {
++	case POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
++		if (v < SM5714_LIMIT_MA_MIN || v > SM5714_INPUT_MA_MAX)
++			return -EINVAL;
++		sm->input_ma = v;
++		if (sm->configured)
++			ret = sm5714_chg_update(sm, SM5714_CHG_REG_VBUSCNTL,
++						SM5714_VBUSCNTL_LIMIT,
++						sm5714_input_limit_to_reg(v));
++		break;
++	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT:
++		if (v < SM5714_LIMIT_MA_MIN || v > SM5714_CHARGE_MA_MAX)
++			return -EINVAL;
++		sm->charge_ma = v;
++		if (sm->configured)
++			ret = sm5714_chg_update(sm, SM5714_CHG_REG_CHGCNTL2, 0xff,
++						sm5714_charge_current_to_reg(v));
++		break;
++	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
++		if (v < SM5714_FLOAT_MV_MIN || v > sm->float_mv_max)
++			return -EINVAL;
++		sm->float_mv = v;
++		if (sm->configured)
++			ret = sm5714_chg_update(sm, SM5714_CHG_REG_CHGCNTL4,
++						SM5714_CHGCNTL4_BATREG,
++						sm5714_batreg_to_reg(v));
++		break;
++	default:
++		return -EINVAL;
++	}
++
++	if (!ret)
++		dev_info(sm->dev, "input %u mA, charge %u mA, float %u mV\n",
++			 sm->input_ma, sm->charge_ma, sm->float_mv);
++	power_supply_changed(psy);
++	return ret;
++}
++
++static int sm5714_chg_property_is_writeable(struct power_supply *psy,
++					    enum power_supply_property psp)
++{
++	return psp == POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT ||
++	       psp == POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT ||
++	       psp == POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE;
 +}
 +
 +static const enum power_supply_property sm5714_chg_props[] = {
@@ -853,7 +999,9 @@ sm5714 MFD, charger and fuel gauge drivers (SM-T735 kernel source).
 +	POWER_SUPPLY_PROP_CHARGE_TYPE,
 +	POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT,
 +	POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT,
++	POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT_MAX,
 +	POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE,
++	POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE_MAX,
 +};
 +
 +static const struct power_supply_desc sm5714_chg_desc = {
@@ -862,6 +1010,8 @@ sm5714 MFD, charger and fuel gauge drivers (SM-T735 kernel source).
 +	.properties	= sm5714_chg_props,
 +	.num_properties	= ARRAY_SIZE(sm5714_chg_props),
 +	.get_property	= sm5714_chg_get_property,
++	.set_property	= sm5714_chg_set_property,
++	.property_is_writeable = sm5714_chg_property_is_writeable,
 +};
 +
 +static char *sm5714_chg_supplied_to[] = { "battery" };
@@ -913,6 +1063,11 @@ sm5714 MFD, charger and fuel gauge drivers (SM-T735 kernel source).
 +
 +	sm->dev = dev;
 +	sm->last_capacity = -1;
++	sm->input_ma = clamp(input_current_ma, SM5714_LIMIT_MA_MIN, SM5714_INPUT_MA_MAX);
++	sm->charge_ma = clamp(charge_current_ma, SM5714_LIMIT_MA_MIN, SM5714_CHARGE_MA_MAX);
++	sm->float_mv = sm->float_mv_max = SM5714_FLOAT_MV_MAX;
++	sm->start_pct = 95;
++	sm->end_pct = 100;
 +	i2c_set_clientdata(client, sm);
 +
 +	ret = devm_mutex_init(dev, &sm->lock);
@@ -960,12 +1115,12 @@ sm5714 MFD, charger and fuel gauge drivers (SM-T735 kernel source).
 +	if (IS_ERR(sm->bat_psy))
 +		return dev_err_probe(dev, PTR_ERR(sm->bat_psy), "battery power supply\n");
 +
-+	sm->float_mv = SM5714_FLOAT_MV_MAX;
 +	if (!power_supply_get_battery_info(sm->bat_psy, &sm->bat_info)) {
 +		int uv = sm->bat_info->constant_charge_voltage_max_uv;
 +
 +		if (uv > 0)
-+			sm->float_mv = min(uv / 1000, SM5714_FLOAT_MV_MAX);
++			sm->float_mv = sm->float_mv_max =
++				clamp(uv / 1000, SM5714_FLOAT_MV_MIN, SM5714_FLOAT_MV_MAX);
 +	} else {
 +		sm->bat_info = NULL;
 +	}

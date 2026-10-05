@@ -258,13 +258,29 @@ What works on the tablet, and where it comes from (kernel patches in
 | --- | --- | --- |
 | Display (TS124QDM, FocalTech FT8203, DSC) | msm + `panel-samsung-ts124qdm-ft8203` (0002-0004) | brightness in `/sys/class/backlight`; the desktop never switches it off (DPMS hangs the link on the SM-T735) |
 | Touchscreen (FT8203 touch, SPI) | `focaltech-ft8203` (0005) | firmware from the stock vendor partition, loaded at every power-up |
-| Battery, charging (SM5714) | `sm5714_charger` (0006) | charges from plain 5 V (input up to 3 A, lowered by AICL on weaker sources; 1.5 A into the battery); `sm5714_charger.enable_charging=0` on the kernel command line leaves the charger alone |
+| Battery, charging (SM5714) | `sm5714_charger` (0006) | charges from plain 5 V, so at most 15 W from any charger (no USB-PD or SM5440 direct-charger driver yet); input 3 A (lowered by AICL on weaker sources), 2.1 A into the battery by default, adjustable with `jk-charge` (below); `sm5714_charger.enable_charging=0` on the kernel command line leaves the charger alone |
 | S Pen (Wacom W9021) | `samsung-w90xx` (0007) | |
 | Wi-Fi, Bluetooth (WCN6750) | ath11k, hci_qca | WPSS firmware and board data from the stock vendor partition; `/etc/init.d/S07wireless` starts Wi-Fi once the system is mounted |
 | GPU (Adreno 642L) | msm, Mesa freedreno | zap shader from the stock apnhlos partition |
 | Book Cover keyboard, cover magnet | `samsung-stm32-pogo` (0001), gpio-keys | closing the cover doesn't suspend (suspend isn't brought up) |
 | UFS, USB device mode | mainline | USB console and network to a PC |
 | Not yet: audio, sensors (rotation), USB host, cameras, suspend | | audio and sensors run on the ADSP; USB host needs the SM5714's Type-C side |
+
+Charging is set with `jk-charge`, kept in `/etc/jk_os/charge` and applied
+at boot (`/etc/init.d/S08charge`), within Samsung's own limits for this
+battery (the driver refuses anything outside them):
+
+```sh
+jk-charge                      # the settings and the battery right now
+sudo jk-charge normal          # 3000 mA in, 2100 mA into the battery, 4.38 V (default)
+sudo jk-charge fast            # 3200 mA into the battery
+sudo jk-charge gentle          # 1500 / 1000 mA, 4.30 V, stop at 80%
+sudo jk-charge input 2000      # or one setting: input <mA>, current <mA>, voltage <mV>
+sudo jk-charge limit 80        # battery care: stop at 80%, charge again below 75%
+```
+
+While held at the limit the tablet runs from the charger. Charging always
+pauses below 0 or above 50 degC.
 
 ## Sources
 
@@ -560,6 +576,16 @@ The collector, `jk-vizd`, runs as root (`/etc/init.d/S50jk-vizd`) and
 samples only while a jk-viz is open; it serves administrators (root and
 group `wheel`) on `/run/jk-viz.sock`. `sudo jk-vizd --dump` prints one
 sample as JSON. `JK_VIZD=no` in `/etc/jk_os/jk-viz` turns it off.
+
+## jk-charge-monitor: the battery
+
+`jk-charge-monitor` ("Charge Monitor" in the desktop's menu) shows the
+battery live: level, charging or discharging and how fast (W, mA, % per
+hour), time to full (or to the battery care limit) or to empty, voltage,
+temperature, capacity and wear (where the fuel gauge reports them: laptops'
+do, the tablet's doesn't), the charger and its settings, and the last hour
+as graphs. It reads `/sys/class/power_supply` (another tree with
+`JK_POWER_SUPPLY_DIR`), so it works on laptops as on the tablet.
 
 ## Packages (apt)
 

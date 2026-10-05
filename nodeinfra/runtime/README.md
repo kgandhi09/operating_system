@@ -1,5 +1,8 @@
 # Class-based node applications
 
+Start with [basic_nodes](../examples/basic_nodes/README.md) for a standalone
+publisher/subscriber project with CMake files and a message schema.
+
 Derive from `jk::NodeApp` and run the class from an executable's `main()`.
 Launch each executable separately: each has its own process, node registration,
 and event loop. `RunNode` runs in the current process; it does not fork.

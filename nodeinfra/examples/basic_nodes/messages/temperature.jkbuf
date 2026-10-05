@@ -1,0 +1,6 @@
+namespace tutorial {
+    message Temperature {
+        u64 sequence;
+        f32 celsius;
+    }
+}

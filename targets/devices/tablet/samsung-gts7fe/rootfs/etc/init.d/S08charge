@@ -1,0 +1,8 @@
+#!/bin/sh
+# The charging settings chosen with jk-charge (/etc/jk_os/charge; default
+# normal): input limit, battery current, full voltage and the battery care
+# limit, written to the SM5714 charger driver.
+
+case "$1" in
+    start) /usr/sbin/jk-charge --boot ;;
+esac
