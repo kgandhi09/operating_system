@@ -28,7 +28,7 @@ across machines so their nodes can communicate.
 - **Architecture and language independence:** the wire format must work
   across x86_64 and aarch64 and support C, C++, Python, and future clients.
 
-The local milestone is implemented in [distributed_arch](distributed_arch/README.md):
+The local milestone is implemented in [nodeinfra](nodeinfra/README.md):
 `jkbuf`, `nodemaster`, and a near-zero-copy C++ shared-memory publisher/subscriber
 transport. See its README for working commands and current limits. The
 cross-machine architecture below remains planned; its wire format, machine
@@ -322,7 +322,7 @@ visible and controllable, including for customer-owned machines.
 1. **Protocol and identity:** specify framing, message types, identity and
    credential binding, naming, permissions, errors, limits, and node API.
    Define interoperability fixtures for architecture-independent messages.
-2. **Local nodemaster (minimal implementation complete):** `distributed_arch`
+2. **Local nodemaster (minimal implementation complete):** `nodeinfra`
    supplies per-user domains, local node/topic registration, process monitoring,
    near-zero-copy publish/subscribe, and example nodes. Fine-grained node
    authorization and richer directory/health tooling remain to be added.

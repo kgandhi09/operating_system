@@ -10,12 +10,13 @@ integration are the next layer; this implementation opens no network sockets.
 From the JK OS repository root:
 
 ```sh
-cmake -S distributed_arch -B build/nodeinfra -DCMAKE_BUILD_TYPE=Debug
+cmake -S nodeinfra -B build/nodeinfra -DCMAKE_BUILD_TYPE=Debug
 cmake --build build/nodeinfra -j4
 ctest --test-dir build/nodeinfra --output-on-failure
 ```
 
-Use a fresh build directory. The previously copied `distributed_arch/build`
+Use a fresh build directory, including after renaming the source directory.
+The previously copied `nodeinfra/build`
 contains a cache from the original source location and is not used.
 
 Requirements: Linux, a C++20 compiler, CMake 3.20+, and pthreads. Tests also
