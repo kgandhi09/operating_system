@@ -6,7 +6,7 @@ add_library(jk::jk_message_headers ALIAS jk_message_headers)
 target_include_directories(jk_message_headers INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-add_library(jk_nodeinfra STATIC src/shared_memory.cpp)
+add_library(jk_nodeinfra STATIC src/shared_memory.cpp src/node_app.cpp)
 add_library(jk::jk_nodeinfra ALIAS jk_nodeinfra)
 target_link_libraries(jk_nodeinfra PUBLIC jk_message_headers Threads::Threads rt)
 target_compile_features(jk_nodeinfra PUBLIC cxx_std_20)

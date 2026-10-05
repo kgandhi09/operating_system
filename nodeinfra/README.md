@@ -2,7 +2,8 @@
 
 The first local implementation is written in **C++20**, with no ROS dependency.
 It includes the `jkbuf` RIDL compiler, `nodemaster`, a transport interface,
-and typed publisher/subscriber APIs. Networking and JKLink controller
+and typed publisher/subscriber APIs, including a class-based `NodeApp` loop.
+Networking and JKLink controller
 integration are the next layer; this implementation opens no network sockets.
 
 ## Build and test
@@ -166,6 +167,12 @@ For a complete source-tree example, see
 
 ## C++ node API
 
+For a node implemented as a class in its own executable, use `jk::NodeApp`:
+register callbacks with `Subscribe`, publishers with `ProvidesSHM`, implement
+`Update`/`Finalize`, and call `jk::RunNode<MyNode>(argc, argv)` from `main`.
+See [the class-based node guide](runtime/README.md) for the API, delivery
+policies, and runnable separate-process examples. The lower-level API follows.
+
 ```cpp
 #include <jk/runtime.hpp>
 #include "reading.h"
@@ -239,7 +246,8 @@ generation runs on the build host. The target build also produces a target
   Topic registrations last until domain restart. One subscriber per
   node/topic is supported; multiple publishers per topic are supported.
 - Topics require exact schema ID, size, and alignment agreement. Delivery
-  order follows publication commit order; there is no retained history.
+  defaults to ordered (`BLOCK_NEXT`); `POLL_NEWEST` coalesces superseded pending
+  samples per subscriber. There is no retained history for new subscribers.
 - Slow readers and pending deliveries retain slots. Exhaustion is explicit;
   live reader memory is never overwritten to make room for a new message.
 - This first version uses a robust process-shared mutex and polling waits
@@ -258,3 +266,8 @@ See [OWNERSHIP.md](OWNERSHIP.md) for commit, crash, and restart invariants.
 The tests cover generated C/C++ headers, separate-process fan-out, allocation
 identity, slow readers, pool exhaustion, concurrent publishers, abnormal
 process exit, robust-mutex owner death, master restart, and stale cleanup.
+They also cover class-based nodes, ordered/newest callbacks, idle UI updates,
+loan ownership, and finalization on exceptions, SIGINT, and SIGTERM.
+
+The shared-memory layout is version 2; rebuild and restart the master and
+all clients together when upgrading from the original layout.

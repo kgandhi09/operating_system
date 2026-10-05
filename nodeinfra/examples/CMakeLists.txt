@@ -1,5 +1,5 @@
 add_subdirectory(messages)
-foreach(app publisher subscriber)
+foreach(app publisher subscriber class_publisher class_subscriber)
   add_executable(jk_${app} ${app}.cpp)
   target_link_libraries(jk_${app} PRIVATE example_messages jk_nodeinfra)
 endforeach()

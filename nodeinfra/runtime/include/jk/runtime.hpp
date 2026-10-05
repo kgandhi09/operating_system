@@ -26,6 +26,10 @@ struct Schema {
   std::uint64_t id;
   std::size_t size, alignment;
 };
+enum class SubscriptionPolicy {
+  BLOCK_NEXT,  // Keep pending messages in publication order.
+  POLL_NEWEST, // Keep only the newest pending message for this subscriber.
+};
 // Local transport boundary. Future backends can implement the same loan
 // contract. An endpoint is process-bound: create new Nodes after fork; never
 // inherit loans.
@@ -34,6 +38,11 @@ public:
   virtual ~Transport() = default;
   virtual unsigned topic(const std::string &, Schema) = 0;
   virtual void subscribe(unsigned) = 0;
+  virtual void subscribe(unsigned topic, SubscriptionPolicy policy) {
+    if (policy != SubscriptionPolicy::BLOCK_NEXT)
+      throw Error("transport does not support this subscription policy");
+    subscribe(topic);
+  }
   virtual void unsubscribe(unsigned) noexcept = 0;
   virtual std::optional<Buffer> loan(unsigned) = 0;
   virtual void publish(unsigned, const Buffer &) = 0;
@@ -151,9 +160,10 @@ template <class T> class Subscriber {
   unsigned topic_;
 
 public:
-  Subscriber(std::shared_ptr<Transport> t, const std::string &name)
+  Subscriber(std::shared_ptr<Transport> t, const std::string &name,
+             SubscriptionPolicy policy = SubscriptionPolicy::BLOCK_NEXT)
       : transport_(std::move(t)), topic_(transport_->topic(name, schema<T>())) {
-    transport_->subscribe(topic_);
+    transport_->subscribe(topic_, policy);
   }
   ~Subscriber() {
     if (transport_)
@@ -188,8 +198,10 @@ public:
   template <class T> Publisher<T> publisher(const std::string &topic) {
     return {transport_, topic};
   }
-  template <class T> Subscriber<T> subscriber(const std::string &topic) {
-    return {transport_, topic};
+  template <class T> Subscriber<T>
+  subscriber(const std::string &topic,
+             SubscriptionPolicy policy = SubscriptionPolicy::BLOCK_NEXT) {
+    return {transport_, topic, policy};
   }
 };
 } // namespace jk

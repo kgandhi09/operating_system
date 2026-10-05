@@ -8,6 +8,15 @@ if(NOT CMAKE_CROSSCOMPILING)
   target_link_libraries(runtime_test PRIVATE example_messages Threads::Threads rt)
   target_compile_options(runtime_test PRIVATE -Wall -Wextra -Wpedantic)
   add_test(NAME local_runtime COMMAND runtime_test)
+  add_executable(node_app_test node_app_test.cpp)
+  target_link_libraries(node_app_test PRIVATE example_messages jk_nodeinfra)
+  target_compile_options(node_app_test PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME node_app COMMAND node_app_test)
+  set_tests_properties(node_app PROPERTIES TIMEOUT 30)
+  add_test(NAME node_app_processes COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/node_app_process_test.py
+    $<TARGET_FILE:nodemaster> $<TARGET_FILE:jk_class_publisher> $<TARGET_FILE:jk_class_subscriber>)
+  set_tests_properties(node_app_processes PROPERTIES TIMEOUT 40)
   add_test(NAME local_processes COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/process_test.py
     $<TARGET_FILE:nodemaster> $<TARGET_FILE:jk_publisher> $<TARGET_FILE:jk_subscriber>)
   set_tests_properties(jkbuf_compiler local_runtime local_processes PROPERTIES TIMEOUT 40)

@@ -207,6 +207,62 @@ void independent_processes() {
   for (int fd : {ready[0], ready[1], go[0], go[1]})
     close(fd);
 }
+void newest_delivery() {
+  auto d = domain("newest");
+  jk::LocalMaster master(d);
+  jk::Node p(d, "p"), ordered_node(d, "ordered"), latest_node(d, "latest");
+  auto pub = p.publisher<Sample>("Sensor Telemetry");
+  rejects([&] { p.publisher<Sample>("invalid\ttopic"); });
+  rejects([&] { latest_node.subscriber<Sample>("Sensor Telemetry",
+                    static_cast<jk::SubscriptionPolicy>(99)); });
+  auto latest = latest_node.subscriber<Sample>(
+      "Sensor Telemetry", jk::SubscriptionPolicy::POLL_NEWEST);
+  auto send = [&](unsigned sequence) {
+    auto loan = pub.loan();
+    CHECK(loan);
+    (*loan)->f_sequence = sequence;
+    pub.publish(std::move(*loan));
+  };
+  std::optional<jk::ReadLoan<Sample>> held;
+  {
+    auto ordered = ordered_node.subscriber<Sample>("Sensor Telemetry");
+    for (unsigned i = 0; i < jk::pool_slots; ++i)
+      send(i);
+    CHECK(!pub.loan()); // Ordered delivery still retains the full burst.
+    auto message = latest.take();
+    CHECK(message);
+    held.emplace(std::move(*message));
+    CHECK((*held)->f_sequence == jk::pool_slots - 1);
+    CHECK(!latest.take());
+    for (unsigned i = 0; i < jk::pool_slots; ++i) {
+      auto message = ordered.take();
+      CHECK(message && (*message)->f_sequence == i);
+    }
+  }
+  // An idle latest-only reader retains one pending sample, not every sample.
+  // The separately held read loan must never be overwritten.
+  for (unsigned i = jk::pool_slots; i < 1000; ++i)
+    send(i);
+  CHECK((*held)->f_sequence == jk::pool_slots - 1);
+  auto newest = latest.take();
+  CHECK(newest && (*newest)->f_sequence == 999);
+  CHECK(!latest.take());
+  held.reset();
+  newest.reset();
+  {
+    auto temporary = ordered_node.subscriber<Sample>(
+        "Sensor Telemetry", jk::SubscriptionPolicy::POLL_NEWEST);
+    send(1000);
+  }
+  // Unsubscription clears the policy too, even if this node index is reused.
+  auto ordered_again = ordered_node.subscriber<Sample>("Sensor Telemetry");
+  send(1001);
+  send(1002);
+  auto first = ordered_again.take();
+  auto second = ordered_again.take();
+  CHECK(first && second);
+  CHECK((*first)->f_sequence == 1001 && (*second)->f_sequence == 1002);
+}
 void crashed_writer_and_live_reader() {
   auto d = domain("crash");
   jk::LocalMaster master(d);
@@ -325,6 +381,7 @@ int main() {
   try {
     loans_and_bounds();
     ordering_and_retention();
+    newest_delivery();
     independent_processes();
     crashed_writer_and_live_reader();
     concurrent_publishers();

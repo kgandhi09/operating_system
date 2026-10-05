@@ -13,8 +13,11 @@ voltage, current, temperature from the gauge, read exactly as Samsung's
 driver does) and "sm5714-charger" (online, status, health, current
 limits). It only reads the gauge and never reloads its battery model.
 Unless enable_charging=0, on VBUS it programs what Samsung's driver does
-on cable attach, with conservative 1500 mA input/charge currents and the
-stock 4.38 V float voltage, and kicks the watchdog every 30 s.
+on cable attach, with a 3000 mA input limit (the 5 V default of any
+USB-C source; AICL backs off on weaker ones), a conservative 1500 mA
+charge current and the stock 4.38 V float voltage, and kicks the
+watchdog every 30 s. The watchdog is switched off across suspend, when
+nothing kicks it.
 
 Register layout, encodings and sequences come from Samsung's GPL
 sm5714 MFD, charger and fuel gauge drivers (SM-T735 kernel source).
@@ -56,7 +59,7 @@ sm5714 MFD, charger and fuel gauge drivers (SM-T735 kernel source).
  obj-$(CONFIG_CHARGER_TPS65217)	+= tps65217_charger.o
 --- /dev/null
 +++ b/drivers/power/supply/sm5714_charger.c	2026-10-04 23:53:20.000138033 +0530
-@@ -0,0 +1,973 @@
+@@ -0,0 +1,984 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Silicon Mitus SM5714 switching charger and fuel gauge
@@ -78,7 +81,7 @@ sm5714 MFD, charger and fuel gauge drivers (SM-T735 kernel source).
 + *
 + * Unless the enable_charging module parameter is cleared, the driver
 + * also does what Samsung's driver does when a cable is attached: set
-+ * conservative input/charge currents and the stock float voltage, enable
++ * the input/charge currents and the stock float voltage, enable
 + * charging and keep the charger's watchdog fed. The bootloader leaves
 + * the watchdog running, so without this charging stops shortly after
 + * boot.
@@ -186,9 +189,14 @@ sm5714 MFD, charger and fuel gauge drivers (SM-T735 kernel source).
 +MODULE_PARM_DESC(enable_charging,
 +		 "Configure and enable charging when VBUS is present (default: true)");
 +
-+static uint input_current_ma = 1500;
++/*
++ * Without a Type-C/PD driver the source's advertised current is unknown:
++ * 3 A is what a USB-C source offers at 5 V, and AICL (4.5 V) lowers the
++ * input current on a source that can't keep up, such as a PC port.
++ */
++static uint input_current_ma = 3000;
 +module_param(input_current_ma, uint, 0444);
-+MODULE_PARM_DESC(input_current_ma, "VBUS input current limit in mA (default: 1500)");
++MODULE_PARM_DESC(input_current_ma, "VBUS input current limit in mA (default: 3000)");
 +
 +static uint charge_current_ma = 1500;
 +module_param(charge_current_ma, uint, 0444);
@@ -986,11 +994,13 @@ sm5714 MFD, charger and fuel gauge drivers (SM-T735 kernel source).
 +	sm5714_release_wdt(i2c_get_clientdata(client));
 +}
 +
++/*
++ * Nothing kicks the watchdog while suspended and an expired one stops
++ * charging, so it is off until resume.
++ */
 +static int sm5714_suspend(struct device *dev)
 +{
-+	struct sm5714 *sm = dev_get_drvdata(dev);
-+
-+	cancel_delayed_work_sync(&sm->work);
++	sm5714_release_wdt(dev_get_drvdata(dev));
 +	return 0;
 +}
 +
@@ -998,6 +1008,10 @@ sm5714 MFD, charger and fuel gauge drivers (SM-T735 kernel source).
 +{
 +	struct sm5714 *sm = dev_get_drvdata(dev);
 +
++	if (sm->configured)
++		sm5714_chg_update(sm, SM5714_CHG_REG_WDTCNTL,
++				  SM5714_WDTCNTL_EN | SM5714_WDTCNTL_KICK,
++				  SM5714_WDTCNTL_EN | SM5714_WDTCNTL_KICK);
 +	schedule_delayed_work(&sm->work, 0);
 +	return 0;
 +}

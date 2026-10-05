@@ -16,6 +16,7 @@ namespace jk {
 namespace {
 constexpr std::uint64_t magic = 0x4a4b53484d303031ULL;
 constexpr unsigned max_nodes = 32, max_topics = 32;
+constexpr std::uint32_t layout_version = 2;
 struct Process {
   std::int32_t pid;
   std::uint64_t start;
@@ -28,7 +29,7 @@ struct Participant {
 struct Topic {
   char name[128];
   std::uint64_t schema;
-  std::uint32_t size, alignment, subscribers;
+  std::uint32_t size, alignment, subscribers, newest_subscribers;
   bool used;
 };
 struct Slot {
@@ -56,12 +57,14 @@ std::string object_name(const std::string &domain) {
       throw Error("invalid domain name");
   return "/jk-nodeinfra-" + std::to_string(geteuid()) + "-" + domain;
 }
-void check_name(const std::string &name, std::size_t limit) {
+void check_name(const std::string &name, std::size_t limit,
+                bool allow_spaces = false) {
   if (name.empty() || name.size() >= limit)
     throw Error("empty or oversized node/topic name");
   for (unsigned char c : name)
-    if (c < 33 || c > 126)
-      throw Error("names must contain printable ASCII without spaces");
+    if (c < (allow_spaces ? 32 : 33) || c > 126)
+      throw Error(allow_spaces ? "topic names must contain printable ASCII"
+                               : "node names must contain printable ASCII without spaces");
 }
 void system_error(const char *operation) {
   throw Error(std::string(operation) + ": " + std::strerror(errno));
@@ -139,8 +142,10 @@ void reclaim(Slot &slot) {
 }
 void remove_node(Shared *s, unsigned index) {
   auto mask = ~(std::uint32_t(1) << index);
-  for (auto &t : s->topics)
+  for (auto &t : s->topics) {
     t.subscribers &= mask;
+    t.newest_subscribers &= mask;
+  }
   for (auto &slot : s->slots) {
     if (slot.state == 1 && slot.writer == index)
       slot.state = 0;
@@ -239,7 +244,7 @@ public:
     map_.map();
     // Initializer publishes signature last using an atomic release store.
     if (__atomic_load_n(&map_.s->signature, __ATOMIC_ACQUIRE) != magic ||
-        map_.s->version != 1 || map_.s->size != sizeof(Shared))
+        map_.s->version != layout_version || map_.s->size != sizeof(Shared))
       throw Error("domain is not ready or has an incompatible ABI");
     Guard lock(map_.s);
     check();
@@ -268,7 +273,7 @@ public:
     }
   }
   unsigned topic(const std::string &name, Schema schema) override {
-    check_name(name, sizeof(Topic::name));
+    check_name(name, sizeof(Topic::name), true);
     if (!schema.id || !schema.size || schema.size > max_payload ||
         !schema.alignment || schema.alignment > 64 ||
         (schema.alignment & (schema.alignment - 1)))
@@ -297,11 +302,18 @@ public:
     t.size = schema.size;
     t.alignment = schema.alignment;
     t.subscribers = 0;
+    t.newest_subscribers = 0;
     std::memcpy(t.name, name.c_str(), name.size() + 1);
     t.used = true;
     return free;
   }
   void subscribe(unsigned t) override {
+    subscribe(t, SubscriptionPolicy::BLOCK_NEXT);
+  }
+  void subscribe(unsigned t, SubscriptionPolicy policy) override {
+    if (policy != SubscriptionPolicy::BLOCK_NEXT &&
+        policy != SubscriptionPolicy::POLL_NEWEST)
+      throw Error("invalid subscription policy");
     Guard lock(map_.s);
     check();
     validate_topic(t);
@@ -309,6 +321,8 @@ public:
     if (map_.s->topics[t].subscribers & bit)
       throw Error("one subscriber per node/topic is supported");
     map_.s->topics[t].subscribers |= bit;
+    if (policy == SubscriptionPolicy::POLL_NEWEST)
+      map_.s->topics[t].newest_subscribers |= bit;
   }
   void unsubscribe(unsigned t) noexcept override {
     if (getpid() != process_.pid)
@@ -319,6 +333,7 @@ public:
         return;
       auto mask = ~(std::uint32_t(1) << index_);
       map_.s->topics[t].subscribers &= mask;
+      map_.s->topics[t].newest_subscribers &= mask;
       for (auto &s : map_.s->slots)
         if (s.topic == t) {
           s.pending &= mask;
@@ -357,6 +372,15 @@ public:
       throw Error("loan owner/topic mismatch");
     if (map_.s->sequence == std::numeric_limits<std::uint64_t>::max())
       throw Error("sequence exhausted");
+    // Coalesce only pending deliveries. Active reader loans remain immutable,
+    // and ordered subscribers keep every one of their pending messages.
+    auto newest = map_.s->topics[t].newest_subscribers;
+    if (newest)
+      for (auto &previous : map_.s->slots)
+        if (previous.state == 2 && previous.topic == t) {
+          previous.pending &= ~newest;
+          reclaim(previous);
+        }
     s.sequence = ++map_.s->sequence;
     s.pending = map_.s->topics[t].subscribers;
     s.readers = 0;
@@ -457,7 +481,7 @@ struct LocalMaster::Impl {
       if (e)
         throw Error("initialize shared mutex: " +
                     std::string(std::strerror(e)));
-      map.s->version = 1;
+      map.s->version = layout_version;
       map.s->size = sizeof(Shared);
       map.s->master = process;
       __atomic_store_n(&map.s->signature, magic, __ATOMIC_RELEASE);

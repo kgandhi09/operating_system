@@ -1,4 +1,4 @@
-# Local shared-memory ownership contract, version 1
+# Local shared-memory ownership contract, version 2
 
 This is the implemented contract for the C++ local backend. It narrows the
 broader proposals in ARCHITECTURE.md for a minimal, reviewable first runtime.
@@ -30,6 +30,8 @@ There are 32 participant entries, 32 topic entries, and 32 slots, each with
 64-byte-aligned storage for at most 65536 bytes. Payload size/alignment and
 schema ID are fixed when a topic is first registered. Topic names are retained
 until domain restart, and incompatible re-registration is rejected.
+Each topic records subscriber membership and a separate mask identifying
+newest-only subscribers. Layout version 2 must match in the master and clients.
 
 Each slot has a state, a generation, an owning writer index, a topic index,
 a publication sequence, and separate 32-bit masks for pending deliveries and
@@ -54,6 +56,8 @@ All mutable metadata transitions are serialized by the robust mutex.
    metadata lock. It owns the loan exclusively and must serialize access to
    that loan itself. Publication validates generated bounds first.
 3. **Commit:** under the lock, confirm slot generation/state and owner/topic,
+   clear newest-only subscribers' pending bits on older publications of this
+   topic (preserving all active-reader bits), reclaim any now-unretained slots,
    assign a monotonically increasing sequence, capture current subscriber
    bits, and switch to PUBLISHED. Unlock makes completed payload writes
    visible to subsequent readers acquiring the lock.
@@ -78,14 +82,23 @@ this first backend assumes cooperating applications in one user's domain.
 ## Backpressure and ordering
 
 Pending deliveries and active readers share the bounded pool. A full pool
-causes `loan()` to return no value. A slow reader therefore applies backpressure
-without losing its allocation. There is no forced eviction, automatic retry,
+causes `loan()` to return no value. A slow ordered reader therefore applies
+backpressure without losing its allocation. There is no eviction of active
+reader loans, automatic retry,
 unbounded offline queue, or automatic replay.
 
 All matching active subscribers at commit are admitted using a single metadata
 transaction. Taking messages scans slots by publication sequence. Per-topic
 order follows commit order, including concurrent publishers. Application
 completion and durable delivery are not guaranteed by publication.
+
+`BLOCK_NEXT` preserves pending samples in commit order. `POLL_NEWEST` retains
+only the newest pending sample for that subscriber. Coalescing changes pending
+metadata, never the bytes or retention of an active read loan, and never the
+pending bits of ordered subscribers. It happens during publication, so an idle
+newest-only subscriber does not accumulate a backlog. A full pool can still
+prevent loaning the next write slot; publication never steals a live allocation.
+Unsubscription and participant cleanup clear both subscription masks.
 
 ## Death and recovery
 
@@ -123,6 +136,8 @@ after a master restart.
 - Exhaustion, invalid bounds, schema mismatches, and duplicate nodes fail
   explicitly.
 - Concurrent publishers deliver distinct messages in commit order.
+- Mixed ordered/newest subscribers preserve ordered delivery while coalescing
+  pending latest samples; active read loans remain unchanged across publication.
 - A killed writer's unpublished loans are recovered; a living stalled writer
   is not reclaimed.
 - Injected metadata-lock owner death fails the domain without reuse.
