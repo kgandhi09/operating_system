@@ -185,10 +185,22 @@ the system it runs on:
 | `android-uboot` (Tab S7 FE) | `….vendor_boot.img` | the `vendor_boot` partition | the Odin `.tar.md5` |
 | `android-bootimg` | `….boot.img` | the `boot` partition | the Odin `.tar.md5` |
 
-On the server: `<downloads>/jk_os/<channel>/<ver>/`, and
-`<downloads>/jk_os/latest-<channel>.json`, which `jk-update` reads. The
-release names its device, arch and boot format, and `jk-update` refuses one
-made for another kind of system.
+On the server, a version's folder holds every channel published at that
+version, and each channel has one pointer to its newest release, which
+`jk-update` reads first (it can't live in a version's folder: it is how the
+newest version is found):
+
+```
+<downloads>/jk_os/
+    latest-x86_64.json                    -> 0.1.0/x86_64/
+    latest-samsung-gts7fe-aarch64.json    -> 0.1.0/samsung-gts7fe-aarch64/
+    0.1.0/
+        x86_64/                   jk_os-0.1.0-x86_64.{squashfs,efi,iso}, INSTALL.txt, SHA256SUMS, release.json
+        samsung-gts7fe-aarch64/   jk_os-0.1.0-samsung-gts7fe-aarch64.{squashfs,vendor_boot.img,tar.md5}, ...
+```
+
+The release names its device, arch and boot format, and `jk-update` refuses
+one made for another kind of system.
 
 ### Android-bootloader devices (Samsung Galaxy Tab S7 FE)
 

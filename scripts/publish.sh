@@ -24,19 +24,21 @@
 #   release.json                    version, channel, arch, device, boot
 #                                   format, git commit, date, and each file's
 #                                   name, size and SHA-256
-# go to <downloads>/jk_os/<channel>/<ver>/ on the server. They are uploaded
-# into a hidden directory first, checked there against SHA256SUMS, and only
-# then renamed into place; last, jk_os/latest-<channel>.json (a copy of
-# release.json, what jk-update reads) is replaced, so whoever reads it
-# always finds a complete release.
+# go to <downloads>/jk_os/<ver>/<channel>/ on the server: a version's
+# folder holds every channel published at that version. They are uploaded
+# into a hidden folder beside it first, checked there against SHA256SUMS, and
+# only then renamed into place; last, jk_os/latest-<channel>.json (a copy of
+# release.json, which jk-update reads to learn the newest version) is
+# replaced, so whoever reads it always finds a complete release.
 #
 # Only one release per channel is kept: once the new one is in place, the
-# channel's other versions are deleted (other channels are left alone; the
-# x86_64 channel also takes away the releases from before the channels, in
-# <downloads>/jk_os/<ver>/). If the server lacks the space to hold both while
-# uploading, the channel's old release is deleted first (its latest json goes
-# with it, so nothing points at a half-uploaded release); its downloads are
-# then unavailable until the upload finishes.
+# channel's folders in the other versions are deleted (other channels are
+# left alone), and so are version folders left empty. The x86_64 channel
+# also takes away its files from before the channels, which lay directly in
+# jk_os/<ver>/. If the server lacks the space to hold both while uploading,
+# the channel's old release is deleted first (its latest json goes with it,
+# so nothing points at a half-uploaded release); its downloads are then
+# unavailable until the upload finishes.
 #
 # The kernel and the image are always published together: an image's kernel
 # modules are built for that kernel. A version already on the channel is
@@ -70,17 +72,19 @@ done
 ver="$OS_VERSION"
 channel="$JK_CHANNEL"
 base="$OS_NAME-$ver-$channel"
-chan_dir="$REMOTE_ROOT/$OS_NAME/$channel"
-remote_dir="$chan_dir/$ver"
-latest="$REMOTE_ROOT/$OS_NAME/latest-$channel.json"
+os_dir="$REMOTE_ROOT/$OS_NAME"
+ver_dir="$os_dir/$ver"
+remote_dir="$ver_dir/$channel"
+tmp_dir="$ver_dir/.upload-$channel"
+latest="$os_dir/latest-$channel.json"
 if [[ "$HOST" == local ]]; then
     remote() { sh -c "$*"; }
-    RSYNC_DEST="$chan_dir/.upload-$ver/"
+    RSYNC_DEST="$tmp_dir/"
 else
     need ssh
     SSH=(ssh -i "$KEY" -o ConnectTimeout=20 -o ServerAliveInterval=30 -o BatchMode=yes)
     remote() { "${SSH[@]}" "$HOST" "$@"; }
-    RSYNC_DEST="$HOST:$chan_dir/.upload-$ver/"
+    RSYNC_DEST="$HOST:$tmp_dir/"
 fi
 
 # ---------------------------------------------------------------- what to publish
@@ -148,7 +152,7 @@ fi
     printf '  "device": "%s",\n  "kernel_profile": "%s",\n  "boot": "%s",\n' "$JK_DEVICE" "$JK_KERNEL" "$DEVICE_BOOT"
     printf '  "kernel_release": "%s",\n  "commit": "%s%s",\n' "$krel" "$commit" "$dirty"
     printf '  "date": "%s",\n  "url": "%s/%s/%s/%s/",\n  "files": {\n' \
-        "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$PUBLIC_URL" "$OS_NAME" "$channel" "$ver"
+        "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$PUBLIC_URL" "$OS_NAME" "$ver" "$channel"
     n=0
     for f in "${files[@]}"; do
         n=$((n + 1))
@@ -177,36 +181,46 @@ remote true || die "cannot reach $HOST over SSH (key $KEY)"
 if remote "test -e '$remote_dir'"; then
     (( force )) || die "$OS_NAME $ver is already on channel $channel ($remote_dir): bump OS_VERSION, or --force to replace it"
 fi
-# old_versions [<keep>]: the channel's releases on the server (and leftovers
-# of other interrupted uploads), but not this version's upload in progress,
-# nor <keep>; for x86_64 also the releases from before the channels
-# (jk_os/<ver>/, named ../<ver> here).
-old_versions() {
-    remote "cd '$chan_dir' 2>/dev/null && for d in */ .upload-*/; do
-        d=\${d%/}; [ -d \"\$d\" ] && [ \"\$d\" != '.upload-$ver' ] && [ \"\$d\" != '${1:-}' ] && echo \"\$d\"; done; true"
-    if [[ "$channel" == x86_64 ]]; then
-        remote "cd '$REMOTE_ROOT/$OS_NAME' 2>/dev/null && for d in [0-9]*/; do
-            d=\${d%/}; [ -d \"\$d\" ] && echo \"../\$d\"; done; true"
-    fi
+# old_releases [<keep>]: the channel's releases on the server (and leftovers
+# of its interrupted uploads), as paths under jk_os/: <ver>/<channel> for
+# every version but <keep>; for x86_64 also its files from before the
+# channels (<ver>/jk_os-<ver>-x86_64.*, SHA256SUMS, release.json,
+# INSTALL.txt directly in a version folder).
+old_releases() {
+    remote "cd '$os_dir' 2>/dev/null || exit 0
+        for d in [0-9]*/; do
+            d=\${d%/}; [ -d \"\$d\" ] || continue
+            [ \"\$d\" != '${1:-}' ] && [ -d \"\$d/$channel\" ] && echo \"\$d/$channel\"
+            [ \"\$d\" != '$ver' ] && [ -d \"\$d/.upload-$channel\" ] && echo \"\$d/.upload-$channel\"
+            if [ '$channel' = x86_64 ]; then
+                for f in \"\$d\"/$OS_NAME-\"\$d\"-x86_64.* \"\$d\"/SHA256SUMS \"\$d\"/release.json \"\$d\"/INSTALL.txt; do
+                    [ -f \"\$f\" ] && echo \"\$f\"
+                done
+            fi
+        done; true"
 }
-remote "mkdir -p '$chan_dir'"
+# drop <paths...>: delete them under jk_os/, then the version folders left empty.
+drop() {
+    remote "cd '$os_dir' && rm -rf $(printf "'%s' " "$@") && for d in [0-9]*/; do rmdir \"\$d\" 2>/dev/null; done; true"
+}
+remote "mkdir -p '$ver_dir'"
 # The user must own the release folders: it renames and deletes releases
 # there (no sudo). Check before anything is deleted.
-remote "test -w '$chan_dir' && test -w '$REMOTE_ROOT/$OS_NAME'" \
-    || die "$HOST cannot write to $REMOTE_ROOT/$OS_NAME: run there: sudo chown -R \$(id -un) $REMOTE_ROOT"
+remote "test -w '$os_dir' && test -w '$ver_dir'" \
+    || die "$HOST cannot write to $os_dir: run there: sudo chown -R \$(id -un) $REMOTE_ROOT"
 need_kb=$(( $(du -sLk "$stage" | cut -f1) + 102400 ))     # and 100 MB to spare
 free_kb() { remote "df -Pk '$REMOTE_ROOT' | awk 'NR==2 {print \$4}'"; }
 if (( $(free_kb) < need_kb )); then
-    old=$(old_versions | grep -v '^\.upload-' || true)
-    [[ -n "$old" ]] || die "not enough space on the server: $((need_kb / 1024)) MB needed, $(($(free_kb) / 1024)) MB free (grow the disk)"
-    warn "not enough space to keep channel $channel's old release while uploading: deleting it first ($(echo $old)); its downloads are unavailable until the upload finishes"
-    remote "cd '$chan_dir' && rm -f '$latest' && rm -rf $(printf "'%s' " $old)"
+    mapfile -t old < <(old_releases)
+    (( ${#old[@]} )) || die "not enough space on the server: $((need_kb / 1024)) MB needed, $(($(free_kb) / 1024)) MB free (grow the disk)"
+    warn "not enough space to keep channel $channel's old release while uploading: deleting it first (${old[*]}); its downloads are unavailable until the upload finishes"
+    remote "rm -f '$latest'"
+    drop "${old[@]}"
     (( $(free_kb) >= need_kb )) \
         || die "not enough space on the server even without the old release: $((need_kb / 1024)) MB needed, $(($(free_kb) / 1024)) MB free (grow the disk)"
 fi
 
 # ---------------------------------------------------------------- upload, verify, switch
-tmp_dir="$chan_dir/.upload-$ver"
 remote "mkdir -p '$tmp_dir'"
 log "uploading to $HOST:$tmp_dir (resumable: rerun if it stops)"
 if [[ "$HOST" == local ]]; then
@@ -220,20 +234,20 @@ remote "set -e
     old='$remote_dir.old-\$\$'
     [ -e '$remote_dir' ] && mv '$remote_dir' \"\$old\"
     mv '$tmp_dir' '$remote_dir'
-    chmod 755 '$chan_dir' '$remote_dir'; chmod 644 '$remote_dir'/*
+    chmod 755 '$ver_dir' '$remote_dir'; chmod 644 '$remote_dir'/*
     rm -rf \"\$old\"
     cp '$remote_dir/release.json' '$latest.new'
     chmod 644 '$latest.new'
     mv '$latest.new' '$latest'"
 
 # Only this release stays on the channel.
-old=$(old_versions "$ver")
-if [[ -n "$old" ]]; then
-    log "deleting channel $channel's previous releases: $(echo $old)"
-    remote "cd '$chan_dir' && rm -rf $(printf "'%s' " $old)"
+mapfile -t old < <(old_releases "$ver")
+if (( ${#old[@]} )); then
+    log "deleting channel $channel's previous releases: ${old[*]}"
+    drop "${old[@]}"
 fi
 
 log "published $OS_NAME $ver on channel $channel"
-echo "  $PUBLIC_URL/$OS_NAME/$channel/$ver/"
+echo "  $PUBLIC_URL/$OS_NAME/$ver/$channel/"
 echo "  $PUBLIC_URL/$OS_NAME/latest-$channel.json"
 rm -rf "$stage"
