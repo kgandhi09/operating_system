@@ -1,0 +1,1 @@
+/usr/bin/clang++ -fPIC  -std=c++20 -O3 -DRELEASE_BUILD -Xlinker --dependency-file=CMakeFiles/ridl_parser.dir/link.d -shared -Wl,-soname,libridl_parser.so -o libridl_parser.so CMakeFiles/ridl_parser.dir/parser.cpp.o  -Wl,-rpath,/home/gandhi/jk_robotics/arch/build/idl/lexer: ../lexer/libridl_lexer.so

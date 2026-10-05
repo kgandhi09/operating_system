@@ -1,0 +1,1 @@
+/usr/bin/clang++  -std=c++20 -O3 -DRELEASE_BUILD -Xlinker --dependency-file=CMakeFiles/ridl_lexer_tests.dir/link.d CMakeFiles/ridl_lexer_tests.dir/lexer_test.cpp.o -o ridl_lexer_tests  -Wl,-rpath,/home/gandhi/jk_robotics/arch/build/idl/lexer: ../libridl_lexer.so /usr/local/lib/libgtest.a /usr/local/lib/libgtest_main.a /usr/local/lib/libgtest.a

@@ -1,0 +1,13 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/gandhi/jk_robotics/arch/build/cmake_install.cmake",
+		"/home/gandhi/jk_robotics/arch/build/idl/cmake_install.cmake",
+		"/home/gandhi/jk_robotics/arch/build/idl/grammar/cmake_install.cmake",
+		"/home/gandhi/jk_robotics/arch/build/idl/lexer/cmake_install.cmake",
+		"/home/gandhi/jk_robotics/arch/build/idl/lexer/tests/cmake_install.cmake",
+		"/home/gandhi/jk_robotics/arch/build/idl/parser/cmake_install.cmake",
+		"/home/gandhi/jk_robotics/arch/build/idl/ast/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

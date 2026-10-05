@@ -1,0 +1,136 @@
+(* ========================================================= *)
+(* JK Robotics RIDL Grammar                                  *)
+(* Robotics Interface Definition Language                    *)
+(* ========================================================= *)
+
+schema
+    = { declaration } ;
+
+namespace_decl
+    = "namespace" qualified_identifier "{"
+        { declaration }
+      "}" ;
+
+declaration
+    = include_decl
+    | namespace_decl
+    | message_decl
+    ;
+
+(* ========================================================= *)
+(* Includes                                                  *)
+(* ========================================================= *)
+
+include_decl
+    = "#include" string_literal ;
+
+(* ========================================================= *)
+(* Messages                                                  *)
+(* ========================================================= *)
+
+message_decl
+    = "message" identifier "{"
+        { field_decl }
+      "}" ;
+
+field_decl
+    = type_expr identifier ";" ;
+
+(* ========================================================= *)
+(* Type Expressions                                          *)
+(* ========================================================= *)
+
+type_expr
+    = primitive_type
+    | array_type
+    | vector_type
+    | string_type
+    | qualified_identifier
+    ;
+
+primitive_type
+    = "bool"
+    | "u8"
+    | "u16"
+    | "u32"
+    | "u64"
+    | "i8"
+    | "i16"
+    | "i32"
+    | "i64"
+    | "f32"
+    | "f64"
+    ;
+
+array_type
+    = "array" "<"
+        type_expr ","
+        integer_literal
+      ">" ;
+
+vector_type
+    = "vector" "<"
+        type_expr ","
+        integer_literal
+      ">" ;
+
+string_type
+    = "string" "<"
+        integer_literal
+      ">" ;
+
+(* ========================================================= *)
+(* Identifiers                                               *)
+(* ========================================================= *)
+
+qualified_identifier
+    = identifier
+      { "." identifier } ;
+
+identifier
+    = letter
+      { letter | digit | "_" } ;
+
+(* ========================================================= *)
+(* Literals                                                  *)
+(* ========================================================= *)
+
+integer_literal
+    = digit
+      { digit } ;
+
+string_literal
+    = "\""
+      { string_character }
+      "\"" ;
+
+string_character
+    = ? any printable character except " and newline ? ;
+
+(* ========================================================= *)
+(* Lexical Elements                                          *)
+(* ========================================================= *)
+
+letter
+    = "A" | "B" | "C" | "D" | "E" | "F" | "G"
+    | "H" | "I" | "J" | "K" | "L" | "M" | "N"
+    | "O" | "P" | "Q" | "R" | "S" | "T" | "U"
+    | "V" | "W" | "X" | "Y" | "Z"
+    | "a" | "b" | "c" | "d" | "e" | "f" | "g"
+    | "h" | "i" | "j" | "k" | "l" | "m" | "n"
+    | "o" | "p" | "q" | "r" | "s" | "t" | "u"
+    | "v" | "w" | "x" | "y" | "z" ;
+
+digit
+    = "0" | "1" | "2" | "3" | "4"
+    | "5" | "6" | "7" | "8" | "9" ;
+
+(* ========================================================= *)
+(* Whitespace                                                *)
+(* ========================================================= *)
+
+whitespace
+    = " "
+    | "\t"
+    | "\r"
+    | "\n" ;

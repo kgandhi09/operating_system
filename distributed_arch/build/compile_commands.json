@@ -1,0 +1,20 @@
+[
+{
+  "directory": "/home/gandhi/jk_robotics/arch/build/idl/lexer",
+  "command": "/usr/bin/clang++ -Dridl_lexer_EXPORTS -I/home/gandhi/jk_robotics/arch/idl/lexer/include  -std=c++20 -O3 -DRELEASE_BUILD -std=c++20 -fPIC -Wall -Wextra -Wpedantic -o CMakeFiles/ridl_lexer.dir/lexer.cpp.o -c /home/gandhi/jk_robotics/arch/idl/lexer/lexer.cpp",
+  "file": "/home/gandhi/jk_robotics/arch/idl/lexer/lexer.cpp",
+  "output": "idl/lexer/CMakeFiles/ridl_lexer.dir/lexer.cpp.o"
+},
+{
+  "directory": "/home/gandhi/jk_robotics/arch/build/idl/lexer/tests",
+  "command": "/usr/bin/clang++  -I/home/gandhi/jk_robotics/arch/idl/lexer/include  -std=c++20 -O3 -DRELEASE_BUILD -std=c++20 -fPIE -Wall -Wextra -Wpedantic -o CMakeFiles/ridl_lexer_tests.dir/lexer_test.cpp.o -c /home/gandhi/jk_robotics/arch/idl/lexer/tests/lexer_test.cpp",
+  "file": "/home/gandhi/jk_robotics/arch/idl/lexer/tests/lexer_test.cpp",
+  "output": "idl/lexer/tests/CMakeFiles/ridl_lexer_tests.dir/lexer_test.cpp.o"
+},
+{
+  "directory": "/home/gandhi/jk_robotics/arch/build/idl/parser",
+  "command": "/usr/bin/clang++ -Dridl_parser_EXPORTS -I/home/gandhi/jk_robotics/arch/idl/parser/include -I/home/gandhi/jk_robotics/arch/idl/ast/include -I/home/gandhi/jk_robotics/arch/idl/lexer/include  -std=c++20 -O3 -DRELEASE_BUILD -std=c++20 -fPIC -Wall -Wextra -Wpedantic -o CMakeFiles/ridl_parser.dir/parser.cpp.o -c /home/gandhi/jk_robotics/arch/idl/parser/parser.cpp",
+  "file": "/home/gandhi/jk_robotics/arch/idl/parser/parser.cpp",
+  "output": "idl/parser/CMakeFiles/ridl_parser.dir/parser.cpp.o"
+}
+]

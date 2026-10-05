@@ -1,0 +1,1 @@
+/usr/bin/clang++ -fPIC  -std=c++20 -O3 -DRELEASE_BUILD -Xlinker --dependency-file=CMakeFiles/ridl_lexer.dir/link.d -shared -Wl,-soname,libridl_lexer.so -o libridl_lexer.so CMakeFiles/ridl_lexer.dir/lexer.cpp.o
