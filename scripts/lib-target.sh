@@ -21,7 +21,9 @@
 #   DEVICE_INITRAMFS_FIRMWARE    no: leave the network firmware out of the
 #                                initramfs (default: in it)
 #   DEVICE_INITRAMFS_TOOLS       more disk tools in the initramfs (from
-#                                build/<arch>/tools/sbin), e.g. mke2fs
+#                                build/<arch>/tools/sbin), e.g. mke2fs;
+#                                added to the category's
+#                                CATEGORY_INITRAMFS_TOOLS (category.env)
 #   DEVICE_KERNEL_IMAGE          android-bootimg: Image (uncompressed) or
 #                                Image.gz (default)
 #   DEVICE_ABL_DTB               android-uboot: the device tree the device's
@@ -92,7 +94,7 @@ target_devices() {   # target_devices <category>
 # load_category / load_device / load_kernel: read a profile into CATEGORY_*,
 # DEVICE_* or KERNEL_*, clearing what a previous one set. Fail if missing.
 load_category() {
-    CATEGORY_DESC=
+    CATEGORY_DESC= CATEGORY_INITRAMFS_TOOLS=
     CATEGORY_DIR="$TARGETS_DIR/devices/$1"
     [[ -f "$CATEGORY_DIR/category.env" ]] || return 1
     # shellcheck source=/dev/null

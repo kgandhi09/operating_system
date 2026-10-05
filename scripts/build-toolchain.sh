@@ -403,15 +403,31 @@ b_bash() {
     ln -sf /usr/bin/bash "$TC/bin/bash"
 }
 
+# Cross-building Python needs a build-machine Python of the same version: one
+# from the same tree, for the build machine (in $CROSS/python), with zlib for
+# ensurepip's wheels. Only used during the build.
+b_python_build() {
+    copy_src "$1" "$2"
+    (cd "$2" && env -u CC -u CXX ./configure --prefix="$CROSS/python" --without-ensurepip \
+        --disable-test-modules --with-dbmliborder=)
+    make -C "$2" -j"$JOBS"
+    make -C "$2" install
+}
+
 # Python 3: shared libpython, OpenSSL (the network stack's: ssl, hashlib,
 # pip over HTTPS), pip installed with ensurepip, venv; the standard modules'
 # libraries given one by one (pkg-config would hand the build machine's
 # /usr paths). No test suite. python, pip: links to python3, pip3.
+# Cross-built for aarch64 with the build-machine Python above, which also
+# runs the build's own scripts and ensurepip.
 b_python() {
+    local cross=() run=(env "LD_LIBRARY_PATH=$2:$DYN/usr/lib:$TC/usr/lib")
     if [[ -n "$CROSS" ]]; then
-        # Cross-building Python needs a build-machine Python of the same version.
-        echo "Python is not cross-built ($ARCH on $HOST_ARCH)" >&2
-        return 0
+        # configure can't run its probes on the target: its devices, and
+        # glibc's getaddrinfo (which works; untested it is taken as buggy).
+        cross=(--with-build-python="$CROSS/python/bin/python3" ac_cv_file__dev_ptmx=yes
+               ac_cv_file__dev_ptc=no ac_cv_buggy_getaddrinfo=no)
+        run=()
     fi
     copy_src "$1" "$2"
     local d="$DYN/usr/include" t="$TC/usr/include"
@@ -427,11 +443,11 @@ b_python() {
         ./configure "${TARGET_ARGS[@]}" --enable-shared --with-openssl="$DYN/usr" \
         --with-openssl-rpath=no --with-ssl-default-suites=openssl --with-system-expat \
         --with-ensurepip=install --with-readline=readline --disable-test-modules \
-        --with-dbmliborder= --without-static-libpython)
-    # The built interpreter runs during the build (it imports every module
+        --with-dbmliborder= --without-static-libpython "${cross[@]}")
+    # A native build runs the interpreter it built (it imports every module
     # it built, and runs ensurepip): with the libraries it links.
-    LD_LIBRARY_PATH="$2:$DYN/usr/lib:$TC/usr/lib" make -C "$2" -j"$JOBS"
-    LD_LIBRARY_PATH="$2:$DYN/usr/lib:$TC/usr/lib" make -C "$2" install DESTDIR="$TC"
+    "${run[@]}" make -C "$2" -j"$JOBS"
+    "${run[@]}" make -C "$2" install DESTDIR="$TC"
     ln -sf python3 "$TC/usr/bin/python"
     ln -sf pip3 "$TC/usr/bin/pip"
 }
@@ -439,7 +455,8 @@ b_python() {
 step bzip2    "$BZIP2_SRC"    b_bzip2
 step sqlite   "$SQLITE_SRC"   b_sqlite
 step bash     "$BASH_SRC"     b_bash "patches=$(cat "$ROOT_DIR"/configs/toolchain/patches/bash/*.patch | sha256sum | cut -c1-16)"
-step python   "$PYTHON_SRC"   b_python
+[[ -n "$CROSS" ]] && step python-build "$PYTHON_SRC" b_python_build
+step python   "$PYTHON_SRC"   b_python ${CROSS:+cross}
 
 # Clang's C++ standard, like GCC's (config file in CLANG_CONFIG_FILE_SYSTEM_DIR).
 mkdir -p "$TC/etc/clang"

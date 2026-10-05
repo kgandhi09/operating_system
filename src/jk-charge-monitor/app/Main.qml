@@ -361,7 +361,7 @@ ApplicationWindow {
                         value: bat.careEnd < 100 ? "stop at " + bat.careEnd + "%" : "off (to 100%)"
                     }
                     Label {
-                        visible: known(bat.inputLimit)
+                        visible: known(bat.inputLimit) || bat.careEnd > 0
                         text: "Change with: sudo jk-charge"
                         color: win.dimColor
                         font.pixelSize: 13

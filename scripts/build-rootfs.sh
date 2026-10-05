@@ -187,6 +187,10 @@ DEB_SRC="$ROOT_DIR/userspace/debian/$ARCH"
 [[ -f "$DEB_SRC/rootfs.tar.gz" ]] || die "no userspace/debian/$ARCH/rootfs.tar.gz (run: scripts/update-debian-rootfs.sh $ARCH)"
 mkdir -p usr/share/jk_os/debian
 cp "$DEB_SRC/rootfs.tar.gz" "$DEB_SRC/pin" usr/share/jk_os/debian/
+# The time zones (Debian's tzdata, from the same base system), for
+# /etc/localtime (set by jk-timedated: KDE's Date & Time settings) and the
+# zone list Qt shows; without /etc/localtime the clock is UTC.
+tar -xzf "$DEB_SRC/rootfs.tar.gz" usr/share/zoneinfo
 
 echo "$OS_HOSTNAME" > etc/hostname
 printf '127.0.1.1\t%s\n' "$OS_HOSTNAME" >> etc/hosts

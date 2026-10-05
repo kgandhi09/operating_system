@@ -39,7 +39,7 @@ by Mark (Marker284).
  obj-$(CONFIG_DRM_PANEL_SHARP_LQ079L1SX01) += panel-sharp-lq079l1sx01.o
 --- /dev/null
 +++ b/drivers/gpu/drm/panel/panel-samsung-ts124qdm-ft8203.c
-@@ -0,0 +1,748 @@
+@@ -0,0 +1,759 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Samsung TS124QDM panel with a FocalTech FT8203 driver IC: the 12.4"
@@ -87,6 +87,16 @@ by Mark (Marker284).
 +static int slice_per_pkt = 2;
 +module_param(slice_per_pkt, int, 0444);
 +MODULE_PARM_DESC(slice_per_pkt, "DSC slices per DSI packet (stock: 2)");
++
++/*
++ * Stock leaves block prediction off (no qcom,mdss-dsc-block-prediction-
++ * enable) and never sends a PPS (samsung,no_qcom_pps): the panel decodes
++ * with its own. Encoding with block prediction on put noise next to text,
++ * along the panel's lines, where the encoder chooses it.
++ */
++static bool block_pred;
++module_param(block_pred, bool, 0444);
++MODULE_PARM_DESC(block_pred, "DSC block prediction (stock: off)");
 +
 +/*
 + * Brightness: 12 bits in DCS 0x51, the upper 8 in the first byte and the
@@ -495,9 +505,10 @@ by Mark (Marker284).
 +	msleep(128);
 +
 +	/*
-+	 * The stock device tree sets samsung,no_qcom_pps: the panel gets its
-+	 * DSC picture parameter set from us. msm has filled in the derived
-+	 * fields of ctx->dsc by the time the panel is prepared.
++	 * The stock device tree sets samsung,no_qcom_pps, so Samsung's kernel
++	 * sends no picture parameter set; sending ours matching the stock
++	 * encoder settings does no harm. msm has filled in the derived fields
++	 * of ctx->dsc by the time the panel is prepared.
 +	 */
 +	if (no_dsc) {
 +		ret = mipi_dsi_compression_mode(dsi, false);
@@ -718,7 +729,7 @@ by Mark (Marker284).
 +	ctx->dsc.slice_count = 2;
 +	ctx->dsc.bits_per_component = 8;
 +	ctx->dsc.bits_per_pixel = 8 << 4;
-+	ctx->dsc.block_pred_enable = true;
++	ctx->dsc.block_pred_enable = block_pred;
 +	if (!no_dsc) {
 +		dsi->dsc = &ctx->dsc;
 +		dsi->dsc_slice_per_pkt = slice_per_pkt;

@@ -1,0 +1,8 @@
+#!/bin/sh
+# The charging settings chosen with jk-charge (/etc/jk_os/charge): those the
+# machine's battery and charger drivers offer (input limit, battery current,
+# full voltage, battery care limit). Without the file nothing is changed.
+
+case "$1" in
+    start) /usr/sbin/jk-charge --boot ;;
+esac

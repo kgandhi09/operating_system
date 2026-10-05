@@ -211,8 +211,10 @@ in `vendor_boot`. U-Boot shows its messages on the display; volume keys move
 in its menu, power selects (hold volume down while it starts to open it).
 
 On the tablet, jk_os's initramfs gives the PC on the USB cable a console
-(`targets/devices/tablet/samsung-gts7fe/initramfs`): the tablet is
-172.16.42.1 and hands the PC 172.16.42.2.
+(`targets/devices/tablet/initramfs`, every tablet; USB device mode in
+`targets/devices/tablet/kernel.config`): the tablet is 172.16.42.1 and
+hands the PC 172.16.42.2. The installed system keeps serving it
+(`targets/devices/tablet/rootfs`, `/etc/init.d/S39usb-console`).
 
 ```sh
 telnet 172.16.42.1                  # a root shell (or: screen /dev/ttyACM0)
@@ -266,20 +268,11 @@ What works on the tablet, and where it comes from (kernel patches in
 | UFS, USB device mode | mainline | USB console and network to a PC |
 | Not yet: audio, sensors (rotation), USB host, cameras, suspend | | audio and sensors run on the ADSP; USB host needs the SM5714's Type-C side |
 
-Charging is set with `jk-charge`, kept in `/etc/jk_os/charge` and applied
-at boot (`/etc/init.d/S08charge`), within Samsung's own limits for this
-battery (the driver refuses anything outside them):
-
-```sh
-jk-charge                      # the settings and the battery right now
-sudo jk-charge normal          # 3000 mA in, 2100 mA into the battery, 4.38 V (default)
-sudo jk-charge fast            # 3200 mA into the battery
-sudo jk-charge gentle          # 1500 / 1000 mA, 4.30 V, stop at 80%
-sudo jk-charge input 2000      # or one setting: input <mA>, current <mA>, voltage <mV>
-sudo jk-charge limit 80        # battery care: stop at 80%, charge again below 75%
-```
-
-While held at the limit the tablet runs from the charger. Charging always
+Charging is set with `jk-charge` (below), within Samsung's own limits for
+this battery, which the driver enforces: here every setting is offered
+(`normal`: 3000 mA in, 2100 mA into the battery, 4.38 V, the defaults;
+`fast`: 3200 mA; `gentle`: 1500 / 1000 mA, 4.30 V, stop at 80%). While held
+at the battery care limit the tablet runs from the charger. Charging always
 pauses below 0 or above 50 degC.
 
 ## Sources
@@ -577,6 +570,26 @@ samples only while a jk-viz is open; it serves administrators (root and
 group `wheel`) on `/run/jk-viz.sock`. `sudo jk-vizd --dump` prints one
 sample as JSON. `JK_VIZD=no` in `/etc/jk_os/jk-viz` turns it off.
 
+## jk-charge: charging settings
+
+`jk-charge` sets what the machine's battery and charger drivers let the
+system set (the standard `/sys/class/power_supply` settings), on any build:
+everything on the tablet (input limit, battery current, full voltage, a
+charge limit), usually only the charge limit ("battery care") on laptops
+whose firmware offers it (ThinkPad, ASUS, Dell, Lenovo, Framework, ...),
+nothing on machines without a battery. It shows what the machine has, and
+leaves out what it doesn't:
+
+```sh
+jk-charge                      # the battery, and what can be set here
+sudo jk-charge limit 80        # battery care: stop at 80%, charge again below 75%
+sudo jk-charge fast | normal | gentle
+sudo jk-charge input 2000      # input <mA>, current <mA>, voltage <mV>: where offered
+```
+
+The settings are kept in `/etc/jk_os/charge` and applied at boot
+(`/etc/init.d/S08charge`); without that file the drivers' defaults stay.
+
 ## jk-charge-monitor: the battery
 
 `jk-charge-monitor` ("Charge Monitor" in the desktop's menu) shows the
@@ -586,6 +599,19 @@ temperature, capacity and wear (where the fuel gauge reports them: laptops'
 do, the tablet's doesn't), the charger and its settings, and the last hour
 as graphs. It reads `/sys/class/power_supply` (another tree with
 `JK_POWER_SUPPLY_DIR`), so it works on laptops as on the tablet.
+
+## Date, time and time zone
+
+KDE's **Date & Time** settings set the time zone, the time by hand, or
+network time (NTP, on by default: `0-3.pool.ntp.org`). They talk to
+`jk-timedated`, jk_os's `org.freedesktop.timedate1` (what systemd's
+timedated offers), started by `/etc/init.d/S19timedate`; it runs BusyBox's
+`ntpd` while network time is on. Root and group `wheel` may change the clock.
+The settings are in `/etc/jk_os/time` (`NTP=`, `NTP_SERVERS=`, `RTC_LOCAL=`),
+the zone is the `/etc/localtime` link (zones from Debian's tzdata in
+`/usr/share/zoneinfo`; none set: UTC). The clock is also saved every 15
+minutes and at shutdown, and put back at boot when the RTC is behind (the
+tablet's can't be set), so it stays close until network time corrects it.
 
 ## Packages (apt)
 
@@ -644,7 +670,7 @@ Every jk_os image carries a toolchain (`scripts/build-toolchain.sh`, `make toolc
 | Binutils | `as`, `ld`, `ar`, `objdump`, `nm`, `strip`, ... (2.47) |
 | Build systems | **CMake 4.4** (HTTPS works, e.g. `FetchContent`) and **Ninja 1.13**; `CMAKE_GENERATOR=Ninja` is set in `/etc/profile` |
 | Classic build tools | **GNU make 4.4** (`make`, `gmake`), **m4 1.4**, **flex 2.6** (`lex`), **bison 3.8** (`yacc`), **Perl 5.44**, **autoconf 2.73**, **automake 1.19**, **libtool 2.6**, `pkg-config` (pkgconf); `autoreconf -fi && ./configure && make` works. Perl is native builds only (not on aarch64 built on x86_64) |
-| Interpreters | **bash 5.3** (patch level 20; `/bin/bash` too, and allowed as a login shell: `chsh -s /bin/bash`) and **Python 3.14** (`python3`, `python`) with OpenSSL (`ssl`, `hashlib`, HTTPS), SQLite, bz2, lzma, zlib, ctypes, readline, curses, uuid, and **pip**, **venv** and **ensurepip**. `python3 -m venv ~/venv && ~/venv/bin/pip install ...`; `pip install --user ...` installs into `~/.local`. Python is native builds only, like Perl |
+| Interpreters | **bash 5.3** (patch level 20; `/bin/bash` too, and allowed as a login shell: `chsh -s /bin/bash`) and **Python 3.14** (`python3`, `python`) with OpenSSL (`ssl`, `hashlib`, HTTPS), SQLite, bz2, lzma, zlib, ctypes, readline, curses, uuid, and **pip**, **venv** and **ensurepip**. `python3 -m venv ~/venv && ~/venv/bin/pip install ...`; `pip install --user ...` installs into `~/.local`. Python is in every build (cross-built for aarch64 with a build-machine Python from the same tree); Perl is native builds only |
 | Debugger | **GDB 18.1** and `gdbserver` |
 | Headers | glibc (from the toolchain that builds jk_os) and Linux (`make headers_install` from jk_os's kernel), and every library in the image: headers, pkg-config and CMake files, static libraries (OpenGL/EGL/Vulkan, Wayland/X11, GLib, D-Bus, PipeWire, ALSA, OpenSSL, curl, ...). Qt and KDE Frameworks' headers are there, but building Qt programs needs Qt's code generators (moc, rcc, uic), which jk_os doesn't carry yet |
 
@@ -718,7 +744,7 @@ fetched (tag, asset, sha256) goes into `userspace/binaries/<arch>/sources.lock`.
 `make deps` installs these on Debian/Ubuntu (apt) or Arch (pacman). On other
 distros, install the equivalents:
 
-- build: `gcc make bc flex bison libelf-dev libssl-dev cpio file`
+- build: `gcc make bc flex bison libelf-dev libssl-dev zlib1g-dev cpio file` (zlib: the build-machine Python that cross-builds aarch64's)
 - fetching GitHub binaries: `curl jq file` (plus `unzip` / `zstd` for those asset types)
 - updating sources (optional): `curl tar xz bzip2`
 - cross: `gcc-aarch64-linux-gnu libc6-dev-arm64-cross` (a glibc cross toolchain; BusyBox links statically against it)

@@ -19,6 +19,23 @@ case "$1" in
         for r in /sys/class/rfkill/rfkill*; do
             [ "$(cat "$r/type" 2>/dev/null)" = bluetooth ] && echo 0 > "$r/soft" 2>/dev/null
         done
+        # Controllers that come up without an address of their own (some
+        # boards' UART ones: the kernel holds them "unconfigured" and BlueZ
+        # never sees them) get a stable, locally administered one, made from
+        # the machine id. A device's own script may have set the real one
+        # earlier (the Tab S7 FE's S07wireless, from its EFS partition).
+        if command -v btmgmt >/dev/null && [ -s /etc/machine-id ]; then
+            for h in /sys/class/bluetooth/hci[0-9]*; do
+                [ -e "$h" ] || continue
+                i=${h##*/hci}
+                btmgmt --index "$i" config 2>/dev/null | grep -qi 'missing options:.*public-address' || continue
+                id=$(cut -c1-10 /etc/machine-id)
+                addr=$(printf '02:%s:%s:%s:%s:%02x' "$(echo "$id" | cut -c1-2)" "$(echo "$id" | cut -c3-4)" \
+                    "$(echo "$id" | cut -c5-6)" "$(echo "$id" | cut -c7-8)" "$i")
+                btmgmt --index "$i" public-addr "$addr" >/dev/null 2>&1 \
+                    || echo "bluetooth: hci$i has no address and won't take $addr"
+            done
+        fi
         mkdir -p /var/lib/bluetooth
         chmod 0700 /var/lib/bluetooth
         /usr/libexec/bluetooth/bluetoothd &

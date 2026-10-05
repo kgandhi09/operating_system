@@ -1,0 +1,228 @@
+#!/bin/sh
+# jk-charge: how the battery charges, kept across reboots, on any machine:
+# what its kernel driver lets the system set (the standard power supply
+# settings in /sys/class/power_supply).
+#
+#   jk-charge                     show the battery and what can be set here
+#   sudo jk-charge fast | normal | gentle
+#   sudo jk-charge input <mA>     input limit from the charger
+#   sudo jk-charge current <mA>   current into the battery
+#   sudo jk-charge voltage <mV>   full-charge voltage
+#   sudo jk-charge limit <%>      battery care: stop at this level, 50-100
+#                                 (100: off), charge again 5% below it
+#
+# What can be set depends on the hardware:
+#   - chargers the system drives itself (the Galaxy Tab S7 FE's SM5714): all
+#     of it, within the driver's own maxima (it refuses anything above them)
+#   - laptops: usually only the battery care limit (ThinkPad, ASUS, Dell,
+#     Lenovo, Framework, Huawei, ...), where the firmware offers it; some
+#     accept only certain levels (e.g. 60, 80, 100)
+#   - machines without a battery: nothing
+# Settings the hardware doesn't offer are left out, presets included:
+#              input  current   voltage     limit
+#   fast       3000   maximum   maximum     100
+#   normal     3000   2/3 max   maximum     100
+#   gentle     1500   1/3 max   max - 80    80
+# (Tab S7 FE: normal = 3000 / 2100 / 4380, its stock defaults.)
+#
+# The settings are kept in /etc/jk_os/charge; /etc/init.d/S08charge applies
+# them at boot. Without that file nothing is changed: the driver's defaults.
+
+CONF=/etc/jk_os/charge
+PS=${JK_POWER_SUPPLY_DIR:-/sys/class/power_supply}   # (another tree: tests)
+name=${0##*/}
+die() { echo "$name: $*" >&2; exit 1; }
+
+# rd <file>: a power supply attribute, or nothing.
+rd() { cat "$1" 2>/dev/null; }
+
+# The system battery (not a mouse's: scope Device), and the charger whose
+# limits can be set (else the first one, to show).
+BAT= CHG=
+for d in "$PS"/*; do
+    [ -d "$d" ] || continue
+    case "$(rd "$d/type")" in
+        Battery)
+            [ -z "$BAT" ] && [ "$(rd "$d/scope")" != Device ] && BAT=$d ;;
+        Mains|USB*)
+            if [ -w "$d/input_current_limit" ] || [ -w "$d/constant_charge_current" ]; then
+                CHG=$d
+            elif [ -z "$CHG" ]; then
+                CHG=$d
+            fi ;;
+    esac
+done
+
+# What this hardware offers.
+can() {
+    case "$1" in
+        input)   [ -n "$CHG" ] && [ -w "$CHG/input_current_limit" ] ;;
+        current) [ -n "$CHG" ] && [ -w "$CHG/constant_charge_current" ] ;;
+        voltage) [ -n "$CHG" ] && [ -w "$CHG/constant_charge_voltage" ] ;;
+        limit)   [ -n "$BAT" ] && [ -w "$BAT/charge_control_end_threshold" ] ;;
+    esac
+}
+# Root sees -w on every attribute that is writable at all; for a user, the
+# mode bits say the same.
+if [ "$(id -u)" != 0 ]; then
+    can() {
+        case "$1" in
+            input)   f=$CHG/input_current_limit ;;
+            current) f=$CHG/constant_charge_current ;;
+            voltage) f=$CHG/constant_charge_voltage ;;
+            limit)   f=$BAT/charge_control_end_threshold ;;
+        esac
+        [ -n "${f%/*}" ] && [ -e "$f" ] && [ -n "$(find "$f" -perm -u+w 2>/dev/null)" ]
+    }
+fi
+
+# Maxima the driver reports (mA, mV), or empty.
+CUR_MAX=$(rd "$CHG/constant_charge_current_max")
+CUR_MAX=${CUR_MAX:+$((CUR_MAX / 1000))}
+VOLT_MAX=$(rd "$CHG/constant_charge_voltage_max")
+VOLT_MAX=${VOLT_MAX:+$((VOLT_MAX / 1000))}
+
+load() {
+    INPUT= CURRENT= VOLTAGE= LIMIT=
+    [ -f "$CONF" ] && . "$CONF"
+}
+
+save() {
+    mkdir -p "${CONF%/*}"
+    {
+        echo "# Charging settings (jk-charge); a setting left empty is the driver's default."
+        echo "INPUT=$INPUT"
+        echo "CURRENT=$CURRENT"
+        echo "VOLTAGE=$VOLTAGE"
+        echo "LIMIT=$LIMIT"
+    } > "$CONF"
+}
+
+# check <value> <min> <max> <what>
+check() {
+    case "$1" in ''|*[!0-9]*) die "$4: not a number: $1" ;; esac
+    [ "$1" -ge "$2" ] && [ "$1" -le "$3" ] || die "$4 must be $2-$3 (got $1)"
+}
+
+# put <file> <value> <what>: write a setting; the driver may refuse it.
+put() {
+    echo "$2" > "$1" 2>/dev/null || { echo "$name: the driver refused $3" >&2; return 1; }
+}
+
+# apply [quiet]: write the settings this hardware takes.
+apply() {
+    rc=0
+    if [ -n "$INPUT" ] && can input; then
+        put "$CHG/input_current_limit" $((INPUT * 1000)) "an input limit of $INPUT mA" || rc=1
+    fi
+    if [ -n "$CURRENT" ] && can current; then
+        put "$CHG/constant_charge_current" $((CURRENT * 1000)) "a battery current of $CURRENT mA" || rc=1
+    fi
+    if [ -n "$VOLTAGE" ] && can voltage; then
+        put "$CHG/constant_charge_voltage" $((VOLTAGE * 1000)) "a full voltage of $VOLTAGE mV" || rc=1
+    fi
+    if [ -n "$LIMIT" ] && can limit; then
+        # The end first: drivers check start < end against what is set.
+        if [ -w "$BAT/charge_control_start_threshold" ]; then
+            put "$BAT/charge_control_start_threshold" 0 "a start level" >/dev/null 2>&1
+        fi
+        put "$BAT/charge_control_end_threshold" "$LIMIT" "a limit of $LIMIT%" || rc=1
+        if [ -w "$BAT/charge_control_start_threshold" ] && [ "$LIMIT" -lt 100 ]; then
+            put "$BAT/charge_control_start_threshold" $((LIMIT - 5)) "a start level of $((LIMIT - 5))%" || rc=1
+        fi
+    fi
+    return $rc
+}
+
+# preset <name>: the values for this hardware, each only where it is offered.
+preset() {
+    INPUT= CURRENT= VOLTAGE= LIMIT=
+    case "$1" in
+        fast)   can input && INPUT=3000
+                [ -n "$CUR_MAX" ] && can current && CURRENT=$CUR_MAX
+                [ -n "$VOLT_MAX" ] && can voltage && VOLTAGE=$VOLT_MAX
+                can limit && LIMIT=100 ;;
+        normal) can input && INPUT=3000
+                [ -n "$CUR_MAX" ] && can current && CURRENT=$(( CUR_MAX * 2 / 3 / 100 * 100 ))
+                [ -n "$VOLT_MAX" ] && can voltage && VOLTAGE=$VOLT_MAX
+                can limit && LIMIT=100 ;;
+        gentle) can input && INPUT=1500
+                [ -n "$CUR_MAX" ] && can current && CURRENT=$(( CUR_MAX / 3 / 100 * 100 ))
+                [ -n "$VOLT_MAX" ] && can voltage && VOLTAGE=$((VOLT_MAX - 80))
+                can limit && LIMIT=80 ;;
+    esac
+    [ -n "$INPUT$CURRENT$VOLTAGE$LIMIT" ] || die "nothing about charging can be set on this machine (jk-charge shows what it has)"
+}
+
+# ma <file>: a µA/µV attribute in mA/mV, or "-".
+ma() { v=$(rd "$1"); [ -n "$v" ] && echo $((v / 1000)) || echo -; }
+
+show() {
+    load
+    if [ -z "$BAT" ]; then
+        echo "No battery on this machine."
+        return 0
+    fi
+    ua=$(rd "$BAT/current_now") uv=$(rd "$BAT/voltage_now") uw=$(rd "$BAT/power_now") t=$(rd "$BAT/temp")
+    echo "Battery ${BAT##*/}: $(rd "$BAT/capacity")%, $(rd "$BAT/status")"
+    if [ -n "$ua" ] && [ -n "$uv" ]; then
+        awk -v i="$ua" -v v="$uv" 'BEGIN { printf "  %+d mA at %.3f V (%+.2f W)\n", i / 1000, v / 1e6, i * v / 1e12 }'
+    elif [ -n "$uw" ]; then
+        awk -v p="$uw" 'BEGIN { printf "  %.2f W\n", p / 1e6 }'
+    fi
+    [ -n "$t" ] && awk -v t="$t" 'BEGIN { printf "  temperature: %.1f degC\n", t / 10 }'
+    if [ -n "$CHG" ]; then
+        echo "Charger ${CHG##*/}: $( [ "$(rd "$CHG/online")" = 1 ] && echo connected || echo 'not connected')"
+    fi
+
+    if [ -f "$CONF" ]; then
+        echo "Settings (kept in $CONF):"
+    else
+        echo "Settings (the driver's defaults: none saved yet):"
+    fi
+    any=
+    if can input; then
+        echo "  input limit:     $(ma "$CHG/input_current_limit") mA"; any=1
+    fi
+    if can current; then
+        echo "  battery current: $(ma "$CHG/constant_charge_current") mA${CUR_MAX:+ (max $CUR_MAX)}"; any=1
+    fi
+    if can voltage; then
+        echo "  full voltage:    $(ma "$CHG/constant_charge_voltage") mV${VOLT_MAX:+ (max $VOLT_MAX)}"; any=1
+    fi
+    if can limit; then
+        end=$(rd "$BAT/charge_control_end_threshold") start=$(rd "$BAT/charge_control_start_threshold")
+        if [ "${end:-100}" -lt 100 ]; then
+            echo "  battery care:    stop at $end%${start:+, charge again below $start%}"
+        else
+            echo "  battery care:    off (charge to 100%)"
+        fi
+        any=1
+    fi
+    [ -n "$any" ] || echo "  none: this machine's charging is up to its firmware"
+}
+
+case "${1:-}" in
+    "") show; exit ;;
+    --boot) load; apply 2>/dev/null; exit 0 ;;
+    -h|--help) sed -n '2,29p' "$0" | sed 's/^# \{0,1\}//'; exit ;;
+esac
+
+[ "$(id -u)" = 0 ] || exec sudo "$0" "$@"
+[ -n "$BAT" ] || die "no battery on this machine"
+load
+case "$1" in
+    fast|normal|gentle) preset "$1" ;;
+    input)   can input || die "the input limit can't be set on this machine"
+             check "$2" 100 10000 "input limit (mA)"; INPUT=$2 ;;
+    current) can current || die "the battery current can't be set on this machine"
+             check "$2" 100 "${CUR_MAX:-10000}" "battery current (mA)"; CURRENT=$2 ;;
+    voltage) can voltage || die "the full voltage can't be set on this machine"
+             check "$2" 4000 "${VOLT_MAX:-4500}" "full voltage (mV)"; VOLTAGE=$2 ;;
+    limit)   can limit || die "this battery has no charge limit (battery care)"
+             check "$2" 50 100 "battery care limit (%)"; LIMIT=$2 ;;
+    *) die "usage: $name [fast|normal|gentle | input <mA> | current <mA> | voltage <mV> | limit <%>]" ;;
+esac
+apply || die "not saved"
+save
+show

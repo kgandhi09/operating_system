@@ -21,13 +21,15 @@ for a in sh mount umount mkdir sleep cat echo sed head grep mv rm ls ln chmod \
 done
 install -m 0755 "$TOOLS_OUT/sbin/e2fsck" sbin/e2fsck
 ln -s e2fsck sbin/fsck.ext4
-# Disk tools a device's initramfs needs besides (DEVICE_INITRAMFS_TOOLS),
-# e.g. mke2fs for a tablet installed from its initramfs.
-for t in $DEVICE_INITRAMFS_TOOLS; do
+# Disk tools the device category's or device's initramfs needs besides
+# (CATEGORY_INITRAMFS_TOOLS, DEVICE_INITRAMFS_TOOLS), e.g. mke2fs for a
+# tablet installed from its initramfs.
+INITRAMFS_TOOLS=" $CATEGORY_INITRAMFS_TOOLS $DEVICE_INITRAMFS_TOOLS "
+for t in $INITRAMFS_TOOLS; do
     [[ -x "$TOOLS_OUT/sbin/$t" ]] || die "no $t in the disk tools (build/<arch>/tools/sbin)"
     install -m 0755 "$TOOLS_OUT/sbin/$t" "sbin/$t"
 done
-[[ " $DEVICE_INITRAMFS_TOOLS " == *" mke2fs "* ]] && ln -sf mke2fs sbin/mkfs.ext4
+[[ "$INITRAMFS_TOOLS" == *" mke2fs "* ]] && ln -sf mke2fs sbin/mkfs.ext4
 install -m 0755 "$ROOT_DIR/initramfs/init" init
 
 # Drivers built into the kernel (Wi-Fi, some Ethernet) ask for firmware while

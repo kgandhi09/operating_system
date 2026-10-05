@@ -821,6 +821,12 @@ step jk-viz "$ROOT_DIR/src/jk-viz" b_jk_viz \
 b_jk_charge_monitor() { qtpkg "$1" "$2"; }
 step jk-charge-monitor "$ROOT_DIR/src/jk-charge-monitor" b_jk_charge_monitor \
     "$(cd "$ROOT_DIR/src/jk-charge-monitor" && find . -type f | LC_ALL=C sort | xargs cat | sha256sum | cut -c1-16)"
+# jk-timedated (src/jk-timedated): org.freedesktop.timedate1, which KDE's
+# Date & Time settings need (time zone, setting the time, network time with
+# BusyBox's ntpd); started by /etc/init.d/S19timedate.
+b_jk_timedated() { qtpkg "$1" "$2"; }
+step jk-timedated "$ROOT_DIR/src/jk-timedated" b_jk_timedated \
+    "$(cd "$ROOT_DIR/src/jk-timedated" && find . -type f | LC_ALL=C sort | xargs cat | sha256sum | cut -c1-16)"
 
 # ---------------------------------------------------------------- Phase F
 # The dev session (jk-dev, on tty1): one terminal, foot, full screen in the

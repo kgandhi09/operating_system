@@ -9,7 +9,7 @@ sudo=()
 host="$(uname -m)"
 
 if command -v apt-get >/dev/null; then
-    pkgs=(build-essential bc bison flex libelf-dev libssl-dev
+    pkgs=(build-essential bc bison flex libelf-dev libssl-dev zlib1g-dev
           cpio bzip2 xz-utils zstd curl jq unzip file rsync
           meson ninja-build pkg-config gperf autoconf automake libtool python3-packaging squashfs-tools
           python3-mako python3-yaml python3-ply python3-pycparser libglib2.0-dev libglib2.0-bin libgdk-pixbuf2.0-bin glslang-tools gettext xsltproc docbook-xsl

@@ -22,7 +22,7 @@ format)
     grep -q "^/dev/$a " /proc/mounts && err "/dev/$a is mounted"
     # lazy_*_init: seconds instead of minutes on 112 GB; the kernel finishes
     # initializing in the background.
-    # /sbin/mke2fs: e2fsprogs' (DEVICE_INITRAMFS_TOOLS), not the BusyBox applet
+    # /sbin/mke2fs: e2fsprogs' (CATEGORY_INITRAMFS_TOOLS), not the BusyBox applet
     # 10-usb-console's busybox --install puts first in PATH (no ext4 there).
     /sbin/mke2fs -t ext4 -F -q -L JK_DATA -E lazy_itable_init=1,lazy_journal_init=1 "/dev/$a" \
         || err "mke2fs failed on /dev/$a"

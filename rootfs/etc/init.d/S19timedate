@@ -1,0 +1,24 @@
+#!/bin/sh
+# The clock: jk-timedated serves org.freedesktop.timedate1 on the system bus
+# (S15dbus) for KDE's Date & Time settings, and runs ntpd for network time
+# while that is on. /etc/jk_os/time keeps the settings (NTP=yes by default),
+# /etc/localtime the time zone. It saves the clock every 15 minutes and at
+# shutdown and puts it back at boot when the RTC is behind (the tablet's
+# can't be set).
+
+case "$1" in
+    start)
+        [ -x /usr/sbin/jk-timedated ] || exit 0
+        /usr/sbin/jk-timedated >> /var/log/jk-timedated.log 2>&1 &
+        ;;
+    stop)
+        # SIGTERM: it saves the clock and stops ntpd; wait for that.
+        pkill -x jk-timedated 2>/dev/null || exit 0
+        i=0
+        while pidof jk-timedated >/dev/null && [ $i -lt 5 ]; do sleep 1; i=$((i + 1)); done
+        ;;
+    restart)
+        "$0" stop
+        "$0" start
+        ;;
+esac
