@@ -157,6 +157,17 @@
 		regulator-always-on;
 	};
 
+	/*
+	 * Why the PMIC last reset or powered off the tablet, printed at boot
+	 * (patches/0010): the PON log PMK7325's PBS keeps in SDAM 5, as on
+	 * Qualcomm's other PMK8350 platforms (stock lists no node for it).
+	 */
+	pmic-pon-log {
+		compatible = "qcom,pmic-pon-log";
+		nvmem = <&pmk8350_sdam_5>;
+		nvmem-names = "pon_log";
+	};
+
 	/* Stock AUX_EN_N GPIO100 and AUX_SEL GPIO99. */
 	typec_sbu_mux: typec-sbu-mux {
 		compatible = "gpio-sbu-mux";

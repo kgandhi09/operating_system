@@ -1,0 +1,230 @@
+#!/bin/sh
+# jk-crashlog: a flight recorder for resets. Every second it notes the
+# temperatures, CPU and GPU clocks, throttling, battery and charger, memory
+# and pressure, in RAM that survives a reset (pstore's pmsg) and in
+# /var/log/jk-crash/live (synced every 5 s, for a power loss, which RAM
+# doesn't survive). After a reset it keeps what led up to it, with the
+# kernel's last log (console-ramoops) and the PMIC's own reset reason (its
+# PON log, which the kernel prints at boot).
+#
+#   jk-crashlog              the saved crashes, newest first
+#   jk-crashlog show [<n>]   one in full (default: the newest): reset reason,
+#                            the kernel's last lines, the last samples
+#   jk-crashlog mark <text>  note an event in the record (jk-stress does)
+#   jk-crashlog record       the recorder (/etc/init.d/S01crashlog)
+#   jk-crashlog save         keep the previous boot's records if it didn't
+#                            shut down cleanly (S01crashlog, at boot)
+#   jk-crashlog stop         stop the recorder, noting a clean shutdown
+#
+# Each crash is a folder in /var/log/jk-crash (the 20 newest are kept):
+# summary, pon-log (the PMIC's), console-ramoops (the kernel log up to the
+# reset), dmesg-ramoops (only after a kernel panic), samples (the flight
+# record). Run as root.
+
+DIR=${JK_CRASHLOG_DIR:-/var/log/jk-crash}   # (another one: tests)
+LIVE=$DIR/live
+PSTORE=${JK_CRASHLOG_PSTORE:-/sys/fs/pstore}
+PMSG=${JK_CRASHLOG_PMSG:-/dev/pmsg0}
+PIDFILE=${JK_CRASHLOG_PIDFILE:-/run/jk-crashlog.pid}
+KEEP=20
+name=${0##*/}
+
+die() { echo "$name: $*" >&2; exit 1; }
+
+# rd <file>: its first line into $v (empty if unreadable). Builtins only:
+# the recorder reads ~60 files a second.
+rd() { v=; { read -r v < "$1"; } 2>/dev/null; }
+
+uptime_s() { rd /proc/uptime; up=${v%% *}; }
+
+# note <line>: into the record (RAM and disk).
+note() {
+    uptime_s
+    [ -c "$PMSG" ] && printf '# %s %s\n' "$up" "$*" > "$PMSG" 2>/dev/null
+    mkdir -p "$DIR" && printf '# %s %s\n' "$up" "$*" >> "$LIVE"
+}
+
+mount_pstore() {
+    [ -d "$PSTORE" ] || return 1
+    grep -q " $PSTORE pstore " /proc/mounts || mount -t pstore pstore "$PSTORE" 2>/dev/null
+}
+
+# ---------------------------------------------------------------- recording
+record() {
+    mkdir -p "$DIR"
+    # What there is to read, found once.
+    zones= znames=
+    for z in /sys/class/thermal/thermal_zone*; do
+        [ -r "$z/temp" ] || continue
+        rd "$z/type"; v=${v%-thermal}; zones="$zones $z/temp"; znames="$znames ${v// /_}"
+    done
+    cools= cnames=
+    for c in /sys/class/thermal/cooling_device*; do
+        rd "$c/max_state"; [ "${v:-0}" -gt 0 ] 2>/dev/null || continue
+        rd "$c/type"; cools="$cools $c/cur_state"; cnames="$cnames ${v// /_}"
+    done
+    pols= pnames=
+    for p in /sys/devices/system/cpu/cpufreq/policy*; do
+        [ -r "$p/scaling_cur_freq" ] || continue
+        pols="$pols $p"; pnames="$pnames ${p##*/}"
+    done
+    gpu=
+    for d in /sys/class/devfreq/*gpu*; do [ -r "$d/cur_freq" ] && gpu=$d && break; done
+    bat= chg=
+    for s in /sys/class/power_supply/*; do
+        rd "$s/type"
+        case "$v" in
+            Battery) rd "$s/scope"; [ "$v" = Device ] || [ -n "$bat" ] || bat=$s ;;
+            USB*|Mains) [ -n "$chg" ] || chg=$s ;;
+        esac
+    done
+
+    exec 3>>"$LIVE"
+    if [ -c "$PMSG" ]; then exec 4>"$PMSG"; else exec 4>/dev/null; fi
+    hdr="# boot $(date '+%F %T') $(uname -r)
+# columns: up(s) | temp C:$znames | cpu MHz:$pnames | gpu MHz | cooling:$cnames | bat mV mA % C, charger | MemAvailable SwapFree MB | psi some avg10 cpu mem io | load"
+    printf '%s\n' "$hdr" >&3
+    printf '%s\n' "$hdr" >&4
+    n=0
+    while :; do
+        uptime_s
+        t=
+        for f in $zones; do rd "$f"; t="$t ${v:+$((v / 1000))}"; done
+        c=
+        for p in $pols; do rd "$p/scaling_cur_freq"; c="$c ${v:+$((v / 1000))}"; done
+        g=-
+        if [ -n "$gpu" ]; then rd "$gpu/cur_freq"; g=${v:+$((v / 1000000))}; fi
+        k=
+        for f in $cools; do rd "$f"; k="$k $v"; done
+        b=-
+        if [ -n "$bat" ]; then
+            rd "$bat/voltage_now"; bv=${v:+$((v / 1000))}
+            rd "$bat/current_now"; bi=${v:+$((v / 1000))}
+            rd "$bat/capacity"; bc=$v
+            rd "$bat/temp"; bt=${v:+$((v / 10))}
+            b="$bv $bi $bc $bt"
+        fi
+        if [ -n "$chg" ]; then rd "$chg/online"; b="$b chg=$v"; fi
+        ma= sf=
+        while read -r key val rest; do
+            case "$key" in
+                MemAvailable:) ma=$((val / 1024)) ;;
+                SwapFree:) sf=$((val / 1024)); break ;;
+            esac
+        done < /proc/meminfo
+        ps=
+        for r in cpu memory io; do
+            rd "/proc/pressure/$r"; v=${v#*avg10=}; ps="$ps ${v%% *}"
+        done
+        rd /proc/loadavg; l=${v%% *}
+        line="$up |$t |$c | $g |$k | $b | $ma $sf |$ps | $l"
+        printf '%s\n' "$line" >&3
+        printf '%s\n' "$line" >&4
+        n=$((n + 1))
+        if [ $((n % 5)) = 0 ]; then
+            fsync "$LIVE" 2>/dev/null
+        fi
+        # One copy behind: at most ~1 MB on disk.
+        if [ $((n % 600)) = 0 ] && [ "$(wc -c < "$LIVE")" -gt 524288 ]; then
+            exec 3>&-
+            mv -f "$LIVE" "$LIVE.1"
+            exec 3>>"$LIVE"
+            printf '%s\n' "$hdr" >&3
+        fi
+        sleep "${JK_CRASHLOG_INTERVAL:-1}"
+    done
+}
+
+# ---------------------------------------------------------------- saving
+save() {
+    mkdir -p "$DIR"
+    mount_pstore
+    crash=0 why=
+    if ls "$PSTORE"/dmesg-* >/dev/null 2>&1; then
+        crash=1 why="kernel panic or oops"
+    fi
+    if [ -f "$LIVE" ] && ! grep -q '^# [0-9.]* clean shutdown' "$LIVE"; then
+        crash=1; why=${why:-"reset without a kernel panic (no clean shutdown)"}
+    fi
+    if [ "$crash" = 1 ]; then
+        d=$DIR/$(date '+%Y%m%d-%H%M%S')
+        mkdir -p "$d"
+        cp "$PSTORE"/* "$d/" 2>/dev/null
+        # The record: RAM's copy (pmsg, up to the reset; ~15 minutes) when
+        # it survived, else the disk's (up to 5 s short; it survives a
+        # power loss).
+        if [ -s "$d/pmsg-ramoops-0" ]; then
+            mv "$d/pmsg-ramoops-0" "$d/samples"
+        else
+            { [ -f "$LIVE.1" ] && cat "$LIVE.1"; [ -f "$LIVE" ] && cat "$LIVE"; } > "$d/samples" 2>/dev/null
+        fi
+        dmesg | grep 'PMIC PON log' > "$d/pon-log"
+        {
+            echo "crash saved $(date '+%F %T'): $why"
+            # The reset just before this boot: the last reset/fault entries
+            # before the PON entries of this boot.
+            grep -E 'Reset Trigger|Reset Type|FAULT_REASON|S3_RESET|SID[0-9] FAULT|VREG_FAULT' "$d/pon-log" \
+                | grep -v 'None; FAULT_REASON2=None' | tail -n 4 | sed 's/.*PMIC PON log: /pmic: /'
+            m=$(grep '^# [0-9.]* mark ' "$d/samples" | tail -n 1)
+            [ -n "$m" ] && echo "last mark: ${m#\# }"
+            s=$(grep -v '^#' "$d/samples" | tail -n 1)
+            [ -n "$s" ] && echo "last sample: $s"
+            c=$(ls "$d"/console-ramoops* 2>/dev/null | head -n 1)
+            [ -n "$c" ] && echo "kernel's last line: $(grep -v '^\s*$' "$c" | tail -n 1)"
+        } > "$d/summary"
+        rm -f "$PSTORE"/* 2>/dev/null
+        ls -d "$DIR"/2* 2>/dev/null | sort -r | tail -n +$((KEEP + 1)) | while read -r o; do rm -rf "$o"; done
+        echo "jk-crashlog: the last boot ended in a crash; saved in $d (jk-crashlog show)"
+    else
+        rm -f "$PSTORE"/* 2>/dev/null
+    fi
+    rm -f "$LIVE" "$LIVE.1"
+}
+
+stop() {
+    if [ -f "$PIDFILE" ]; then
+        kill "$(cat "$PIDFILE")" 2>/dev/null
+        rm -f "$PIDFILE"
+    fi
+    note "clean shutdown"
+    fsync "$LIVE" 2>/dev/null
+}
+
+# ---------------------------------------------------------------- showing
+list() {
+    i=0
+    for d in $(ls -d "$DIR"/2* 2>/dev/null | sort -r); do
+        i=$((i + 1))
+        echo "[$i] ${d##*/}"
+        sed 's/^/    /' "$d/summary" 2>/dev/null
+    done
+    [ "$i" -gt 0 ] || echo "No crashes saved (they are kept in $DIR)."
+}
+
+show() {
+    d=$(ls -d "$DIR"/2* 2>/dev/null | sort -r | sed -n "${1:-1}p")
+    [ -n "$d" ] || die "no crash number ${1:-1} (jk-crashlog lists them)"
+    echo "== ${d##*/}"
+    cat "$d/summary"
+    echo; echo "== PMIC power-on log (oldest first)"
+    sed 's/.*PMIC PON log: //' "$d/pon-log"
+    for c in "$d"/dmesg-ramoops* "$d"/console-ramoops*; do
+        [ -f "$c" ] || continue
+        echo; echo "== ${c##*/}: last 40 lines"
+        tail -n 40 "$c"
+    done
+    echo; echo "== flight record: last 30 samples"
+    grep -E '^# (boot|columns)' "$d/samples" | tail -n 2
+    tail -n 30 "$d/samples"
+}
+
+case "${1:-}" in
+    "") list ;;
+    show) [ "$(id -u)" = 0 ] || exec sudo "$0" "$@"; show "${2:-1}" ;;
+    mark) shift; note "mark $*" ;;
+    record) echo $$ > "$PIDFILE"; record ;;
+    save) [ "$(id -u)" = 0 ] || die "run as root"; save ;;
+    stop) stop ;;
+    -h|--help) sed -n '2,/^$/p' "$0" | sed '$d; s/^# \{0,1\}//' ;;
+    *) die "usage: $name [show [<n>] | mark <text> | record | save | stop]" ;;
+esac

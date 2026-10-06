@@ -1,0 +1,220 @@
+#!/bin/sh
+# jk-stress: load the tablet one part at a time, to find what makes it
+# reset. Each stage is noted in the crash flight record (jk-crashlog), so
+# after a reset `jk-crashlog` shows which stage was running and what the
+# temperatures, clocks and battery were doing.
+#
+#   sudo jk-stress [options] <stage>...
+#
+# Stages (run in the order given):
+#   cpu     floating point on every core (the most power the CPUs draw)
+#   mem     memory copies on every core (DDR bandwidth)
+#   build   parallel C compiles (what a heavy build does: CPU, memory, files)
+#   io      large writes to /data, synced
+#   gpu     glmark2 (run it from a terminal in the desktop; install it with
+#           sudo apt install glmark2-es2-wayland)
+#   mix     cpu + mem + gpu at once
+#   all     cpu, mem, build, io, gpu, mix
+#
+# Options:
+#   -t <seconds>       each stage's length (default 180)
+#   -j <n>             workers (default: every core)
+#   --cpu-max <MHz>    cap the CPU clocks while testing (every cluster)
+#   --gpu-max <MHz>    cap the GPU clock while testing
+# The caps are put back when jk-stress ends (Ctrl+C included).
+#
+# Example: sudo jk-stress -t 300 build; then, should it reset with that,
+# sudo jk-stress --gpu-max 550 --cpu-max 1800 -t 300 build to see whether
+# lower clocks avoid it.
+
+name=${0##*/}
+die() { echo "$name: $*" >&2; exit 1; }
+say() { echo "$name: $*"; }
+
+# Root for the caps and the record; the GPU stage then runs as the desktop's
+# user, on its Wayland display.
+if [ "$(id -u)" != 0 ]; then
+    exec sudo JK_STRESS_USER="$(id -un)" WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-}" \
+        XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-}" "$0" "$@"
+fi
+
+T=180 J=$(nproc) CPU_MAX= GPU_MAX=
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -t) T=$2; shift 2 ;;
+        -j) J=$2; shift 2 ;;
+        --cpu-max) CPU_MAX=$2; shift 2 ;;
+        --gpu-max) GPU_MAX=$2; shift 2 ;;
+        -h|--help) sed -n '2,/^$/p' "$0" | sed '$d; s/^# \{0,1\}//'; exit 0 ;;
+        -*) die "unknown option $1 (see --help)" ;;
+        *) break ;;
+    esac
+done
+[ $# -gt 0 ] || die "name a stage: cpu mem build io gpu mix all (see --help)"
+for n in "$T" "$J" ${CPU_MAX:+"$CPU_MAX"} ${GPU_MAX:+"$GPU_MAX"}; do
+    case "$n" in ''|*[!0-9]*) die "not a number: $n" ;; esac
+done
+
+WORK=/run/jk-stress
+mkdir -p "$WORK"
+mark() { jk-crashlog mark "jk-stress $*" 2>/dev/null; say "$*"; }
+
+# ---------------------------------------------------------------- caps
+GPU_DEV=
+for d in /sys/class/devfreq/*gpu*; do [ -w "$d/max_freq" ] && GPU_DEV=$d && break; done
+saved=
+cap() {
+    if [ -n "$CPU_MAX" ]; then
+        for p in /sys/devices/system/cpu/cpufreq/policy*; do
+            saved="$saved $p/scaling_max_freq=$(cat "$p/scaling_max_freq")"
+            # The nearest available clock at or below the cap.
+            echo $((CPU_MAX * 1000)) > "$p/scaling_max_freq" 2>/dev/null
+        done
+    fi
+    if [ -n "$GPU_MAX" ]; then
+        [ -n "$GPU_DEV" ] || die "no GPU clock to cap"
+        saved="$saved $GPU_DEV/max_freq=$(cat "$GPU_DEV/max_freq")"
+        echo $((GPU_MAX * 1000000)) > "$GPU_DEV/max_freq" || die "the GPU refused a $GPU_MAX MHz cap"
+    fi
+}
+uncap() {
+    for s in $saved; do echo "${s#*=}" > "${s%%=*}" 2>/dev/null; done
+    saved=
+}
+
+pids= gpu_on=
+stop_workers() {
+    # The loops first, then what each is running (gcc, dd, glmark2).
+    for p in $pids; do kill "$p" 2>/dev/null; pkill -P "$p" 2>/dev/null; done
+    [ -n "$gpu_on" ] && pkill -f 'glmark2' 2>/dev/null
+    wait 2>/dev/null
+    pids= gpu_on=
+}
+cleanup() {
+    stop_workers
+    uncap
+    mark "ended"
+    rm -rf "$WORK"
+}
+trap 'exit 130' INT TERM
+trap cleanup EXIT
+
+# ---------------------------------------------------------------- workers
+# A small C program, built here with the image's gcc on first use.
+burn() {
+    [ -x "$WORK/burn" ] && return 0
+    command -v gcc >/dev/null || die "no gcc in this image"
+    cat > "$WORK/burn.c" <<'C'
+#include <stdlib.h>
+#include <string.h>
+
+int main(int argc, char **argv)
+{
+	if (argc > 1 && !strcmp(argv[1], "mem")) {
+		/* 2 x 32 MB, far beyond the caches: every copy goes to DDR. */
+		size_t n = 32u << 20;
+		char *a = malloc(n), *b = malloc(n);
+
+		if (!a || !b)
+			return 1;
+		memset(a, 1, n);
+		memset(b, 2, n);
+		for (;;) {
+			memcpy(b, a, n);
+			memcpy(a, b, n);
+			__asm__ volatile("" : : "r"(a), "r"(b) : "memory");
+		}
+	}
+	/* cpu: vectorised multiply-adds, the most power a core draws */
+	{
+		double x[256], y[256], z[256];
+		int i, k;
+
+		for (i = 0; i < 256; i++)
+			x[i] = 1.0 + i * 1e-9, y[i] = 1.0 - i * 1e-9, z[i] = 0;
+		for (;;) {
+			for (k = 0; k < 100000; k++)
+				for (i = 0; i < 256; i++)
+					z[i] = z[i] * x[i] + y[i];
+			__asm__ volatile("" : : "r"(z) : "memory");
+		}
+	}
+}
+C
+    gcc -O3 -o "$WORK/burn" "$WORK/burn.c" || die "cannot build the stress program"
+}
+
+start_burn() {  # <cpu|mem> <n>
+    burn
+    i=0
+    while [ $i -lt "$2" ]; do "$WORK/burn" "$1" & pids="$pids $!"; i=$((i + 1)); done
+}
+
+start_build() {
+    command -v gcc >/dev/null || die "no gcc in this image"
+    mkdir -p "$WORK/build"
+    # A source that takes the compiler a few seconds: many functions.
+    if [ ! -f "$WORK/build/unit.c" ]; then
+        i=0
+        while [ $i -lt 400 ]; do
+            echo "int f$i(int *a, int n) { int s = 0; for (int i = 0; i < n; i++) s += a[i] * $i ^ (s >> 3); for (int i = 0; i < n; i++) a[i] = s - a[(i * 7) % n]; return s; }"
+            i=$((i + 1))
+        done > "$WORK/build/unit.c"
+    fi
+    i=0
+    while [ $i -lt "$J" ]; do
+        ( cd "$WORK/build" && while :; do gcc -O2 -c unit.c -o "u$i.o" 2>/dev/null; done ) & pids="$pids $!"
+        i=$((i + 1))
+    done
+}
+
+start_io() {
+    f=/data/jk-stress.tmp
+    ( trap 'rm -f "$f"' EXIT; while :; do dd if=/dev/zero of="$f" bs=1M count=512 conv=fsync 2>/dev/null; done ) & pids="$pids $!"
+}
+
+start_gpu() {
+    g=$(PATH="$PATH:/data/apt/bin" command -v glmark2-es2-wayland || PATH="$PATH:/data/apt/bin" command -v glmark2-wayland)
+    if [ -z "$g" ]; then
+        say "gpu: no glmark2 (sudo apt install glmark2-es2-wayland); skipped"
+        return 1
+    fi
+    if [ -z "${WAYLAND_DISPLAY:-}" ] || [ -z "${JK_STRESS_USER:-}" ]; then
+        say "gpu: run jk-stress from a terminal in the desktop, as your user (no Wayland display); skipped"
+        return 1
+    fi
+    ( while :; do
+        su "$JK_STRESS_USER" -s /bin/sh -c "WAYLAND_DISPLAY='$WAYLAND_DISPLAY' XDG_RUNTIME_DIR='$XDG_RUNTIME_DIR' exec '$g' --fullscreen --run-forever" \
+            > /dev/null 2>&1 || sleep 1
+      done ) & pids="$pids $!"
+    gpu_on=1
+}
+
+# ---------------------------------------------------------------- stages
+stage() {
+    s=$1
+    case "$s" in
+        cpu) start_burn cpu "$J" ;;
+        mem) start_burn mem "$J" ;;
+        build) start_build ;;
+        io) start_io ;;
+        gpu) start_gpu || return 0 ;;
+        mix) start_burn cpu $(( (J + 1) / 2 )); start_burn mem $(( J / 2 )); start_gpu ;;
+        *) die "unknown stage $s (see --help)" ;;
+    esac
+    mark "$s start (${T}s, $J workers${CPU_MAX:+, cpu max $CPU_MAX MHz}${GPU_MAX:+, gpu max $GPU_MAX MHz})"
+    sleep "$T"
+    stop_workers
+    mark "$s passed"
+    sleep 10   # cool down a little between stages
+}
+
+cap
+for s in "$@"; do
+    if [ "$s" = all ]; then
+        for a in cpu mem build io gpu mix; do stage "$a"; done
+    else
+        stage "$s"
+    fi
+done
+say "every stage passed; jk-crashlog has the record"

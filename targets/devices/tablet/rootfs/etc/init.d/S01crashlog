@@ -1,0 +1,21 @@
+#!/bin/sh
+# The crash flight recorder (jk-crashlog): at boot, keep what led up to a
+# reset of the previous boot, then record this one. Stopping it notes a
+# clean shutdown.
+#
+# /etc/jk_os/crashlog (optional): JK_CRASHLOG=no leaves it off,
+# JK_CRASHLOG_INTERVAL=<seconds> between samples (default 1).
+
+case "$1" in
+    start)
+        JK_CRASHLOG=yes
+        [ -f /etc/jk_os/crashlog ] && . /etc/jk_os/crashlog
+        /usr/sbin/jk-crashlog save
+        [ "$JK_CRASHLOG" = no ] && exit 0
+        JK_CRASHLOG_INTERVAL=${JK_CRASHLOG_INTERVAL:-1} \
+            /usr/sbin/jk-crashlog record > /dev/null 2>&1 &
+        ;;
+    stop)
+        /usr/sbin/jk-crashlog stop
+        ;;
+esac

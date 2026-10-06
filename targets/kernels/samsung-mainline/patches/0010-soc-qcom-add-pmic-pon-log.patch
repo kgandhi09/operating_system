@@ -1,0 +1,359 @@
+Subject: [PATCH] soc: qcom: add the PMIC power-on log
+
+PMK8350-class PMICs (PON gen3) record why they last powered off or reset
+the system in an SDAM FIFO instead of PON/POFF reason registers. Print it
+at boot, so a silent reset (PS_HOLD, watchdog, UVLO, OTST3, OCP, BCL) can
+be told apart. Adapted from Qualcomm's GPL-2.0 pmic-pon-log driver (Samsung
+SM7325 kernel), without IPC logging.
+
+---
+diff --git a/drivers/soc/qcom/Kconfig b/drivers/soc/qcom/Kconfig
+--- a/drivers/soc/qcom/Kconfig
++++ b/drivers/soc/qcom/Kconfig
+@@ -295,6 +295,14 @@
+ 	  This module provides the APIs to the client drivers that wants to send the
+ 	  PBS trigger event to the PBS RAM.
+ 
++config QCOM_PMIC_PON_LOG
++	tristate "Qualcomm PMIC power-on log"
++	depends on NVMEM
++	help
++	  Print at boot the power-on log that PMK8350-class PMICs keep in an
++	  SDAM: why the PMIC last powered the system off or reset it (PS_HOLD,
++	  watchdog, undervoltage, over-temperature, overcurrent, ...).
++
+ endmenu
+ 
+ config QCOM_UBWC_CONFIG
+diff --git a/drivers/soc/qcom/Makefile b/drivers/soc/qcom/Makefile
+--- a/drivers/soc/qcom/Makefile
++++ b/drivers/soc/qcom/Makefile
+@@ -39,4 +39,5 @@
+ qcom_ice-objs			+= ice.o
+ obj-$(CONFIG_QCOM_INLINE_CRYPTO_ENGINE)	+= qcom_ice.o
+ obj-$(CONFIG_QCOM_PBS) +=	qcom-pbs.o
++obj-$(CONFIG_QCOM_PMIC_PON_LOG) += pmic-pon-log.o
+ obj-$(CONFIG_QCOM_UBWC_CONFIG) += ubwc_config.o
+diff --git a/drivers/soc/qcom/pmic-pon-log.c b/drivers/soc/qcom/pmic-pon-log.c
+--- a/drivers/soc/qcom/pmic-pon-log.c
++++ b/drivers/soc/qcom/pmic-pon-log.c
+@@ -0,0 +1,319 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Qualcomm PMIC power-on log: why the PMIC last powered the system off or
++ * reset it (PS_HOLD, watchdog, UVLO, over-temperature, OCP, ...).
++ *
++ * PMK8350-class PMICs (PON gen3) have no PON/POFF reason registers; their
++ * PBS firmware appends each power state change to a FIFO in an SDAM
++ * instead. This prints that FIFO at boot.
++ *
++ * Adapted for jk_os from Qualcomm's GPL-2.0 pmic-pon-log driver (Samsung
++ * SM7325 kernel, drivers/soc/qcom/pmic-pon-log.c), without its IPC logging.
++ * Copyright (c) 2020, The Linux Foundation. All rights reserved.
++ */
++
++#include <linux/bits.h>
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/nvmem-consumer.h>
++#include <linux/of.h>
++#include <linux/platform_device.h>
++#include <linux/string.h>
++
++/* SDAM register offsets */
++#define REG_PUSH_PTR		0x46
++#define REG_FIFO_DATA_START	0x4B
++#define REG_FIFO_DATA_END	0xBF
++
++struct pon_log_entry {
++	u8 state;
++	u8 event;
++	u8 data1;
++	u8 data0;
++};
++
++#define FIFO_SIZE		(REG_FIFO_DATA_END - REG_FIFO_DATA_START + 1)
++#define FIFO_ENTRY_SIZE		(sizeof(struct pon_log_entry))
++#define FIFO_MAX_ENTRY_COUNT	(FIFO_SIZE / FIFO_ENTRY_SIZE)
++
++enum pon_event {
++	EVENT_PON_TRIGGER_RECEIVED	= 0x01,
++	EVENT_OTP_COPY_COMPLETE		= 0x02,
++	EVENT_TRIM_COMPLETE		= 0x03,
++	EVENT_XVLO_CHECK_COMPLETE	= 0x04,
++	EVENT_PMIC_CHECK_COMPLETE	= 0x05,
++	EVENT_RESET_TRIGGER_RECEIVED	= 0x06,
++	EVENT_RESET_TYPE		= 0x07,
++	EVENT_WARM_RESET_COUNT		= 0x08,
++	EVENT_FAULT_REASON_1_2		= 0x09,
++	EVENT_FAULT_REASON_3		= 0x0A,
++	EVENT_PBS_PC_DURING_FAULT	= 0x0B,
++	EVENT_FUNDAMENTAL_RESET		= 0x0C,
++	EVENT_PON_SEQ_START		= 0x0D,
++	EVENT_PON_SUCCESS		= 0x0E,
++	EVENT_WAITING_ON_PSHOLD		= 0x0F,
++	EVENT_PMIC_SID1_FAULT		= 0x10,
++	EVENT_PMIC_SID5_FAULT		= 0x14,
++	EVENT_PMIC_VREG_READY_CHECK	= 0x15,
++};
++
++static const char * const state_label[] = {
++	"FAULT", "PON", "POFF", "ON", "RESET", "OFF", "FAULT", "WARM_RESET",
++};
++
++static const char * const reset_type_label[] = {
++	[1] = "WARM_RESET",
++	[4] = "SHUTDOWN",
++	[7] = "HARD_RESET",
++};
++
++static const char * const fault_reason1[8] = {
++	"GP_FAULT0", "GP_FAULT1", "GP_FAULT2", "GP_FAULT3",
++	"MBG_FAULT", "OVLO", "UVLO", "AVDD_RB",
++};
++
++static const char * const fault_reason2[8] = {
++	"UNKNOWN(0)", "UNKNOWN(1)", "UNKNOWN(2)", "FAULT_N",
++	"FAULT_WATCHDOG", "PBS_NACK", "RESTART_PON", "OVERTEMP_STAGE3",
++};
++
++static const char * const fault_reason3[8] = {
++	"GP_FAULT4", "GP_FAULT5", "GP_FAULT6", "GP_FAULT7",
++	"GP_FAULT8", "GP_FAULT9", "GP_FAULT10", "GP_FAULT11",
++};
++
++static const char * const s3_reset_reason[8] = {
++	"UNKNOWN(0)", "UNKNOWN(1)", "UNKNOWN(2)", "UNKNOWN(3)",
++	"FAULT_N", "FAULT_WATCHDOG", "PBS_NACK", "KPDPWR_AND/OR_RESIN",
++};
++
++static const char * const pbl_status[8] = {
++	"UNKNOWN(0)", "UNKNOWN(1)", "UNKNOWN(2)", "UNKNOWN(3)",
++	"UNKNOWN(4)", "UNKNOWN(5)", "XVDD", "DVDD",
++};
++
++struct trigger_map {
++	u16 code;
++	const char *label;
++};
++
++static const struct trigger_map pon_trigger_map[] = {
++	{ 0x0084, "PS_HOLD" },
++	{ 0x0085, "HARD_RESET" },
++	{ 0x0086, "RESIN_N" },
++	{ 0x0087, "KPDPWR_N" },
++	{ 0x0621, "RTC_ALARM" },
++	{ 0x0640, "SMPL" },
++	{ 0x18C0, "PMIC_SID1_GPIO5" },
++	{ 0x31C2, "USB_CHARGER" },
++};
++
++static const struct trigger_map reset_trigger_map[] = {
++	{ 0x0080, "KPDPWR_N_S2" },
++	{ 0x0081, "RESIN_N_S2" },
++	{ 0x0082, "KPDPWR_N_AND_RESIN_N_S2" },
++	{ 0x0083, "PMIC_WATCHDOG_S2" },
++	{ 0x0084, "PS_HOLD" },
++	{ 0x0085, "SW_RESET" },
++	{ 0x0086, "RESIN_N_DEBOUNCE" },
++	{ 0x0087, "KPDPWR_N_DEBOUNCE" },
++	{ 0x21E3, "PMIC_SID2_BCL_ALARM" },
++	{ 0x31F5, "PMIC_SID3_BCL_ALARM" },
++	{ 0x11D0, "PMIC_SID1_OCP" },
++	{ 0x21D0, "PMIC_SID2_OCP" },
++	{ 0x41D0, "PMIC_SID4_OCP" },
++	{ 0x51D0, "PMIC_SID5_OCP" },
++};
++
++#define BUF_SIZE 160
++
++static int print_bits(char *buf, int size, u8 data, const char * const *names)
++{
++	int pos = 0, i;
++
++	if (!data)
++		return scnprintf(buf, size, "None");
++	for (i = 0; i < 8; i++)
++		if (data & BIT(i))
++			pos += scnprintf(buf + pos, size - pos, "%s%s",
++					 pos ? ", " : "", names[i]);
++	return pos;
++}
++
++static int print_trigger(char *buf, int size, const struct pon_log_entry *e,
++			 const struct trigger_map *map, int n)
++{
++	u16 data = (e->data1 << 8) | e->data0;
++	int i;
++
++	for (i = 0; i < n; i++)
++		if (map[i].code == data)
++			return scnprintf(buf, size, "%s", map[i].label);
++	return scnprintf(buf, size, "SID=0x%X, PID=0x%02X, IRQ=0x%X",
++			 e->data1 >> 4, (data >> 4) & 0xFF, e->data0 & 0x7);
++}
++
++static void pon_log_print(struct device *dev, const struct pon_log_entry *e)
++{
++	u16 data = (e->data1 << 8) | e->data0;
++	char buf[BUF_SIZE];
++	int pos = 0;
++
++	buf[0] = '\0';
++	switch (e->event) {
++	case EVENT_PON_TRIGGER_RECEIVED:
++		pos = scnprintf(buf, BUF_SIZE, "PON Trigger: ");
++		print_trigger(buf + pos, BUF_SIZE - pos, e, pon_trigger_map,
++			      ARRAY_SIZE(pon_trigger_map));
++		break;
++	case EVENT_OTP_COPY_COMPLETE:
++		scnprintf(buf, BUF_SIZE, "OTP Copy Complete: last addr 0x%04X", data);
++		break;
++	case EVENT_TRIM_COMPLETE:
++		scnprintf(buf, BUF_SIZE, "Trim Complete: %u bytes", data);
++		break;
++	case EVENT_XVLO_CHECK_COMPLETE:
++		scnprintf(buf, BUF_SIZE, "XVLO Check Complete");
++		break;
++	case EVENT_PMIC_CHECK_COMPLETE:
++		scnprintf(buf, BUF_SIZE, "PMICs Detected: SID Mask=0x%04X", data);
++		break;
++	case EVENT_RESET_TRIGGER_RECEIVED:
++		pos = scnprintf(buf, BUF_SIZE, "Reset Trigger: ");
++		print_trigger(buf + pos, BUF_SIZE - pos, e, reset_trigger_map,
++			      ARRAY_SIZE(reset_trigger_map));
++		break;
++	case EVENT_RESET_TYPE:
++		if (e->data0 < ARRAY_SIZE(reset_type_label) &&
++		    reset_type_label[e->data0])
++			scnprintf(buf, BUF_SIZE, "Reset Type: %s",
++				  reset_type_label[e->data0]);
++		else
++			scnprintf(buf, BUF_SIZE, "Reset Type: UNKNOWN (%u)", e->data0);
++		break;
++	case EVENT_WARM_RESET_COUNT:
++		scnprintf(buf, BUF_SIZE, "Warm Reset Count: %u", data);
++		break;
++	case EVENT_FAULT_REASON_1_2:
++		pos = scnprintf(buf, BUF_SIZE, "FAULT_REASON1=");
++		pos += print_bits(buf + pos, BUF_SIZE - pos, e->data0, fault_reason1);
++		pos += scnprintf(buf + pos, BUF_SIZE - pos, "; FAULT_REASON2=");
++		print_bits(buf + pos, BUF_SIZE - pos, e->data1, fault_reason2);
++		break;
++	case EVENT_FAULT_REASON_3:
++		pos = scnprintf(buf, BUF_SIZE, "FAULT_REASON3=");
++		print_bits(buf + pos, BUF_SIZE - pos, e->data0, fault_reason3);
++		break;
++	case EVENT_PBS_PC_DURING_FAULT:
++		scnprintf(buf, BUF_SIZE, "PBS PC at Fault: 0x%04X", data);
++		break;
++	case EVENT_FUNDAMENTAL_RESET:
++		pos = scnprintf(buf, BUF_SIZE, "Fundamental Reset: PON_PBL_STATUS=");
++		pos += print_bits(buf + pos, BUF_SIZE - pos, e->data1, pbl_status);
++		pos += scnprintf(buf + pos, BUF_SIZE - pos, "; S3_RESET_REASON=");
++		print_bits(buf + pos, BUF_SIZE - pos, e->data0, s3_reset_reason);
++		break;
++	case EVENT_PON_SEQ_START:
++		scnprintf(buf, BUF_SIZE, "Begin PON Sequence");
++		break;
++	case EVENT_PON_SUCCESS:
++		scnprintf(buf, BUF_SIZE, "PON Successful");
++		break;
++	case EVENT_WAITING_ON_PSHOLD:
++		scnprintf(buf, BUF_SIZE, "Waiting on PS_HOLD");
++		break;
++	case EVENT_PMIC_SID1_FAULT ... EVENT_PMIC_SID5_FAULT:
++		pos = scnprintf(buf, BUF_SIZE, "PMIC SID%u FAULT_REASON1=",
++				e->event - EVENT_PMIC_SID1_FAULT + 1);
++		pos += print_bits(buf + pos, BUF_SIZE - pos, e->data0, fault_reason1);
++		pos += scnprintf(buf + pos, BUF_SIZE - pos, "; FAULT_REASON2=");
++		print_bits(buf + pos, BUF_SIZE - pos, e->data1, fault_reason2);
++		break;
++	case EVENT_PMIC_VREG_READY_CHECK:
++		scnprintf(buf, BUF_SIZE, "VREG Check: %sVREG_FAULT detected",
++			  data ? "" : "No ");
++		break;
++	default:
++		scnprintf(buf, BUF_SIZE, "Unknown Event (0x%02X): data=0x%04X",
++			  e->event, data);
++		break;
++	}
++
++	dev_info(dev, "PMIC PON log: State=%s; %s\n",
++		 e->state < ARRAY_SIZE(state_label) ? state_label[e->state] : "UNKNOWN",
++		 buf);
++}
++
++static int pon_log_read_entry(struct nvmem_device *nvmem, int addr,
++			      struct pon_log_entry *e)
++{
++	u8 *buf = (u8 *)e;
++	int len, ret;
++
++	if (addr + (int)FIFO_ENTRY_SIZE - 1 > REG_FIFO_DATA_END) {
++		/* The entry wraps around the end of the FIFO. */
++		len = REG_FIFO_DATA_END - addr + 1;
++		ret = nvmem_device_read(nvmem, addr, len, buf);
++		if (ret < 0)
++			return ret;
++		return nvmem_device_read(nvmem, REG_FIFO_DATA_START,
++					 FIFO_ENTRY_SIZE - len, buf + len);
++	}
++	return nvmem_device_read(nvmem, addr, FIFO_ENTRY_SIZE, buf);
++}
++
++static int pmic_pon_log_probe(struct platform_device *pdev)
++{
++	struct device *dev = &pdev->dev;
++	struct nvmem_device *nvmem;
++	struct pon_log_entry e;
++	int ret, i, addr, start;
++	u8 ptr;
++
++	nvmem = devm_nvmem_device_get(dev, "pon_log");
++	if (IS_ERR(nvmem))
++		return dev_err_probe(dev, PTR_ERR(nvmem), "PON log SDAM\n");
++
++	ret = nvmem_device_read(nvmem, REG_PUSH_PTR, 1, &ptr);
++	if (ret < 0)
++		return dev_err_probe(dev, ret, "reading the PON log pointer\n");
++	if (ptr < REG_FIFO_DATA_START || ptr > REG_FIFO_DATA_END + 1) {
++		dev_warn(dev, "no PON log in this SDAM (pointer 0x%02x)\n", ptr);
++		return 0;
++	}
++
++	/* Oldest first, assuming the FIFO is full; unused entries are 0. */
++	start = ptr - FIFO_MAX_ENTRY_COUNT * FIFO_ENTRY_SIZE;
++	if (start < REG_FIFO_DATA_START)
++		start += FIFO_SIZE;
++	for (i = 0; i < FIFO_MAX_ENTRY_COUNT; i++) {
++		addr = start + i * FIFO_ENTRY_SIZE;
++		if (addr > REG_FIFO_DATA_END)
++			addr -= FIFO_SIZE;
++		ret = pon_log_read_entry(nvmem, addr, &e);
++		if (ret < 0)
++			return dev_err_probe(dev, ret, "reading the PON log\n");
++		if (!e.state && !e.event && !e.data1 && !e.data0)
++			continue;
++		pon_log_print(dev, &e);
++	}
++	return 0;
++}
++
++static const struct of_device_id pmic_pon_log_of_match[] = {
++	{ .compatible = "qcom,pmic-pon-log" },
++	{ }
++};
++MODULE_DEVICE_TABLE(of, pmic_pon_log_of_match);
++
++static struct platform_driver pmic_pon_log_driver = {
++	.driver = {
++		.name = "pmic-pon-log",
++		.of_match_table = pmic_pon_log_of_match,
++	},
++	.probe = pmic_pon_log_probe,
++};
++module_platform_driver(pmic_pon_log_driver);
++
++MODULE_DESCRIPTION("Qualcomm PMIC power-on log");
++MODULE_LICENSE("GPL");

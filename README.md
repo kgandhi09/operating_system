@@ -300,12 +300,35 @@ What works on the tablet, and where it comes from (kernel patches in
 | USB-C host/device, USB3, external DisplayPort | SM5714 TCPM + charger/MUIC, PS5169, QMP, msm DP (0008-0009) | implemented; awaiting SM-T733 hardware validation; USB host (hub, keyboard, mouse) works; DisplayPort over USB-C awaits validation; [wiring, limits and test steps](targets/devices/tablet/samsung-gts7fe/USB.md) |
 | Not yet: audio, sensors (rotation), cameras, suspend | | audio and sensors run on the ADSP |
 
-Charging is set with `jk-charge` (below), within Samsung's own limits for
-this battery, which the driver enforces: here every setting is offered
-(`normal`: 3000 mA in, 2100 mA into the battery, 4.38 V, the defaults;
-`fast`: 3200 mA; `gentle`: 1500 / 1000 mA, 4.30 V, stop at 80%). While held
-at the battery care limit the tablet runs from the charger. Charging always
-pauses below 0 or above 50 degC.
+Charging is set with `jk-charge` (below), within limits the driver
+enforces (Samsung's own for this battery, except an input of up to 3200 mA
+where Samsung stops at 3000): here every setting is offered (`normal`:
+3000 mA in, 2100 mA into the battery, 4.38 V, the defaults; `fast`: 3200 mA
+in and into the battery; `gentle`: 1500 / 1000 mA, 4.30 V, stop at 80%).
+While held at the battery care limit the tablet runs from the charger.
+Charging always pauses below 0 or above 50 degC.
+
+#### Resets: jk-crashlog and jk-stress
+
+The tablet has been resetting under load (a browser, a heavy build) with
+nothing in the kernel's log. To find out why, `/etc/init.d/S01crashlog`
+runs a flight recorder, `jk-crashlog`: every second it notes the
+temperatures, CPU and GPU clocks, throttling, battery and charger, memory
+and pressure, in RAM that survives a reset (pstore's pmsg) and on disk.
+After a reset it saves what led up to it in `/var/log/jk-crash`, with the
+kernel's last log and the PMIC's own reset reason (its power-on log, which
+the kernel prints at boot: patches/0010), e.g. PS_HOLD or a watchdog (a
+reset the SoC asked for), UVLO (the supply sagged), OVERTEMP_STAGE3, OCP.
+
+```sh
+jk-crashlog                # the saved crashes, newest first, with the reason
+jk-crashlog show           # the newest in full
+sudo jk-stress -t 300 build                        # load one part at a time:
+sudo jk-stress --gpu-max 550 --cpu-max 1800 build  # cpu mem build io gpu mix all
+```
+
+`jk-stress` notes each stage in the record, so a crash shows what was
+running; its caps show whether lower clocks avoid it.
 
 ## Sources
 
