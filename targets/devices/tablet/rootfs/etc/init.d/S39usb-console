@@ -9,11 +9,25 @@
 
 G=/sys/kernel/config/usb_gadget/jk_os
 
-start() {
-    if [ ! -d "$G" ] || [ -z "$(cat "$G/UDC" 2>/dev/null)" ]; then
-        echo "usb-console: the initramfs didn't set up the USB link; no USB console"
-        return 0
-    fi
+# The gadget may have been prepared while booting with a hub attached.
+# Wait for the first device-mode UDC; the gadget core handles later rebinds.
+run() {
+    while :; do
+        if [ -n "$(cat "$G/UDC" 2>/dev/null)" ]; then
+            break
+        fi
+        udc=$(ls /sys/class/udc 2>/dev/null | head -n1)
+        if [ -n "$udc" ] && { echo "$udc" > "$G/UDC"; } 2>/dev/null; then
+            break
+        fi
+        sleep 1
+    done
+    # Binding registers the NCM interface; wait across a concurrent role swap.
+    while :; do
+        ifname=$(cat "$G/functions/ncm.usb0/ifname" 2>/dev/null)
+        [ -n "$ifname" ] && [ -d "/sys/class/net/$ifname" ] && break
+        sleep 1
+    done
     ifname=$(cat "$G/functions/ncm.usb0/ifname")
     ip link set "$ifname" up
     ip addr show dev "$ifname" | grep -q 172.16.42.1 || ip addr add 172.16.42.1/24 dev "$ifname"
@@ -21,10 +35,30 @@ start() {
     sed "s/@IF@/$ifname/" /etc/jk/udhcpd.conf > /run/jk/udhcpd.conf
     udhcpd /run/jk/udhcpd.conf
     telnetd -b 172.16.42.1
+    : > /run/jk/usb-console.started
+    rm -f /run/jk/usb-console-start.pid
     echo "usb-console: telnet 172.16.42.1 or /dev/ttyACM0 on the PC"
+}
+
+start() {
+    [ ! -f /run/jk/usb-console.started ] || return 0
+    [ -d "$G" ] || { echo "usb-console: no configfs gadget prepared"; return 0; }
+    mkdir -p /run/jk
+    if [ -f /run/jk/usb-console-start.pid ]; then
+        pid=$(cat /run/jk/usb-console-start.pid)
+        kill -0 "$pid" 2>/dev/null && return 0
+    fi
+    "$0" run &
+    echo $! > /run/jk/usb-console-start.pid
 }
 
 case "$1" in
     start) start ;;
-    stop)  killall -q telnetd udhcpd ;;
+    run) run ;;
+    stop)
+        [ ! -f /run/jk/usb-console-start.pid ] ||
+            kill "$(cat /run/jk/usb-console-start.pid)" 2>/dev/null
+        rm -f /run/jk/usb-console-start.pid /run/jk/usb-console.started
+        killall -q telnetd udhcpd
+        ;;
 esac

@@ -1,0 +1,404 @@
+Subject: [PATCH] power: sm5714: coordinate USB OTG, MUIC and Type-C charging
+
+Serialize TCPM, charge polling and user settings. Use Samsung SM7325 OTG
+limits, refuse boost against incoming VBUS, and cap charging to the
+negotiated 5 V input. The Type-C consumer references its charger through firmware.
+
+---
+diff --git a/drivers/power/supply/sm5714_charger.c b/drivers/power/supply/sm5714_charger.c
+--- a/drivers/power/supply/sm5714_charger.c
++++ b/drivers/power/supply/sm5714_charger.c
+@@ -42,6 +42,7 @@
+ #include <linux/module.h>
+ #include <linux/mutex.h>
+ #include <linux/power_supply.h>
++#include <linux/power/sm5714.h>
+ #include <linux/property.h>
+ #include <linux/regmap.h>
+ #include <linux/workqueue.h>
+@@ -142,9 +143,8 @@
+ 		 "Configure and enable charging when VBUS is present (default: true)");
+ 
+ /*
+- * Without a Type-C/PD driver the source's advertised current is unknown:
+- * 3 A is what a USB-C source offers at 5 V, and AICL (4.5 V) lowers the
+- * input current on a source that can't keep up, such as a PC port.
++ * This is a user ceiling. On Type-C managed boards TCPM supplies a separate
++ * ceiling from Rp / the PD contract; the smaller of the two is applied.
+  */
+ static uint input_current_ma = 3000;
+ module_param(input_current_ma, uint, 0444);
+@@ -159,6 +159,14 @@
+ 	struct device *dev;
+ 	struct regmap *chg;
+ 	struct regmap *fg;
++	struct i2c_client *muic;
++	struct mutex policy_lock; /* Type-C, user settings and charge worker */
++	bool typec_controlled;
++	bool typec_bound; /* the Type-C driver is running */
++	bool otg_active;
++	bool usb_host;
++	bool sink_enabled;
++	unsigned int typec_ma;
+ 	struct mutex lock; /* SRAM address/data pairs, charger updates */
+ 	struct power_supply *bat_psy;
+ 	struct power_supply *chg_psy;
+@@ -430,6 +438,12 @@
+ 				 on ? SM5714_CNTL1_ENQ4FET : 0);
+ }
+ 
++/* Caller holds policy_lock. Never exceed the advertised/negotiated input. */
++static unsigned int sm5714_input_ma(struct sm5714 *sm)
++{
++	return sm->typec_bound ? min(sm->input_ma, sm->typec_ma) : sm->input_ma;
++}
++
+ /* Charging paused: battery too hot or cold, or held for battery care. */
+ static bool sm5714_paused(struct sm5714 *sm)
+ {
+@@ -445,7 +459,7 @@
+  */
+ static int sm5714_charging_enable(struct sm5714 *sm, unsigned int st2)
+ {
+-	unsigned int ilim = sm->input_ma;
++	unsigned int ilim = sm5714_input_ma(sm);
+ 	unsigned int ichg = sm->charge_ma;
+ 	unsigned int mode;
+ 	int ret;
+@@ -526,6 +540,161 @@
+ 	sm->configured = false;
+ }
+ 
++/* D+/D- must be explicitly connected for a host with no incoming VBUS. */
++static int sm5714_usb_path(struct sm5714 *sm, bool host)
++{
++	int ctrl, sw, ret;
++
++	ctrl = i2c_smbus_read_byte_data(sm->muic, 0x05);
++	if (ctrl < 0)
++		return ctrl;
++	sw = i2c_smbus_read_byte_data(sm->muic, 0x06);
++	if (sw < 0)
++		return sw;
++	ret = i2c_smbus_write_byte_data(sm->muic, 0x05,
++				       host ? ctrl | BIT(1) : ctrl & ~BIT(1));
++	if (ret)
++		return ret;
++	/* MANUAL_SW: manual bit 7, D+/D- USB routing 0x09. */
++	ret = i2c_smbus_write_byte_data(sm->muic, 0x06,
++				       (sw & ~0xbf) | (host ? 0x89 : 0));
++	if (ret)
++		i2c_smbus_write_byte_data(sm->muic, 0x05, ctrl);
++	return ret;
++}
++
++/*
++ * The Type-C driver takes over the charging policy only while it is bound:
++ * should it fail to probe, charging keeps working from VBUS alone, as on a
++ * board without one.
++ */
++void sm5714_usb_typec_bind(struct power_supply *psy, bool bound)
++{
++	struct sm5714 *sm = power_supply_get_drvdata(psy);
++
++	mutex_lock(&sm->policy_lock);
++	sm->typec_bound = bound;
++	sm->sink_enabled = false;
++	sm->typec_ma = 0;
++	mutex_unlock(&sm->policy_lock);
++}
++EXPORT_SYMBOL_GPL(sm5714_usb_typec_bind);
++
++int sm5714_usb_set_host(struct power_supply *psy, bool host)
++{
++	struct sm5714 *sm = power_supply_get_drvdata(psy);
++	int ret;
++
++	mutex_lock(&sm->policy_lock);
++	ret = sm5714_usb_path(sm, host || sm->otg_active);
++	if (!ret)
++		sm->usb_host = host;
++	mutex_unlock(&sm->policy_lock);
++	return ret;
++}
++EXPORT_SYMBOL_GPL(sm5714_usb_set_host);
++
++bool sm5714_usb_vbus_enabled(struct power_supply *psy)
++{
++	struct sm5714 *sm = power_supply_get_drvdata(psy);
++
++	return READ_ONCE(sm->otg_active);
++}
++EXPORT_SYMBOL_GPL(sm5714_usb_vbus_enabled);
++
++int sm5714_usb_set_vbus(struct power_supply *psy, bool source, bool sink)
++{
++	struct sm5714 *sm = power_supply_get_drvdata(psy);
++	unsigned int status, factory;
++	int ret = 0;
++
++	mutex_lock(&sm->policy_lock);
++	if (source && sink) {
++		ret = -EINVAL;
++		goto out;
++	}
++	if (source && !sm->otg_active) {
++		if (!enable_charging) {
++			ret = -EPERM;
++			goto out;
++		}
++		ret = regmap_read(sm->chg, SM5714_CHG_REG_STATUS1, &status);
++		if (!ret)
++			ret = regmap_read(sm->chg, SM5714_CHG_REG_FACTORY1, &factory);
++		if (ret)
++			goto out;
++		/* Never drive VBUS against another source or in factory bypass. */
++		if ((status & SM5714_STATUS1_VBUSPOK) ||
++		    (factory & (SM5714_FACTORY1_NOZX | SM5714_FACTORY1_ENBYPASS))) {
++			ret = -EBUSY;
++			goto out;
++		}
++		sm5714_charging_disable(sm);
++		ret = sm5714_usb_path(sm, true);
++		if (!ret)
++			ret = sm5714_set_q4fet(sm, false);
++		/* Samsung's USB_OTG operating point: 5.1 V, 900 mA boost limit. */
++		if (!ret)
++			ret = sm5714_chg_update(sm, 0x23, 0xcf, 0x46);
++		if (!ret)
++			ret = sm5714_chg_update(sm, SM5714_CHG_REG_CNTL2,
++						SM5714_CNTL2_OP_MODE, 0x7);
++		if (ret) {
++			sm5714_usb_path(sm, sm->usb_host);
++			goto out;
++		}
++		WRITE_ONCE(sm->otg_active, true);
++		dev_info(sm->dev, "USB VBUS source enabled (5.1 V, 900 mA limit)\n");
++	} else if (!source && sm->otg_active) {
++		ret = sm5714_chg_update(sm, SM5714_CHG_REG_CNTL2,
++					SM5714_CNTL2_OP_MODE, SM5714_OP_MODE_CHG_ON_VBUS);
++		if (ret)
++			goto out;
++		WRITE_ONCE(sm->otg_active, false);
++		ret = sm5714_usb_path(sm, sm->usb_host);
++		dev_info(sm->dev, "USB VBUS source disabled\n");
++	}
++	sm->sink_enabled = sink;
++	if (!sink && !source) {
++		sm->typec_ma = 0;
++		if (enable_charging)
++			sm5714_charging_disable(sm);
++	}
++out:
++	mutex_unlock(&sm->policy_lock);
++	/* start charging now rather than at the next poll */
++	if (!ret && sink)
++		mod_delayed_work(system_wq, &sm->work, 0);
++	return ret;
++}
++EXPORT_SYMBOL_GPL(sm5714_usb_set_vbus);
++
++int sm5714_usb_set_current(struct power_supply *psy, unsigned int mv,
++			  unsigned int ma)
++{
++	struct sm5714 *sm = power_supply_get_drvdata(psy);
++	int ret = 0;
++
++	/* The board advertises only fixed 5 V sink PDOs. No PPS/direct charging. */
++	if ((mv && mv != 5000) || ma > SM5714_INPUT_MA_MAX)
++		return -ERANGE;
++	mutex_lock(&sm->policy_lock);
++	sm->typec_ma = mv ? ma : 0;
++	if (enable_charging && sm->configured) {
++		if (!sm->typec_ma)
++			sm5714_charging_disable(sm);
++		else
++			ret = sm5714_chg_update(sm, SM5714_CHG_REG_VBUSCNTL,
++					SM5714_VBUSCNTL_LIMIT,
++					sm5714_input_limit_to_reg(sm5714_input_ma(sm)));
++	}
++	mutex_unlock(&sm->policy_lock);
++	power_supply_changed(sm->chg_psy);
++	mod_delayed_work(system_wq, &sm->work, 0);
++	return ret;
++}
++EXPORT_SYMBOL_GPL(sm5714_usb_set_current);
++
+ static void sm5714_check_temp(struct sm5714 *sm)
+ {
+ 	int t;
+@@ -580,7 +749,12 @@
+ 	unsigned int f1, cntl1;
+ 	int uv;
+ 
+-	if (!(st1 & SM5714_STATUS1_VBUSPOK)) {
++	/* OTG owns the operating mode until TCPM releases it. */
++	if (sm->otg_active)
++		return;
++
++	if (!(st1 & SM5714_STATUS1_VBUSPOK) ||
++	    (sm->typec_bound && (!sm->sink_enabled || !sm->typec_ma))) {
+ 		if (sm->configured) {
+ 			sm5714_charging_disable(sm);
+ 			sm->too_hot_or_cold = false;
+@@ -639,15 +813,22 @@
+ 	struct sm5714 *sm = container_of(work, struct sm5714, work.work);
+ 	unsigned int st1, st2, st3, sys;
+ 	bool online, chgon, changed;
++	bool status_ok = false;
+ 	int capacity = -1;
+ 
++	mutex_lock(&sm->policy_lock);
+ 	if (regmap_read(sm->chg, SM5714_CHG_REG_STATUS1, &st1) ||
+ 	    regmap_read(sm->chg, SM5714_CHG_REG_STATUS2, &st2) ||
+ 	    regmap_read(sm->chg, SM5714_CHG_REG_STATUS3, &st3))
+-		goto out;
++		goto unlock;
+ 
++	status_ok = true;
+ 	if (enable_charging)
+ 		sm5714_charge_control(sm, st1, st2, st3);
++unlock:
++	mutex_unlock(&sm->policy_lock);
++	if (!status_ok)
++		goto out;
+ 
+ 	if (!regmap_read(sm->fg, SM5714_FG_REG_SYSTEM_STATUS, &sys)) {
+ 		bool done = sys & SM5714_FG_SYS_INIT_DONE;
+@@ -759,7 +940,7 @@
+ 	return ret;
+ }
+ 
+-static int sm5714_bat_set_property(struct power_supply *psy,
++static int sm5714_bat_set_property_locked(struct power_supply *psy,
+ 				   enum power_supply_property psp,
+ 				   const union power_supply_propval *val)
+ {
+@@ -785,6 +966,19 @@
+ 	return 0;
+ }
+ 
++static int sm5714_bat_set_property(struct power_supply *psy,
++				 enum power_supply_property psp,
++				 const union power_supply_propval *val)
++{
++	struct sm5714 *sm = power_supply_get_drvdata(psy);
++	int ret;
++
++	mutex_lock(&sm->policy_lock);
++	ret = sm5714_bat_set_property_locked(psy, psp, val);
++	mutex_unlock(&sm->policy_lock);
++	return ret;
++}
++
+ static int sm5714_bat_property_is_writeable(struct power_supply *psy,
+ 					    enum power_supply_property psp)
+ {
+@@ -847,7 +1041,7 @@
+ 		break;
+ 	/* the settings, applied while a cable is attached */
+ 	case POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
+-		val->intval = sm->input_ma * 1000;
++		val->intval = sm5714_input_ma(sm) * 1000;
+ 		break;
+ 	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT:
+ 		val->intval = sm->charge_ma * 1000;
+@@ -872,7 +1066,7 @@
+  * New limits, within the stock board's maxima; written to the charger at
+  * once while it is set up for a cable, else on the next attach.
+  */
+-static int sm5714_chg_set_property(struct power_supply *psy,
++static int sm5714_chg_set_property_locked(struct power_supply *psy,
+ 				   enum power_supply_property psp,
+ 				   const union power_supply_propval *val)
+ {
+@@ -888,7 +1082,7 @@
+ 		if (sm->configured)
+ 			ret = sm5714_chg_update(sm, SM5714_CHG_REG_VBUSCNTL,
+ 						SM5714_VBUSCNTL_LIMIT,
+-						sm5714_input_limit_to_reg(v));
++						sm5714_input_limit_to_reg(sm5714_input_ma(sm)));
+ 		break;
+ 	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT:
+ 		if (v < SM5714_LIMIT_MA_MIN || v > SM5714_CHARGE_MA_MAX)
+@@ -918,6 +1112,19 @@
+ 	return ret;
+ }
+ 
++static int sm5714_chg_set_property(struct power_supply *psy,
++				 enum power_supply_property psp,
++				 const union power_supply_propval *val)
++{
++	struct sm5714 *sm = power_supply_get_drvdata(psy);
++	int ret;
++
++	mutex_lock(&sm->policy_lock);
++	ret = sm5714_chg_set_property_locked(psy, psp, val);
++	mutex_unlock(&sm->policy_lock);
++	return ret;
++}
++
+ static int sm5714_chg_property_is_writeable(struct power_supply *psy,
+ 					    enum power_supply_property psp)
+ {
+@@ -997,6 +1204,7 @@
+ 
+ 	sm->dev = dev;
+ 	sm->last_capacity = -1;
++	sm->typec_controlled = device_property_read_bool(dev, "siliconmitus,typec-controlled");
+ 	sm->input_ma = clamp(input_current_ma, SM5714_LIMIT_MA_MIN, SM5714_INPUT_MA_MAX);
+ 	sm->charge_ma = clamp(charge_current_ma, SM5714_LIMIT_MA_MIN, SM5714_CHARGE_MA_MAX);
+ 	sm->float_mv = sm->float_mv_max = SM5714_FLOAT_MV_MAX;
+@@ -1008,6 +1216,14 @@
+ 	if (ret)
+ 		return ret;
+ 
++	ret = devm_mutex_init(dev, &sm->policy_lock);
++	if (ret)
++		return ret;
++
++	sm->muic = devm_i2c_new_dummy_device(dev, client->adapter, 0x25);
++	if (IS_ERR(sm->muic))
++		return dev_err_probe(dev, PTR_ERR(sm->muic), "MUIC I2C client\n");
++
+ 	sm->chg = devm_regmap_init_i2c(client, &sm5714_chg_regmap_config);
+ 	if (IS_ERR(sm->chg))
+ 		return dev_err_probe(dev, PTR_ERR(sm->chg), "charger regmap\n");
+@@ -1018,6 +1234,17 @@
+ 	if (FIELD_GET(SM5714_DEVICEID_VENDOR, id) != 0x1)
+ 		return dev_err_probe(dev, -ENODEV, "unexpected device ID 0x%02x\n", id);
+ 
++	if (sm->typec_controlled && enable_charging) {
++		/* Firmware can leave charging or OTG enabled across a warm boot. */
++		sm5714_charging_disable(sm);
++		ret = sm5714_chg_update(sm, SM5714_CHG_REG_CNTL2,
++					SM5714_CNTL2_OP_MODE, SM5714_OP_MODE_CHG_ON_VBUS);
++		if (!ret)
++			ret = sm5714_usb_path(sm, false);
++		if (ret)
++			return dev_err_probe(dev, ret, "resetting inherited USB power state\n");
++	}
++
+ 	fg_client = devm_i2c_new_dummy_device(dev, client->adapter, SM5714_FG_I2C_ADDR);
+ 	if (IS_ERR(fg_client))
+ 		return dev_err_probe(dev, PTR_ERR(fg_client), "fuel gauge I2C client\n");
+diff --git a/include/linux/power/sm5714.h b/include/linux/power/sm5714.h
+--- a/include/linux/power/sm5714.h
++++ b/include/linux/power/sm5714.h
+@@ -0,0 +1,16 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++#ifndef _LINUX_POWER_SM5714_H
++#define _LINUX_POWER_SM5714_H
++
++#include <linux/types.h>
++
++struct power_supply;
++/* psy must belong to the SM5714 charger/fuel-gauge driver. */
++int sm5714_usb_set_vbus(struct power_supply *psy, bool source, bool sink);
++bool sm5714_usb_vbus_enabled(struct power_supply *psy);
++int sm5714_usb_set_current(struct power_supply *psy, unsigned int mv,
++			  unsigned int ma);
++void sm5714_usb_typec_bind(struct power_supply *psy, bool bound);
++int sm5714_usb_set_host(struct power_supply *psy, bool host);
++
++#endif

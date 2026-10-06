@@ -12,7 +12,7 @@
 # the PC instead, with a login.
 
 usb_console() {
-    local g=/sys/kernel/config/usb_gadget/jk_os udc="" i=0 serial ifname
+    local g=/sys/kernel/config/usb_gadget/jk_os udc="" serial ifname
 
     # Every BusyBox applet (telnetd, udhcpd, nc, ip, dd, ...), not only the
     # few /init uses.
@@ -20,14 +20,6 @@ usb_console() {
     mkdir -p /dev/pts
     mount -t devpts devpts /dev/pts
     mount -t configfs configfs /sys/kernel/config
-
-    # The USB controller may still be probing.
-    while [ $i -lt 40 ]; do
-        udc=$(ls /sys/class/udc 2>/dev/null | head -n1)
-        [ -n "$udc" ] && break
-        sleep 0.25; i=$((i + 1))
-    done
-    [ -n "$udc" ] || { say "no USB device controller: no USB console"; return 1; }
 
     serial=$(cat /sys/devices/soc0/serial_number 2>/dev/null)
     mkdir -p "$g/strings/0x409" "$g/functions/ncm.usb0" "$g/functions/acm.GS0" \
@@ -41,7 +33,17 @@ usb_console() {
     echo "network + serial console" > "$g/configs/c.1/strings/0x409/configuration"
     ln -s "$g/functions/ncm.usb0" "$g/configs/c.1/"
     ln -s "$g/functions/acm.GS0" "$g/configs/c.1/"
-    echo "$udc" > "$g/UDC" || { say "cannot start USB device mode on $udc"; return 1; }
+    # A hub present at boot puts DWC3 in host mode: no UDC exists yet.
+    # Prepare configfs now and bind asynchronously when device mode returns.
+    # Once registered, the gadget core rebinds this driver after role changes.
+    (
+    while :; do
+        udc=$(ls /sys/class/udc 2>/dev/null | head -n1)
+        if [ -n "$udc" ] && { echo "$udc" > "$g/UDC"; } 2>/dev/null; then
+            break
+        fi
+        sleep 1
+    done
 
     ifname=$(cat "$g/functions/ncm.usb0/ifname")
     ip link set "$ifname" up
@@ -51,11 +53,17 @@ usb_console() {
     telnetd -b 172.16.42.1 -l /bin/sh
     nc -lk -s 172.16.42.1 -p 5000 -e /bin/jk-serve &
 
-    # A shell on the serial port, again whenever it exits.
-    ( while :; do setsid sh -c 'exec sh -i </dev/ttyGS0 >/dev/ttyGS0 2>&1'; sleep 1; done ) &
+    # This worker becomes the serial loop, so the late hook can stop it
+    # whether it is still waiting for a UDC or already serving the console.
+    while :; do
+        if [ -c /dev/ttyGS0 ]; then
+            setsid sh -c 'exec sh -i </dev/ttyGS0 >/dev/ttyGS0 2>&1'
+        fi
+        sleep 1
+    done
+    ) &
     echo $! > /run/jk/usb-console.pid
-
-    say "USB console: telnet 172.16.42.1, or the serial port (/dev/ttyACM0) on the PC"
+    say "USB console prepared; waits for a PC connection when USB-C is hosting a hub"
 }
 
 usb_console

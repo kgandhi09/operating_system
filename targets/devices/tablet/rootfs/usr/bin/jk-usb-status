@@ -1,0 +1,57 @@
+#!/bin/sh
+# Read-only USB/Type-C/display bring-up report. Run as root for kernel logs.
+
+section() { printf '\n== %s ==\n' "$1"; }
+value() {
+    [ -r "$1" ] || return 0
+    printf '%s: ' "$1"
+    tr '\000' ' ' < "$1"
+    printf '\n'
+}
+
+section 'Kernel and board'
+uname -a
+value /sys/firmware/devicetree/base/model
+value /proc/cmdline
+
+section 'USB role and Type-C'
+for f in /sys/class/usb_role/*/role /sys/class/typec/port*/data_role \
+         /sys/class/typec/port*/power_role /sys/class/typec/port*/power_operation_mode \
+         /sys/class/typec/port*/orientation; do
+    value "$f"
+done
+
+section 'USB devices'
+lsusb
+for d in /sys/bus/usb/devices/*; do
+    [ -f "$d/idVendor" ] || continue
+    for name in idVendor idProduct manufacturer product speed; do
+        value "$d/$name"
+    done
+done
+
+section 'Gadget console'
+value /sys/kernel/config/usb_gadget/jk_os/UDC
+for f in /sys/class/udc/*/state; do value "$f"; done
+
+section 'Displays and alternate modes'
+for f in /sys/class/drm/card*-*/status /sys/class/drm/card*-*/modes \
+         /sys/class/typec/*/svid /sys/class/typec/*/active \
+         /sys/class/typec/*/displayport/configuration \
+         /sys/class/typec/*/displayport/pin_assignment \
+         /sys/class/typec/*/displayport/hpd; do
+    value "$f"
+done
+
+section 'Power'
+for f in /sys/class/power_supply/*/online /sys/class/power_supply/*/status \
+         /sys/class/power_supply/*/input_current_limit \
+         /sys/class/power_supply/*/current_max /sys/class/power_supply/*/voltage_max; do
+    value "$f"
+done
+
+section 'Deferred probes'
+value /sys/kernel/debug/devices_deferred
+
+section 'Relevant kernel messages'
+dmesg | grep -iE 'sm5714|ps5169|typec|tcpm|dwc3|xhci|usb |qmp|displayport|drm|defer' | tail -200

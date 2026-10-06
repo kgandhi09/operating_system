@@ -9,7 +9,8 @@
  * the display driven by msm (its panel, a TS124QDM with a FocalTech FT8203,
  * and the brightness) and the touchscreen, (stage 6) Wi-Fi and Bluetooth
  * (WCN6750), (stage 5) battery and charging, (stage 7) the GPU and
- * (stage 8) the S Pen and the cover's hall sensor.
+ * (stage 8) the S Pen and the cover's hall sensor. USB-C dual role and
+ * DisplayPort are wired through SM5714, PS5169 and the SBU GPIO mux.
  * Everything else in sm7325.dtsi stays disabled until its board wiring is
  * known. The Wi-Fi/Bluetooth and GPU wiring is the same as on the other
  * SM7325/QCM6490 devices (Nothing Phone (1), Fairphone 5).
@@ -26,6 +27,7 @@
 #include <dt-bindings/input/input.h>
 #include <dt-bindings/pinctrl/qcom,pmic-gpio.h>
 #include <dt-bindings/regulator/qcom,rpmh-regulator.h>
+#include <dt-bindings/usb/pd.h>
 
 #include "sm7325.dtsi"
 #include "pm7325.dtsi"
@@ -153,6 +155,23 @@
 		enable-active-high;
 		regulator-boot-on;
 		regulator-always-on;
+	};
+
+	/* Stock AUX_EN_N GPIO100 and AUX_SEL GPIO99. */
+	typec_sbu_mux: typec-sbu-mux {
+		compatible = "gpio-sbu-mux";
+		enable-gpios = <&tlmm 100 GPIO_ACTIVE_LOW>;
+		select-gpios = <&tlmm 99 GPIO_ACTIVE_HIGH>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&dp_aux_switch>;
+		orientation-switch;
+		mode-switch;
+
+		port {
+			sbu_mux_in: endpoint {
+				remote-endpoint = <&typec_sbu>;
+			};
+		};
 	};
 
 	/* Stock sm5714-fuelgauge / sec-battery values. */
@@ -355,6 +374,14 @@
 			regulator-name = "vreg_l19b_1p8";
 			regulator-min-microvolt = <1800000>;
 			regulator-max-microvolt = <2000000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		};
+
+		/* USB3/DP combo PLL: stock PM7325 L1, 0.912 V. */
+		vreg_l1b_0p912: ldo1 {
+			regulator-name = "vreg_l1b_0p912";
+			regulator-min-microvolt = <912000>;
+			regulator-max-microvolt = <912000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 		};
 
@@ -656,14 +683,16 @@
  * Battery and charging: Silicon Mitus SM5714 (stock: sm5714@49 on
  * qupv3_se3_i2c, interrupt GPIO 54), charger at 0x49, fuel gauge at 0x71
  * (reached by the same driver, patches/0006). Its USB-PD/Type-C block
- * (usbpd-sm5714@33 on i2c8) has no driver yet: charging is plain 5 V.
+ * (usbpd-sm5714@33 on i2c8) owns role switching and the negotiated 5 V
+ * input limit; the charger owns the MUIC data switch and OTG boost.
  */
 &i2c3 {
 	clock-frequency = <400000>;
 	status = "okay";
 
-	charger@49 {
+	sm5714_charger: charger@49 {
 		compatible = "siliconmitus,sm5714";
+		siliconmitus,typec-controlled;
 		reg = <0x49>;
 
 		interrupts-extended = <&tlmm 54 IRQ_TYPE_LEVEL_LOW>;
@@ -721,21 +750,142 @@
 };
 
 /*
- * USB-C in device mode only, USB 2.0: the PC on the other end of the cable
- * gets jk_os's USB network and serial console. Host mode and the role
- * switching that goes with it need the Type-C controller (Samsung's
- * SM5714), which has no mainline driver yet.
+ * The connector's HS link controls DWC3 roles. The SS link passes through
+ * the PS5169 to the QMP USB3/DP PHY; SBU orientation is a separate switch.
+ * Keep the gadget registered: the UDC core rebinds it on return to device mode.
  */
-&usb_1 {
-	dr_mode = "peripheral";
-	maximum-speed = "high-speed";
-	/* No USB 3 PHY: the controller takes its pipe clock from UTMI. */
-	qcom,select-utmi-as-pipe-clk;
-	phys = <&usb_1_hsphy>;
-	phy-names = "usb2-phy";
-	/delete-property/ usb-role-switch;
-
+&i2c8 {
+	clock-frequency = <400000>;
 	status = "okay";
+
+	typec@33 {
+		compatible = "siliconmitus,sm5714-usbpd";
+		reg = <0x33>;
+		interrupts-extended = <&tlmm 142 IRQ_TYPE_LEVEL_LOW>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&usbpd_irq>;
+		power-supplies = <&sm5714_charger>;
+
+		connector {
+			compatible = "usb-c-connector";
+			label = "USB-C";
+			power-role = "dual";
+			data-role = "dual";
+			try-power-role = "sink";
+			/* Limit bring-up to fixed 5 V, within the existing charger path. */
+			source-pdos = <PDO_FIXED(5000, 500, PDO_FIXED_DUAL_ROLE |
+						PDO_FIXED_DATA_SWAP | PDO_FIXED_USB_COMM)>;
+			sink-pdos = <PDO_FIXED(5000, 3000, PDO_FIXED_DUAL_ROLE |
+					      PDO_FIXED_DATA_SWAP | PDO_FIXED_USB_COMM)>;
+			op-sink-microwatt = <2500000>;
+
+			altmodes {
+				displayport {
+					svid = /bits/ 16 <0xff01>;
+					/* DP source, receptacle, assignments C/D/E. */
+					vdo = <0x00001c46>;
+				};
+			};
+
+			ports {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				port@0 {
+					reg = <0>;
+					typec_hs: endpoint {
+						remote-endpoint = <&usb_1_dwc3_hs>;
+					};
+				};
+				port@1 {
+					reg = <1>;
+					typec_ss: endpoint {
+						remote-endpoint = <&ps5169_out>;
+					};
+				};
+				port@2 {
+					reg = <2>;
+					typec_sbu: endpoint {
+						remote-endpoint = <&sbu_mux_in>;
+					};
+				};
+			};
+		};
+	};
+};
+
+&i2c6 {
+	clock-frequency = <400000>;
+	status = "okay";
+
+	redriver@28 {
+		compatible = "parade,ps5169";
+		reg = <0x28>;
+		orientation-switch;
+		mode-switch;
+		parade,usb-controller = <&usb_1>;
+		aux-pullup-supply = <&vreg_l2b_3p072>;
+		/* Samsung SM7325 WORK_MODE tuning, not the SM8550 values. */
+		parade,reg50 = <0x20>;
+		parade,reg51 = <0x40>;
+		parade,reg54 = <0x00>;
+		parade,reg5d = <0x44>;
+
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			port@0 {
+				reg = <0>;
+				ps5169_out: endpoint {
+					remote-endpoint = <&typec_ss>;
+				};
+			};
+			port@1 {
+				reg = <1>;
+				ps5169_in: endpoint {
+					remote-endpoint = <&usb_dp_qmpphy_out>;
+				};
+			};
+		};
+	};
+};
+
+&usb_1 {
+	dr_mode = "otg";
+	usb-role-switch;
+	status = "okay";
+};
+
+&usb_1_dwc3_hs {
+	remote-endpoint = <&typec_hs>;
+};
+
+&usb_1_qmpphy {
+	vdda-phy-supply = <&vreg_l6b_1p2>;
+	vdda-pll-supply = <&vreg_l1b_0p912>;
+	orientation-switch;
+	mode-switch;
+	status = "okay";
+};
+
+&usb_dp_qmpphy_out {
+	remote-endpoint = <&ps5169_in>;
+};
+
+/*
+ * Off until USB host is confirmed on the device: msm binds the panel only
+ * once every enabled display interface has probed, and DP waits for its
+ * whole bridge chain (QMP PHY, PS5169, SM5714's connector). Any link that
+ * fails to probe would leave the tablet's own screen without a driver.
+ */
+&mdss_dp {
+	vdda-1p2-supply = <&vreg_l6b_1p2>;
+	vdda-0p9-supply = <&vreg_l1b_0p912>;
+	status = "disabled";
+};
+
+&mdss_dp_out {
+	data-lanes = <0 1 2 3>;
+	link-frequencies = /bits/ 64 <1620000000 2700000000 5400000000>;
 };
 
 &usb_1_hsphy {
@@ -771,6 +921,21 @@
 };
 
 &tlmm {
+	usbpd_irq: usbpd-irq-state {
+		pins = "gpio142";
+		function = "gpio";
+		drive-strength = <8>;
+		bias-disable;
+		input-enable;
+	};
+
+	dp_aux_switch: dp-aux-switch-state {
+		pins = "gpio99", "gpio100";
+		function = "gpio";
+		drive-strength = <8>;
+		bias-disable;
+	};
+
 	pogo_attn: pogo-attn-state {
 		pins = "gpio51";
 		function = "gpio";
