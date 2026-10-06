@@ -1,0 +1,154 @@
+cage: -r auto|0|90|180|270, the built-in screen's rotation (jk_os: the dev session on a tablet whose panel is mounted portrait).
+By default (auto) every output takes its DRM panel orientation, as KWin does; mirror mode compares widths after rotation.
+
+--- a/cage.c
++++ b/cage.c
+@@ -247,6 +247,8 @@
+ 		" -m extend Extend the display across all connected outputs (default)\n"
+ 		" -m last Use only the last connected output\n"
+ 		" -m mirror Show the same picture on every connected output\n"
++		" -r auto|0|90|180|270 Rotate the built-in screen (default auto: as\n"
++		"\t the panel is mounted, from its DRM panel orientation)\n"
+ 		" -s\t Allow VT switching\n"
+ 		" -v\t Show the version number and exit\n"
+ 		"\n"
+@@ -258,7 +260,7 @@
+ parse_args(struct cg_server *server, int argc, char *argv[])
+ {
+ 	int c;
+-	while ((c = getopt(argc, argv, "dDhm:sv")) != -1) {
++	while ((c = getopt(argc, argv, "dDhm:r:sv")) != -1) {
+ 		switch (c) {
+ 		case 'd':
+ 			server->xdg_decoration = true;
+@@ -278,6 +280,26 @@
+ 				server->output_mode = CAGE_MULTI_OUTPUT_MODE_MIRROR;
+ 			}
+ 			break;
++		case 'r':
++			if (strcmp(optarg, "auto") == 0) {
++				server->rotation_set = false;
++			} else if (strcmp(optarg, "0") == 0) {
++				server->rotation_set = true;
++				server->rotation = WL_OUTPUT_TRANSFORM_NORMAL;
++			} else if (strcmp(optarg, "90") == 0) {
++				server->rotation_set = true;
++				server->rotation = WL_OUTPUT_TRANSFORM_90;
++			} else if (strcmp(optarg, "180") == 0) {
++				server->rotation_set = true;
++				server->rotation = WL_OUTPUT_TRANSFORM_180;
++			} else if (strcmp(optarg, "270") == 0) {
++				server->rotation_set = true;
++				server->rotation = WL_OUTPUT_TRANSFORM_270;
++			} else {
++				usage(stderr, argv[0]);
++				return false;
++			}
++			break;
+ 		case 's':
+ 			server->allow_vt_switch = true;
+ 			break;
+--- a/output.c
++++ b/output.c
+@@ -13,6 +13,7 @@
+ 
+ #include <assert.h>
+ #include <stdlib.h>
++#include <string.h>
+ #include <unistd.h>
+ #include <wayland-server-core.h>
+ #include <wlr/backend.h>
+@@ -24,6 +25,9 @@
+ #include <wlr/render/swapchain.h>
+ #include <wlr/render/wlr_renderer.h>
+ #include <wlr/types/wlr_compositor.h>
++#if WLR_HAS_DRM_BACKEND
++#include <wlr/backend/drm.h>
++#endif
+ #include <wlr/types/wlr_data_device.h>
+ #include <wlr/types/wlr_output.h>
+ #include <wlr/types/wlr_output_layout.h>
+@@ -109,12 +113,14 @@
+ 		return;
+ 	}
+ 	updating = true;
+-	int min_width = 0;
++	/* Widths as shown, after each output's rotation. */
++	int min_width = 0, w, h;
+ 	struct cg_output *output;
+ 	wl_list_for_each (output, &server->outputs, link) {
+ 		struct wlr_output *o = output->wlr_output;
+-		if (o->enabled && o->width > 0 && (min_width == 0 || o->width < min_width)) {
+-			min_width = o->width;
++		wlr_output_transformed_resolution(o, &w, &h);
++		if (o->enabled && w > 0 && (min_width == 0 || w < min_width)) {
++			min_width = w;
+ 		}
+ 	}
+ 	if (min_width == 0) {
+@@ -123,10 +129,11 @@
+ 	}
+ 	wl_list_for_each (output, &server->outputs, link) {
+ 		struct wlr_output *o = output->wlr_output;
+-		if (!o->enabled || o->width <= 0) {
++		wlr_output_transformed_resolution(o, &w, &h);
++		if (!o->enabled || w <= 0) {
+ 			continue;
+ 		}
+-		float scale = (float)o->width / (float)min_width;
++		float scale = (float)w / (float)min_width;
+ 		if (scale < 1.0f) {
+ 			scale = 1.0f;
+ 		}
+@@ -175,6 +182,31 @@
+ 	}
+ }
+ 
++/* A screen built into the machine: a laptop's or a tablet's own. */
++static bool
++output_is_builtin(struct wlr_output *wlr_output)
++{
++	return strncmp(wlr_output->name, "eDP-", 4) == 0 || strncmp(wlr_output->name, "DSI-", 4) == 0 ||
++	       strncmp(wlr_output->name, "LVDS-", 5) == 0;
++}
++
++/* The rotation -r asks for on a built-in screen; otherwise (and with -r auto)
++ * the panel's own, as it is mounted (DRM "panel orientation"; normal for an
++ * external screen). */
++static enum wl_output_transform
++output_rotation(struct cg_server *server, struct wlr_output *wlr_output)
++{
++	if (server->rotation_set && output_is_builtin(wlr_output)) {
++		return server->rotation;
++	}
++#if WLR_HAS_DRM_BACKEND
++	if (wlr_output_is_drm(wlr_output)) {
++		return wlr_drm_connector_get_panel_orientation(wlr_output);
++	}
++#endif
++	return WL_OUTPUT_TRANSFORM_NORMAL;
++}
++
+ static void
+ output_enable(struct cg_output *output)
+ {
+@@ -370,6 +402,7 @@
+ 
+ 	struct wlr_output_state state = {0};
+ 	wlr_output_state_set_enabled(&state, true);
++	wlr_output_state_set_transform(&state, output_rotation(server, wlr_output));
+ 	if (!wl_list_empty(&wlr_output->modes)) {
+ 		struct wlr_output_mode *preferred_mode = wlr_output_preferred_mode(wlr_output);
+ 		if (preferred_mode) {
+--- a/server.h
++++ b/server.h
+@@ -45,6 +45,9 @@
+ 	struct wl_list inhibitors;
+ 
+ 	enum cg_multi_output_mode output_mode;
++	/* -r: the built-in screens' rotation; auto: the panel's own */
++	bool rotation_set;
++	enum wl_output_transform rotation;
+ 	struct wlr_output_layout *output_layout;
+ 	struct wlr_scene_output_layout *scene_output_layout;
+ 

@@ -502,8 +502,15 @@ Settings:
   ```sh
   JK_DEV_COMMAND=herdr        # run this in the terminal first, then the shell
   JK_DEV_OUTPUTS=extend       # external screen: mirror (default), extend or last
+  JK_DEV_ROTATION=0           # built-in screen: auto (default), 0, 90, 180 or 270
   XKB_DEFAULT_LAYOUT=de       # keyboard layout (XKB_DEFAULT_VARIANT, XKB_DEFAULT_OPTIONS)
   ```
+
+  `auto` turns the built-in screen the way its panel is mounted (its DRM
+  panel orientation), as the desktop does: a tablet's portrait panel shows
+  landscape (on the Galaxy Tab S7 FE that is 90; 270 is landscape the other
+  way up, 0 and 180 portrait). External screens keep their own orientation.
+  `jk-dev --rotate <value>` sets it for one session.
 
 ## NVIDIA GPUs
 

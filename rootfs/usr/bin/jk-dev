@@ -6,6 +6,30 @@
 # itself. Leaving the terminal (exit) comes back to the shell there, where
 # jk-dev starts it again, or jk-gui starts the desktop. Each console has its
 # own session. Settings: see /usr/lib/jk_os/jk-dev-session.
+#
+#   jk-dev [--rotate auto|0|90|180|270]
+#
+# --rotate turns the built-in screen for this session only (the lasting
+# setting is JK_DEV_ROTATION in ~/.config/jk_os/dev-session). auto, the
+# default, shows it the way the panel is mounted, like the desktop does: on
+# the Galaxy Tab S7 FE that is landscape (90; 270 is landscape the other
+# way up); 0 and 180 are its portrait.
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -r|--rotate)
+            [ $# -ge 2 ] || { echo "jk-dev: --rotate needs auto, 0, 90, 180 or 270" >&2; exit 1; }
+            case "$2" in
+                auto|0|90|180|270) export JK_DEV_ROTATION="$2" ;;
+                *) echo "jk-dev: --rotate takes auto, 0, 90, 180 or 270, not '$2'" >&2; exit 1 ;;
+            esac
+            shift 2 ;;
+        -h|--help)
+            sed -n '2,/^$/p' "$0" | sed 's/^# \{0,1\}//'
+            exit 0 ;;
+        *) echo "jk-dev: unknown option $1 (see jk-dev --help)" >&2; exit 1 ;;
+    esac
+done
 
 case "$(tty)" in
     /dev/tty[0-9]*) ;;

@@ -151,6 +151,8 @@ int main(int argc, char **argv)
     keep(envp, &n, "TERM");
     keep(envp, &n, "LANG");
     keep(envp, &n, "TZ");
+    /* jk-dev --rotate, for jk-dev-session (which checks it). */
+    keep(envp, &n, "JK_DEV_ROTATION");
     envp[n] = NULL;
 
     pid_t child = fork();

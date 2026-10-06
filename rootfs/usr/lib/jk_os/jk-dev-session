@@ -12,6 +12,13 @@
 #   JK_DEV_OUTPUTS=extend    with an external screen: mirror (default: the
 #                            same terminal on every screen), extend (one
 #                            terminal across them) or last (the newest only)
+#   JK_DEV_ROTATION=0        the built-in screen's rotation: auto (default:
+#                            as the panel is mounted, like the desktop; on
+#                            the Galaxy Tab S7 FE landscape, 90), 0, 90,
+#                            180 or 270 (degrees, as wlr-randr names them;
+#                            on the Tab S7 FE 0 and 180 are portrait,
+#                            270 landscape the other way up)
+#                            jk-dev --rotate <value> overrides it once.
 # The terminal itself: ~/.config/foot/foot.ini (jk_os's defaults are in
 # /etc/xdg/foot/foot.ini).
 
@@ -30,6 +37,8 @@ jk_gpu_select
 # A UTF-8 locale; C.UTF-8 (shipped in /usr/lib/locale) when none is set.
 case "${LANG:-}" in *UTF-8*|*utf8*) ;; *) export LANG=C.UTF-8 ;; esac
 
+# jk-dev --rotate (passed on by jk-session) wins over the settings file.
+rotation_once=${JK_DEV_ROTATION:-}
 conf="${XDG_CONFIG_HOME:-$HOME/.config}/jk_os/dev-session"
 if [ -f "$conf" ]; then
     set -a
@@ -42,10 +51,17 @@ mkdir -p "$state"
 [ -f "$state/jk-dev.log" ] && mv -f "$state/jk-dev.log" "$state/jk-dev.log.old"
 
 # cage: -s lets Ctrl+Alt+F1-F6 switch consoles, -d keeps foot undecorated,
-# -m how several screens are used (mirror: jk_os's patch to cage).
+# -m how several screens are used (mirror: jk_os's patch to cage), -r the
+# built-in screen's rotation (also jk_os's patch).
 case "${JK_DEV_OUTPUTS:-mirror}" in
     extend|last|mirror) outputs=${JK_DEV_OUTPUTS:-mirror} ;;
     *) outputs=mirror ;;
+esac
+rotation=${rotation_once:-${JK_DEV_ROTATION:-auto}}
+case "$rotation" in
+    auto|0|90|180|270) ;;
+    *) echo "jk-dev: JK_DEV_ROTATION=$rotation is not auto, 0, 90, 180 or 270; using auto" >&2
+       rotation=auto ;;
 esac
 if [ -n "${JK_DEV_COMMAND:-}" ]; then
     set -- foot -- /bin/sh -lc "$JK_DEV_COMMAND; exec \"\${SHELL:-/bin/sh}\" -l"
@@ -53,4 +69,4 @@ else
     set -- foot
 fi
 # Sound (PipeWire) runs in the session's bus: /usr/lib/jk_os/jk-audio.
-exec dbus-run-session /usr/lib/jk_os/jk-audio cage -s -d -m "$outputs" -- "$@" > "$state/jk-dev.log" 2>&1
+exec dbus-run-session /usr/lib/jk_os/jk-audio cage -s -d -m "$outputs" -r "$rotation" -- "$@" > "$state/jk-dev.log" 2>&1
