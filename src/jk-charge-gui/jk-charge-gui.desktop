@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Charge Settings
+GenericName=Battery Monitor
+Comment=The battery and its charger in real time: charging, discharging, power, health
+Exec=jk-charge-gui
+Icon=battery
+Terminal=false
+Categories=System;Monitor;
+Keywords=battery;charge;charging;power;health;watt;

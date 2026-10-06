@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Power Settings
+Comment=CPU, GPU and temperature settings
+Exec=jk-power-gui
+Icon=preferences-system-power-management
+Categories=Settings;System;
+Terminal=false
