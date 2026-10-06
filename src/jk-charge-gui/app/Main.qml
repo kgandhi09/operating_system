@@ -412,14 +412,23 @@ ApplicationWindow {
                             }
                             TextField {
                                 id: chargeValue
+                                visible: modelData.type !== "choice"
                                 text: modelData.current
                                 color: win.textColor
                                 Layout.preferredWidth: 84
                                 selectByMouse: true
                             }
+                            ComboBox {
+                                id: chargeChoice
+                                visible: modelData.type === "choice"
+                                model: modelData.choices.split(",")
+                                currentIndex: Math.max(0, Math.min(2, parseInt(modelData.current)))
+                                Layout.preferredWidth: 132
+                            }
                             Button {
                                 text: "Apply"
-                                onClicked: win.runCharge([modelData.key, chargeValue.text])
+                                onClicked: win.runCharge([modelData.key,
+                                    modelData.type === "choice" ? chargeChoice.currentText : chargeValue.text])
                             }
                         }
                     }

@@ -10,6 +10,8 @@
 #   sudo jk-charge current <mA>   current into the battery
 #   sudo jk-charge voltage <mV>   full-charge voltage
 #   sudo jk-charge limit <%>      battery care: stop at this level, 50-100
+#   sudo jk-charge direct off|auto|full
+#   sudo jk-charge direct-current <mA>  PPS input ceiling, 2000-4500
 #                                 (100: off), charge again 5% below it
 #   jk-charge --machine           what can be set, for programs (jk-charge-gui):
 #                                 one line each, tab-separated: setting, value
@@ -27,8 +29,8 @@
 #   fast       maximum  maximum   maximum     100
 #   normal     3000     2/3 max   maximum     100
 #   gentle     1500     1/3 max   max - 80    80
-# (Tab S7 FE: fast = 3000 / 3200 / 4380, 15 W from the charger at 5 V;
-# normal = 3000 / 2100 / 4380, Samsung's original defaults.)
+# (Tab S7 FE: SM5714 switching path fast = 3000 / 3200 / 4380;
+# normal = 3000 / 2100 / 4380. The SM5440 adds full/auto/off.)
 #
 # The settings are kept in /etc/jk_os/charge; /etc/init.d/S08charge applies
 # them at boot. Without that file nothing is changed: the driver's defaults.
@@ -43,9 +45,10 @@ rd() { cat "$1" 2>/dev/null; }
 
 # The system battery (not a mouse's: scope Device), and the charger whose
 # limits can be set (else the first one, to show).
-BAT= CHG=
+BAT= CHG= DIRECT=
 for d in "$PS"/*; do
     [ -d "$d" ] || continue
+    [ "${d##*/}" = sm5440-direct ] && DIRECT=$d
     case "$(rd "$d/type")" in
         Battery)
             [ -z "$BAT" ] && [ "$(rd "$d/scope")" != Device ] && BAT=$d ;;
@@ -65,6 +68,8 @@ can() {
         current) [ -n "$CHG" ] && [ -w "$CHG/constant_charge_current" ] ;;
         voltage) [ -n "$CHG" ] && [ -w "$CHG/constant_charge_voltage" ] ;;
         limit)   [ -n "$BAT" ] && [ -w "$BAT/charge_control_end_threshold" ] ;;
+        direct)  [ -n "$DIRECT" ] && [ -w "$DIRECT/charge_control_limit" ] ;;
+        direct-current) [ -n "$DIRECT" ] && [ -w "$DIRECT/input_current_limit" ] ;;
     esac
 }
 # Root sees -w on every attribute that is writable at all; for a user, the
@@ -76,6 +81,8 @@ if [ "$(id -u)" != 0 ]; then
             current) f=$CHG/constant_charge_current ;;
             voltage) f=$CHG/constant_charge_voltage ;;
             limit)   f=$BAT/charge_control_end_threshold ;;
+            direct)  f=$DIRECT/charge_control_limit ;;
+            direct-current) f=$DIRECT/input_current_limit ;;
         esac
         [ -n "${f%/*}" ] && [ -e "$f" ] && [ -n "$(find "$f" -perm -u+w 2>/dev/null)" ]
     }
@@ -89,9 +96,11 @@ CUR_MAX=$(rd "$CHG/constant_charge_current_max")
 CUR_MAX=${CUR_MAX:+$((CUR_MAX / 1000))}
 VOLT_MAX=$(rd "$CHG/constant_charge_voltage_max")
 VOLT_MAX=${VOLT_MAX:+$((VOLT_MAX / 1000))}
+DIRECT_MAX=$(rd "$DIRECT/current_max")
+DIRECT_MAX=${DIRECT_MAX:+$((DIRECT_MAX / 1000))}
 
 load() {
-    INPUT= CURRENT= VOLTAGE= LIMIT=
+    INPUT= CURRENT= VOLTAGE= LIMIT= DIRECT_MODE= DIRECT_CURRENT=
     [ -f "$CONF" ] && . "$CONF"
 }
 
@@ -103,6 +112,8 @@ save() {
         echo "CURRENT=$CURRENT"
         echo "VOLTAGE=$VOLTAGE"
         echo "LIMIT=$LIMIT"
+        echo "DIRECT_MODE=$DIRECT_MODE"
+        echo "DIRECT_CURRENT=$DIRECT_CURRENT"
     } > "$CONF"
 }
 
@@ -143,28 +154,38 @@ apply() {
             put "$BAT/charge_control_start_threshold" $((LIMIT - 5)) "a start level of $((LIMIT - 5))%" || rc=1
         fi
     fi
+    if [ -n "$DIRECT_CURRENT" ] && can direct-current; then
+        put "$DIRECT/input_current_limit" $((DIRECT_CURRENT * 1000)) "a PPS input ceiling of $DIRECT_CURRENT mA" || rc=1
+    fi
+    # Apply this last: the driver's worker may start a PPS contract at once.
+    if [ -n "$DIRECT_MODE" ] && can direct; then
+        put "$DIRECT/charge_control_limit" "$DIRECT_MODE" "a direct charge mode of $DIRECT_MODE" || rc=1
+    fi
     return $rc
 }
 
 # preset <name>: the values for this hardware, each only where it is offered.
 preset() {
-    INPUT= CURRENT= VOLTAGE= LIMIT=
+    INPUT= CURRENT= VOLTAGE= LIMIT= DIRECT_MODE= DIRECT_CURRENT=
     case "$1" in
         fast)   can input && INPUT=${INPUT_MAX:-3000}
                 [ -n "$CUR_MAX" ] && can current && CURRENT=$CUR_MAX
                 [ -n "$VOLT_MAX" ] && can voltage && VOLTAGE=$VOLT_MAX
-                can limit && LIMIT=100 ;;
+                can limit && LIMIT=100
+                can direct && DIRECT_MODE=2 ;;
         normal) can input && INPUT=3000
                 [ -n "$INPUT" ] && [ -n "$INPUT_MAX" ] && [ "$INPUT_MAX" -lt "$INPUT" ] && INPUT=$INPUT_MAX
                 [ -n "$CUR_MAX" ] && can current && CURRENT=$(( CUR_MAX * 2 / 3 / 100 * 100 ))
                 [ -n "$VOLT_MAX" ] && can voltage && VOLTAGE=$VOLT_MAX
-                can limit && LIMIT=100 ;;
+                can limit && LIMIT=100
+                can direct && DIRECT_MODE=1 ;;
         gentle) can input && INPUT=1500
                 [ -n "$CUR_MAX" ] && can current && CURRENT=$(( CUR_MAX / 3 / 100 * 100 ))
                 [ -n "$VOLT_MAX" ] && can voltage && VOLTAGE=$((VOLT_MAX - 80))
-                can limit && LIMIT=80 ;;
+                can limit && LIMIT=80
+                can direct && DIRECT_MODE=0 ;;
     esac
-    [ -n "$INPUT$CURRENT$VOLTAGE$LIMIT" ] || die "nothing about charging can be set on this machine (jk-charge shows what it has)"
+    [ -n "$INPUT$CURRENT$VOLTAGE$LIMIT$DIRECT_MODE" ] || die "nothing about charging can be set on this machine (jk-charge shows what it has)"
 }
 
 # ma <file>: a µA/µV attribute in mA/mV, or "-".
@@ -186,6 +207,16 @@ show() {
     [ -n "$t" ] && awk -v t="$t" 'BEGIN { printf "  temperature: %.1f degC\n", t / 10 }'
     if [ -n "$CHG" ]; then
         echo "Charger ${CHG##*/}: $( [ "$(rd "$CHG/online")" = 1 ] && echo connected || echo 'not connected')"
+    fi
+    if [ -n "$DIRECT" ]; then
+        case "$(rd "$DIRECT/charge_control_limit")" in
+            0) direct_name=off ;; 1) direct_name=auto ;; 2) direct_name=full ;; *) direct_name=unknown ;;
+        esac
+        echo "Direct charger: $direct_name, $( [ "$(rd "$DIRECT/online")" = 1 ] && echo active || echo standby)"
+        if [ "$(rd "$DIRECT/online")" = 1 ]; then
+            du=$(rd "$DIRECT/current_now") dv=$(rd "$DIRECT/voltage_now")
+            [ -n "$du" ] && [ -n "$dv" ] && awk -v i="$du" -v v="$dv" 'BEGIN { printf "  PPS input: %.2f W (%.3f V, %d mA)\n", i * v / 1e12, v / 1e6, i / 1000 }'
+        fi
     fi
 
     if [ -f "$CONF" ]; then
@@ -212,6 +243,12 @@ show() {
         fi
         any=1
     fi
+    if can direct; then
+        echo "  direct mode:     $direct_name (off, auto ~25 W, full up to 45 W)"; any=1
+    fi
+    if can direct-current; then
+        echo "  PPS input ceiling: $(ma "$DIRECT/input_current_limit") mA${DIRECT_MAX:+ (max $DIRECT_MAX)}"; any=1
+    fi
     [ -n "$any" ] || echo "  none: this machine's charging is up to its firmware"
 }
 
@@ -229,6 +266,12 @@ machine() {
     fi
     if can limit; then
         printf 'limit\t%s\t%s\t50\t100\t%%\n' "$(rd "$BAT/charge_control_end_threshold")" "$LIMIT"
+    fi
+    if can direct; then
+        printf 'direct\t%s\t%s\t0\t2\tmode\n' "$(rd "$DIRECT/charge_control_limit")" "$DIRECT_MODE"
+    fi
+    if can direct-current; then
+        printf 'direct-current\t%s\t%s\t2000\t%s\tmA\n' "$(ma "$DIRECT/input_current_limit")" "$DIRECT_CURRENT" "${DIRECT_MAX:-4500}"
     fi
 }
 
@@ -252,7 +295,11 @@ case "$1" in
              check "$2" 4000 "${VOLT_MAX:-4500}" "full voltage (mV)"; VOLTAGE=$2 ;;
     limit)   can limit || die "this battery has no charge limit (battery care)"
              check "$2" 50 100 "battery care limit (%)"; LIMIT=$2 ;;
-    *) die "usage: $name [fast|normal|gentle | input <mA> | current <mA> | voltage <mV> | limit <%>]" ;;
+    direct)  can direct || die "this machine has no direct charger control"
+             case "$2" in off|0) DIRECT_MODE=0 ;; auto|1) DIRECT_MODE=1 ;; full|2) DIRECT_MODE=2 ;; *) die "direct mode must be off, auto, or full" ;; esac ;;
+    direct-current) can direct-current || die "this machine has no PPS input ceiling"
+             check "$2" 2000 "${DIRECT_MAX:-4500}" "PPS input ceiling (mA)"; DIRECT_CURRENT=$2 ;;
+    *) die "usage: $name [fast|normal|gentle | input <mA> | current <mA> | voltage <mV> | limit <%> | direct off|auto|full | direct-current <mA>]" ;;
 esac
 apply || die "not saved"
 save

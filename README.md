@@ -291,7 +291,7 @@ What works on the tablet, and where it comes from (kernel patches in
 | --- | --- | --- |
 | Display (TS124QDM, FocalTech FT8203, DSC) | msm + `panel-samsung-ts124qdm-ft8203` (0002-0004) | brightness in `/sys/class/backlight`; the desktop never switches it off (DPMS hangs the link on the SM-T735) |
 | Touchscreen (FT8203 touch, SPI) | `focaltech-ft8203` (0005) | firmware from the stock vendor partition, loaded at every power-up |
-| Battery, charging (SM5714) | `sm5714_charger` (0006) | charges from plain 5 V, so at most 15 W from any charger (fixed 5 V USB-PD only; no SM5440 direct-charger driver); input capped by the Type-C/PD contract and the user limit (at most 3 A, 15 W; asking 3.2 A made chargers fold back), up to 3.2 A into the battery and 4.38 V at the battery by default, adjustable with `jk-charge` (below); `sm5714_charger.enable_charging=0` on the kernel command line leaves the charger alone |
+| Battery, charging (SM5714 + SM5440) | `sm5714_charger` (0006, 0008) and `sm5440_direct` (0011) | the switching charger uses fixed 5 V at up to 3 A; when enabled, SM5440 requests a suitable PPS contract, opens the SM5714 battery path, then starts its 2:1 charge pump. `jk-charge direct full` allows a PPS input ceiling up to 4.5 A; actual power depends on the adapter's APDO, cable, cell voltage and temperature. The driver restores fixed 5 V before reconnecting SM5714. Direct charging starts disabled until selected with `jk-charge`. Hardware validation on SM-T733 is pending. |
 | S Pen (Wacom W9021) | `samsung-w90xx` (0007) | |
 | Wi-Fi, Bluetooth (WCN6750) | ath11k, hci_qca | WPSS firmware and board data from the stock vendor partition; `/etc/init.d/S07wireless` starts Wi-Fi once the system is mounted |
 | GPU (Adreno 642L) | msm, Mesa freedreno | zap shader from the stock apnhlos partition |
@@ -302,10 +302,9 @@ What works on the tablet, and where it comes from (kernel patches in
 
 Charging is set with `jk-charge` (below), within Samsung's own limits for
 this battery, which the driver enforces: here every setting is offered
-(`fast`: 3000 mA in, 3200 mA into the battery, 4.38 V, the defaults;
-`normal`: 3000 mA in, 2100 mA into the battery, 4.38 V;
-`gentle`: 1500 / 1000 mA, 4.30 V, stop at
-80%).
+(`fast`: SM5440 full where present, 3000 mA SM5714 input at fixed 5 V;
+`normal`: SM5440 auto where present, 2100 mA SM5714 battery current;
+`gentle`: direct charging off, 1500 / 1000 mA, 4.30 V, stop at 80%).
 An existing saved `/etc/jk_os/charge` still takes precedence at boot;
 `sudo jk-charge fast` saves the full rated settings.
 While held at the battery care limit the tablet runs from the charger.
@@ -682,11 +681,20 @@ jk-charge                      # the battery, and what can be set here
 sudo jk-charge limit 80        # battery care: stop at 80%, charge again below 75%
 sudo jk-charge fast | normal | gentle
 sudo jk-charge input 2000      # input <mA>, current <mA>, voltage <mV>: where offered
+sudo jk-charge direct full      # SM5440: off, auto (~25 W), full (up to 45 W input)
+sudo jk-charge direct-current 3000  # PPS input current ceiling, 2000-4500 mA
 ```
 
 `jk-charge` shows the highest input limit the driver accepts (the
-charger's `current_max`; 3000 mA on the Galaxy Tab S7 FE, 15 W at 5 V), and
+switching charger's `current_max`; 3000 mA on the Galaxy Tab S7 FE at fixed 5 V), and
 a saved setting above it is applied as that maximum.
+The direct charger's actual PPS request is capped by the advertised APDO and
+the `direct-current` ceiling. It is used only from 5% to 90% charge, with a
+battery temperature of 10-42 °C; otherwise charging stays on the switching
+path. `jk-charge` shows whether the direct path is active and its measured
+input voltage, current and power. `fast`, `normal` and `gentle` also choose
+full, auto and off on tablets with SM5440. Existing machines without SM5440
+do not get those controls.
 
 The settings are kept in `/etc/jk_os/charge` and applied at boot
 (`/etc/init.d/S08charge`); without that file the drivers' defaults stay.

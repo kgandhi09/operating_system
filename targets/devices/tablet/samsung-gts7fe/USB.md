@@ -19,6 +19,7 @@ tablet's own screen stays dark after this change, that chain is the suspect
 | --- | --- | --- |
 | SM5714 Type-C/PD | I2C8, address 0x33, interrupt GPIO142 | TCPM transport, connector discovery, role negotiation and PD messages |
 | SM5714 charger | I2C3, address 0x49 | Owns boost and charging; serializes Type-C, polling and user changes |
+| SM5440 direct charger | I2C9, address 0x63 | Requests PPS through TCPM and hands the battery path back to SM5714 after returning to fixed 5 V |
 | SM5714 MUIC | I2C3, address 0x25 | Connects D+/D- for host operation, including an unpowered hub |
 | DWC3 | USB1 at 0x0a600000 | `dr_mode = "otg"`, role switch linked to connector HS endpoint |
 | QMP USB3/DP PHY | 0x088e8000, PM7325 L1 at 0.912 V, L6 at 1.2 V | Orientation and lane-mode switching |
@@ -27,8 +28,12 @@ tablet's own screen stays dark after this change, that chain is the suspect
 | DisplayPort | MDSS DP at 0x0ae90000 | DP source, Type-C HPD bridge, C/D/E pin assignments |
 
 The controller can source VBUS for a passive hub or sink power while hosting
-a PD dock. Charging is limited to fixed 5 V: no PPS or SM5440 direct charging
-is enabled. The input limit is the smaller of the user's charger setting and
+a PD dock. The SM5714 switching path uses fixed 5 V. The SM5440 direct path
+starts disabled; `sudo jk-charge direct auto` or `full` enables PPS when the
+source advertises a compatible APDO and the battery is within the driver's
+temperature and charge window. On any PPS or pump fault, the pump stops and
+TCPM returns to fixed 5 V before SM5714 resumes. Hardware validation of this
+handoff on the SM-T733 is pending. The switching input limit is the smaller of the user's charger setting and
 TCPM's advertised/negotiated limit (default Rp, which a USB-A charger and a PC
 port both show, allows the full 3 A and relies on AICL, as before). The
 charger follows TCPM only while the SM5714 Type-C driver is bound: should it
@@ -111,7 +116,8 @@ narrows the remaining problem to the display/PD/AUX path.
   `drivers/battery/charger/sm5714_charger/sm5714_charger_oper.c`,
   `drivers/muic/sm/sm5714` and `drivers/redriver/ps5169.c`.
 
-The S9-specific OTG-detect GPIO pulse, PD/PPS charging and TCPM core quirks
-are not imported. Warm powered-dock state is reset through a CC detach before
+The S9-specific OTG-detect GPIO pulse and TCPM core quirks are not imported.
+The SM5440 PPS charge-pump sequence is adapted from that port's GPL driver.
+Warm powered-dock state is reset through a CC detach before
 standard TCPM negotiation. Runtime suspend remains outside this board's
 current bring-up scope.

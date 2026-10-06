@@ -49,13 +49,15 @@ void CliSettings::refresh()
             if (cells.size() != 6)
                 continue;
             row.insert("key", QString::fromUtf8(cells[0]));
-            row.insert("type", "number");
+            const bool directMode = cells[0] == "direct";
+            row.insert("type", directMode ? "choice" : "number");
             row.insert("current", QString::fromUtf8(cells[1]));
             row.insert("saved", QString::fromUtf8(cells[2]));
-            row.insert("choices", QString::fromUtf8(cells[3]) + "-" + QString::fromUtf8(cells[4]));
+            row.insert("choices", directMode ? "off,auto,full"
+                                             : QString::fromUtf8(cells[3]) + "-" + QString::fromUtf8(cells[4]));
             row.insert("unit", QString::fromUtf8(cells[5]));
             row.insert("group", "Charging");
-            row.insert("label", QString::fromUtf8(cells[0]));
+            row.insert("label", directMode ? "Direct charging" : QString::fromUtf8(cells[0]));
         } else {
             if (cells.size() != 9)
                 continue;
