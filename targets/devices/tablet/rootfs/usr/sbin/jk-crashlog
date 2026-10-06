@@ -16,7 +16,8 @@
 #                            shut down cleanly (S01crashlog, at boot)
 #   jk-crashlog stop         stop the recorder, noting a clean shutdown
 #
-# Each crash is a folder in /var/log/jk-crash (the 20 newest are kept):
+# Each crash is a folder in /var/log/jk-crash (the 20 newest are kept),
+# numbered, with the date when the clock was set by then (else no-clock):
 # summary, pon-log (the PMIC's), console-ramoops (the kernel log up to the
 # reset), dmesg-ramoops (only after a kernel panic), samples (the flight
 # record). Run as root.
@@ -42,6 +43,15 @@ note() {
     uptime_s
     [ -c "$PMSG" ] && printf '# %s %s\n' "$up" "$*" > "$PMSG" 2>/dev/null
     mkdir -p "$DIR" && printf '# %s %s\n' "$up" "$*" >> "$LIVE"
+}
+
+# The saved crashes, newest first.
+crashes() { ls -d "$DIR"/[0-9][0-9][0-9][0-9]-* 2>/dev/null | sort -r; }
+
+# when: the time, or "no-clock" before it is set (at boot, before
+# S19timedate, the RTC can still read 1970).
+when() {
+    if [ "$(date +%Y)" -ge 2024 ]; then date "$1"; else echo no-clock; fi
 }
 
 mount_pstore() {
@@ -147,7 +157,12 @@ save() {
         crash=1; why=${why:-"reset without a kernel panic (no clean shutdown)"}
     fi
     if [ "$crash" = 1 ]; then
-        d=$DIR/$(date '+%Y%m%d-%H%M%S')
+        # Folders from before the numbering (<date>-<time>) first.
+        for o in "$DIR"/[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-[0-9]*; do
+            [ -d "$o" ] && mv "$o" "$DIR/0000-${o##*/}"
+        done
+        last=$(crashes | head -n 1); last=${last##*/}; last=${last%%-*}
+        d=$DIR/$(printf '%04d' $(( 1${last:-0000} - 10000 + 1 )))-$(when '+%Y%m%d-%H%M%S')
         mkdir -p "$d"
         cp "$PSTORE"/* "$d/" 2>/dev/null
         # The record: RAM's copy (pmsg, up to the reset; ~15 minutes) when
@@ -160,7 +175,7 @@ save() {
         fi
         dmesg | grep 'PMIC PON log' > "$d/pon-log"
         {
-            echo "crash saved $(date '+%F %T'): $why"
+            echo "crash saved $(when '+%F %T'): $why"
             # The reset just before this boot: the last reset/fault entries
             # before the PON entries of this boot.
             grep -E 'Reset Trigger|Reset Type|FAULT_REASON|S3_RESET|SID[0-9] FAULT|VREG_FAULT' "$d/pon-log" \
@@ -173,7 +188,7 @@ save() {
             [ -n "$c" ] && echo "kernel's last line: $(grep -v '^\s*$' "$c" | tail -n 1)"
         } > "$d/summary"
         rm -f "$PSTORE"/* 2>/dev/null
-        ls -d "$DIR"/2* 2>/dev/null | sort -r | tail -n +$((KEEP + 1)) | while read -r o; do rm -rf "$o"; done
+        crashes | tail -n +$((KEEP + 1)) | while read -r o; do rm -rf "$o"; done
         echo "jk-crashlog: the last boot ended in a crash; saved in $d (jk-crashlog show)"
     else
         rm -f "$PSTORE"/* 2>/dev/null
@@ -193,7 +208,7 @@ stop() {
 # ---------------------------------------------------------------- showing
 list() {
     i=0
-    for d in $(ls -d "$DIR"/2* 2>/dev/null | sort -r); do
+    for d in $(crashes); do
         i=$((i + 1))
         echo "[$i] ${d##*/}"
         sed 's/^/    /' "$d/summary" 2>/dev/null
@@ -202,7 +217,7 @@ list() {
 }
 
 show() {
-    d=$(ls -d "$DIR"/2* 2>/dev/null | sort -r | sed -n "${1:-1}p")
+    d=$(crashes | sed -n "${1:-1}p")
     [ -n "$d" ] || die "no crash number ${1:-1} (jk-crashlog lists them)"
     echo "== ${d##*/}"
     cat "$d/summary"

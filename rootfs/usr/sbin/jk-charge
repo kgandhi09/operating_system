@@ -24,9 +24,8 @@
 #   fast       maximum  maximum   maximum     100
 #   normal     3000     2/3 max   maximum     100
 #   gentle     1500     1/3 max   max - 80    80
-# (Tab S7 FE: fast = 3200 / 3200 / 4380, 16 W from the charger at 5 V;
-# normal = 3000 / 2100 / 4380, its stock defaults. A USB-C charger never
-# gives more than it advertises, at most 3000 mA at 5 V.)
+# (Tab S7 FE: fast = 3000 / 3200 / 4380, 15 W from the charger at 5 V;
+# normal = 3000 / 2100 / 4380, its stock defaults.)
 #
 # The settings are kept in /etc/jk_os/charge; /etc/init.d/S08charge applies
 # them at boot. Without that file nothing is changed: the driver's defaults.
@@ -118,6 +117,10 @@ put() {
 # apply [quiet]: write the settings this hardware takes.
 apply() {
     rc=0
+    # A saved limit above what the driver now allows: its maximum.
+    if [ -n "$INPUT" ] && [ -n "$INPUT_MAX" ] && [ "$INPUT" -gt "$INPUT_MAX" ]; then
+        INPUT=$INPUT_MAX
+    fi
     if [ -n "$INPUT" ] && can input; then
         put "$CHG/input_current_limit" $((INPUT * 1000)) "an input limit of $INPUT mA" || rc=1
     fi

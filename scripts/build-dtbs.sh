@@ -43,3 +43,15 @@ vendor_dir=$(dirname "$name")
     "$out.pre"
 rm -f "$out.pre"
 log "device tree: $out ($(du -h "$out" | cut -f1), from ${src#"$ROOT_DIR"/})"
+
+# A device with stock firmware read (DEVICE_STOCK, scripts/inspect-stock.sh):
+# the tree must reserve every memory region stock's does, its base trees with
+# Samsung's dtbo overlays applied (a region the firmware owns reset the
+# Galaxy Tab S7 FE whenever Linux used it).
+stock=$(compgen -G "$ROOT_DIR/$DEVICE_STOCK" | head -n1 || true)
+if [[ -n "$DEVICE_STOCK" && -d "$stock/dtb" && -d "$stock/dtbo" ]]; then
+    need python3 fdtoverlay
+    PATH="$(dirname "$dtc"):$PATH" python3 "$ROOT_DIR/scripts/check-reserved-memory.py" \
+        "$out" "$stock"/dtb/*.dtb -- "$stock"/dtbo/*.dtb \
+        || die "$DEVICE_DTB doesn't reserve all of stock's memory (above)"
+fi

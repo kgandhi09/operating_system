@@ -238,7 +238,7 @@ diff --git a/drivers/usb/typec/tcpm/sm5714.c b/drivers/usb/typec/tcpm/sm5714.c
 + */
 +static int sm5714_usbpd_get_current_limit(struct tcpc_dev *tcpc)
 +{
-+	return 3200;
++	return 3000;
 +}
 +
 +static int sm5714_usbpd_get_cc(struct tcpc_dev *tcpc,

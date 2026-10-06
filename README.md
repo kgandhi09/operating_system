@@ -291,7 +291,7 @@ What works on the tablet, and where it comes from (kernel patches in
 | --- | --- | --- |
 | Display (TS124QDM, FocalTech FT8203, DSC) | msm + `panel-samsung-ts124qdm-ft8203` (0002-0004) | brightness in `/sys/class/backlight`; the desktop never switches it off (DPMS hangs the link on the SM-T735) |
 | Touchscreen (FT8203 touch, SPI) | `focaltech-ft8203` (0005) | firmware from the stock vendor partition, loaded at every power-up |
-| Battery, charging (SM5714) | `sm5714_charger` (0006) | charges from plain 5 V, so at most 15 W from any charger (fixed 5 V USB-PD only; no SM5440 direct-charger driver); input capped by the Type-C/PD contract and the user limit (3 A, 15 W, by default; up to 3.2 A, 16 W, with `jk-charge fast` or `jk-charge input`, where the charger allows: a USB-C charger gives at most what it advertises, 3 A at 5 V), 2.1 A into the battery by default, adjustable with `jk-charge` (below); `sm5714_charger.enable_charging=0` on the kernel command line leaves the charger alone |
+| Battery, charging (SM5714) | `sm5714_charger` (0006) | charges from plain 5 V, so at most 15 W from any charger (fixed 5 V USB-PD only; no SM5440 direct-charger driver); input capped by the Type-C/PD contract and the user limit (at most 3 A, 15 W; asking 3.2 A made chargers fold back), 2.1 A into the battery by default, adjustable with `jk-charge` (below); `sm5714_charger.enable_charging=0` on the kernel command line leaves the charger alone |
 | S Pen (Wacom W9021) | `samsung-w90xx` (0007) | |
 | Wi-Fi, Bluetooth (WCN6750) | ath11k, hci_qca | WPSS firmware and board data from the stock vendor partition; `/etc/init.d/S07wireless` starts Wi-Fi once the system is mounted |
 | GPU (Adreno 642L) | msm, Mesa freedreno | zap shader from the stock apnhlos partition |
@@ -300,11 +300,11 @@ What works on the tablet, and where it comes from (kernel patches in
 | USB-C host/device, USB3, external DisplayPort | SM5714 TCPM + charger/MUIC, PS5169, QMP, msm DP (0008-0009) | implemented; awaiting SM-T733 hardware validation; USB host (hub, keyboard, mouse) works; DisplayPort over USB-C awaits validation; [wiring, limits and test steps](targets/devices/tablet/samsung-gts7fe/USB.md) |
 | Not yet: audio, sensors (rotation), cameras, suspend | | audio and sensors run on the ADSP |
 
-Charging is set with `jk-charge` (below), within limits the driver
-enforces (Samsung's own for this battery, except an input of up to 3200 mA
-where Samsung stops at 3000): here every setting is offered (`normal`:
-3000 mA in, 2100 mA into the battery, 4.38 V, the defaults; `fast`: 3200 mA
-in and into the battery; `gentle`: 1500 / 1000 mA, 4.30 V, stop at 80%).
+Charging is set with `jk-charge` (below), within Samsung's own limits for
+this battery, which the driver enforces: here every setting is offered
+(`normal`: 3000 mA in, 2100 mA into the battery, 4.38 V, the defaults;
+`fast`: 3200 mA into the battery; `gentle`: 1500 / 1000 mA, 4.30 V, stop at
+80%).
 While held at the battery care limit the tablet runs from the charger.
 Charging always pauses below 0 or above 50 degC.
 
@@ -654,11 +654,8 @@ sudo jk-charge input 2000      # input <mA>, current <mA>, voltage <mV>: where o
 ```
 
 `jk-charge` shows the highest input limit the driver accepts (the
-charger's `current_max`). On the Galaxy Tab S7 FE that is 3200 mA (16 W at
-5 V, above Samsung's own 3000); `fast` uses it, `normal` keeps stock's
-3000. A USB-C charger still gives no more than it advertises (at most
-3000 mA at 5 V); a USB-A charger, which advertises nothing, is held to the
-limit by the charger chip's input voltage check (4.5 V).
+charger's `current_max`; 3000 mA on the Galaxy Tab S7 FE, 15 W at 5 V), and
+a saved setting above it is applied as that maximum.
 
 The settings are kept in `/etc/jk_os/charge` and applied at boot
 (`/etc/init.d/S08charge`); without that file the drivers' defaults stay.
