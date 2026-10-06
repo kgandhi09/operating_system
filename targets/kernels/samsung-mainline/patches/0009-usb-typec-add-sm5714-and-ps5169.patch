@@ -10,7 +10,7 @@ used on SM-T733.
 diff --git a/drivers/usb/typec/tcpm/sm5714.c b/drivers/usb/typec/tcpm/sm5714.c
 --- a/drivers/usb/typec/tcpm/sm5714.c
 +++ b/drivers/usb/typec/tcpm/sm5714.c
-@@ -0,0 +1,876 @@
+@@ -0,0 +1,877 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Silicon Mitus SM5714 USB Type-C / USB-PD controller.
@@ -232,12 +232,13 @@ diff --git a/drivers/usb/typec/tcpm/sm5714.c b/drivers/usb/typec/tcpm/sm5714.c
 +/*
 + * TCPM asks only for default Rp, which a USB-A charger behind an A-to-C
 + * cable shows as well as a PC port. Without BC1.2 detection the two can't
-+ * be told apart: allow the charger's full input and let its AICL (4.5 V)
-+ * lower it on a source that can't keep up, as before Type-C was managed.
++ * be told apart: allow the charger's highest input (the user's limit then
++ * applies) and let its AICL (4.5 V) lower it on a source that can't keep
++ * up, as before Type-C was managed.
 + */
 +static int sm5714_usbpd_get_current_limit(struct tcpc_dev *tcpc)
 +{
-+	return 3000;
++	return 3200;
 +}
 +
 +static int sm5714_usbpd_get_cc(struct tcpc_dev *tcpc,
