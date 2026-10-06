@@ -130,7 +130,7 @@ discover() {
         done
         # Sleep states, as the cluster's first core lists them.
         first=${cores%% *}
-        for s in "$cpu/cpu$first"/cpuidle/state[1-9]*; do
+        for s in "$cpu/cpu$first"/cpuidle/state[0-9]*; do
             [ -f "$s/disable" ] || continue
             sn=$(rd "$s/name" | tr 'A-Z ' 'a-z-' | tr -cd 'a-z0-9-')
             files=
@@ -189,13 +189,14 @@ discover() {
         f=$card/device/power_dpm_force_performance_level
         [ -f "$f" ] && add gpu.level amdlevel "$f" "auto low high" "" "GPU (AMD)" "performance level"
     done
-    if [ -d "$SYS/sys/module/nvidia" ] && command -v nvidia-smi >/dev/null 2>&1 && [ -z "$SYS" ]; then
+    if [ -d "$SYS/sys/module/nvidia" ] && command -v nvidia-smi >/dev/null 2>&1 &&
+       [ -z "$SYS" ] && nvidia-smi --query-gpu=index --format=csv,noheader,nounits >/dev/null 2>&1; then
         add gpu.nvidia.persistence nvpers - "on off" "" "GPU (NVIDIA)" "persistence mode"
         add gpu.nvidia.dynamic_boost nvboost - "on off" "" "GPU (NVIDIA)" "Dynamic Boost (nvidia-powerd)"
         lim=$(nvidia-smi --query-gpu=power.min_limit,power.max_limit --format=csv,noheader,nounits 2>/dev/null | head -n1 | tr -d ' ')
         case "$lim" in *,*) add gpu.nvidia.power_limit nvpl - "range:${lim%%.*,*}-$(echo "${lim#*,}" | cut -d. -f1)" W "GPU (NVIDIA)" "power limit" ;; esac
         mx=$(nvidia-smi --query-gpu=clocks.max.gr --format=csv,noheader,nounits 2>/dev/null | head -n1 | tr -d ' ')
-        [ -n "$mx" ] && add gpu.nvidia.max_clock nvclk - "range:300-$mx" MHz "GPU (NVIDIA)" "highest clock (or default)"
+        case "$mx" in ''|*[!0-9]*) ;; *) add gpu.nvidia.max_clock nvclk - "range:300-$mx" MHz "GPU (NVIDIA)" "highest clock (or default)" ;; esac
     fi
 
     f=$SYS/sys/firmware/acpi/platform_profile
@@ -476,8 +477,12 @@ mode_values() {
                         [ "$k" = gpu.max ] || continue
                         echo "$k=$(snap "$(frac "$k" 60)" "$(field "$k" 4)" max)" ;;
                     quiet:trips|quiet:tcc)
-                        case "$k" in temp.cpu|temp.gpu) ;; *) continue ;; esac
-                        s=$(stock "$k"); [ -n "$s" ] && echo "$k=$(( s - 15 < 60 ? 60 : s - 15 ))" ;;
+                        is_group "$k" && continue
+                        s=$(stock "$k")
+                        [ -n "$s" ] || continue
+                        lo=$(field "$k" 4)
+                        case "$lo" in range:*) lo=${lo#range:}; lo=${lo%-*} ;; *) lo=40 ;; esac
+                        [ "$s" -gt "$lo" ] && echo "$k=$(( s - 15 < lo ? lo : s - 15 ))" ;;
                     performance:cpumin) echo "$k=$(snap "$(frac "$k" 50)" "$(field "$k" 4)" min)" ;;
                     performance:dfmin)
                         echo "$k=$(snap "$(frac "$k" 40)" "$(field "$k" 4)" min)" ;;
@@ -579,7 +584,9 @@ list_machine() {
     printf '%s' "$TABLE" | while IFS="|" read -r k type target choices unit group label; do
         line=$(printf '%s\n' "$w" | grep "^$k=" | head -n1)
         rest=${line#*=}
-        printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$k" "$type" "$(get "$k")" "${rest%=*}" "${rest##*=}" \
+        saved=${rest%=*} source=${rest##*=}
+        is_group "$k" && { saved=; source=all; }
+        printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$k" "$type" "$(get "$k")" "$saved" "$source" \
             "$choices" "$unit" "$group" "$label"
     done
 }
@@ -656,8 +663,10 @@ case "$cmd" in
         show; exit $rc ;;
     unset)
         root "$@"; shift
+        [ $# -gt 0 ] || die "unset <key>..."
         ov=$(conf_overrides)
         for k in "$@"; do
+            has "$k" || die "no setting $k here (jk-power list)"
             for l in $(echo "$k=" | expand); do ov=$(printf '%s\n' "$ov" | grep -v "^${l%%=*}="); done
         done
         save_conf "$(conf_mode)" "$ov"
@@ -678,7 +687,8 @@ case "$cmd" in
         echo "Saved mode $n ($MODES_DIR/$n) and switched to it." ;;
     delete)
         root "$@"
-        [ -f "$MODES_DIR/${2:-}" ] || die "no mode of your own named ${2:-}"
+        case "${2:-}" in ''|*[!a-z0-9_-]*) die "delete <name>: letters, digits, - and _" ;; esac
+        [ -f "$MODES_DIR/$2" ] || die "no mode of your own named $2"
         rm -f "$MODES_DIR/$2"
         [ "$(conf_mode)" = "$2" ] && save_conf balanced "$(conf_overrides)" && apply
         echo "Deleted mode $2." ;;

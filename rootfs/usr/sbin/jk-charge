@@ -28,7 +28,7 @@
 #   normal     3000     2/3 max   maximum     100
 #   gentle     1500     1/3 max   max - 80    80
 # (Tab S7 FE: fast = 3000 / 3200 / 4380, 15 W from the charger at 5 V;
-# normal = 3000 / 2100 / 4380, its stock defaults.)
+# normal = 3000 / 2100 / 4380, Samsung's original defaults.)
 #
 # The settings are kept in /etc/jk_os/charge; /etc/init.d/S08charge applies
 # them at boot. Without that file nothing is changed: the driver's defaults.

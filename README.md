@@ -291,7 +291,7 @@ What works on the tablet, and where it comes from (kernel patches in
 | --- | --- | --- |
 | Display (TS124QDM, FocalTech FT8203, DSC) | msm + `panel-samsung-ts124qdm-ft8203` (0002-0004) | brightness in `/sys/class/backlight`; the desktop never switches it off (DPMS hangs the link on the SM-T735) |
 | Touchscreen (FT8203 touch, SPI) | `focaltech-ft8203` (0005) | firmware from the stock vendor partition, loaded at every power-up |
-| Battery, charging (SM5714) | `sm5714_charger` (0006) | charges from plain 5 V, so at most 15 W from any charger (fixed 5 V USB-PD only; no SM5440 direct-charger driver); input capped by the Type-C/PD contract and the user limit (at most 3 A, 15 W; asking 3.2 A made chargers fold back), 2.1 A into the battery by default, adjustable with `jk-charge` (below); `sm5714_charger.enable_charging=0` on the kernel command line leaves the charger alone |
+| Battery, charging (SM5714) | `sm5714_charger` (0006) | charges from plain 5 V, so at most 15 W from any charger (fixed 5 V USB-PD only; no SM5440 direct-charger driver); input capped by the Type-C/PD contract and the user limit (at most 3 A, 15 W; asking 3.2 A made chargers fold back), up to 3.2 A into the battery and 4.38 V at the battery by default, adjustable with `jk-charge` (below); `sm5714_charger.enable_charging=0` on the kernel command line leaves the charger alone |
 | S Pen (Wacom W9021) | `samsung-w90xx` (0007) | |
 | Wi-Fi, Bluetooth (WCN6750) | ath11k, hci_qca | WPSS firmware and board data from the stock vendor partition; `/etc/init.d/S07wireless` starts Wi-Fi once the system is mounted |
 | GPU (Adreno 642L) | msm, Mesa freedreno | zap shader from the stock apnhlos partition |
@@ -302,9 +302,12 @@ What works on the tablet, and where it comes from (kernel patches in
 
 Charging is set with `jk-charge` (below), within Samsung's own limits for
 this battery, which the driver enforces: here every setting is offered
-(`normal`: 3000 mA in, 2100 mA into the battery, 4.38 V, the defaults;
-`fast`: 3200 mA into the battery; `gentle`: 1500 / 1000 mA, 4.30 V, stop at
+(`fast`: 3000 mA in, 3200 mA into the battery, 4.38 V, the defaults;
+`normal`: 3000 mA in, 2100 mA into the battery, 4.38 V;
+`gentle`: 1500 / 1000 mA, 4.30 V, stop at
 80%).
+An existing saved `/etc/jk_os/charge` still takes precedence at boot;
+`sudo jk-charge fast` saves the full rated settings.
 While held at the battery care limit the tablet runs from the charger.
 Charging always pauses below 0 or above 50 degC.
 
@@ -559,13 +562,10 @@ is built in.
   `/usr/lib/jk_os/apt` binds them into its container, next to Debian's Mesa.
   A container set up before this gets its mount point at the next `sudo apt ...`.
 - `NVIDIA_DRIVER=nouveau` in `/etc/jk_os/gpu` uses nouveau instead.
-- Power: `sudo jk-power performance|balanced|quiet` sets the laptop firmware's
-  profile (fans, power limits), the CPUs' energy preference, NVIDIA persistence
-  mode and Dynamic Boost (`nvidia-powerd`: on AC power the GPU gets power the
-  CPU doesn't use); `jk-power` shows the current state. Kept in
-  `/etc/jk_os/power`, applied at boot. `nvidia-settings` is there for looking
-  at the GPU (clocks, temperatures, PowerMizer levels); on Wayland it can't
-  change settings, `jk-power` and `nvidia-smi` do that.
+- Power: `jk-power` and Power Settings show the controls available on this
+  machine. See [jk-power](#jk-power-cpu-gpu-and-temperature-settings) below.
+  `nvidia-settings` can inspect NVIDIA clocks and temperatures; `jk-power`
+  changes supported limits on Wayland.
 - CUDA programs run as they are. The CUDA toolkit (`nvcc`, cuBLAS, cuFFT, ...,
   about 6 GB) is installed on demand: `sudo jk-cuda install` (the newest
   release the driver runs; `--minimal` for the compiler and runtime only,
@@ -636,6 +636,37 @@ samples only while a jk-viz is open; it serves administrators (root and
 group `wheel`) on `/run/jk-viz.sock`. `sudo jk-vizd --dump` prints one
 sample as JSON. `JK_VIZD=no` in `/etc/jk_os/jk-viz` turns it off.
 
+## jk-power: CPU, GPU and temperature settings
+
+`jk-power` discovers the controls this machine exposes. The tablet offers
+little (cores 0–3), big (4–6), and prime (7) CPU clusters and its Adreno GPU;
+PCs expose their own CPU, GPU and firmware controls. Core 0 remains online.
+
+```sh
+jk-power                         # current values and their source
+jk-power list                    # available settings and ranges
+jk-power watch                   # live clocks, temperatures and battery power
+jk-power modes                   # built-in and saved modes
+sudo jk-power quiet              # CPU caps near 70%, GPU near 60%
+sudo jk-power balanced           # stock settings
+sudo jk-power performance        # higher minimum clocks and firmware profile
+sudo jk-power set cpu.little.max=1600 gpu.max=400
+sudo jk-power unset cpu.little.max
+sudo jk-power save my-mode       # save the current settings as a mode
+sudo jk-power delete my-mode
+sudo jk-power reset              # balanced with no overrides
+```
+
+`jk-power list` shows each machine's actual keys, clocks, governors, sleep
+states, per-core switches, x86 boost and energy controls, GPU controls,
+firmware profile, and writable CPU/GPU temperature limits. Quiet moves
+eligible throttling trips up to 15 °C lower than stock; critical shutdown
+trips are never changed. The kernel must expose a writable trip for a
+temperature control to appear. Custom modes live in `/etc/jk_os/power.d/`;
+the selected mode and overrides live in `/etc/jk_os/power` and are applied
+at boot by `S41power`. Power Settings (`jk-power-gui`) offers the same keys
+through `jk-power list --machine` and applies changes through `jk-power`.
+
 ## jk-charge: charging settings
 
 `jk-charge` sets what the machine's battery and charger drivers let the
@@ -659,16 +690,20 @@ a saved setting above it is applied as that maximum.
 
 The settings are kept in `/etc/jk_os/charge` and applied at boot
 (`/etc/init.d/S08charge`); without that file the drivers' defaults stay.
+`jk-charge --machine` gives the GUI the current and saved values and each
+setting's supported range.
 
-## jk-charge-monitor: the battery
+## jk-charge-gui: battery and charging settings
 
-`jk-charge-monitor` ("Charge Monitor" in the desktop's menu) shows the
+`jk-charge-gui` ("Charge Settings" in the desktop's menu) shows the
 battery live: level, charging or discharging and how fast (W, mA, % per
 hour), time to full (or to the battery care limit) or to empty, voltage,
 temperature, capacity and wear (where the fuel gauge reports them: laptops'
 do, the tablet's doesn't), the charger and its settings, and the last hour
 as graphs. It reads `/sys/class/power_supply` (another tree with
-`JK_POWER_SUPPLY_DIR`), so it works on laptops as on the tablet.
+`JK_POWER_SUPPLY_DIR`), so it works on laptops as on the tablet. It also
+offers the fast, normal and gentle presets and every control reported by
+`jk-charge --machine`; changes are applied through `jk-charge`.
 
 ## Date, time and time zone
 

@@ -14,8 +14,8 @@ driver does) and "sm5714-charger" (online, status, health, current
 limits). It only reads the gauge and never reloads its battery model.
 Unless enable_charging=0, on VBUS it programs what Samsung's driver does
 on cable attach, with a 3000 mA input limit (the 5 V default of any
-USB-C source; AICL backs off on weaker ones), the stock 2100 mA charge
-current and 4.38 V float voltage, and kicks the watchdog every 30 s.
+USB-C source; AICL backs off on weaker ones), the board's maximum 3200 mA
+charge current and 4.38 V float voltage, and kicks the watchdog every 30 s.
 The watchdog is switched off across suspend, when nothing kicks it.
 
 The input limit, charge current and float voltage are writable within
@@ -42,7 +42,7 @@ sm5714 MFD, charger and fuel gauge drivers (SM-T735 kernel source).
 +	  of the Silicon Mitus SM5714 interface PMIC, found in Samsung
 +	  Galaxy devices such as the Galaxy Tab S7 FE. The driver reports
 +	  the battery state of charge, voltage, current and temperature,
-+	  and by default enables charging at conservative currents while
++	  and by default enables charging at the board's rated limits while
 +	  a charger is attached.
 +
 +	  To compile this driver as a module, choose M here: the
@@ -216,10 +216,10 @@ sm5714 MFD, charger and fuel gauge drivers (SM-T735 kernel source).
 +module_param(input_current_ma, uint, 0444);
 +MODULE_PARM_DESC(input_current_ma, "VBUS input current limit in mA at boot (default: 3000)");
 +
-+/* battery,default_charging_current */
-+static uint charge_current_ma = 2100;
++/* Samsung's board maximum (battery,max_charging_current). */
++static uint charge_current_ma = 3200;
 +module_param(charge_current_ma, uint, 0444);
-+MODULE_PARM_DESC(charge_current_ma, "Fast charge current in mA at boot (default: 2100)");
++MODULE_PARM_DESC(charge_current_ma, "Fast charge current in mA at boot (default: 3200)");
 +
 +struct sm5714 {
 +	struct device *dev;
