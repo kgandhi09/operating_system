@@ -31,7 +31,7 @@ index e2c8117..f41fb67 100644
  obj-$(CONFIG_CHARGER_TPS65217)	+= tps65217_charger.o
 diff --git a/drivers/power/supply/sm5440_direct.c b/drivers/power/supply/sm5440_direct.c
 new file mode 100644
-index 0000000..08c1a78
+index 0000000..0eb52f0
 --- /dev/null
 +++ b/drivers/power/supply/sm5440_direct.c
 @@ -0,0 +1,762 @@
@@ -754,7 +754,7 @@ index 0000000..08c1a78
 +	if (ret)
 +		return ret;
 +
-+	sm->battery = power_supply_get_by_name("sm5714-battery");
++	sm->battery = power_supply_get_by_name("battery");
 +	if (!sm->battery)
 +		return dev_err_probe(sm->dev, -EPROBE_DEFER,
 +				     "battery power supply is not ready\n");
