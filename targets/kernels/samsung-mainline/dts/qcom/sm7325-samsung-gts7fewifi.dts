@@ -872,20 +872,24 @@
 };
 
 /*
- * Off until USB host is confirmed on the device: msm binds the panel only
+ * DisplayPort over USB-C (alt mode). msm binds the tablet's own panel only
  * once every enabled display interface has probed, and DP waits for its
- * whole bridge chain (QMP PHY, PS5169, SM5714's connector). Any link that
- * fails to probe would leave the tablet's own screen without a driver.
+ * whole bridge chain (QMP PHY, PS5169, SM5714's connector): should one of
+ * them fail to probe, the panel stays without a driver too. USB host
+ * working shows that chain probes (2026-10-06).
+ *
+ * Two lanes, as on the Fairphone 5 (same QMP USB3/DP PHY): a hub or dock
+ * that also carries USB 3 uses pin assignment D, two DP lanes beside USB.
+ * Link rates up to HBR2 (msm's default).
  */
 &mdss_dp {
 	vdda-1p2-supply = <&vreg_l6b_1p2>;
 	vdda-0p9-supply = <&vreg_l1b_0p912>;
-	status = "disabled";
+	status = "okay";
 };
 
 &mdss_dp_out {
-	data-lanes = <0 1 2 3>;
-	link-frequencies = /bits/ 64 <1620000000 2700000000 5400000000>;
+	data-lanes = <0 1>;
 };
 
 &usb_1_hsphy {

@@ -5,11 +5,13 @@ These changes are build-validated; USB enumeration, charging transitions,
 and external video must still be validated on an SM-T733. A successful build
 does not establish that the hardware bring-up is complete.
 
-DisplayPort is wired but `&mdss_dp` is left `disabled` for the first test:
-msm binds the internal panel only after every enabled display interface has
-probed, and DP waits for its whole bridge chain (QMP PHY, PS5169, SM5714
-connector). A failure anywhere in that chain would leave the tablet's own
-screen without a driver. Enable it once USB host works (step 5 below).
+USB host with a keyboard and mouse on a hub works on the device
+(2026-10-06). DisplayPort (`&mdss_dp`) is enabled since then, with two lanes
+(pin assignment D, beside USB 3, as on the Fairphone 5). msm binds the
+internal panel only after every enabled display interface has probed, and DP
+waits for its whole bridge chain (QMP PHY, PS5169, SM5714 connector): if the
+tablet's own screen stays dark after this change, that chain is the suspect
+(`sudo jk-update --rollback`, or set `&mdss_dp` back to `disabled`).
 
 ## Hardware and software
 
@@ -74,9 +76,8 @@ tablet partition write is performed by the implementation/build itself.
    PC cable; verify that the console appears without rebooting.
 4. If the hub accepts power, test attaching/removing its charger. The tablet
    should keep hosting its USB devices while it becomes a power sink.
-5. Set `&mdss_dp` to `okay` in the device tree, rebuild and reflash the boot
-   image, and check that the tablet's own screen still comes up. Then attach
-   the external monitor. Check `/sys/class/drm/card*-DP-*/status` and
+5. Check that the tablet's own screen still comes up. Then attach the
+   external monitor. Check `/sys/class/drm/card*-DP-*/status` and
    available modes, then enable the monitor in Plasma's display settings.
    Repeat after a reboot with the powered dock connected.
 

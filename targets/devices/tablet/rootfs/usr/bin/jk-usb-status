@@ -9,6 +9,9 @@ value() {
     printf '\n'
 }
 
+# The TCPM log and the deferred probes are in debugfs (root only).
+mountpoint -q /sys/kernel/debug || mount -t debugfs debugfs /sys/kernel/debug 2>/dev/null
+
 section 'Kernel and board'
 uname -a
 value /sys/firmware/devicetree/base/model
@@ -48,6 +51,20 @@ for f in /sys/class/power_supply/*/online /sys/class/power_supply/*/status \
          /sys/class/power_supply/*/input_current_limit \
          /sys/class/power_supply/*/current_max /sys/class/power_supply/*/voltage_max; do
     value "$f"
+done
+
+section 'Type-C partner (PD identity, alternate modes)'
+for f in /sys/class/typec/port*-partner/usb_power_delivery_revision \
+         /sys/class/typec/port*-partner/identity/id_header \
+         /sys/class/typec/port*-partner/port*-partner.*/svid \
+         /sys/class/typec/port*-partner/port*-partner.*/vdo \
+         /sys/class/typec/port*-partner/port*-partner.*/active; do
+    value "$f"
+done
+
+section 'TCPM log (USB-PD negotiation; reading it empties it)'
+for f in /sys/kernel/debug/usb/tcpm-*; do
+    [ -r "$f" ] && { echo "-- $f"; cat "$f"; }
 done
 
 section 'Deferred probes'

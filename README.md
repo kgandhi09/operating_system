@@ -297,7 +297,7 @@ What works on the tablet, and where it comes from (kernel patches in
 | GPU (Adreno 642L) | msm, Mesa freedreno | zap shader from the stock apnhlos partition |
 | Book Cover keyboard, cover magnet | `samsung-stm32-pogo` (0001), gpio-keys | closing the cover doesn't suspend (suspend isn't brought up) |
 | UFS | mainline | |
-| USB-C host/device, USB3, external DisplayPort | SM5714 TCPM + charger/MUIC, PS5169, QMP, msm DP (0008-0009) | implemented; awaiting SM-T733 hardware validation; DisplayPort stays disabled in the device tree until USB host is confirmed; [wiring, limits and test steps](targets/devices/tablet/samsung-gts7fe/USB.md) |
+| USB-C host/device, USB3, external DisplayPort | SM5714 TCPM + charger/MUIC, PS5169, QMP, msm DP (0008-0009) | implemented; awaiting SM-T733 hardware validation; USB host (hub, keyboard, mouse) works; DisplayPort over USB-C awaits validation; [wiring, limits and test steps](targets/devices/tablet/samsung-gts7fe/USB.md) |
 | Not yet: audio, sensors (rotation), cameras, suspend | | audio and sensors run on the ADSP |
 
 Charging is set with `jk-charge` (below), within Samsung's own limits for
