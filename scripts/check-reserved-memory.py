@@ -2,7 +2,7 @@
 """Check that jk_os's device tree reserves every memory region the stock
 firmware does.
 
-    check-reserved-memory.py <jk_os.dtb> <stock base .dtb>... -- <stock dtbo entry .dtb>...
+    check-reserved-memory.py <jk_os.dtb> <stock base .dtb>... -- <stock dtbo entry .dtb>... [--bootloader <live .dtb>]
 
 The stock tree the bootloader really uses is a base tree with Samsung's board
 overlay (dtbo) applied, and the overlay can move or grow regions: on the
@@ -12,7 +12,8 @@ touches it). So each base tree is merged with each dtbo entry that applies to
 it (fdtoverlay), and every fixed region in the result (a reg, not reusable,
 not disabled) must lie inside jk_os's reserved regions, no-map ones where the
 stock region is no-map. Regions only allocated at run time (size and
-alloc-ranges, no reg) are Android drivers' and are left out.
+alloc-ranges, no reg) are Android drivers' and are left out. A bootloader may
+also add fixed reservations at boot; --bootloader checks a captured live tree.
 
 Exits 1 and names the regions when one is missing. Needs dtc and fdtoverlay.
 """
@@ -93,6 +94,13 @@ def covered(start, end, regions):
 def main(argv):
     if "--" not in argv or len(argv) < 4:
         sys.exit(__doc__)
+    bootloader = None
+    if "--bootloader" in argv:
+        pos = argv.index("--bootloader")
+        if pos != len(argv) - 2:
+            sys.exit(__doc__)
+        bootloader = argv[pos + 1]
+        argv = argv[:pos]
     ours_dtb = argv[1]
     sep = argv.index("--")
     bases, overlays = argv[2:sep], argv[sep + 1:]
@@ -116,6 +124,12 @@ def main(argv):
                         key = (name, s, e, nomap)
                         missing.setdefault(key, []).append(
                             f"{os.path.basename(b)} + {os.path.basename(o)}")
+    if bootloader:
+        for name, s, e, nomap in reserved_regions(decompile(bootloader)):
+            pool = ours_nomap if nomap else ours
+            if not covered(s, e, pool):
+                missing.setdefault((name, s, e, nomap), []).append(
+                    os.path.basename(bootloader))
     if not merged_any:
         sys.exit("check-reserved-memory: no dtbo entry applies to any stock base tree")
     if missing:
@@ -125,7 +139,7 @@ def main(argv):
             print(f"  {name}: 0x{s:x}-0x{e:x}{' (no-map)' if nomap else ''}"
                   f"  [{', '.join(sorted(set(where)))}]", file=sys.stderr)
         sys.exit(1)
-    print(f"check-reserved-memory: every stock reserved region is reserved "
+    print(f"check-reserved-memory: every checked firmware reserved region is reserved "
           f"({len(ours)} regions in {os.path.basename(ours_dtb)})")
 
 

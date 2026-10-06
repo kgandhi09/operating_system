@@ -51,7 +51,11 @@ log "device tree: $out ($(du -h "$out" | cut -f1), from ${src#"$ROOT_DIR"/})"
 stock=$(compgen -G "$ROOT_DIR/$DEVICE_STOCK" | head -n1 || true)
 if [[ -n "$DEVICE_STOCK" && -d "$stock/dtb" && -d "$stock/dtbo" ]]; then
     need python3 fdtoverlay
+    # A captured bootloader tree can contain reservations that are absent
+    # from both vendor_boot and dtbo (Samsung's UH regions are one case).
+    bootloader_check=()
+    [[ ! -f "$stock/abl.dtb" ]] || bootloader_check=(--bootloader "$stock/abl.dtb")
     PATH="$(dirname "$dtc"):$PATH" python3 "$ROOT_DIR/scripts/check-reserved-memory.py" \
-        "$out" "$stock"/dtb/*.dtb -- "$stock"/dtbo/*.dtb \
+        "$out" "$stock"/dtb/*.dtb -- "$stock"/dtbo/*.dtb "${bootloader_check[@]}" \
         || die "$DEVICE_DTB doesn't reserve all of stock's memory (above)"
 fi

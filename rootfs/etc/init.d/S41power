@@ -1,6 +1,7 @@
 #!/bin/sh
-# The power mode chosen with jk-power (/etc/jk_os/power; default balanced):
-# firmware profile, CPU energy preference, NVIDIA persistence and Dynamic
+# The power settings chosen with jk-power (/etc/jk_os/power; default
+# balanced): CPU and GPU clocks and governors, sleep states, cores,
+# temperature limits, the firmware profile, NVIDIA persistence and Dynamic
 # Boost (nvidia-powerd, which needs the D-Bus system bus, S15dbus).
 
 case "$1" in

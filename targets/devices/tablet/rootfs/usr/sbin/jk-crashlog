@@ -15,6 +15,9 @@
 #   jk-crashlog save         keep the previous boot's records if it didn't
 #                            shut down cleanly (S01crashlog, at boot)
 #   jk-crashlog stop         stop the recorder, noting a clean shutdown
+#   jk-crashlog abl-dt       save the device tree Samsung's bootloader
+#                            passed on this boot (U-Boot copies it to
+#                            0xf0a00000) to /var/log/jk-crash/abl.dtb
 #
 # Each crash is a folder in /var/log/jk-crash (the 20 newest are kept),
 # numbered, with the date when the clock was set by then (else no-clock):
@@ -196,6 +199,26 @@ save() {
     rm -f "$LIVE" "$LIVE.1"
 }
 
+abl_dt() {
+    mkdir -p "$DIR"
+    # Through mmap, 32 bits at a time: arm64's /dev/mem read() refuses
+    # no-map memory, and the mapping is device memory (aligned words only).
+    python3 - "$DIR/abl.dtb" <<'PY' || die "no device tree at 0xf0a00000"
+import mmap, os, struct, sys
+fd = os.open("/dev/mem", os.O_RDONLY | os.O_SYNC)
+m = mmap.mmap(fd, 1 << 20, mmap.MAP_SHARED, mmap.PROT_READ, offset=0xf0a00000)
+words = memoryview(m).cast("I")
+if struct.pack("<I", words[0]) != b"\xd0\x0d\xfe\xed":
+    sys.exit("jk-crashlog: no device tree at 0xf0a00000 (this U-Boot doesn't copy it there yet)")
+size = struct.unpack(">I", struct.pack("<I", words[1]))[0]
+if not 64 <= size <= (1 << 20):
+    sys.exit("jk-crashlog: implausible device tree size %d" % size)
+data = b"".join(struct.pack("<I", words[i]) for i in range((size + 3) // 4))[:size]
+open(sys.argv[1], "wb").write(data)
+print("saved %s (%d bytes)" % (sys.argv[1], size))
+PY
+}
+
 stop() {
     if [ -f "$PIDFILE" ]; then
         kill "$(cat "$PIDFILE")" 2>/dev/null
@@ -240,6 +263,7 @@ case "${1:-}" in
     record) echo $$ > "$PIDFILE"; record ;;
     save) [ "$(id -u)" = 0 ] || die "run as root"; save ;;
     stop) stop ;;
+    abl-dt) [ "$(id -u)" = 0 ] || exec sudo "$0" "$@"; abl_dt ;;
     -h|--help) sed -n '2,/^$/p' "$0" | sed '$d; s/^# \{0,1\}//' ;;
-    *) die "usage: $name [show [<n>] | mark <text> | record | save | stop]" ;;
+    *) die "usage: $name [show [<n>] | mark <text> | record | save | stop | abl-dt]" ;;
 esac

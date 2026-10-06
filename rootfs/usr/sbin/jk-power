@@ -1,99 +1,696 @@
 #!/bin/sh
-# jk-power: the machine's power mode, for the CPU, the NVIDIA GPU and the
-# laptop's firmware (fans, power limits), kept across reboots.
+# jk-power: how hard the machine runs: a mode, and any single setting of
+# the CPUs, the GPU, the temperature limits and the firmware on top of it,
+# kept across reboots. It offers what this machine has (read from the
+# kernel), on PCs as on the tablet.
 #
-#   jk-power                 show the mode and what it set
-#   sudo jk-power performance | balanced | quiet
+#   jk-power                        the mode and every setting, with its
+#                                   value, where it comes from and its range
+#   jk-power list                   everything that can be set here
+#   jk-power watch                  clocks, temperatures and power, live
+#   jk-power modes                  the modes there are
+#   sudo jk-power <mode>            quiet | balanced | performance | your own
+#   sudo jk-power set <key>=<value>...   one setting or more, over the mode
+#   sudo jk-power unset <key>...    back to the mode's value
+#   sudo jk-power save <name>       the settings now as your own mode
+#   sudo jk-power delete <name>     remove your own mode
+#   sudo jk-power reset             balanced, nothing set over it
 #
-#   performance  the firmware's performance profile (ASUS: "Turbo"/
-#                "Performance"; higher power limits, faster fans), CPUs
-#                favouring speed (intel_pstate EPP "performance"), the NVIDIA
-#                GPU kept initialised (persistence mode) with Dynamic Boost
-#                (nvidia-powerd) moving power from the CPU to the GPU
-#   balanced     (default) the firmware's balanced profile, EPP
-#                "balance_performance", Dynamic Boost on
-#   quiet        the firmware's quiet profile (low power, quiet fans), EPP
-#                "power", Dynamic Boost off
+# Settings (each only where the machine has it; `jk-power list` shows them):
+#   cpu.<cluster>.min|max           clock limits, MHz (snapped to the
+#                                   cluster's own clocks)
+#   cpu.<cluster>.governor          schedutil, performance, powersave, ...
+#   cpu.<cluster>.<governor>.<tunable>   the governor's own settings
+#   cpu.<cluster>.idle.<state>      on|off: may the cores use that sleep state
+#   cpu.<n>.online                  on|off: core <n> (core 0 always runs)
+#   cpu.boost                       on|off: turbo / boost clocks (PCs)
+#   cpu.epp                         the CPUs' energy preference (PCs)
+#   cpu.min_perf|max_perf           Intel's performance limits, %
+#   gpu.min|max|governor            the GPU's clocks (tablet; Intel: also
+#                                   gpu.boost), MHz
+#   gpu.level                       AMD's GPU performance level
+#   gpu.nvidia.persistence|dynamic_boost   on|off
+#   gpu.nvidia.power_limit          W
+#   gpu.nvidia.max_clock            MHz, or default
+#   platform.profile                the laptop firmware's profile (fans,
+#                                   power limits)
+#   temp.cpu|gpu|<zone>             the temperature throttling starts at, C:
+#                                   only lower than the machine's own, never
+#                                   its critical (shutdown) temperatures
+# Clusters: little, big and prime on the tablet (cores 0-3, 4-6, 7); on
+# other machines core<n> per CPU, and cpu.all.* for every one at once.
 #
-# The mode is kept in /etc/jk_os/power; /etc/init.d/S41power applies it at
-# boot. On AC power only, the NVIDIA driver lets Dynamic Boost raise the GPU's
-# power limit (RTX 4050 laptop: 35 W up to 65 W).
+# Modes: balanced is the machine as it starts (the kernel's and firmware's
+# own settings); quiet caps the CPUs near 70% and the GPU near 60% of their
+# clocks and throttles 15 C earlier; performance raises the minimum clocks
+# and asks the firmware for performance. Your own modes (save) are kept in
+# /etc/jk_os/power.d. The mode and what is set over it are kept in
+# /etc/jk_os/power (one key=value a line, editable); /etc/init.d/S41power
+# applies them at boot. The kernel's own thermal protection always stays:
+# it throttles below any limit set here when the chip gets hot.
 
-CONF=/etc/jk_os/power
+SYS=${JK_SYSFS_ROOT:-}                  # (another tree: tests)
+CONF=${JK_POWER_CONF:-/etc/jk_os/power}
+MODES_DIR=${CONF}.d
+RUN=${JK_POWER_RUN:-/run/jk-power}
 name=${0##*/}
+TAB=$(printf '\t')
+NL='
+'
 die() { echo "$name: $*" >&2; exit 1; }
+warn() { echo "$name: $*" >&2; }
 
-current() {
-    MODE=balanced
-    [ -f "$CONF" ] && . "$CONF"
-    echo "$MODE"
-}
+# rd <file>: its first line, or nothing.
+rd() { v=; { read -r v < "$1"; } 2>/dev/null; printf '%s' "$v"; }
+# wr <file> <value>: write it; the driver may refuse.
+wr() { { printf '%s\n' "$2" > "$1"; } 2>/dev/null; }
 
-# profile_for <mode>: the firmware profile name among the ones offered.
-profile_for() {
-    choices=$(cat /sys/firmware/acpi/platform_profile_choices 2>/dev/null)
-    case "$1" in
-        performance) want="performance balanced-performance" ;;
-        balanced)    want="balanced" ;;
-        quiet)       want="quiet low-power cool" ;;
-    esac
-    for w in $want; do
-        case " $choices " in *" $w "*) echo "$w"; return ;; esac
-    done
-}
+# ---------------------------------------------------------------- discovery
+# One line per setting: key, type, target (paths), choices, unit, group,
+# label, separated by | (which none of them contains).
+TABLE=
+add() { TABLE="$TABLE$1|$2|$3|$4|$5|$6|$7$NL"; }
+# Keys that stand for several others (cpu.all.*, temp.cpu, temp.gpu): one
+# line each, "<key> <member keys>". Setting one sets its members.
+GROUPS=
+group() { GROUPS="$GROUPS$*$NL"; }
 
-apply() {
-    mode=$1
-    p=$(profile_for "$mode")
-    if [ -n "$p" ]; then
-        echo "$p" > /sys/firmware/acpi/platform_profile 2>/dev/null
+# MHz values of a cpufreq policy's clocks, ascending.
+policy_freqs() {
+    f=$(rd "$1/scaling_available_frequencies")
+    if [ -n "$f" ]; then
+        for k in $f; do echo $((k / 1000)); done | sort -n | uniq | tr '\n' ' '
+    else
+        echo "range:$(( $(rd "$1/cpuinfo_min_freq") / 1000 ))-$(( $(rd "$1/cpuinfo_max_freq") / 1000 ))"
     fi
-    case "$mode" in
-        performance) epp=performance ;;
-        balanced)    epp=balance_performance ;;
-        quiet)       epp=power ;;
-    esac
-    for f in /sys/devices/system/cpu/cpu[0-9]*/cpufreq/energy_performance_preference; do
-        [ -f "$f" ] && echo "$epp" > "$f" 2>/dev/null
-    done
-    if [ -d /sys/module/nvidia ] && command -v nvidia-smi >/dev/null; then
-        if [ "$mode" = performance ]; then
-            nvidia-smi -pm 1 >/dev/null 2>&1
+}
+
+cpus_of() {  # <policy dir>: its cores, "4 5 6"
+    rd "$1/related_cpus"
+}
+
+discover() {
+    TABLE= GROUPS=
+    cpu=$SYS/sys/devices/system/cpu
+    # Clusters: on an ARM SoC with two or three, slowest first and named
+    # little, big (and prime); else core<n> in order.
+    pols=$(for p in "$cpu"/cpufreq/policy[0-9]*; do
+        [ -d "$p" ] && echo "${p##*policy} $(rd "$p/cpuinfo_max_freq") $p"
+    done)
+    n=$(printf '%s\n' "$pols" | grep -c .)
+    aliases=
+    if [ "$n" -ge 2 ] && [ "$n" -le 3 ] && [ "${JK_POWER_ARCH:-$(uname -m)}" = aarch64 ]; then
+        [ "$n" = 2 ] && aliases="little big" || aliases="little big prime"
+        pols=$(printf '%s\n' "$pols" | sort -k2,2n | cut -d' ' -f3 | tr '\n' ' ')
+    else
+        pols=$(printf '%s\n' "$pols" | sort -k1,1n | cut -d' ' -f3 | tr '\n' ' ')
+    fi
+    clusters=
+    i=0
+    for p in $pols; do
+        i=$((i + 1))
+        if [ -n "$aliases" ]; then
+            c=$(echo "$aliases" | cut -d' ' -f$i)
+        elif [ "$n" = 1 ]; then
+            c=all
         else
-            nvidia-smi -pm 0 >/dev/null 2>&1
+            c=core${p##*policy}
         fi
-        if [ "$mode" = quiet ]; then
-            killall nvidia-powerd 2>/dev/null
-        elif [ -x /usr/bin/nvidia-powerd ] && ! pidof nvidia-powerd >/dev/null; then
-            start-stop-daemon -S -b -q -x /usr/bin/nvidia-powerd
-        fi
-    fi
-}
-
-show() {
-    echo "Power mode: $(current)"
-    [ -f /sys/firmware/acpi/platform_profile ] &&
-        echo "  firmware profile: $(cat /sys/firmware/acpi/platform_profile) (of: $(cat /sys/firmware/acpi/platform_profile_choices))"
-    f=/sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference
-    [ -f "$f" ] && echo "  CPU energy preference: $(cat "$f")"
-    if [ -d /sys/module/nvidia ] && command -v nvidia-smi >/dev/null; then
-        nvidia-smi --query-gpu=name,persistence_mode,pstate,power.limit,power.max_limit,clocks.gr,clocks.max.gr \
-            --format=csv,noheader 2>/dev/null | while IFS=, read -r n pm ps pl pmax cg cgmax; do
-            echo "  GPU:$n, persistence$pm, state$ps, power limit$pl (max$pmax), clock$cg (max$cgmax)"
+        cores=$(cpus_of "$p")
+        g="CPU $c (cores $(echo $cores | sed 's/ /,/g'))"
+        fr=$(policy_freqs "$p")
+        add "cpu.$c.max" cpumax "$p" "$fr" MHz "$g" "highest clock"
+        add "cpu.$c.min" cpumin "$p" "$fr" MHz "$g" "lowest clock"
+        add "cpu.$c.governor" cpugov "$p" "$(rd "$p/scaling_available_governors")" "" "$g" "governor"
+        gov=$(rd "$p/scaling_governor")
+        for t in "$p/$gov"/* "$cpu/cpufreq/$gov"/*; do
+            [ -f "$t" ] && writable "$t" || continue
+            case "$(rd "$t")" in ''|*[!0-9]*) continue ;; esac
+            add "cpu.$c.$gov.${t##*/}" tunable "$t" int "" "$g" "$gov: ${t##*/}"
         done
-        echo "  Dynamic Boost (nvidia-powerd): $(pidof nvidia-powerd >/dev/null && echo running || echo off)"
+        # Sleep states, as the cluster's first core lists them.
+        first=${cores%% *}
+        for s in "$cpu/cpu$first"/cpuidle/state[1-9]*; do
+            [ -f "$s/disable" ] || continue
+            sn=$(rd "$s/name" | tr 'A-Z ' 'a-z-' | tr -cd 'a-z0-9-')
+            files=
+            for k in $cores; do files="$files $cpu/cpu$k/cpuidle/${s##*/}/disable"; done
+            add "cpu.$c.idle.$sn" idle "${files# }" "on off" "" "$g" "sleep state $(rd "$s/name") ($(rd "$s/desc"))"
+        done
+        clusters="$clusters $c"
+    done
+    if [ "$n" -gt 3 ]; then
+        # The fastest cluster's clocks: the others snap to their own.
+        p1=$(for p in $pols; do echo "$(rd "$p/cpuinfo_max_freq") $p"; done | sort -n | tail -n 1 | cut -d' ' -f2)
+        add cpu.all.max cpumax "$pols" "$(policy_freqs "$p1")" MHz "CPU all cores" "highest clock"
+        add cpu.all.min cpumin "$pols" "$(policy_freqs "$p1")" MHz "CPU all cores" "lowest clock"
+        add cpu.all.governor cpugov "$pols" "$(rd "$p1/scaling_available_governors")" "" "CPU all cores" "governor"
+        for x in max min governor; do
+            m=; for c in $clusters; do m="$m cpu.$c.$x"; done
+            group "cpu.all.$x$m"
+        done
+    fi
+    for o in "$cpu"/cpu[1-9]*/online; do
+        [ -f "$o" ] || continue
+        k=${o%/online}; k=${k##*/cpu}
+        add "cpu.$k.online" online "$o" "on off" "" "CPU cores" "core $k running"
+    done
+    if [ -f "$cpu/intel_pstate/no_turbo" ]; then
+        add cpu.boost noturbo "$cpu/intel_pstate/no_turbo" "on off" "" "CPU" "turbo clocks"
+    elif [ -f "$cpu/cpufreq/boost" ]; then
+        add cpu.boost boost "$cpu/cpufreq/boost" "on off" "" "CPU" "boost clocks"
+    fi
+    e=$(ls "$cpu"/cpu[0-9]*/cpufreq/energy_performance_preference 2>/dev/null | tr '\n' ' ')
+    if [ -n "$e" ]; then
+        add cpu.epp epp "$e" "$(rd "$cpu/cpu0/cpufreq/energy_performance_available_preferences")" "" CPU "energy preference"
+    fi
+    for k in min max; do
+        f=$cpu/intel_pstate/${k}_perf_pct
+        [ -f "$f" ] && add "cpu.${k}_perf" pct "$f" "range:0-100" % CPU "Intel performance $k"
+    done
+
+    # GPU: a devfreq one (ARM SoCs), Intel, AMD, NVIDIA.
+    for d in "$SYS"/sys/class/devfreq/*; do
+        case "${d##*/}" in *gpu*|*kgsl*|*mali*) ;; *) continue ;; esac
+        [ -f "$d/max_freq" ] || continue
+        fr=$(for h in $(rd "$d/available_frequencies"); do echo $((h / 1000000)); done | sort -n | uniq | tr '\n' ' ')
+        add gpu.max dfmax "$d" "$fr" MHz GPU "highest clock"
+        add gpu.min dfmin "$d" "$fr" MHz GPU "lowest clock"
+        add gpu.governor dfgov "$d" "$(rd "$d/available_governors")" "" GPU "governor"
+        break
+    done
+    for card in "$SYS"/sys/class/drm/card[0-9]; do
+        if [ -f "$card/gt_max_freq_mhz" ]; then
+            r="range:$(rd "$card/gt_RPn_freq_mhz")-$(rd "$card/gt_RP0_freq_mhz")"
+            add gpu.max igpu "$card/gt_max_freq_mhz" "$r" MHz "GPU (Intel)" "highest clock"
+            add gpu.min igpu "$card/gt_min_freq_mhz" "$r" MHz "GPU (Intel)" "lowest clock"
+            add gpu.boost igpu "$card/gt_boost_freq_mhz" "$r" MHz "GPU (Intel)" "boost clock"
+        fi
+        f=$card/device/power_dpm_force_performance_level
+        [ -f "$f" ] && add gpu.level amdlevel "$f" "auto low high" "" "GPU (AMD)" "performance level"
+    done
+    if [ -d "$SYS/sys/module/nvidia" ] && command -v nvidia-smi >/dev/null 2>&1 && [ -z "$SYS" ]; then
+        add gpu.nvidia.persistence nvpers - "on off" "" "GPU (NVIDIA)" "persistence mode"
+        add gpu.nvidia.dynamic_boost nvboost - "on off" "" "GPU (NVIDIA)" "Dynamic Boost (nvidia-powerd)"
+        lim=$(nvidia-smi --query-gpu=power.min_limit,power.max_limit --format=csv,noheader,nounits 2>/dev/null | head -n1 | tr -d ' ')
+        case "$lim" in *,*) add gpu.nvidia.power_limit nvpl - "range:${lim%%.*,*}-$(echo "${lim#*,}" | cut -d. -f1)" W "GPU (NVIDIA)" "power limit" ;; esac
+        mx=$(nvidia-smi --query-gpu=clocks.max.gr --format=csv,noheader,nounits 2>/dev/null | head -n1 | tr -d ' ')
+        [ -n "$mx" ] && add gpu.nvidia.max_clock nvclk - "range:300-$mx" MHz "GPU (NVIDIA)" "highest clock (or default)"
+    fi
+
+    f=$SYS/sys/firmware/acpi/platform_profile
+    [ -f "$f" ] && add platform.profile profile "$f" "$(rd "$SYS/sys/firmware/acpi/platform_profile_choices")" "" Platform "firmware profile"
+
+    # Temperature limits: thermal zones whose trips the kernel lets us move
+    # (device-tree ones), by group and one by one.
+    record_trips
+    cz= gz= ck= gk= seen=
+    for z in "$SYS"/sys/class/thermal/thermal_zone*; do
+        first_passive "$z" >/dev/null || continue
+        t=$(rd "$z/type" | tr 'A-Z ' 'a-z_' | tr -cd 'a-z0-9_-'); t=${t%-thermal}
+        k=temp.$t
+        case " $seen " in *" $k "*) k=$k-${z##*thermal_zone} ;; esac
+        seen="$seen $k"
+        case "$t" in cpu[0-9]*|cpuss*) cz="$cz $z" ck="$ck $k" ;; gpu*) gz="$gz $z" gk="$gk $k" ;; esac
+        add "$k" trips "$z" "$(trip_range "$z")" C "Temperature limits (zones)" "$t: throttling starts at"
+    done
+    if [ -n "$cz" ]; then
+        add temp.cpu trips "${cz# }" "$(trip_range $cz)" C Temperature "CPUs: throttling starts at"
+        group "temp.cpu$ck"
+    fi
+    if [ -n "$gz" ]; then
+        add temp.gpu trips "${gz# }" "$(trip_range $gz)" C Temperature "GPU: throttling starts at"
+        group "temp.gpu$gk"
+    fi
+    # Intel: the CPU's own limit, below TjMax by the TCC offset.
+    for c in "$SYS"/sys/class/thermal/cooling_device*; do
+        [ "$(rd "$c/type")" = TCC_Offset ] || continue
+        tj=$(tjmax)
+        [ -n "$tj" ] && [ -z "$cz" ] && add temp.cpu tcc "$c" "range:$((tj - $(rd "$c/max_state")))-$tj" C Temperature "CPU: throttling starts at"
+    done
+}
+
+# writable <file>: the kernel lets root write it (its owner-write bit).
+writable() { [ -n "$(find "$1" -maxdepth 0 -perm -200 2>/dev/null)" ]; }
+
+# ---------------------------------------------------------------- thermal
+# The writable passive/active trips of a zone, as "<n>" lines, or failure.
+first_passive() {
+    found=1
+    for tf in "$1"/trip_point_*_type; do
+        [ -f "$tf" ] || continue
+        case "$(rd "$tf")" in passive|active) ;; *) continue ;; esac
+        i=${tf#*trip_point_}; i=${i%_type}
+        writable "$1/trip_point_${i}_temp" || continue
+        echo "$i"; found=0
+    done
+    return $found
+}
+
+# Each boot's stock trips, before anything here moves them.
+record_trips() {
+    [ -f "$RUN/trips" ] && return
+    mkdir -p "$RUN" 2>/dev/null || return
+    for z in "$SYS"/sys/class/thermal/thermal_zone*; do
+        for tf in "$z"/trip_point_*_temp; do
+            [ -f "$tf" ] && echo "$tf=$(rd "$tf")"
+        done
+    done > "$RUN/trips" 2>/dev/null
+}
+stock_trip() {  # <trip temp file>: its stock value (m°C)
+    s=$(grep "^$1=" "$RUN/trips" 2>/dev/null | cut -d= -f2)
+    [ -n "$s" ] && echo "$s" || rd "$1"
+}
+zone_start() {  # <zone>: its lowest stock passive trip, C
+    lo=
+    for i in $(first_passive "$1"); do
+        t=$(stock_trip "$1/trip_point_${i}_temp")
+        [ -z "$lo" ] || [ "$t" -lt "$lo" ] && lo=$t
+    done
+    echo $((lo / 1000))
+}
+trip_range() {  # <zones>: 40 C up to the lowest of their stock starts
+    m=
+    for z in "$@"; do s=$(zone_start "$z"); [ -z "$m" ] || [ "$s" -lt "$m" ] && m=$s; done
+    echo "range:40-$m"
+}
+zone_now() {  # <zone>: where its throttling starts now, C
+    lo=
+    for i in $(first_passive "$1"); do
+        t=$(rd "$1/trip_point_${i}_temp")
+        [ -z "$lo" ] || [ "$t" -lt "$lo" ] && lo=$t
+    done
+    echo $((lo / 1000))
+}
+tjmax() {
+    for h in "$SYS"/sys/class/hwmon/hwmon*; do
+        [ "$(rd "$h/name")" = coretemp ] || continue
+        t=$(rd "$h/temp1_crit"); [ -n "$t" ] && { echo $((t / 1000)); return; }
+    done
+}
+
+# ---------------------------------------------------------------- the table
+field() {  # <key> <n>: field n of the key's row
+    printf '%s' "$TABLE" | awk -F'|' -v k="$1" -v n="$2" '$1 == k { print $n; exit }'
+}
+has() { printf '%s' "$TABLE" | awk -F'|' -v k="$1" '$1 == k { f = 1 } END { exit !f }'; }
+keys() { printf '%s' "$TABLE" | cut -d'|' -f1; }
+members() { printf '%s' "$GROUPS" | awk -v k="$1" '$1 == k { $1 = ""; print; exit }'; }
+is_group() { [ -n "$(members "$1")" ]; }
+# expand: key=value lines, a group's turned into its members'.
+expand() {
+    while IFS= read -r l; do
+        [ -n "$l" ] || continue
+        m=$(members "${l%%=*}")
+        if [ -n "$m" ]; then for k in $m; do echo "$k=${l#*=}"; done; else echo "$l"; fi
+    done
+}
+
+onoff() { [ "$1" = 1 ] && echo on || echo off; }
+
+# get <key>: its value now.
+get() {
+    type=$(field "$1" 2) target=$(field "$1" 3)
+    case "$type" in
+        cpumax) set -- $target; v=$(rd "$1/scaling_max_freq"); echo $((v / 1000)) ;;
+        cpumin) set -- $target; v=$(rd "$1/scaling_min_freq"); echo $((v / 1000)) ;;
+        cpugov) set -- $target; rd "$1/scaling_governor"; echo ;;
+        tunable|pct|igpu) rd "$target"; echo ;;
+        idle) set -- $target; [ "$(rd "$1")" = 0 ] && echo on || echo off ;;
+        online) onoff "$(rd "$target")" ;;
+        noturbo) [ "$(rd "$target")" = 1 ] && echo off || echo on ;;
+        boost) onoff "$(rd "$target")" ;;
+        epp) set -- $target; rd "$1"; echo ;;
+        dfmax) v=$(rd "$target/max_freq"); echo $((v / 1000000)) ;;
+        dfmin) v=$(rd "$target/min_freq"); echo $((v / 1000000)) ;;
+        dfgov) rd "$target/governor"; echo ;;
+        amdlevel) rd "$target"; echo ;;
+        profile) rd "$target"; echo ;;
+        nvpers) nvidia-smi --query-gpu=persistence_mode --format=csv,noheader 2>/dev/null | head -n1 | grep -qi enabled && echo on || echo off ;;
+        nvboost) pidof nvidia-powerd >/dev/null && echo on || echo off ;;
+        nvpl) nvidia-smi --query-gpu=power.limit --format=csv,noheader,nounits 2>/dev/null | head -n1 | cut -d. -f1 | tr -d ' ' ;;
+        nvclk) v=$(rd "$RUN/nvclk"); echo "${v:-default}" ;;
+        trips) set -- $target; zone_now "$1" ;;
+        tcc) echo $(( $(tjmax) - $(rd "$target/cur_state") )) ;;
+    esac
+}
+
+# snap <value> <choices> <min|max>: the nearest clock the hardware has: the
+# highest at or below a maximum, the lowest at or above a minimum.
+snap() {
+    case "$2" in
+        range:*) r=${2#range:}; lo=${r%-*} hi=${r#*-}
+                 [ "$1" -lt "$lo" ] && echo "$lo" && return
+                 [ "$1" -gt "$hi" ] && echo "$hi" && return
+                 echo "$1"; return ;;
+    esac
+    best=
+    if [ "$3" = max ]; then
+        for f in $2; do [ "$f" -le "$1" ] && best=$f; done
+        echo "${best:-${2%% *}}"
+    else
+        for f in $2; do [ "$f" -ge "$1" ] && { echo "$f"; return; }; done
+        set -- $2; eval echo "\${$#}"
     fi
 }
 
-case "${1:-}" in
+# check <key> <value>: the value to use (snapped), or failure with why.
+check() {
+    has "$1" || { echo "no setting $1 here (jk-power list)"; return 1; }
+    type=$(field "$1" 2) choices=$(field "$1" 4) unit=$(field "$1" 5)
+    case "$type" in
+        cpumax|cpumin|dfmax|dfmin|igpu)
+            case "$2" in ''|*[!0-9]*) echo "$1: a number of MHz, not '$2'"; return 1 ;; esac
+            case "$type" in *min) snap "$2" "$choices" min ;; *) snap "$2" "$choices" max ;; esac ;;
+        pct|tunable|nvpl|trips|tcc)
+            case "$2" in ''|*[!0-9]*) echo "$1: a number${unit:+ ($unit)}, not '$2'"; return 1 ;; esac
+            case "$choices" in
+                range:*) r=${choices#range:}
+                         if [ "$2" -lt "${r%-*}" ] || [ "$2" -gt "${r#*-}" ]; then
+                             echo "$1: ${r%-*} to ${r#*-}${unit:+ $unit}, not $2"; return 1
+                         fi ;;
+            esac
+            echo "$2" ;;
+        nvclk)
+            [ "$2" = default ] && { echo default; return; }
+            case "$2" in ''|*[!0-9]*) echo "$1: MHz or default, not '$2'"; return 1 ;; esac
+            snap "$2" "$choices" max ;;
+        *)
+            for c in $choices; do [ "$c" = "$2" ] && { echo "$2"; return; }; done
+            echo "$1: one of: $choices (not '$2')"; return 1 ;;
+    esac
+}
+
+# put <key> <value>: write it (checked already).
+put() {
+    type=$(field "$1" 2) target=$(field "$1" 3) choices=$(field "$1" 4) ok=0
+    case "$type" in
+        cpumax|cpumin)
+            for p in $target; do
+                fr=$(policy_freqs "$p")
+                case "$type" in cpumax) s=$(snap "$2" "$fr" max) ;; *) s=$(snap "$2" "$fr" min) ;; esac
+                if [ "$type" = cpumax ]; then
+                    # Below the minimum first lowers the minimum.
+                    [ "$(rd "$p/scaling_min_freq")" -gt $((s * 1000)) ] && wr "$p/scaling_min_freq" $((s * 1000))
+                    wr "$p/scaling_max_freq" $((s * 1000)) || ok=1
+                else
+                    [ "$(rd "$p/scaling_max_freq")" -lt $((s * 1000)) ] && wr "$p/scaling_max_freq" $((s * 1000))
+                    wr "$p/scaling_min_freq" $((s * 1000)) || ok=1
+                fi
+            done ;;
+        cpugov) for p in $target; do wr "$p/scaling_governor" "$2" || ok=1; done ;;
+        tunable|pct|igpu|amdlevel|profile) wr "$target" "$2" || ok=1 ;;
+        idle) for f in $target; do wr "$f" $([ "$2" = on ] && echo 0 || echo 1) || ok=1; done ;;
+        online) wr "$target" $([ "$2" = on ] && echo 1 || echo 0) || ok=1 ;;
+        noturbo) wr "$target" $([ "$2" = on ] && echo 0 || echo 1) || ok=1 ;;
+        boost) wr "$target" $([ "$2" = on ] && echo 1 || echo 0) || ok=1 ;;
+        epp) for f in $target; do wr "$f" "$2" || ok=1; done ;;
+        dfmax)
+            [ "$(rd "$target/min_freq")" -gt $(($2 * 1000000)) ] && wr "$target/min_freq" $(($2 * 1000000))
+            wr "$target/max_freq" $(($2 * 1000000)) || ok=1 ;;
+        dfmin)
+            [ "$(rd "$target/max_freq")" -lt $(($2 * 1000000)) ] && wr "$target/max_freq" $(($2 * 1000000))
+            wr "$target/min_freq" $(($2 * 1000000)) || ok=1 ;;
+        dfgov) wr "$target/governor" "$2" || ok=1 ;;
+        nvpers) nvidia-smi -pm $([ "$2" = on ] && echo 1 || echo 0) >/dev/null 2>&1 || ok=1 ;;
+        nvboost)
+            if [ "$2" = on ]; then
+                pidof nvidia-powerd >/dev/null || [ ! -x /usr/bin/nvidia-powerd ] ||
+                    start-stop-daemon -S -b -q -x /usr/bin/nvidia-powerd || ok=1
+            else
+                killall nvidia-powerd 2>/dev/null
+            fi ;;
+        nvpl) nvidia-smi -pl "$2" >/dev/null 2>&1 || ok=1 ;;
+        nvclk)
+            if [ "$2" = default ]; then nvidia-smi -rgc >/dev/null 2>&1; rm -f "$RUN/nvclk"
+            else nvidia-smi -lgc "0,$2" >/dev/null 2>&1 && echo "$2" > "$RUN/nvclk" || ok=1
+            fi ;;
+        trips)
+            # Move each zone's passive/active trips down together (keeping
+            # their spacing), never above the stock ones.
+            for z in $target; do
+                start=$(zone_start "$z")
+                for i in $(first_passive "$z"); do
+                    f=$z/trip_point_${i}_temp
+                    st=$(stock_trip "$f")
+                    nt=$(( st - (start - $2) * 1000 ))
+                    [ "$nt" -gt "$st" ] && nt=$st
+                    wr "$f" "$nt" || ok=1
+                done
+            done ;;
+        tcc) wr "$target/cur_state" $(( $(tjmax) - $2 )) || ok=1 ;;
+    esac
+    return $ok
+}
+
+# ---------------------------------------------------------------- modes
+# Each boot's stock values (before anything here changes them).
+record_stock() {
+    [ -f "$RUN/stock" ] && return
+    mkdir -p "$RUN" 2>/dev/null || return
+    for k in $(keys); do echo "$k=$(get "$k")"; done > "$RUN/stock" 2>/dev/null
+}
+stock() { grep "^$1=" "$RUN/stock" 2>/dev/null | head -n1 | cut -d= -f2-; }
+
+# frac <key> <percent>: that share of the key's highest clock.
+frac() {
+    ch=$(field "$1" 4)
+    case "$ch" in
+        range:*) top=${ch##*-} ;;
+        *) top=$(echo $ch | awk '{ print $NF }') ;;
+    esac
+    echo $(( top * $2 / 100 ))
+}
+
+# mode_values <mode>: its key=value lines (stock for what it doesn't name).
+mode_values() {
+    case "$1" in
+        balanced) ;;
+        quiet|performance)
+            for k in $(keys); do
+                type=$(field "$k" 2)
+                case "$k" in cpu.all.*) continue ;; esac
+                case "$1:$type" in
+                    quiet:cpumax) echo "$k=$(snap "$(frac "$k" 70)" "$(field "$k" 4)" max)" ;;
+                    quiet:dfmax|quiet:igpu)
+                        [ "$k" = gpu.max ] || continue
+                        echo "$k=$(snap "$(frac "$k" 60)" "$(field "$k" 4)" max)" ;;
+                    quiet:trips|quiet:tcc)
+                        case "$k" in temp.cpu|temp.gpu) ;; *) continue ;; esac
+                        s=$(stock "$k"); [ -n "$s" ] && echo "$k=$(( s - 15 < 60 ? 60 : s - 15 ))" ;;
+                    performance:cpumin) echo "$k=$(snap "$(frac "$k" 50)" "$(field "$k" 4)" min)" ;;
+                    performance:dfmin)
+                        echo "$k=$(snap "$(frac "$k" 40)" "$(field "$k" 4)" min)" ;;
+                esac
+            done
+            for pair in "cpu.epp:power:performance" "cpu.boost:off:on" \
+                        "gpu.nvidia.persistence:off:on" "gpu.nvidia.dynamic_boost:off:on"; do
+                k=${pair%%:*} q=${pair#*:}; q=${q%%:*} p=${pair##*:}
+                has "$k" || continue
+                [ "$k" = cpu.boost ] && [ "$1" = quiet ] && continue
+                [ "$1" = quiet ] && echo "$k=$q" || echo "$k=$p"
+            done
+            if has platform.profile; then
+                ch=" $(field platform.profile 4) "
+                case "$1" in
+                    quiet) want="quiet low-power cool" ;;
+                    performance) want="performance balanced-performance" ;;
+                esac
+                for w in $want; do case "$ch" in *" $w "*) echo "platform.profile=$w"; break ;; esac; done
+            fi ;;
+        *)
+            [ -f "$MODES_DIR/$1" ] || return 1
+            grep -E '^[a-z0-9_.-]+=' "$MODES_DIR/$1" ;;
+    esac
+}
+modes() { echo "quiet balanced performance $(ls "$MODES_DIR" 2>/dev/null | tr '\n' ' ')"; }
+
+# The configuration: MODE, and the keys set over it.
+conf_mode() { m=$(grep '^MODE=' "$CONF" 2>/dev/null | tail -n1 | cut -d= -f2); echo "${m:-balanced}"; }
+conf_overrides() { grep -E '^[a-z0-9_.-]+\.[a-z0-9_.-]+=' "$CONF" 2>/dev/null; }
+
+# wanted: key=value=source for every key: set over the mode, else the
+# mode's, else stock. Groups are only a way to set their members.
+wanted() {
+    mv=$(mode_values "$(conf_mode)" | expand)
+    ov=$(conf_overrides | expand)
+    for k in $(keys); do
+        is_group "$k" && continue
+        v=$(printf '%s\n' "$ov" | grep "^$k=" | tail -n1 | cut -d= -f2-) src=set
+        [ -n "$v" ] || { v=$(printf '%s\n' "$mv" | grep "^$k=" | tail -n1 | cut -d= -f2-); src=mode; }
+        [ -n "$v" ] || { v=$(stock "$k"); src=stock; }
+        [ -n "$v" ] && echo "$k=$v=$src"
+    done
+}
+
+# apply: write every key, in an order that works (governor before its
+# tunables, cores online before their clocks), and report what failed.
+apply() {
+    w=$(wanted)
+    fails=
+    for stage in "platform.profile" "cpu.*.online" "cpu.*.governor" "cpu.*.max" "cpu.*.min" \
+                 "cpu.*.*.*" "cpu.*" "gpu.governor" "gpu.*" "temp.cpu temp.gpu" "temp.*"; do
+        for line in $w; do
+            k=${line%%=*} rest=${line#*=}; v=${rest%=*}
+            matched=
+            for pat in $stage; do case "$k" in $pat) matched=1 ;; esac; done
+            [ -n "$matched" ] || continue
+            case " $done_keys " in *" $k "*) continue ;; esac
+            done_keys="$done_keys $k"
+            # A governor's tunables only once it is that governor.
+            if [ "$(field "$k" 2)" = tunable ] && [ ! -f "$(field "$k" 3)" ]; then continue; fi
+            if s=$(check "$k" "$v"); then
+                put "$k" "$s" || fails="$fails $k=$v"
+            else
+                fails="$fails $k=$v"
+                warn "$s"
+            fi
+        done
+    done
+    [ -z "$fails" ] || { warn "the kernel refused:$fails"; return 1; }
+}
+
+save_conf() {  # <mode> <override lines>
+    mkdir -p "${CONF%/*}"
+    {
+        echo "# jk-power: the mode, then settings over it (key=value)."
+        echo "MODE=$1"
+        [ -n "$2" ] && printf '%s\n' "$2"
+    } > "$CONF"
+}
+
+# ---------------------------------------------------------------- showing
+show() {
+    echo "Mode: $(conf_mode)"
+    w=$(wanted)
+    last=
+    printf '%s' "$TABLE" | while IFS="|" read -r k type target choices unit group label; do
+        [ "$group" = "$last" ] || { echo "$group:"; last=$group; }
+        src=$(printf '%s\n' "$w" | grep "^$k=" | head -n1); src=${src##*=}
+        is_group "$k" && src=all
+        case "$choices" in range:*) r="${choices#range:} $unit" ;; int) r= ;; *) r=$(echo $choices | sed 's/ /|/g') ;; esac
+        printf '  %-34s %-12s %-6s %s\n' "$k" "$(get "$k")${unit:+ $unit}" "${src:-}" "$r"
+    done
+    echo "(set: by you; mode: by the mode; stock: the machine's own; all: sets every one of its group)"
+}
+
+list_machine() {
+    w=$(wanted)
+    printf '%s' "$TABLE" | while IFS="|" read -r k type target choices unit group label; do
+        line=$(printf '%s\n' "$w" | grep "^$k=" | head -n1)
+        rest=${line#*=}
+        printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$k" "$type" "$(get "$k")" "${rest%=*}" "${rest##*=}" \
+            "$choices" "$unit" "$group" "$label"
+    done
+}
+
+watch_loop() {
+    cpu=$SYS/sys/devices/system/cpu
+    while :; do
+        out=
+        for k in $(keys); do
+            case "$(field "$k" 2)" in
+                cpumax) [ "${k#cpu.all}" = "$k" ] || continue
+                        set -- $(field "$k" 3); out="$out ${k%.max}=$(( $(rd "$1/scaling_cur_freq") / 1000 ))MHz" ;;
+                dfmax) out="$out gpu=$(( $(rd "$(field "$k" 3)/cur_freq") / 1000000 ))MHz" ;;
+                igpu) [ "$k" = gpu.max ] && out="$out gpu=$(rd "$(dirname "$(field "$k" 3)")/gt_act_freq_mhz")MHz" ;;
+            esac
+        done
+        hot=0 hz=
+        for z in "$SYS"/sys/class/thermal/thermal_zone*; do
+            t=$(rd "$z/temp"); [ -n "$t" ] || continue
+            [ "$t" -gt "$hot" ] && hot=$t hz=$(rd "$z/type")
+        done
+        pw=
+        for b in "$SYS"/sys/class/power_supply/*; do
+            [ "$(rd "$b/type")" = Battery ] || continue
+            i=$(rd "$b/current_now") u=$(rd "$b/voltage_now")
+            [ -n "$i" ] && [ -n "$u" ] && pw=$(awk -v i="$i" -v u="$u" 'BEGIN { printf "%+.1fW", i * u / 1e12 }')
+            break
+        done
+        printf '%s | hottest %s %dC%s\n' "${out# }" "$hz" $((hot / 1000)) "${pw:+ | battery $pw}"
+        sleep 1
+    done
+}
+
+# ---------------------------------------------------------------- commands
+root() { [ "$(id -u)" = 0 ] || [ -n "$SYS" ] || exec sudo "$0" "$@"; }
+
+cmd=${1:-}
+case "$cmd" in
+    -h|--help) sed -n '2,/^$/p' "$0" | sed '$d; s/^# \{0,1\}//'; exit 0 ;;
+esac
+discover
+record_stock
+case "$cmd" in
     "") show ;;
-    --boot) apply "$(current)" ;;
-    performance|balanced|quiet)
-        [ "$(id -u)" = 0 ] || exec sudo "$0" "$1"
-        mkdir -p "${CONF%/*}"
-        echo "MODE=$1" > "$CONF"
-        apply "$1"
-        show ;;
-    -h|--help) sed -n '2,24p' "$0" | sed 's/^# \{0,1\}//' ;;
-    *) die "usage: $name [performance|balanced|quiet]" ;;
+    list)
+        if [ "${2:-}" = --machine ]; then list_machine
+        else
+            printf '%s' "$TABLE" | while IFS="|" read -r k type target choices unit group label; do
+                case "$choices" in range:*) r="${choices#range:} $unit" ;; int) r="a number" ;; *) r=$(echo $choices | sed 's/ /|/g')${unit:+ $unit} ;; esac
+                printf '%-34s %s: %s\n' "$k" "$label" "$r"
+            done
+        fi ;;
+    watch) watch_loop ;;
+    modes)
+        cur=$(conf_mode)
+        for m in $(modes); do [ "$m" = "$cur" ] && echo "* $m" || echo "  $m"; done ;;
+    --boot) apply ;;
+    set)
+        root "$@"; shift
+        [ $# -gt 0 ] || die "set <key>=<value>..."
+        ov=$(conf_overrides)
+        for a in "$@"; do
+            case "$a" in *=*) ;; *) die "set $a: write <key>=<value>" ;; esac
+            k=${a%%=*} v=${a#*=}
+            s=$(check "$k" "$v") || die "$s"
+            [ "$s" != "$v" ] && echo "$k: $v snapped to $s, the nearest the hardware has"
+            for l in $(echo "$k=$s" | expand); do
+                ov=$(printf '%s\n' "$ov" | grep -v "^${l%%=*}=")
+                ov="${ov:+$ov$NL}$l"
+            done
+        done
+        save_conf "$(conf_mode)" "$ov"
+        apply; rc=$?
+        show; exit $rc ;;
+    unset)
+        root "$@"; shift
+        ov=$(conf_overrides)
+        for k in "$@"; do
+            for l in $(echo "$k=" | expand); do ov=$(printf '%s\n' "$ov" | grep -v "^${l%%=*}="); done
+        done
+        save_conf "$(conf_mode)" "$ov"
+        apply; rc=$?
+        show; exit $rc ;;
+    save)
+        root "$@"
+        n=${2:-}
+        case "$n" in ''|*[!a-z0-9_-]*) die "save <name>: letters, digits, - and _" ;; esac
+        case " quiet balanced performance " in *" $n "*) die "$n is a built-in mode" ;; esac
+        mkdir -p "$MODES_DIR"
+        { echo "# jk-power mode $n: key=value over the machine's own settings."
+          wanted | while IFS= read -r line; do
+              k=${line%%=*} rest=${line#*=}; v=${rest%=*}
+              [ "$v" = "$(stock "$k")" ] || echo "$k=$v"
+          done; } > "$MODES_DIR/$n"
+        save_conf "$n" ""
+        echo "Saved mode $n ($MODES_DIR/$n) and switched to it." ;;
+    delete)
+        root "$@"
+        [ -f "$MODES_DIR/${2:-}" ] || die "no mode of your own named ${2:-}"
+        rm -f "$MODES_DIR/$2"
+        [ "$(conf_mode)" = "$2" ] && save_conf balanced "$(conf_overrides)" && apply
+        echo "Deleted mode $2." ;;
+    reset)
+        root "$@"
+        save_conf balanced ""
+        apply; rc=$?
+        show; exit $rc ;;
+    *)
+        case " $(modes) " in *" $cmd "*) ;; *) die "no mode or command '$cmd' (jk-power --help)" ;; esac
+        root "$@"
+        save_conf "$cmd" "$(conf_overrides)"
+        apply; rc=$?
+        show; exit $rc ;;
 esac

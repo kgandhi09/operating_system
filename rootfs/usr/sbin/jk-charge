@@ -11,6 +11,9 @@
 #   sudo jk-charge voltage <mV>   full-charge voltage
 #   sudo jk-charge limit <%>      battery care: stop at this level, 50-100
 #                                 (100: off), charge again 5% below it
+#   jk-charge --machine           what can be set, for programs (jk-charge-gui):
+#                                 one line each, tab-separated: setting, value
+#                                 now, saved value, lowest, highest, unit
 #
 # What can be set depends on the hardware:
 #   - chargers the system drives itself (the Galaxy Tab S7 FE's SM5714): all
@@ -212,8 +215,26 @@ show() {
     [ -n "$any" ] || echo "  none: this machine's charging is up to its firmware"
 }
 
+machine() {
+    load
+    [ -n "$BAT" ] || return 0
+    if can input; then
+        printf 'input\t%s\t%s\t100\t%s\tmA\n' "$(ma "$CHG/input_current_limit")" "$INPUT" "${INPUT_MAX:-10000}"
+    fi
+    if can current; then
+        printf 'current\t%s\t%s\t100\t%s\tmA\n' "$(ma "$CHG/constant_charge_current")" "$CURRENT" "${CUR_MAX:-10000}"
+    fi
+    if can voltage; then
+        printf 'voltage\t%s\t%s\t4000\t%s\tmV\n' "$(ma "$CHG/constant_charge_voltage")" "$VOLTAGE" "${VOLT_MAX:-4500}"
+    fi
+    if can limit; then
+        printf 'limit\t%s\t%s\t50\t100\t%%\n' "$(rd "$BAT/charge_control_end_threshold")" "$LIMIT"
+    fi
+}
+
 case "${1:-}" in
     "") show; exit ;;
+    --machine) machine; exit ;;
     --boot) load; apply 2>/dev/null; exit 0 ;;
     -h|--help) sed -n '2,/^$/p' "$0" | sed '$d; s/^# \{0,1\}//'; exit ;;
 esac

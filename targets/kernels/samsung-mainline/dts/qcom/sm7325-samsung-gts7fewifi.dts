@@ -265,6 +265,22 @@
 			no-map;
 		};
 
+		/*
+		 * Samsung's bootloader adds these two UH (hypervisor) regions to
+		 * its live tree. They are absent from vendor_boot's base tree and
+		 * dtbo, so comparing only the stock image misses them. Linux using
+		 * these pages resets the tablet when allocations reach low memory.
+		 */
+		uh_heap_mem: uh-heap@b0200000 {
+			reg = <0x0 0xb0200000 0x0 0x200000>;
+			no-map;
+		};
+
+		uh_guest_mem: uh-guest@b0400000 {
+			reg = <0x0 0xb0400000 0x0 0x1200000>;
+			no-map;
+		};
+
 		/* Samsung's overlay (dtbo fragment@108) grows it from 0x5100000. */
 		removed_mem: removed@c0000000 {
 			reg = <0x0 0xc0000000 0x0 0x5f00000>;
