@@ -24,8 +24,7 @@ def main():
         run([
             "gst-launch-1.0", "-q", "filesrc", f"location={SOURCE}", "!",
             "qtdemux", "!", "h264parse", "!", "avdec_h264", "!",
-            "videorate", "!", "video/x-raw,framerate=30/1", "!",
-            "videoscale", "!", "video/x-raw,width=1280,height=720", "!",
+            "videorate", "!", "video/x-raw,framerate=30/1,width=1920,height=1080", "!",
             "videoconvert", "!", "pngenc", "!", "multifilesink",
             f"location={frames}/frame-%03d.png",
         ], check=True)
@@ -35,7 +34,7 @@ def main():
         OUTPUT.parent.mkdir(parents=True, exist_ok=True)
         pictures[0].save(
             OUTPUT, format="WEBP", save_all=True, append_images=pictures[1:],
-            duration=[33, 33, 34] * 60, loop=1, quality=85, method=4,
+            duration=[33, 33, 34] * 60, loop=1, quality=98, method=6,
         )
         print(f"Wrote {OUTPUT} ({OUTPUT.stat().st_size:,} bytes)")
 

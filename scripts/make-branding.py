@@ -95,8 +95,13 @@ def tracked_text(text, font, tracking):
 
 
 def full_name_logo():
-    """The logo with its lettering replaced by FULL_NAME: same typeface, cap
-    height, letter spacing, colour and baseline, centred under the mark."""
+    """Render the mark and full name at twice the source resolution.
+
+    The supplied PNG provides the lettering's proportions and colour. The
+    wallpaper itself uses the mark's paths and the Poppins font directly, so
+    its edges do not inherit the source PNG's 700-pixel resolution.
+    """
+    scale = 2
     src = Image.open(SRC).convert("RGB")
     ink = np.asarray(src.convert("L")) < 200
     rows = np.flatnonzero(ink.any(axis=1))
@@ -114,15 +119,43 @@ def full_name_logo():
     _, (x0, y0, x1, y1) = tracked_text(LOGO_TEXT, font, 0)
     tracking = (width - (x1 - x0)) / (len(LOGO_TEXT) - 1)
 
-    mask, (x0, y0, x1, y1) = tracked_text(FULL_NAME, font, tracking)
+    font = ImageFont.truetype(str(FONT), font.size * scale)
+    mask, (x0, y0, x1, y1) = tracked_text(FULL_NAME, font, tracking * scale)
     mask = mask.crop((x0, y0, x1, y1))
-    centre = (cols[0] + cols[-1]) / 2
-    margin = cols[0]
-    w = max(src.width, mask.width + 2 * margin)
-    img = Image.new("RGB", (w, src.height), "white")
-    shift = round(w / 2 - centre)
-    img.paste(src.crop((0, 0, src.width, top - 1)), (shift, 0))
-    img.paste(Image.new("RGB", mask.size, colour), (round(w / 2 - mask.width / 2), top), mask)
+    centre = (cols[0] + cols[-1]) / 2 * scale
+    margin = cols[0] * scale
+    w = max(src.width * scale, mask.width + 2 * margin)
+    img = Image.new("RGBA", (w, src.height * scale))
+    mark = Image.new("RGBA", (src.width * scale, top * scale))
+    draw = ImageDraw.Draw(mark)
+
+    def mark_colour(t):
+        return tuple(round(v) for v in GREEN * (1 - t) + DARK * t) + (255,)
+
+    stroke_width = round(STROKE * scale)
+    for points, tones in STROKES:
+        for (p, tp), (q, tq) in zip(zip(points, tones), zip(points[1:], tones[1:])):
+            steps = max(abs(q[0] - p[0]), abs(q[1] - p[1])) // 3 + 1
+            for i in range(steps):
+                t0, t1 = i / steps, (i + 1) / steps
+                a = ((p[0] + (q[0] - p[0]) * t0) * scale,
+                     (p[1] + (q[1] - p[1]) * t0) * scale)
+                b = ((p[0] + (q[0] - p[0]) * t1) * scale,
+                     (p[1] + (q[1] - p[1]) * t1) * scale)
+                draw.line((a, b), fill=mark_colour(tp + (tq - tp) * (t0 + t1) / 2), width=stroke_width)
+            for point, tone in ((p, tp), (q, tq)):
+                x, y = point[0] * scale, point[1] * scale
+                r = stroke_width / 2
+                draw.ellipse((x - r, y - r, x + r, y + r), fill=mark_colour(tone))
+    for (x, y), tone in RINGS:
+        radius, line = RING_R * scale, round(RING_W * scale)
+        x, y = x * scale, y * scale
+        draw.ellipse((x - radius, y - radius, x + radius, y + radius),
+                     fill=(0, 0, 0, 0), outline=mark_colour(tone), width=line)
+
+    img.alpha_composite(mark, (round(w / 2 - centre), 0))
+    img.paste(Image.new("RGBA", mask.size, colour + (255,)),
+              (round(w / 2 - mask.width / 2), top * scale), mask)
     return img
 
 
@@ -246,13 +279,19 @@ def main():
     for n in (16, 22, 24, 32, 48, 64, 96, 128, 256, 512):
         save(render_mark(n), OUT / f"icons/hicolor/{n}x{n}/apps/jk-os.png")
 
-    named = trim(color_to_alpha(full_name_logo()), 12)
+    named = trim(full_name_logo(), 24)
     named_dark = invert_lightness(named)
     # JPEG: the glows' fine noise (against banding) doesn't compress as PNG.
     wp = OUT / "wallpapers/jk_os/contents"
-    for w, h in ((1920, 1080), (2560, 1440), (3840, 2160), (1080, 1920)):
-        save(compose((w, h), named, AURORA_LIGHT), wp / f"images/{w}x{h}.jpg", quality=93)
-        save(compose((w, h), named_dark, AURORA_DARK), wp / f"images_dark/{w}x{h}.jpg", quality=93)
+    for names, size in (
+            (((1920, 1080), (2560, 1440), (3840, 2160)), (3840, 2160)),
+            (((1080, 1920), (2160, 3840)), (2160, 3840))):
+        light = compose(size, named, AURORA_LIGHT)
+        dark = compose(size, named_dark, AURORA_DARK)
+        for label in names:
+            filename = f"{label[0]}x{label[1]}.jpg"
+            save(light, wp / "images" / filename, quality=98, subsampling=0)
+            save(dark, wp / "images_dark" / filename, quality=98, subsampling=0)
     save(compose((400, 250), named, AURORA_LIGHT), wp / "screenshot.png")
 
     # The Global Themes' previews (light and dark): the wallpaper, a menu bar

@@ -539,9 +539,11 @@ way up, 0 and 180 portrait). External screens keep their own orientation.
 
 The light `jk-gui` theme plays `jk_os_particle_splash.mp4` as a six-second
 particle intro and fades into the default wallpaper. The OS ships its
-animated WebP conversion because QtMultimedia has no video backend;
+full-resolution 1920×1080 animated WebP conversion because QtMultimedia has no video backend;
 `python3 scripts/make-splash-animation.py` regenerates that asset after
-the source video changes. The dark theme keeps its dark wallpaper splash.
+the source video changes. The wallpaper is rendered at 4K from the logo's
+vector mark and Poppins lettering by `scripts/make-branding.py`. The dark
+theme keeps its dark wallpaper splash.
 
 ## NVIDIA GPUs
 
