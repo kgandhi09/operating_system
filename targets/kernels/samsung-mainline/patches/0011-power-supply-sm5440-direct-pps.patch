@@ -444,7 +444,7 @@ index 0000000..0eb52f0
 +
 +	return sm->mode > 0 && online > 0 && capacity >= 5 &&
 +	       capacity < min(limit, 90) &&
-+	       temp >= 100 && temp < 420 &&
++	       temp >= 100 && temp < 620 &&
 +	       voltage >= 3500000 && voltage < 4350000;
 +}
 +

@@ -723,9 +723,9 @@ as graphs. It reads `/sys/class/power_supply` (another tree with
 `JK_POWER_SUPPLY_DIR`), so it works on laptops as on the tablet. It also
 offers the fast, normal and gentle presets, an explicit charging path selector,
 and every control reported by `jk-charge --machine` in the top charging panel.
-Battery, charger, health, power, and history appear together in one instrument
-cluster. Changes are applied through `jk-charge` without a password field in
-the GUI.
+Charging, battery, health, and charger status appear in one row, with a single
+history plot immediately below. The plot can show power or battery level.
+Changes are applied through `jk-charge` without a password field in the GUI.
 
 ## Date, time and time zone
 
