@@ -1,0 +1,32 @@
+Subject: [PATCH] drm/msm/dpu: advertise color management only when all mixers have DSPP
+
+The SC7280 DPU used by the SM-T733 has three layer mixers, but only LM_0
+has a DSPP. DPU exposes CTM and gamma LUT on every CRTC as soon as the
+catalog contains any DSPP. A compositor can then set a gamma LUT on the
+external DP CRTC. At 1920x1080 it needs the LM_2/LM_3 pair, neither of
+which has a DSPP, so atomic resource reservation fails with -ENAVAIL and
+the monitor goes black after detection.
+
+The advertised CRTC color properties cannot be tied to a particular
+mixer: resource allocation can place any CRTC on any mixer. Only expose
+them when every mixer has a DSPP, so userspace does not submit a color
+configuration that some display pipelines cannot satisfy.
+
+---
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
+@@ -1911,7 +1911,12 @@ struct drm_crtc *dpu_crtc_init(struct drm_device *dev, struct drm_plane *plane,
+ 
+ 	drm_crtc_helper_add(crtc, &dpu_crtc_helper_funcs);
+ 
+-	if (dpu_kms->catalog->dspp_count) {
++	/* A CRTC can use any mixer. Do not advertise color properties when
++	 * some mixers have no DSPP: userspace may otherwise request a LUT on
++	 * a pipeline that cannot reserve the required color processing block.
++	 */
++	if (dpu_kms->catalog->dspp_count &&
++	    dpu_kms->catalog->dspp_count == dpu_kms->catalog->mixer_count) {
+ 		const struct dpu_dspp_cfg *dspp = &dpu_kms->catalog->dspp[0];
+ 
+ 		if (dspp->sblk->gc.base) {

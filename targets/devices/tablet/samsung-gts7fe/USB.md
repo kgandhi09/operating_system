@@ -13,6 +13,14 @@ waits for its whole bridge chain (QMP PHY, PS5169, SM5714 connector): if the
 tablet's own screen stays dark after this change, that chain is the suspect
 (`sudo jk-update --rollback`, or set `&mdss_dp` back to `disabled`).
 
+On 2026-10-07, an external 1920x1080 display was detected with DP alt mode
+active but went black when the desktop enabled it. The kernel logged
+`LM_2/LM_3, invalid DSPP_-1` and `failed to reserve hw resources: -119`.
+The SC7280 DPU has a DSPP only on LM_0, while DPU advertised gamma/CTM
+on every CRTC. Patch 0012 stops advertising those color controls when the
+mixers do not all have DSPPs. This preserves the external DP resource path;
+the resulting boot image still needs testing on the tablet.
+
 ## Hardware and software
 
 | Component | Stock wiring | JK OS implementation |
