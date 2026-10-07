@@ -10,6 +10,7 @@
 #   sudo jk-charge current <mA>   current into the battery
 #   sudo jk-charge voltage <mV>   full-charge voltage
 #   sudo jk-charge limit <%>      battery care: stop at this level, 50-100
+#   sudo jk-charge driver sm5714|sm5440-auto|sm5440-full
 #   sudo jk-charge direct off|auto|full
 #   sudo jk-charge direct-current <mA>  PPS input ceiling, 2000-4500
 #                                 (100: off), charge again 5% below it
@@ -212,7 +213,20 @@ show() {
         case "$(rd "$DIRECT/charge_control_limit")" in
             0) direct_name=off ;; 1) direct_name=auto ;; 2) direct_name=full ;; *) direct_name=unknown ;;
         esac
-        echo "Direct charger: $direct_name, $( [ "$(rd "$DIRECT/online")" = 1 ] && echo active || echo standby)"
+        case "$direct_name" in
+            off) driver_name="SM5714 switching (fixed 5 V, up to 15 W)" ;;
+            auto) driver_name="SM5440 direct (PPS, about 25 W)" ;;
+            full) driver_name="SM5440 direct (PPS, up to 45 W)" ;;
+            *) driver_name="unknown" ;;
+        esac
+        echo "Selected charging path: $driver_name"
+        if [ "$(rd "$DIRECT/online")" = 1 ]; then
+            echo "Active charging path: SM5440 direct"
+        elif [ "$(rd "$CHG/online")" = 1 ]; then
+            echo "Active charging path: SM5714 switching"
+        else
+            echo "Active charging path: none (charger disconnected)"
+        fi
         if [ "$(rd "$DIRECT/online")" = 1 ]; then
             du=$(rd "$DIRECT/current_now") dv=$(rd "$DIRECT/voltage_now")
             [ -n "$du" ] && [ -n "$dv" ] && awk -v i="$du" -v v="$dv" 'BEGIN { printf "  PPS input: %.2f W (%.3f V, %d mA)\n", i * v / 1e12, v / 1e6, i / 1000 }'
@@ -268,7 +282,7 @@ machine() {
         printf 'limit\t%s\t%s\t50\t100\t%%\n' "$(rd "$BAT/charge_control_end_threshold")" "$LIMIT"
     fi
     if can direct; then
-        printf 'direct\t%s\t%s\t0\t2\tmode\n' "$(rd "$DIRECT/charge_control_limit")" "$DIRECT_MODE"
+        printf 'driver\t%s\t%s\t0\t2\tmode\n' "$(rd "$DIRECT/charge_control_limit")" "$DIRECT_MODE"
     fi
     if can direct-current; then
         printf 'direct-current\t%s\t%s\t2000\t%s\tmA\n' "$(ma "$DIRECT/input_current_limit")" "$DIRECT_CURRENT" "${DIRECT_MAX:-4500}"
@@ -295,11 +309,13 @@ case "$1" in
              check "$2" 4000 "${VOLT_MAX:-4500}" "full voltage (mV)"; VOLTAGE=$2 ;;
     limit)   can limit || die "this battery has no charge limit (battery care)"
              check "$2" 50 100 "battery care limit (%)"; LIMIT=$2 ;;
+    driver)  can direct || die "this machine has no selectable charging driver"
+             case "$2" in sm5714) DIRECT_MODE=0 ;; sm5440-auto) DIRECT_MODE=1 ;; sm5440-full|sm5440) DIRECT_MODE=2 ;; *) die "driver must be sm5714, sm5440-auto, or sm5440-full" ;; esac ;;
     direct)  can direct || die "this machine has no direct charger control"
              case "$2" in off|0) DIRECT_MODE=0 ;; auto|1) DIRECT_MODE=1 ;; full|2) DIRECT_MODE=2 ;; *) die "direct mode must be off, auto, or full" ;; esac ;;
     direct-current) can direct-current || die "this machine has no PPS input ceiling"
              check "$2" 2000 "${DIRECT_MAX:-4500}" "PPS input ceiling (mA)"; DIRECT_CURRENT=$2 ;;
-    *) die "usage: $name [fast|normal|gentle | input <mA> | current <mA> | voltage <mV> | limit <%> | direct off|auto|full | direct-current <mA>]" ;;
+    *) die "usage: $name [fast|normal|gentle | driver sm5714|sm5440-auto|sm5440-full | input <mA> | current <mA> | voltage <mV> | limit <%> | direct off|auto|full | direct-current <mA>]" ;;
 esac
 apply || die "not saved"
 save

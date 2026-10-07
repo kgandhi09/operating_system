@@ -690,6 +690,9 @@ sudo jk-charge limit 80        # battery care: stop at 80%, charge again below 7
 sudo jk-charge fast | normal | gentle
 sudo jk-charge input 2000      # input <mA>, current <mA>, voltage <mV>: where offered
 sudo jk-charge direct full      # SM5440: off, auto (~25 W), full (up to 45 W input)
+sudo jk-charge driver sm5714       # fixed 5 V switching path, up to 15 W input
+sudo jk-charge driver sm5440-auto  # PPS direct path, about 25 W input
+sudo jk-charge driver sm5440-full  # PPS direct path, up to 45 W input
 sudo jk-charge direct-current 3000  # PPS input current ceiling, 2000-4500 mA
 ```
 
@@ -711,15 +714,18 @@ setting's supported range.
 
 ## jk-charge-gui: battery and charging settings
 
-`jk-charge-gui` ("Charge Settings" in the desktop's menu) shows the
+`jk-charge-gui` ("Charge Settings" in the desktop's menu) runs as root and shows the
 battery live: level, charging or discharging and how fast (W, mA, % per
 hour), time to full (or to the battery care limit) or to empty, voltage,
 temperature, capacity and wear (where the fuel gauge reports them: laptops'
 do, the tablet's doesn't), the charger and its settings, and the last hour
 as graphs. It reads `/sys/class/power_supply` (another tree with
 `JK_POWER_SUPPLY_DIR`), so it works on laptops as on the tablet. It also
-offers the fast, normal and gentle presets and every control reported by
-`jk-charge --machine`; changes are applied through `jk-charge`.
+offers the fast, normal and gentle presets, an explicit charging path selector,
+and every control reported by `jk-charge --machine` in the top charging panel.
+Battery, charger, health, power, and history appear together in one instrument
+cluster. Changes are applied through `jk-charge` without a password field in
+the GUI.
 
 ## Date, time and time zone
 

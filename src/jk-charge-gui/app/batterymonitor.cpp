@@ -189,6 +189,7 @@ void BatteryMonitor::poll()
 
     chargerPresent_ = !chargerDir_.isEmpty();
     chargerOnline_ = false;
+    directActive_ = readUevent(root_ + "/sm5440-direct").value("ONLINE") == "1";
     chargerName_.clear();
     chargerHealth_.clear();
     chargeType_.clear();

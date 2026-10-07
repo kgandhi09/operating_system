@@ -2,7 +2,7 @@
 Type=Application
 Name=Charge Settings
 GenericName=Battery Monitor
-Comment=The battery and its charger in real time: charging, discharging, power, health
+Comment=Run as root to monitor the battery and change charging settings
 Exec=jk-charge-gui
 Icon=battery
 Terminal=false

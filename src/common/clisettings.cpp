@@ -49,15 +49,15 @@ void CliSettings::refresh()
             if (cells.size() != 6)
                 continue;
             row.insert("key", QString::fromUtf8(cells[0]));
-            const bool directMode = cells[0] == "direct";
-            row.insert("type", directMode ? "choice" : "number");
+            const bool driver = cells[0] == "driver";
+            row.insert("type", driver ? "choice" : "number");
             row.insert("current", QString::fromUtf8(cells[1]));
             row.insert("saved", QString::fromUtf8(cells[2]));
-            row.insert("choices", directMode ? "off,auto,full"
+            row.insert("choices", driver ? "sm5714,sm5440-auto,sm5440-full"
                                              : QString::fromUtf8(cells[3]) + "-" + QString::fromUtf8(cells[4]));
             row.insert("unit", QString::fromUtf8(cells[5]));
             row.insert("group", "Charging");
-            row.insert("label", directMode ? "Direct charging" : QString::fromUtf8(cells[0]));
+            row.insert("label", driver ? "Charging driver" : QString::fromUtf8(cells[0]));
         } else {
             if (cells.size() != 9)
                 continue;
@@ -94,12 +94,16 @@ bool CliSettings::invoke(const QStringList &args, const QString &password)
     if (program_.isEmpty() || args.isEmpty())
         return false;
     QByteArray output;
-    // sudo -S reads the password from a pipe. It is never placed in an
-    // argument or stored on disk. A cached sudo ticket also works with an
-    // empty field.
-    QStringList sudoArgs{"-S", "-p", "", program_};
-    sudoArgs.append(args);
-    const bool ok = command("sudo", sudoArgs, password.toUtf8() + '\n', output);
+    // Charge Settings starts as root and runs jk-charge directly. Power
+    // Settings still uses sudo for changes from a regular desktop session.
+    bool ok;
+    if (charge_) {
+        ok = command(program_, args, {}, output);
+    } else {
+        QStringList sudoArgs{"-S", "-p", "", program_};
+        sudoArgs.append(args);
+        ok = command("sudo", sudoArgs, password.toUtf8() + '\n', output);
+    }
     message_ = ok ? QString::fromUtf8(output).trimmed() : QString();
     error_ = ok ? QString() : QString::fromUtf8(output).trimmed();
     if (ok) {

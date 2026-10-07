@@ -12,9 +12,15 @@
 #include <QQuickStyle>
 #include <QQuickWindow>
 #include <QTimer>
+#include <cstdio>
+#include <unistd.h>
 
 int main(int argc, char **argv)
 {
+    if (geteuid() != 0) {
+        std::fprintf(stderr, "jk-charge-gui: run as root to change charging settings\n");
+        return 1;
+    }
     QGuiApplication app(argc, argv);
     app.setApplicationName("jk-charge-gui");
     app.setApplicationDisplayName("Charge Settings");

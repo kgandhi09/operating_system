@@ -34,10 +34,17 @@ ApplicationWindow {
         charge: true
         Component.onCompleted: refresh()
     }
+    Connections {
+        target: chargeControls
+        function onChanged() {
+            const row = chargeControls.rows.find(r => r.key === "driver")
+            if (row)
+                driverChoice.currentIndex = Math.max(0, Math.min(2, parseInt(row.current)))
+        }
+    }
 
     function runCharge(args) {
-        if (chargeControls.invoke(args, chargePassword.text))
-            chargePassword.clear()
+        chargeControls.invoke(args)
     }
 
     // ---- formatting ----
@@ -109,6 +116,34 @@ ApplicationWindow {
             Label {
                 text: heading
                 color: win.dimColor
+                font.pixelSize: 13
+                font.bold: true
+                font.capitalization: Font.AllUppercase
+                Layout.bottomMargin: 4
+            }
+        }
+    }
+
+    component ClusterPanel: Rectangle {
+        default property alias content: sectionCol.data
+        property string heading
+        property color accent: win.idleColor
+        color: "#202833"
+        radius: 8
+        border.color: win.lineColor
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        implicitHeight: sectionCol.implicitHeight + 24
+        ColumnLayout {
+            id: sectionCol
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.margins: 12
+            spacing: 7
+            Label {
+                text: heading
+                color: accent
                 font.pixelSize: 13
                 font.bold: true
                 font.capitalization: Font.AllUppercase
@@ -199,12 +234,17 @@ ApplicationWindow {
             width: scroll.availableWidth
             spacing: 14
 
-            // Level, state and the big numbers.
-            RowLayout {
+            // Charging overview and every control live in one top panel.
+            Card {
+                heading: "Charging"
                 Layout.fillWidth: true
-                Layout.margins: 18
+                Layout.leftMargin: 18
+                Layout.rightMargin: 18
+                Layout.topMargin: 18
                 Layout.bottomMargin: 0
-                spacing: 22
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 22
 
                 // The battery, filled to its level.
                 Item {
@@ -276,190 +316,258 @@ ApplicationWindow {
                         color: win.dimColor
                     }
                 }
-            }
-
-            GridLayout {
-                Layout.fillWidth: true
-                Layout.leftMargin: 18
-                Layout.rightMargin: 18
-                columns: scroll.availableWidth > 1300 ? 4 : scroll.availableWidth > 620 ? 2 : 1
-                columnSpacing: 14
-                rowSpacing: 14
-
-                Card {
-                    heading: "Charging and discharging"
-                    Stat { label: "Power"; value: signed(bat.power, 2, "W"); valueColor: win.flowColor(bat.power) }
-                    Stat {
-                        label: "Current"
-                        value: signed(known(bat.current) ? bat.current * 1000 : NaN, 0, "mA")
-                        valueColor: win.flowColor(bat.power)
-                    }
-                    Stat {
-                        label: "Current (gauge average)"
-                        visible: known(bat.currentAvg)
-                        value: signed(known(bat.currentAvg) ? bat.currentAvg * 1000 : NaN, 0, "mA")
-                    }
-                    Stat { label: "Rate"; value: signed(bat.ratePerHour, 1, "% per hour") }
-                    Stat {
-                        label: flow > 0 ? "Time to " + (bat.careEnd > 0 && bat.careEnd < 100 ? bat.careEnd + "%" : "full")
-                                        : "Time left"
-                        value: duration(bat.secondsLeft)
-                    }
-                    Stat { label: "Status (driver)"; value: bat.status }
                 }
 
-                Card {
-                    heading: "Battery"
-                    Stat { label: "Voltage"; value: num(bat.voltage, 3, "V") }
-                    Stat { label: "Resting voltage (OCV)"; visible: known(bat.voltageOcv); value: num(bat.voltageOcv, 3, "V") }
-                    Stat {
-                        label: "Temperature"
-                        value: num(bat.temperature, 1, "°C")
-                        valueColor: known(bat.temperature) && (bat.temperature >= 45 || bat.temperature < 5)
-                                    ? win.warnColor : win.textColor
-                    }
-                    Stat { label: "Charge now"; value: amount(known(bat.now) ? bat.now
-                        : (known(bat.full) ? bat.full : bat.designFull) * Math.max(bat.capacity, 0) / 100) }
-                    Stat { label: "Technology"; visible: bat.technology !== ""; value: bat.technology }
-                    Stat { label: "Model"; visible: bat.model !== ""; value: bat.model }
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 1
+                    color: win.lineColor
+                    Layout.topMargin: 10
+                    Layout.bottomMargin: 6
                 }
 
-                Card {
-                    heading: "Health"
-                    Stat { label: "Design capacity"; value: amount(bat.designFull) }
-                    Stat { label: "Full capacity now"; value: amount(bat.full) }
-                    Stat {
-                        label: "Health"
-                        value: known(bat.healthPercent) ? bat.healthPercent.toFixed(0) + "%" : "—"
-                        valueColor: known(bat.healthPercent) && bat.healthPercent < 70 ? win.warnColor : win.textColor
-                    }
-                    Stat { label: "Charge cycles"; value: bat.cycleCount >= 0 ? bat.cycleCount : "—" }
-                    Stat {
-                        label: "Battery state"
-                        value: bat.health !== "" ? bat.health : bat.chargerHealth !== "" ? bat.chargerHealth : "—"
-                        valueColor: (bat.health || bat.chargerHealth || "Good") === "Good" ? win.textColor : win.warnColor
-                    }
-                    Label {
-                        visible: bat.available && !known(bat.full)
-                        text: "This battery's fuel gauge doesn't report how much it has worn."
-                        color: win.dimColor
-                        font.pixelSize: 13
-                        wrapMode: Text.WordWrap
+                Label {
+                    text: "CHARGING PATH"
+                    color: win.dimColor
+                    font.pixelSize: 12
+                    font.bold: true
+                }
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 10
+                    ComboBox {
+                        id: driverChoice
                         Layout.fillWidth: true
+                        model: ["SM5714  ·  Switching  ·  up to 15 W",
+                                "SM5440  ·  Direct PPS  ·  about 25 W",
+                                "SM5440  ·  Direct PPS  ·  up to 45 W"]
+                        currentIndex: 0
+                        enabled: chargeControls.rows.some(r => r.key === "driver")
+                    }
+                    Button {
+                        text: "Use driver"
+                        enabled: driverChoice.enabled
+                        highlighted: true
+                        onClicked: win.runCharge(["driver", ["sm5714", "sm5440-auto", "sm5440-full"][driverChoice.currentIndex]])
                     }
                 }
+                Label {
+                    text: "Active now: " + (bat.directActive ? "SM5440 direct PPS"
+                            : bat.chargerOnline ? "SM5714 switching" : "no charger connected")
+                    color: bat.directActive ? win.inColor : win.dimColor
+                    font.pixelSize: 13
+                    wrapMode: Text.WordWrap
+                    Layout.fillWidth: true
+                    visible: driverChoice.enabled
+                }
 
-                Card {
-                    heading: "Charger"
-                    Stat {
-                        label: "Charger"
-                        value: !bat.chargerPresent ? "none" : bat.chargerOnline ? "connected" : "not connected"
-                        valueColor: bat.chargerOnline ? win.inColor : win.textColor
-                    }
-                    Stat { label: "Name"; visible: bat.chargerPresent; value: bat.chargerName }
-                    Stat { label: "Charge phase"; visible: bat.chargeType !== ""; value: bat.chargeType }
-                    Stat { label: "Input limit"; visible: known(bat.inputLimit); value: mA(bat.inputLimit) }
-                    Stat {
-                        label: "Battery current"
-                        visible: known(bat.chargeCurrentSet)
-                        value: mA(bat.chargeCurrentSet) + (known(bat.chargeCurrentMax) ? " of " + mA(bat.chargeCurrentMax) : "")
-                    }
-                    Stat { label: "Full voltage"; visible: known(bat.chargeVoltageSet); value: num(bat.chargeVoltageSet, 2, "V") }
-                    Stat {
-                        label: "Battery care"
-                        visible: bat.careEnd > 0
-                        value: bat.careEnd < 100 ? "stop at " + bat.careEnd + "%" : "off (to 100%)"
-                    }
-                    Label {
-                        text: "Charging controls"
-                        color: win.textColor
-                        font.bold: true
-                        Layout.topMargin: 12
-                    }
-                    Label {
-                        visible: chargeControls.rows.length === 0
-                        text: "This machine offers no charging controls."
-                        color: win.dimColor
-                    }
-                    TextField {
-                        id: chargePassword
-                        visible: chargeControls.rows.length > 0
-                        Layout.fillWidth: true
-                        echoMode: TextInput.Password
-                        placeholderText: "Administrator password for changes"
-                        color: win.textColor
-                        placeholderTextColor: win.dimColor
-                    }
-                    RowLayout {
-                        visible: chargeControls.rows.length > 0
-                        spacing: 6
-                        Button { text: "Fast"; onClicked: win.runCharge(["fast"]) }
-                        Button { text: "Normal"; onClicked: win.runCharge(["normal"]) }
-                        Button { text: "Gentle"; onClicked: win.runCharge(["gentle"]) }
-                        Button { text: "Refresh"; onClicked: chargeControls.refresh() }
-                    }
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.topMargin: 8
+                    spacing: 8
+                    Label { text: "PRESETS"; color: win.dimColor; font.pixelSize: 12; font.bold: true; Layout.rightMargin: 8 }
+                    Button { text: "Fast"; enabled: chargeControls.rows.length > 0; onClicked: win.runCharge(["fast"]) }
+                    Button { text: "Normal"; enabled: chargeControls.rows.length > 0; onClicked: win.runCharge(["normal"]) }
+                    Button { text: "Gentle"; enabled: chargeControls.rows.length > 0; onClicked: win.runCharge(["gentle"]) }
+                    Item { Layout.fillWidth: true }
+                    Button { text: "Refresh"; onClicked: chargeControls.refresh() }
+                }
+
+                GridLayout {
+                    Layout.fillWidth: true
+                    Layout.topMargin: 8
+                    columns: scroll.availableWidth > 760 ? 3 : scroll.availableWidth > 480 ? 2 : 1
+                    columnSpacing: 10
+                    rowSpacing: 10
                     Repeater {
-                        model: chargeControls.rows
-                        delegate: RowLayout {
+                        model: chargeControls.rows.filter(r => r.key !== "driver")
+                        delegate: Rectangle {
                             required property var modelData
                             Layout.fillWidth: true
-                            spacing: 6
-                            Label {
-                                text: modelData.label + " (" + modelData.choices + " " + modelData.unit + ")"
-                                      + (modelData.saved ? " · saved " + modelData.saved : "")
-                                Layout.fillWidth: true
-                                elide: Text.ElideRight
-                            }
-                            TextField {
-                                id: chargeValue
-                                visible: modelData.type !== "choice"
-                                text: modelData.current
-                                color: win.textColor
-                                Layout.preferredWidth: 84
-                                selectByMouse: true
-                            }
-                            ComboBox {
-                                id: chargeChoice
-                                visible: modelData.type === "choice"
-                                model: modelData.choices.split(",")
-                                currentIndex: Math.max(0, Math.min(2, parseInt(modelData.current)))
-                                Layout.preferredWidth: 132
-                            }
-                            Button {
-                                text: "Apply"
-                                onClicked: win.runCharge([modelData.key,
-                                    modelData.type === "choice" ? chargeChoice.currentText : chargeValue.text])
+                            Layout.preferredHeight: 100
+                            color: "#202833"
+                            radius: 8
+                            border.color: win.lineColor
+                            ColumnLayout {
+                                anchors.fill: parent
+                                anchors.margins: 10
+                                spacing: 4
+                                Label {
+                                    text: ({input: "Input limit", current: "Battery current", voltage: "Full voltage",
+                                            limit: "Battery care", "direct-current": "PPS input ceiling"})[modelData.key] || modelData.label
+                                    color: win.textColor
+                                    font.bold: true
+                                }
+                                Label {
+                                    text: modelData.choices + " " + modelData.unit
+                                          + (modelData.saved ? "  ·  saved " + modelData.saved : "")
+                                    color: win.dimColor
+                                    font.pixelSize: 12
+                                    Layout.fillWidth: true
+                                    elide: Text.ElideRight
+                                }
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    TextField {
+                                        id: chargeValue
+                                        Layout.fillWidth: true
+                                        text: modelData.current
+                                        color: win.textColor
+                                        selectByMouse: true
+                                        inputMethodHints: Qt.ImhDigitsOnly
+                                        onAccepted: win.runCharge([modelData.key, text])
+                                    }
+                                    Button { text: "Apply"; onClicked: win.runCharge([modelData.key, chargeValue.text]) }
+                                }
                             }
                         }
                     }
-                    Label {
-                        visible: chargeControls.error !== ""
-                        text: chargeControls.error
-                        color: win.warnColor
-                        wrapMode: Text.WordWrap
-                        Layout.fillWidth: true
-                    }
-                    Label {
-                        visible: chargeControls.error === "" && chargeControls.message !== ""
-                        text: chargeControls.message.split("\n")[0]
-                        color: win.inColor
-                        elide: Text.ElideRight
-                        Layout.fillWidth: true
-                    }
+                }
+                Label {
+                    visible: chargeControls.rows.length === 0
+                    text: "This machine offers no charging controls."
+                    color: win.dimColor
+                }
+                Label {
+                    visible: chargeControls.error !== ""
+                    text: chargeControls.error
+                    color: win.warnColor
+                    wrapMode: Text.WordWrap
+                    Layout.fillWidth: true
+                }
+                Label {
+                    visible: chargeControls.error === "" && chargeControls.message !== ""
+                    text: chargeControls.message.split("\n")[0]
+                    color: win.inColor
+                    elide: Text.ElideRight
+                    Layout.fillWidth: true
                 }
             }
 
-            // The last minutes as graphs.
             Card {
                 id: histCard
-                heading: "History"
+                heading: "Instrument cluster"
+                Layout.fillWidth: true
                 Layout.leftMargin: 18
                 Layout.rightMargin: 18
                 Layout.bottomMargin: 18
                 property int range: 600
 
+                GridLayout {
+                    Layout.fillWidth: true
+                    columns: scroll.availableWidth > 1300 ? 4 : scroll.availableWidth > 620 ? 2 : 1
+                    columnSpacing: 10
+                    rowSpacing: 10
+
+                    ClusterPanel {
+                        heading: "Charging and discharging"
+                        accent: win.inColor
+                        Stat { label: "Power"; value: signed(bat.power, 2, "W"); valueColor: win.flowColor(bat.power) }
+                        Stat {
+                            label: "Current"
+                            value: signed(known(bat.current) ? bat.current * 1000 : NaN, 0, "mA")
+                            valueColor: win.flowColor(bat.power)
+                        }
+                        Stat {
+                            label: "Current (gauge average)"
+                            visible: known(bat.currentAvg)
+                            value: signed(known(bat.currentAvg) ? bat.currentAvg * 1000 : NaN, 0, "mA")
+                        }
+                        Stat { label: "Rate"; value: signed(bat.ratePerHour, 1, "% per hour") }
+                        Stat {
+                            label: flow > 0 ? "Time to " + (bat.careEnd > 0 && bat.careEnd < 100 ? bat.careEnd + "%" : "full")
+                                            : "Time left"
+                            value: duration(bat.secondsLeft)
+                        }
+                        Stat { label: "Status (driver)"; value: bat.status }
+                    }
+
+                    ClusterPanel {
+                        heading: "Battery"
+                        accent: win.idleColor
+                        Stat { label: "Voltage"; value: num(bat.voltage, 3, "V") }
+                        Stat { label: "Resting voltage (OCV)"; visible: known(bat.voltageOcv); value: num(bat.voltageOcv, 3, "V") }
+                        Stat {
+                            label: "Temperature"
+                            value: num(bat.temperature, 1, "°C")
+                            valueColor: known(bat.temperature) && (bat.temperature >= 45 || bat.temperature < 5)
+                                        ? win.warnColor : win.textColor
+                        }
+                        Stat { label: "Charge now"; value: amount(known(bat.now) ? bat.now
+                            : (known(bat.full) ? bat.full : bat.designFull) * Math.max(bat.capacity, 0) / 100) }
+                        Stat { label: "Technology"; visible: bat.technology !== ""; value: bat.technology }
+                        Stat { label: "Model"; visible: bat.model !== ""; value: bat.model }
+                    }
+
+                    ClusterPanel {
+                        heading: "Health"
+                        accent: "#b9a0ed"
+                        Stat { label: "Design capacity"; value: amount(bat.designFull) }
+                        Stat { label: "Full capacity now"; value: amount(bat.full) }
+                        Stat {
+                            label: "Health"
+                            value: known(bat.healthPercent) ? bat.healthPercent.toFixed(0) + "%" : "—"
+                            valueColor: known(bat.healthPercent) && bat.healthPercent < 70 ? win.warnColor : win.textColor
+                        }
+                        Stat { label: "Charge cycles"; value: bat.cycleCount >= 0 ? bat.cycleCount : "—" }
+                        Stat {
+                            label: "Battery state"
+                            value: bat.health !== "" ? bat.health : bat.chargerHealth !== "" ? bat.chargerHealth : "—"
+                            valueColor: (bat.health || bat.chargerHealth || "Good") === "Good" ? win.textColor : win.warnColor
+                        }
+                        Label {
+                            visible: bat.available && !known(bat.full)
+                            text: "This battery's fuel gauge doesn't report how much it has worn."
+                            color: win.dimColor
+                            font.pixelSize: 13
+                            wrapMode: Text.WordWrap
+                            Layout.fillWidth: true
+                        }
+                    }
+
+                    ClusterPanel {
+                        heading: "Charger"
+                        accent: win.outColor
+                        Stat {
+                            label: "Charger"
+                            value: !bat.chargerPresent ? "none" : bat.chargerOnline ? "connected" : "not connected"
+                            valueColor: bat.chargerOnline ? win.inColor : win.textColor
+                        }
+                        Stat { label: "Name"; visible: bat.chargerPresent; value: bat.chargerName }
+                        Stat { label: "Charge phase"; visible: bat.chargeType !== ""; value: bat.chargeType }
+                        Stat { label: "Input limit"; visible: known(bat.inputLimit); value: mA(bat.inputLimit) }
+                        Stat {
+                            label: "Battery current"
+                            visible: known(bat.chargeCurrentSet)
+                            value: mA(bat.chargeCurrentSet) + (known(bat.chargeCurrentMax) ? " of " + mA(bat.chargeCurrentMax) : "")
+                        }
+                        Stat { label: "Full voltage"; visible: known(bat.chargeVoltageSet); value: num(bat.chargeVoltageSet, 2, "V") }
+                        Stat {
+                            label: "Battery care"
+                            visible: bat.careEnd > 0
+                            value: bat.careEnd < 100 ? "stop at " + bat.careEnd + "%" : "off (to 100%)"
+                        }
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 1
+                    Layout.topMargin: 10
+                    Layout.bottomMargin: 8
+                    color: win.lineColor
+                }
+
                 RowLayout {
                     spacing: 6
+                    Layout.fillWidth: true
+                    Label {
+                        text: "HISTORY"
+                        color: win.dimColor
+                        font.pixelSize: 13
+                        font.bold: true
+                        Layout.rightMargin: 10
+                    }
                     Label { text: "Power, into (+) and out of (−) the battery"; color: win.textColor; Layout.fillWidth: true }
                     Repeater {
                         model: [{ t: "5 min", s: 300 }, { t: "10 min", s: 600 }, { t: "30 min", s: 1800 }, { t: "1 h", s: 3600 }]
