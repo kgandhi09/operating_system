@@ -557,7 +557,7 @@ index 0000000..0eb52f0
 +
 +	if (capacity < 0 || pack_temp < 0 || op_mode < 0 || status3 < 0 ||
 +	    vbus < 0 || ibus < 0 || vbat < 0 || die_temp < 0 ||
-+	    capacity >= min(limit, 90) || pack_temp < 100 || pack_temp >= 420 ||
++	    capacity >= min(limit, 90) || pack_temp < 100 || pack_temp >= 620 ||
 +	    !(op_mode & SM5440_CNTL5_CHG_ON) ||
 +	    !(status3 & SM5440_STATUS3_VBUSPOK) ||
 +	    vbus > 10800 || vbat > 4400 || die_temp >= SM5440_MAX_DIE_TEMP) {
@@ -826,7 +826,7 @@ index c76f478..c25c752 100644
 +	if (active) {
 +		if (!enable_charging || !sm->typec_bound || !sm->sink_enabled ||
 +		    sm->otg_active || sm->held || sm->too_hot_or_cold ||
-+		    sm5714_fg_get_temp(sm, &temp) || temp < 100 || temp >= 420 ||
++		    sm5714_fg_get_temp(sm, &temp) || temp < 100 || temp >= 620 ||
 +		    sm5714_fg_get_capacity(sm, &capacity) ||
 +		    capacity >= min(sm->end_pct, 90)) {
 +			ret = -ERANGE;
