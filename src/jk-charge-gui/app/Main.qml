@@ -66,8 +66,14 @@ ApplicationWindow {
         return bat.energyUnits ? v.toFixed(1) + " Wh" : Math.round(v * 1000) + " mAh"
     }
     function mA(v) { return known(v) ? Math.round(v * 1000) + " mA" : "—" }
-    readonly property bool directView: driverChoice.currentIndex > 0
-    readonly property bool showDirect: bat.directActive || directView
+    readonly property int selectedDriver: {
+        const row = chargeControls.rows.find(r => r.key === "driver")
+        return row ? Number(row.current) : -1
+    }
+    readonly property bool directSelected: selectedDriver > 0
+    readonly property bool fallbackActive: directSelected && bat.chargerOnline && !bat.directActive
+    // Live panels follow the actual charger; without one, show the saved choice.
+    readonly property bool showDirect: bat.directActive || (!bat.chargerOnline && directSelected)
 
     readonly property real flow: known(bat.powerAvg) ? bat.powerAvg : 0
     readonly property bool held: bat.status === "Not charging" && bat.chargerOnline
@@ -362,16 +368,34 @@ ApplicationWindow {
                     Layout.fillWidth: true
                     visible: driverChoice.enabled
                 }
+                Rectangle {
+                    visible: win.fallbackActive
+                    Layout.fillWidth: true
+                    implicitHeight: fallbackText.implicitHeight + 16
+                    radius: 7
+                    color: "#3b292b"
+                    border.color: win.warnColor
+                    Label {
+                        id: fallbackText
+                        anchors.fill: parent
+                        anchors.margins: 8
+                        text: "SM5440 PPS is selected, but SM5714 switching is active now. "
+                              + "Showing SM5714 readings and controls until direct PPS becomes active."
+                        color: win.warnColor
+                        wrapMode: Text.WordWrap
+                        font.pixelSize: 12
+                    }
+                }
 
                 GridLayout {
                     Layout.fillWidth: true
                     Layout.topMargin: 2
-                    columns: win.directView ? 2 : scroll.availableWidth > 600 ? 4 : 2
+                    columns: win.showDirect ? 2 : scroll.availableWidth > 600 ? 4 : 2
                     columnSpacing: 6
                     rowSpacing: 6
                     Repeater {
                         model: chargeControls.rows.filter(r => r.key === "limit" ||
-                            (win.directView ? r.key === "direct-current"
+                            (win.showDirect ? r.key === "direct-current"
                                             : ["input", "current", "voltage"].includes(r.key)))
                         delegate: Rectangle {
                             required property var modelData
@@ -515,9 +539,9 @@ ApplicationWindow {
                         accent: win.outColor
                         Stat {
                             label: "Path"
-                            value: bat.directActive ? "active" : win.directView ? "waiting for PPS" :
+                            value: bat.directActive ? "active" : win.showDirect ? "waiting for PPS" :
                                    bat.chargerOnline ? "active" : "disconnected"
-                            valueColor: bat.directActive || (!win.directView && bat.chargerOnline) ? win.inColor : win.dimColor
+                            valueColor: bat.directActive || (!win.showDirect && bat.chargerOnline) ? win.inColor : win.dimColor
                         }
                         Stat { label: "PPS input"; visible: win.showDirect && bat.directActive; value: num(bat.directPower, 2, "W") }
                         Stat { label: "PPS voltage"; visible: win.showDirect && bat.directActive; value: num(bat.directVoltage, 2, "V") }
