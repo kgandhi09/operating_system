@@ -1,0 +1,66 @@
+Subject: [PATCH] ksplash: finish the JK particle reveal before closing
+
+Plasma can reach its desktop stage before the six-second jk_os particle
+animation finishes. Let the JK light splash finish and fade to the
+wallpaper before removing the overlay. Other themes keep their normal
+startup timing. A short timeout still closes the overlay if QML fails.
+
+---
+diff --git a/ksplash/ksplashqml/splashapp.h b/ksplash/ksplashqml/splashapp.h
+--- a/ksplash/ksplashqml/splashapp.h
++++ b/ksplash/ksplashqml/splashapp.h
+@@ -30,7 +30,9 @@ protected:
+     void setStage(int stage);
+ 
+ private:
++    void finishSplash();
+     void setupWaylandIntegration();
+     int m_stage;
++    int m_splashWaits = 0;
+     QList<SplashWindow *> m_windows;
+     bool m_testing;
+diff --git a/ksplash/ksplashqml/splashapp.cpp b/ksplash/ksplashqml/splashapp.cpp
+--- a/ksplash/ksplashqml/splashapp.cpp
++++ b/ksplash/ksplashqml/splashapp.cpp
+@@ -15,5 +15,7 @@
+ #include <QLoggingCategory>
+ #include <QPixmap>
++#include <QQuickItem>
+ #include <QScreen>
++#include <QTimer>
+ 
+ #include <KWindowSystem>
+@@ -113,7 +114,8 @@ void SplashApp::setStage(int stage)
+ {
+     m_stage = stage;
+     if (m_stage == 6) {
+-        QGuiApplication::exit(EXIT_SUCCESS);
++        finishSplash();
++        return;
+     }
+     for (SplashWindow *w : std::as_const(m_windows)) {
+         w->setStage(stage);
+@@ -121,5 +123,23 @@ void SplashApp::setStage(int stage)
+     }
+ }
+ 
++void SplashApp::finishSplash()
++{
++    if (m_theme == QLatin1String("org.jk_os.desktop") && m_splashWaits++ < 80) {
++        bool ready = !m_windows.isEmpty();
++        for (SplashWindow *w : std::as_const(m_windows)) {
++            if (!w->rootObject() || !w->rootObject()->property("splashFinished").toBool()) {
++                ready = false;
++                break;
++            }
++        }
++        if (!ready) {
++            QTimer::singleShot(100, this, &SplashApp::finishSplash);
++            return;
++        }
++    }
++    QGuiApplication::exit(EXIT_SUCCESS);
++}
++
+ void SplashApp::adoptScreen(QScreen *screen)
+ {

@@ -531,11 +531,17 @@ Settings:
   XKB_DEFAULT_LAYOUT=de       # keyboard layout (XKB_DEFAULT_VARIANT, XKB_DEFAULT_OPTIONS)
   ```
 
-  `auto` turns the built-in screen the way its panel is mounted (its DRM
-  panel orientation), as the desktop does: a tablet's portrait panel shows
-  landscape (on the Galaxy Tab S7 FE that is 90; 270 is landscape the other
-  way up, 0 and 180 portrait). External screens keep their own orientation.
-  `jk-dev --rotate <value>` sets it for one session.
+`auto` turns the built-in screen the way its panel is mounted (its DRM
+panel orientation), as the desktop does: a tablet's portrait panel shows
+landscape (on the Galaxy Tab S7 FE that is 90; 270 is landscape the other
+way up, 0 and 180 portrait). External screens keep their own orientation.
+`jk-dev --rotate <value>` sets it for one session.
+
+The light `jk-gui` theme plays `jk_os_particle_splash.mp4` as a six-second
+particle intro and fades into the default wallpaper. The OS ships its
+animated WebP conversion because QtMultimedia has no video backend;
+`python3 scripts/make-splash-animation.py` regenerates that asset after
+the source video changes. The dark theme keeps its dark wallpaper splash.
 
 ## NVIDIA GPUs
 

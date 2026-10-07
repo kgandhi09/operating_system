@@ -760,6 +760,15 @@ b_aurorae() {
     done
     kfpkg "$out/src" "$out/build" "${@:1:$#-1}"
 }
+b_plasma_workspace() {
+    local src="$1" out="$2"; shift 2
+    mkdir -p "$out/src"; copy_tree "$src" "$out/src"
+    local p
+    for p in "$ROOT_DIR"/configs/desktop/patches/plasma-workspace/*.patch; do
+        patch -d "$out/src" -p1 --no-backup-if-mismatch < "$p"
+    done
+    kfpkg "$out/src" "$out/build" "${@:1:$#-1}"
+}
 b_no_users_kcm() {
     rm -f "$DYN/usr/lib/qt6/plugins/plasma/kcms/systemsettings/kcm_users.so" \
           "$DYN/usr/share/applications/kcm_users.desktop" "$DYN"/usr/share/locale/*/LC_MESSAGES/kcm_users.mo
@@ -791,7 +800,8 @@ for p in kdecoration layer-shell-qt kwayland plasma-activities plasma-activities
         plasma-integration) pkg plasma-integration kfpkg -DBUILD_QT5=OFF -DBUILD_QT6=ON ;;
         # Wayland session only (X11 apps still run, through Xwayland); locales
         # come with glibc, nothing to generate.
-        plasma-workspace)   pkg plasma-workspace kfpkg -DWITH_X11_SESSION=OFF -DGLIBC_LOCALE_GEN=OFF
+        plasma-workspace)   pkg plasma-workspace b_plasma_workspace -DWITH_X11_SESSION=OFF -DGLIBC_LOCALE_GEN=OFF \
+                                "patches=$(cat "$ROOT_DIR"/configs/desktop/patches/plasma-workspace/*.patch | sha256sum | cut -c1-16)"
                             # No user management in the desktop: users are managed as
                             # root on the console (jk_os's accounts), so the Users
                             # page of System Settings is removed.
