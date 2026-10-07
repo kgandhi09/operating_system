@@ -393,8 +393,12 @@ step host-qttools "$SRC/qttools" hostqt -DFEATURE_assistant=OFF -DFEATURE_design
     -DFEATURE_qdoc=OFF -DFEATURE_clang=OFF -DFEATURE_distancefieldgenerator=OFF \
     -DFEATURE_pixeltool=OFF -DFEATURE_qtdiag=OFF -DFEATURE_qtplugininfo=OFF -DFEATURE_qdbus=OFF
 
+# Build target-native Qt tools as well as the host tools above. The host tools
+# drive cross-builds; the target tools and their Qt6*Tools CMake packages let
+# applications use find_package(Qt6 ...) on the installed OS itself.
 # PCRE2: Qt needs the 16-bit library, the system one is 8-bit only, so Qt uses its own copy.
-pkg qtbase           qtpkg "${QT_DIRS[@]}" -DFEATURE_xcb=ON -DFEATURE_xcb_xlib=ON -DFEATURE_opengl=ON \
+pkg qtbase           qtpkg "${QT_DIRS[@]}" -DQT_FORCE_BUILD_TOOLS=ON -DQT_BUILD_TOOLS_BY_DEFAULT=ON \
+                         -DFEATURE_xcb=ON -DFEATURE_xcb_xlib=ON -DFEATURE_opengl=ON \
                          -DINPUT_opengl=desktop -DFEATURE_egl=ON -DFEATURE_vulkan=ON \
                          -DFEATURE_eglfs=OFF -DFEATURE_linuxfb=OFF -DFEATURE_kms=OFF \
                          -DFEATURE_icu=OFF -DFEATURE_glib=ON -DFEATURE_libinput=ON -DFEATURE_xkbcommon=ON \

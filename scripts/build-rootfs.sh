@@ -13,6 +13,14 @@ DYN="$OUT_DIR/dyn"
 TC="$OUT_DIR/toolchain"
 [[ -x "$TC/usr/bin/gcc" && -x "$TC/usr/bin/clang" ]] || die "toolchain not built yet (run: make toolchain)"
 [[ -x "$DYN/usr/bin/startplasma-wayland" ]] || die "desktop not built yet (run: make desktop)"
+for module in Core Gui Widgets; do
+    [[ -f "$DYN/usr/lib/cmake/Qt6${module}Tools/Qt6${module}ToolsConfig.cmake" ]] \
+        || die "Qt6${module}Tools missing (run: make desktop)"
+done
+for tool in moc rcc uic; do
+    [[ -x "$DYN/usr/lib/qt6/libexec/$tool" ]] \
+        || die "Qt tool $tool missing (run: make desktop)"
+done
 
 log "assembling rootfs ($JK_DEVICE, $ARCH)"
 rm -rf "$ROOTFS_DIR"
