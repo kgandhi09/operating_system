@@ -117,7 +117,10 @@ HOST_PKG_CONFIG="$(command -v pkg-config)"
 # compilers default to PIE, which hides this; jk_os's cross compiler doesn't.
 cmakepkg() {
     local src="$1" out="$2"; shift 2
-    cmake -G Ninja -S "$src" -B "$out" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr \
+    # Qt clears PKG_CONFIG_EXECUTABLE while configuring qtbase, then searches
+    # again. Pin the build-host executable via the environment so that search
+    # cannot pick the target's /usr/bin/pkg-config from the sysroot.
+    PKG_CONFIG="$HOST_PKG_CONFIG" cmake -G Ninja -S "$src" -B "$out" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr \
         -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
         -DWaylandScanner_EXECUTABLE="$HOSTDIR/bin/wayland-scanner" \
         -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_C_COMPILER="$CC" -DCMAKE_CXX_COMPILER="$CXX" \
