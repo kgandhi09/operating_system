@@ -101,6 +101,7 @@ void BatteryMonitor::reset()
     designFull_ = full_ = now_ = healthPercent_ = ratePerHour_ = NaN;
     inputLimit_ = chargeCurrentSet_ = chargeCurrentMax_ = chargeVoltageSet_ = NaN;
     directVoltage_ = directCurrent_ = directPower_ = directTemperature_ = directInputLimit_ = NaN;
+    fallbackReason_.clear();
 }
 
 // The system battery (not a mouse's or a headset's: scope Device), and the
@@ -144,6 +145,9 @@ void BatteryMonitor::poll()
 
     const auto b = readUevent(batteryDir_);
     const auto direct = readUevent(root_ + "/sm5440-direct");
+    QFile reasonFile(root_ + "/sm5440-direct/fallback_reason");
+    if (reasonFile.open(QIODevice::ReadOnly))
+        fallbackReason_ = QString::fromUtf8(reasonFile.readAll()).trimmed();
     directActive_ = direct.value("ONLINE") == "1";
     if (directActive_) {
         directVoltage_ = micro(direct, "VOLTAGE_NOW");

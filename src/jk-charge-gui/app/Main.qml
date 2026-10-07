@@ -66,6 +66,44 @@ ApplicationWindow {
         return bat.energyUnits ? v.toFixed(1) + " Wh" : Math.round(v * 1000) + " mAh"
     }
     function mA(v) { return known(v) ? Math.round(v * 1000) + " mA" : "—" }
+    function fallbackReasonText() {
+        const reasons = {
+            "checking": "The driver is checking whether PPS can start.",
+            "starting": "The direct-charge handoff is in progress.",
+            "direct-disabled": "Direct charging is disabled in the driver.",
+            "charger-disconnected": "The USB-PD controller does not report a charger contract.",
+            "measurement-unavailable": "A battery or charger measurement could not be read.",
+            "battery-low": "Battery level is below the direct-charge starting range.",
+            "battery-level-limit": "Battery level reached the direct-charge or battery-care limit.",
+            "battery-cold": "Battery temperature is below the direct-charge range.",
+            "battery-hot": "Battery temperature is above the direct-charge range (reported "
+                           + num(bat.temperature, 1, "°C") + ").",
+            "battery-voltage-low": "Battery voltage is below the direct-charge range.",
+            "battery-voltage-high": "Battery voltage is above the direct-charge range.",
+            "switching-handoff-rejected": "SM5714 refused the handoff to direct charging.",
+            "switching-restore-failed": "The switching path could not be safely restored.",
+            "pump-setup-failed": "The SM5440 pump could not be configured.",
+            "pps-negotiation-failed": "The adapter did not accept the PPS request.",
+            "pps-contract-unsuitable": "The adapter's PPS range cannot supply the required voltage and current.",
+            "pps-voltage-not-reached": "The requested PPS voltage did not reach the pump.",
+            "pump-enable-failed": "The SM5440 pump could not be enabled.",
+            "pump-input-not-ready": "The pump did not detect a valid input bus.",
+            "pps-current-too-low": "Available PPS current is below the pump's minimum.",
+            "pps-current-adjustment-failed": "The PPS current adjustment failed.",
+            "pps-refresh-failed": "The PPS contract could not be refreshed.",
+            "pump-hot": "The SM5440 pump reached its temperature limit.",
+            "pps-bus-overvoltage": "PPS input voltage exceeded the pump limit.",
+            "battery-overvoltage": "Battery voltage exceeded the pump limit.",
+            "pump-input-lost": "The pump lost its valid input bus.",
+            "pump-stopped": "The pump stopped or reported a fault.",
+            "pump-watchdog-failed": "The pump watchdog could not be serviced."
+        }
+        if (bat.fallbackReason === "none")
+            return "The direct-charge status is updating."
+        return reasons[bat.fallbackReason] ||
+               (bat.fallbackReason ? "Driver reported: " + bat.fallbackReason
+                                   : "The installed kernel does not report a fallback reason.")
+    }
     readonly property int selectedDriver: {
         const row = chargeControls.rows.find(r => r.key === "driver")
         return row ? Number(row.current) : -1
@@ -380,7 +418,8 @@ ApplicationWindow {
                         anchors.fill: parent
                         anchors.margins: 8
                         text: "SM5440 PPS is selected, but SM5714 switching is active now. "
-                              + "Showing SM5714 readings and controls until direct PPS becomes active."
+                              + "Showing SM5714 readings and controls.\nReason: "
+                              + win.fallbackReasonText()
                         color: win.warnColor
                         wrapMode: Text.WordWrap
                         font.pixelSize: 12

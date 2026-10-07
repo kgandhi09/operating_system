@@ -34,7 +34,7 @@ new file mode 100644
 index 0000000..0eb52f0
 --- /dev/null
 +++ b/drivers/power/supply/sm5440_direct.c
-@@ -0,0 +1,762 @@
+@@ -0,0 +1,784 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Silicon Mitus SM5440 2:1 direct charger for the Samsung SM-T733.
@@ -442,10 +442,13 @@ index 0000000..0eb52f0
 +	if (limit < 0)
 +		limit = 100;
 +
-+	return sm->mode > 0 && online > 0 && capacity >= 5 &&
-+	       capacity < min(limit, 90) &&
-+	       temp >= 100 && temp < 580 &&
-+	       voltage >= 3500000 && voltage < 4350000;
++	// return sm->mode > 0 && online > 0 && capacity >= 5 &&
++	//        capacity < min(limit, 90) &&
++	//        temp >= 100 && temp < 580 &&
++	//        voltage >= 3500000 && voltage < 4350000;
++   return sm->mode > 0 && online > 0 &&
++          temp >= 100 && temp < 580 &&
++          voltage >= 3500000 && voltage < 4400000;
 +}
 +
 +static int sm5440_adjust_current(struct sm5440_direct *sm)
@@ -514,7 +517,11 @@ index 0000000..0eb52f0
 +		}
 +		goto out;
 +	}
-+	if (sm->mode == 0 || !sm5440_eligible(sm)) {
++	//if (sm->mode == 0 || !sm5440_eligible(sm)) {
++	//	sm5440_restore_switching(sm);
++	//	goto out;
++	//}
++	if (sm->mode == 0) {
 +		sm5440_restore_switching(sm);
 +		goto out;
 +	}
@@ -555,9 +562,24 @@ index 0000000..0eb52f0
 +	if (limit < 0)
 +		limit = 100;
 +
++	//if (capacity < 0 || pack_temp < 0 || op_mode < 0 || status3 < 0 ||
++	//    vbus < 0 || ibus < 0 || vbat < 0 || die_temp < 0 ||
++	//    capacity >= min(limit, 90) || pack_temp < 100 || pack_temp >= 580 ||
++	//    !(op_mode & SM5440_CNTL5_CHG_ON) ||
++	//    !(status3 & SM5440_STATUS3_VBUSPOK) ||
++	//    vbus > 10800 || vbat > 4400 || die_temp >= SM5440_MAX_DIE_TEMP) {
++	//	dev_warn(sm->dev,
++	//		 "stopping direct charge: cap=%d temp=%d mode=%#x "
++	//		 "st3=%#x vbus=%d ibus=%d vbat=%d die=%d\n",
++	//		 capacity, pack_temp, op_mode, status3,
++	//		 vbus, ibus, vbat, die_temp);
++	//	sm5440_restore_switching(sm);
++	//	delay = msecs_to_jiffies(SM5440_RETRY_MS);
++	//	goto out;
++	//}
 +	if (capacity < 0 || pack_temp < 0 || op_mode < 0 || status3 < 0 ||
 +	    vbus < 0 || ibus < 0 || vbat < 0 || die_temp < 0 ||
-+	    capacity >= min(limit, 90) || pack_temp < 100 || pack_temp >= 580 ||
++	    pack_temp < 100 || pack_temp >= 580 ||
 +	    !(op_mode & SM5440_CNTL5_CHG_ON) ||
 +	    !(status3 & SM5440_STATUS3_VBUSPOK) ||
 +	    vbus > 10800 || vbat > 4400 || die_temp >= SM5440_MAX_DIE_TEMP) {

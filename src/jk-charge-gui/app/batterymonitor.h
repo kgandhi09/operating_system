@@ -43,6 +43,7 @@ class BatteryMonitor : public QObject {
     Q_PROPERTY(bool chargerPresent MEMBER chargerPresent_ NOTIFY updated)
     Q_PROPERTY(bool chargerOnline MEMBER chargerOnline_ NOTIFY updated)
     Q_PROPERTY(bool directActive MEMBER directActive_ NOTIFY updated)
+    Q_PROPERTY(QString fallbackReason MEMBER fallbackReason_ NOTIFY updated)
     Q_PROPERTY(qreal directVoltage MEMBER directVoltage_ NOTIFY updated)
     Q_PROPERTY(qreal directCurrent MEMBER directCurrent_ NOTIFY updated)
     Q_PROPERTY(qreal directPower MEMBER directPower_ NOTIFY updated)
@@ -84,6 +85,7 @@ private:
     bool energyUnits_ = false;
     qreal designFull_, full_, now_, healthPercent_, ratePerHour_;
     bool chargerPresent_ = false, chargerOnline_ = false, directActive_ = false;
+    QString fallbackReason_;
     qreal directVoltage_, directCurrent_, directPower_, directTemperature_, directInputLimit_;
     QString chargerName_, chargerHealth_, chargeType_;
     qreal inputLimit_, chargeCurrentSet_, chargeCurrentMax_, chargeVoltageSet_;
