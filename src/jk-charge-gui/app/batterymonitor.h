@@ -43,6 +43,12 @@ class BatteryMonitor : public QObject {
     Q_PROPERTY(bool chargerPresent MEMBER chargerPresent_ NOTIFY updated)
     Q_PROPERTY(bool chargerOnline MEMBER chargerOnline_ NOTIFY updated)
     Q_PROPERTY(bool directActive MEMBER directActive_ NOTIFY updated)
+    Q_PROPERTY(qreal directVoltage MEMBER directVoltage_ NOTIFY updated)
+    Q_PROPERTY(qreal directCurrent MEMBER directCurrent_ NOTIFY updated)
+    Q_PROPERTY(qreal directPower MEMBER directPower_ NOTIFY updated)
+    Q_PROPERTY(qreal directTemperature MEMBER directTemperature_ NOTIFY updated)
+    Q_PROPERTY(qreal directInputLimit MEMBER directInputLimit_ NOTIFY updated)
+    Q_PROPERTY(QVariantList directPowerHistory READ directPowerHistory NOTIFY updated)
     Q_PROPERTY(QString chargerName MEMBER chargerName_ NOTIFY updated)
     Q_PROPERTY(QString chargerHealth MEMBER chargerHealth_ NOTIFY updated)
     Q_PROPERTY(QString chargeType MEMBER chargeType_ NOTIFY updated)
@@ -58,6 +64,7 @@ public:
     explicit BatteryMonitor(QObject *parent = nullptr);
     bool available() const { return !batteryDir_.isEmpty(); }
     QVariantList powerHistory() const;
+    QVariantList directPowerHistory() const;
     QVariantList capacityHistory() const;
     int historySeconds() const { return kHistory; }
 
@@ -77,10 +84,11 @@ private:
     bool energyUnits_ = false;
     qreal designFull_, full_, now_, healthPercent_, ratePerHour_;
     bool chargerPresent_ = false, chargerOnline_ = false, directActive_ = false;
+    qreal directVoltage_, directCurrent_, directPower_, directTemperature_, directInputLimit_;
     QString chargerName_, chargerHealth_, chargeType_;
     qreal inputLimit_, chargeCurrentSet_, chargeCurrentMax_, chargeVoltageSet_;
 
-    QList<qreal> powerHist_, capacityHist_, flowHist_;   // flow: A or W, for the averages
+    QList<qreal> powerHist_, directPowerHist_, capacityHist_, flowHist_;   // flow: A or W, for the averages
 
     void findSupplies();
     void poll();

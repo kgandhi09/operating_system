@@ -444,7 +444,7 @@ index 0000000..0eb52f0
 +
 +	return sm->mode > 0 && online > 0 && capacity >= 5 &&
 +	       capacity < min(limit, 90) &&
-+	       temp >= 100 && temp < 620 &&
++	       temp >= 100 && temp < 580 &&
 +	       voltage >= 3500000 && voltage < 4350000;
 +}
 +
@@ -557,7 +557,7 @@ index 0000000..0eb52f0
 +
 +	if (capacity < 0 || pack_temp < 0 || op_mode < 0 || status3 < 0 ||
 +	    vbus < 0 || ibus < 0 || vbat < 0 || die_temp < 0 ||
-+	    capacity >= min(limit, 90) || pack_temp < 100 || pack_temp >= 620 ||
++	    capacity >= min(limit, 90) || pack_temp < 100 || pack_temp >= 580 ||
 +	    !(op_mode & SM5440_CNTL5_CHG_ON) ||
 +	    !(status3 & SM5440_STATUS3_VBUSPOK) ||
 +	    vbus > 10800 || vbat > 4400 || die_temp >= SM5440_MAX_DIE_TEMP) {
@@ -809,7 +809,17 @@ index c76f478..c25c752 100644
  	unsigned int typec_ma;
  	struct mutex lock; /* SRAM address/data pairs, charger updates */
  	struct power_supply *bat_psy;
-@@ -607,6 +608,49 @@ bool sm5714_usb_vbus_enabled(struct power_supply *psy)
+@@ -303,7 +304,8 @@ static int sm5714_fg_get_current(struct sm5714 *sm, u8 addr, int *ua)
+ 	ma = ((raw & SM5714_MAGNITUDE) * 1000) / 2044;
+ 	if (raw & SM5714_SIGN)
+ 		ma = -ma;
+-	else if (!(aux & SM5714_FG_AUX_CHG_DETECT) && !sm5714_chg_is_charging(sm))
++	else if (!READ_ONCE(sm->direct_charging) &&
++		 !(aux & SM5714_FG_AUX_CHG_DETECT) && !sm5714_chg_is_charging(sm))
+ 		ma = 0;
+ 
+ 	if (aux & SM5714_FG_AUX_CURR_X2_5)
+@@ -607,6 +609,49 @@ bool sm5714_usb_vbus_enabled(struct power_supply *psy)
  }
  EXPORT_SYMBOL_GPL(sm5714_usb_vbus_enabled);
  
@@ -826,7 +836,7 @@ index c76f478..c25c752 100644
 +	if (active) {
 +		if (!enable_charging || !sm->typec_bound || !sm->sink_enabled ||
 +		    sm->otg_active || sm->held || sm->too_hot_or_cold ||
-+		    sm5714_fg_get_temp(sm, &temp) || temp < 100 || temp >= 620 ||
++		    sm5714_fg_get_temp(sm, &temp) || temp < 100 || temp >= 580 ||
 +		    sm5714_fg_get_capacity(sm, &capacity) ||
 +		    capacity >= min(sm->end_pct, 90)) {
 +			ret = -ERANGE;
@@ -859,7 +869,7 @@ index c76f478..c25c752 100644
  int sm5714_usb_set_vbus(struct power_supply *psy, bool source, bool sink)
  {
  	struct sm5714 *sm = power_supply_get_drvdata(psy);
-@@ -680,12 +724,14 @@ int sm5714_usb_set_current(struct power_supply *psy, unsigned int mv,
+@@ -680,12 +725,14 @@ int sm5714_usb_set_current(struct power_supply *psy, unsigned int mv,
  	struct sm5714 *sm = power_supply_get_drvdata(psy);
  	int ret = 0;
  
@@ -877,7 +887,7 @@ index c76f478..c25c752 100644
  		if (!sm->typec_ma)
  			sm5714_charging_disable(sm);
  		else
-@@ -755,7 +801,7 @@ static void sm5714_charge_control(struct sm5714 *sm, unsigned int st1,
+@@ -755,7 +802,7 @@ static void sm5714_charge_control(struct sm5714 *sm, unsigned int st1,
  	int uv;
  
  	/* OTG owns the operating mode until TCPM releases it. */
@@ -886,7 +896,7 @@ index c76f478..c25c752 100644
  		return;
  
  	if (!(st1 & SM5714_STATUS1_VBUSPOK) ||
-@@ -870,6 +916,11 @@ static int sm5714_bat_get_status(struct sm5714 *sm, int *status)
+@@ -870,6 +917,11 @@ static int sm5714_bat_get_status(struct sm5714 *sm, int *status)
  {
  	int ret, capacity;
  

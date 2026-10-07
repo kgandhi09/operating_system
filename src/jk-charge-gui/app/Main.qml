@@ -66,6 +66,8 @@ ApplicationWindow {
         return bat.energyUnits ? v.toFixed(1) + " Wh" : Math.round(v * 1000) + " mAh"
     }
     function mA(v) { return known(v) ? Math.round(v * 1000) + " mA" : "—" }
+    readonly property bool directView: driverChoice.currentIndex > 0
+    readonly property bool showDirect: bat.directActive || directView
 
     readonly property real flow: known(bat.powerAvg) ? bat.powerAvg : 0
     readonly property bool held: bat.status === "Not charging" && bat.chargerOnline
@@ -77,6 +79,7 @@ ApplicationWindow {
     readonly property color stateColor: bat.available ? flowColor(flow) : dimColor
     readonly property string headline: {
         if (!bat.available) return "No battery found"
+        if (bat.directActive) return "Charging · SM5440 PPS"
         if (bat.status === "Full") return "Full"
         if (held) return "Held at " + bat.careEnd + "% (battery care)"
         if (bat.chargerOnline && flow < -0.05)
@@ -87,6 +90,7 @@ ApplicationWindow {
     }
     readonly property string subline: {
         if (!bat.available) return "No battery in /sys/class/power_supply"
+        if (bat.directActive) return "Direct charging active"
         if (bat.chargerOnline && flow < -0.05)
             return "The device uses more power than the charger gives"
         if (bat.secondsLeft >= 0)
@@ -298,21 +302,22 @@ ApplicationWindow {
                     Layout.alignment: Qt.AlignTop | Qt.AlignRight
                     Label {
                         Layout.alignment: Qt.AlignRight
-                        text: signed(bat.power, 2, "W")
+                        text: signed(bat.directActive ? bat.directPower : bat.power, 2, "W")
                         font.pixelSize: 32
                         font.bold: true
-                        color: win.flowColor(bat.power)
+                        color: win.flowColor(bat.directActive ? bat.directPower : bat.power)
                     }
                     Label {
                         Layout.alignment: Qt.AlignRight
-                        text: (bat.energyUnits ? "" : signed(known(bat.current) ? bat.current * 1000 : NaN, 0, "mA") + "  ·  ")
-                              + signed(bat.ratePerHour, 1, "%/h")
+                        text: bat.directActive ? "PPS input  ·  " + mA(bat.directCurrent)
+                              : "Battery net  ·  " + signed(bat.ratePerHour, 1, "%/h")
                         font.pixelSize: 13
                         color: win.dimColor
                     }
                     Label {
                         Layout.alignment: Qt.AlignRight
-                        text: "average of 30 s: " + signed(bat.powerAvg, 2, "W")
+                        text: bat.directActive ? num(bat.directVoltage, 2, "V")
+                              : "average of 30 s: " + signed(bat.powerAvg, 2, "W")
                         font.pixelSize: 11
                         color: win.dimColor
                     }
@@ -346,9 +351,6 @@ ApplicationWindow {
                         highlighted: true
                         onClicked: win.runCharge(["driver", ["sm5714", "sm5440-auto", "sm5440-full"][driverChoice.currentIndex]])
                     }
-                    Button { text: "Fast"; enabled: chargeControls.rows.length > 0; onClicked: win.runCharge(["fast"]) }
-                    Button { text: "Normal"; enabled: chargeControls.rows.length > 0; onClicked: win.runCharge(["normal"]) }
-                    Button { text: "Gentle"; enabled: chargeControls.rows.length > 0; onClicked: win.runCharge(["gentle"]) }
                     Button { text: "Refresh"; onClicked: chargeControls.refresh() }
                 }
                 Label {
@@ -364,11 +366,13 @@ ApplicationWindow {
                 GridLayout {
                     Layout.fillWidth: true
                     Layout.topMargin: 2
-                    columns: scroll.availableWidth > 900 ? 5 : scroll.availableWidth > 600 ? 3 : 2
+                    columns: win.directView ? 2 : scroll.availableWidth > 600 ? 4 : 2
                     columnSpacing: 6
                     rowSpacing: 6
                     Repeater {
-                        model: chargeControls.rows.filter(r => r.key !== "driver")
+                        model: chargeControls.rows.filter(r => r.key === "limit" ||
+                            (win.directView ? r.key === "direct-current"
+                                            : ["input", "current", "voltage"].includes(r.key)))
                         delegate: Rectangle {
                             required property var modelData
                             Layout.fillWidth: true
@@ -451,7 +455,7 @@ ApplicationWindow {
                     ClusterPanel {
                         heading: "Charging and discharging"
                         accent: win.inColor
-                        Stat { label: "Power"; value: signed(bat.power, 2, "W"); valueColor: win.flowColor(bat.power) }
+                        Stat { label: "Battery net"; value: signed(bat.power, 2, "W"); valueColor: win.flowColor(bat.power) }
                         Stat {
                             label: "Current"
                             value: signed(known(bat.current) ? bat.current * 1000 : NaN, 0, "mA")
@@ -468,7 +472,7 @@ ApplicationWindow {
                                             : "Time left"
                             value: duration(bat.secondsLeft)
                         }
-                        Stat { label: "Status"; value: bat.status }
+                        Stat { label: "Status"; value: bat.directActive ? "Charging" : bat.status }
                     }
 
                     ClusterPanel {
@@ -507,22 +511,28 @@ ApplicationWindow {
                     }
 
                     ClusterPanel {
-                        heading: "Charger"
+                        heading: win.showDirect ? "SM5440 · Direct PPS" : "SM5714 · Switching"
                         accent: win.outColor
                         Stat {
-                            label: "Charger"
-                            value: !bat.chargerPresent ? "none" : bat.chargerOnline ? "connected" : "not connected"
-                            valueColor: bat.chargerOnline ? win.inColor : win.textColor
+                            label: "Path"
+                            value: bat.directActive ? "active" : win.directView ? "waiting for PPS" :
+                                   bat.chargerOnline ? "active" : "disconnected"
+                            valueColor: bat.directActive || (!win.directView && bat.chargerOnline) ? win.inColor : win.dimColor
                         }
-                        Stat { label: "Device"; visible: bat.chargerPresent; value: bat.chargerName }
-                        Stat { label: "Phase"; visible: bat.chargeType !== ""; value: bat.chargeType }
-                        Stat { label: "Input limit"; visible: known(bat.inputLimit); value: mA(bat.inputLimit) }
+                        Stat { label: "PPS input"; visible: win.showDirect && bat.directActive; value: num(bat.directPower, 2, "W") }
+                        Stat { label: "PPS voltage"; visible: win.showDirect && bat.directActive; value: num(bat.directVoltage, 2, "V") }
+                        Stat { label: "PPS current"; visible: win.showDirect && bat.directActive; value: mA(bat.directCurrent) }
+                        Stat { label: "PPS ceiling"; visible: win.showDirect && bat.directActive; value: mA(bat.directInputLimit) }
+                        Stat { label: "Pump temp"; visible: win.showDirect && bat.directActive; value: num(bat.directTemperature, 1, "°C") }
+                        Stat { label: "Device"; visible: !win.showDirect && bat.chargerPresent; value: bat.chargerName }
+                        Stat { label: "Phase"; visible: !win.showDirect && bat.chargeType !== ""; value: bat.chargeType }
+                        Stat { label: "Input limit"; visible: !win.showDirect && known(bat.inputLimit); value: mA(bat.inputLimit) }
                         Stat {
                             label: "Current limit"
-                            visible: known(bat.chargeCurrentSet)
+                            visible: !win.showDirect && known(bat.chargeCurrentSet)
                             value: mA(bat.chargeCurrentSet)
                         }
-                        Stat { label: "Voltage limit"; visible: known(bat.chargeVoltageSet); value: num(bat.chargeVoltageSet, 2, "V") }
+                        Stat { label: "Voltage limit"; visible: !win.showDirect && known(bat.chargeVoltageSet); value: num(bat.chargeVoltageSet, 2, "V") }
                         Stat {
                             label: "Care"
                             visible: bat.careEnd > 0
@@ -551,7 +561,7 @@ ApplicationWindow {
                     }
                     ComboBox {
                         id: historyMetric
-                        model: ["Power (+ in, − out)", "Battery level"]
+                        model: [bat.directActive ? "PPS input power" : "Battery net power", "Battery level"]
                         Layout.preferredWidth: 205
                     }
                     Item { Layout.fillWidth: true }
@@ -566,9 +576,10 @@ ApplicationWindow {
                     }
                 }
                 Graph {
-                    values: historyMetric.currentIndex === 0 ? bat.powerHistory : bat.capacityHistory
+                    values: historyMetric.currentIndex === 0 ?
+                            (bat.directActive ? bat.directPowerHistory : bat.powerHistory) : bat.capacityHistory
                     seconds: histCard.range
-                    signedValues: historyMetric.currentIndex === 0
+                    signedValues: historyMetric.currentIndex === 0 && !bat.directActive
                     minRange: historyMetric.currentIndex === 0 ? 1 : 100
                     unit: historyMetric.currentIndex === 0 ? " W" : "%"
                     Layout.preferredHeight: 185

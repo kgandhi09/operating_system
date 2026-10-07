@@ -16,14 +16,35 @@ QHash<QString, QString> readUevent(const QString &dir)
 {
     QHash<QString, QString> m;
     QFile f(dir + "/uevent");
-    if (!f.open(QIODevice::ReadOnly))
-        return m;
-    for (const QByteArray &line : f.readAll().split('\n')) {
-        if (!line.startsWith("POWER_SUPPLY_"))
+    if (f.open(QIODevice::ReadOnly)) {
+        for (const QByteArray &line : f.readAll().split('\n')) {
+            if (!line.startsWith("POWER_SUPPLY_"))
+                continue;
+            const qsizetype eq = line.indexOf('=');
+            if (eq > 0)
+                m.insert(QString::fromUtf8(line.mid(13, eq - 13)), QString::fromUtf8(line.mid(eq + 1)).trimmed());
+        }
+    }
+    // One failed ADC property can make the kernel's whole uevent read fail.
+    // Read the individual attributes then, so status and the other live
+    // values keep updating while a charger switches paths.
+    static const char *const attrs[] = {
+        "type", "scope", "online", "status", "manufacturer", "model_name",
+        "technology", "health", "capacity", "cycle_count", "temp",
+        "charge_control_start_threshold", "charge_control_end_threshold",
+        "voltage_now", "voltage_ocv", "current_now", "current_avg", "power_now",
+        "energy_full_design", "energy_full", "energy_now",
+        "charge_full_design", "charge_full", "charge_now", "charge_type",
+        "input_current_limit", "constant_charge_current",
+        "constant_charge_current_max", "constant_charge_voltage"
+    };
+    for (const char *attr : attrs) {
+        const QString key = QString::fromLatin1(attr).toUpper();
+        if (m.contains(key))
             continue;
-        const qsizetype eq = line.indexOf('=');
-        if (eq > 0)
-            m.insert(QString::fromUtf8(line.mid(13, eq - 13)), QString::fromUtf8(line.mid(eq + 1)).trimmed());
+        QFile value(dir + "/" + QString::fromLatin1(attr));
+        if (value.open(QIODevice::ReadOnly))
+            m.insert(key, QString::fromUtf8(value.readAll()).trimmed());
     }
     return m;
 }
@@ -79,6 +100,7 @@ void BatteryMonitor::reset()
     voltage_ = voltageOcv_ = current_ = currentAvg_ = power_ = powerAvg_ = temperature_ = NaN;
     designFull_ = full_ = now_ = healthPercent_ = ratePerHour_ = NaN;
     inputLimit_ = chargeCurrentSet_ = chargeCurrentMax_ = chargeVoltageSet_ = NaN;
+    directVoltage_ = directCurrent_ = directPower_ = directTemperature_ = directInputLimit_ = NaN;
 }
 
 // The system battery (not a mouse's or a headset's: scope Device), and the
@@ -113,6 +135,7 @@ void BatteryMonitor::poll()
     reset();
     if (batteryDir_.isEmpty()) {
         powerHist_.clear();
+        directPowerHist_.clear();
         capacityHist_.clear();
         flowHist_.clear();
         emit updated();
@@ -120,6 +143,17 @@ void BatteryMonitor::poll()
     }
 
     const auto b = readUevent(batteryDir_);
+    const auto direct = readUevent(root_ + "/sm5440-direct");
+    directActive_ = direct.value("ONLINE") == "1";
+    if (directActive_) {
+        directVoltage_ = micro(direct, "VOLTAGE_NOW");
+        directCurrent_ = micro(direct, "CURRENT_NOW");
+        directInputLimit_ = micro(direct, "INPUT_CURRENT_LIMIT");
+        const int dieTemp = integer(direct, "TEMP", INT_MIN);
+        directTemperature_ = dieTemp == INT_MIN ? NaN : dieTemp / 10.0;
+        if (!std::isnan(directVoltage_) && !std::isnan(directCurrent_))
+            directPower_ = directVoltage_ * directCurrent_;
+    }
     batteryName_ = QFileInfo(batteryDir_).fileName();
     model_ = (b.value("MANUFACTURER") + " " + b.value("MODEL_NAME")).trimmed();
     status_ = b.value("STATUS", "Unknown");
@@ -162,6 +196,7 @@ void BatteryMonitor::poll()
             l.removeFirst();
     };
     push(powerHist_, std::isnan(power_) ? 0 : power_);
+    push(directPowerHist_, directActive_ && !std::isnan(directPower_) ? directPower_ : 0);
     push(capacityHist_, capacity_ < 0 ? 0 : capacity_);
     if (!std::isnan(flow))
         push(flowHist_, flow);
@@ -189,7 +224,6 @@ void BatteryMonitor::poll()
 
     chargerPresent_ = !chargerDir_.isEmpty();
     chargerOnline_ = false;
-    directActive_ = readUevent(root_ + "/sm5440-direct").value("ONLINE") == "1";
     chargerName_.clear();
     chargerHealth_.clear();
     chargeType_.clear();
@@ -208,4 +242,5 @@ void BatteryMonitor::poll()
 }
 
 QVariantList BatteryMonitor::powerHistory() const { return toVariant(powerHist_); }
+QVariantList BatteryMonitor::directPowerHistory() const { return toVariant(directPowerHist_); }
 QVariantList BatteryMonitor::capacityHistory() const { return toVariant(capacityHist_); }
