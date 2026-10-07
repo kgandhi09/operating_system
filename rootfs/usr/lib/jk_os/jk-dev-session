@@ -19,6 +19,8 @@
 #                            on the Tab S7 FE 0 and 180 are portrait,
 #                            270 landscape the other way up)
 #                            jk-dev --rotate <value> overrides it once.
+#   JK_DEV_FONT_SIZE=12       foot font size in points (6-36; default 9).
+#                            jk-dev --font-size <value> overrides it once.
 # The terminal itself: ~/.config/foot/foot.ini (jk_os's defaults are in
 # /etc/xdg/foot/foot.ini).
 
@@ -37,8 +39,9 @@ jk_gpu_select
 # A UTF-8 locale; C.UTF-8 (shipped in /usr/lib/locale) when none is set.
 case "${LANG:-}" in *UTF-8*|*utf8*) ;; *) export LANG=C.UTF-8 ;; esac
 
-# jk-dev --rotate (passed on by jk-session) wins over the settings file.
+# Command-line values (passed on by jk-session) win over the settings file.
 rotation_once=${JK_DEV_ROTATION:-}
+font_size_once=${JK_DEV_FONT_SIZE:-}
 conf="${XDG_CONFIG_HOME:-$HOME/.config}/jk_os/dev-session"
 if [ -f "$conf" ]; then
     set -a
@@ -63,10 +66,23 @@ case "$rotation" in
     *) echo "jk-dev: JK_DEV_ROTATION=$rotation is not auto, 0, 90, 180 or 270; using auto" >&2
        rotation=auto ;;
 esac
+font_size=${font_size_once:-${JK_DEV_FONT_SIZE:-}}
+case "$font_size" in
+    '') ;;
+    *[!0-9]*|???*) echo "jk-dev: JK_DEV_FONT_SIZE must be 6-36 points; using foot's configured font" >&2
+                     font_size= ;;
+    *) if [ "$font_size" -lt 6 ] || [ "$font_size" -gt 36 ]; then
+           echo "jk-dev: JK_DEV_FONT_SIZE must be 6-36 points; using foot's configured font" >&2
+           font_size=
+       fi ;;
+esac
+set -- foot
+if [ -n "$font_size" ]; then
+    font="FiraCode Nerd Font Mono:style=Bold:size=$font_size, DejaVu Sans Mono:style=Bold:size=$font_size"
+    set -- "$@" --font "$font" --override "font-bold=$font"
+fi
 if [ -n "${JK_DEV_COMMAND:-}" ]; then
-    set -- foot -- /bin/sh -lc "$JK_DEV_COMMAND; exec \"\${SHELL:-/bin/sh}\" -l"
-else
-    set -- foot
+    set -- "$@" -- /bin/sh -lc "$JK_DEV_COMMAND; exec \"\${SHELL:-/bin/sh}\" -l"
 fi
 # Sound (PipeWire) runs in the session's bus: /usr/lib/jk_os/jk-audio.
 exec dbus-run-session /usr/lib/jk_os/jk-audio cage -s -d -m "$outputs" -r "$rotation" -- "$@" > "$state/jk-dev.log" 2>&1

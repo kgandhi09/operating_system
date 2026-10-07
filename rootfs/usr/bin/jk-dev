@@ -7,13 +7,14 @@
 # jk-dev starts it again, or jk-gui starts the desktop. Each console has its
 # own session. Settings: see /usr/lib/jk_os/jk-dev-session.
 #
-#   jk-dev [--rotate auto|0|90|180|270]
+#   jk-dev [--rotate auto|0|90|180|270] [--font-size 6..36]
 #
 # --rotate turns the built-in screen for this session only (the lasting
 # setting is JK_DEV_ROTATION in ~/.config/jk_os/dev-session). auto, the
 # default, shows it the way the panel is mounted, like the desktop does: on
 # the Galaxy Tab S7 FE that is landscape (90; 270 is landscape the other
 # way up); 0 and 180 are its portrait.
+# --font-size sets foot's font size in points for this session only.
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -23,6 +24,17 @@ while [ $# -gt 0 ]; do
                 auto|0|90|180|270) export JK_DEV_ROTATION="$2" ;;
                 *) echo "jk-dev: --rotate takes auto, 0, 90, 180 or 270, not '$2'" >&2; exit 1 ;;
             esac
+            shift 2 ;;
+        -f|--font-size)
+            [ $# -ge 2 ] || { echo "jk-dev: --font-size needs a size from 6 to 36 points" >&2; exit 1; }
+            case "$2" in
+                *[!0-9]*|''|???*) echo "jk-dev: --font-size needs a whole number from 6 to 36" >&2; exit 1 ;;
+            esac
+            if [ "$2" -lt 6 ] || [ "$2" -gt 36 ]; then
+                echo "jk-dev: --font-size needs a size from 6 to 36 points" >&2
+                exit 1
+            fi
+            export JK_DEV_FONT_SIZE="$2"
             shift 2 ;;
         -h|--help)
             sed -n '2,/^$/p' "$0" | sed 's/^# \{0,1\}//'

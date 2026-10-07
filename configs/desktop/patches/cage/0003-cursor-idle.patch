@@ -1,0 +1,123 @@
+--- a/seat.c
++++ b/seat.c
+@@ -45,6 +45,32 @@
+ 
+ static void drag_icon_update_position(struct cg_drag_icon *drag_icon);
+ 
++#define CURSOR_HIDE_DELAY_MS 3000
++
++static int
++hide_idle_cursor(void *data)
++{
++	struct cg_seat *seat = data;
++	wlr_cursor_unset_image(seat->cursor);
++	seat->cursor_hidden = true;
++	return 0;
++}
++
++static void
++show_active_cursor(struct cg_seat *seat)
++{
++	if (wl_list_empty(&seat->pointers)) {
++		return;
++	}
++	if (seat->cursor_hidden) {
++		wlr_cursor_set_xcursor(seat->cursor, seat->xcursor_manager, DEFAULT_XCURSOR);
++		seat->cursor_hidden = false;
++	}
++	if (seat->cursor_hide_timer) {
++		wl_event_source_timer_update(seat->cursor_hide_timer, CURSOR_HIDE_DELAY_MS);
++	}
++}
++
+ /* XDG toplevels may have nested surfaces, such as popup windows for context
+  * menus or tooltips. This function tests if any of those are underneath the
+  * coordinates lx and ly (in output Layout Coordinates). If so, it sets the
+@@ -128,9 +154,15 @@
+ 
+ 	/* Hide cursor if the seat doesn't have pointer capability. */
+ 	if ((caps & WL_SEAT_CAPABILITY_POINTER) == 0) {
++		if (seat->cursor_hide_timer) {
++			wl_event_source_timer_update(seat->cursor_hide_timer, -1);
++		}
++		seat->cursor_hidden = true;
+ 		wlr_cursor_unset_image(seat->cursor);
+ 	} else {
+ 		wlr_cursor_set_xcursor(seat->cursor, seat->xcursor_manager, DEFAULT_XCURSOR);
++		seat->cursor_hidden = false;
++		show_active_cursor(seat);
+ 	}
+ }
+ 
+@@ -494,6 +526,9 @@
+ 	 * this one actually has pointer focus first. */
+ 	if (focused_client == event->seat_client->client) {
+ 		wlr_cursor_set_surface(seat->cursor, event->surface, event->hotspot_x, event->hotspot_y);
++		if (seat->cursor_hidden) {
++			wlr_cursor_unset_image(seat->cursor);
++		}
+ 	}
+ }
+ 
+@@ -600,6 +635,7 @@
+ 	struct cg_seat *seat = wl_container_of(listener, seat, cursor_axis);
+ 	struct wlr_pointer_axis_event *event = data;
+ 
++	show_active_cursor(seat);
+ 	wlr_seat_pointer_notify_axis(seat->seat, event->time_msec, event->orientation, event->delta,
+ 				     event->delta_discrete, event->source, event->relative_direction);
+ 	wlr_idle_notifier_v1_notify_activity(seat->server->idle, seat->seat);
+@@ -611,6 +647,7 @@
+ 	struct cg_seat *seat = wl_container_of(listener, seat, cursor_button);
+ 	struct wlr_pointer_button_event *event = data;
+ 
++	show_active_cursor(seat);
+ 	wlr_seat_pointer_notify_button(seat->seat, event->time_msec, event->button, event->state);
+ 	press_cursor_button(seat, &event->pointer->base, event->time_msec, event->button, event->state, seat->cursor->x,
+ 			    seat->cursor->y);
+@@ -621,6 +658,7 @@
+ process_cursor_motion(struct cg_seat *seat, uint32_t time_msec, double dx, double dy, double dx_unaccel,
+ 		      double dy_unaccel)
+ {
++	show_active_cursor(seat);
+ 	double sx, sy;
+ 	struct wlr_seat *wlr_seat = seat->seat;
+ 	struct wlr_surface *surface = NULL;
+@@ -771,6 +809,9 @@
+ handle_destroy(struct wl_listener *listener, void *data)
+ {
+ 	struct cg_seat *seat = wl_container_of(listener, seat, destroy);
++	if (seat->cursor_hide_timer) {
++		wl_event_source_remove(seat->cursor_hide_timer);
++	}
+ 	wl_list_remove(&seat->destroy.link);
+ 	wl_list_remove(&seat->cursor_motion_relative.link);
+ 	wl_list_remove(&seat->cursor_motion_absolute.link);
+@@ -845,6 +886,16 @@
+ 			return NULL;
+ 		}
+ 	}
++	seat->cursor_hide_timer = wl_event_loop_add_timer(wl_display_get_event_loop(server->wl_display),
++			hide_idle_cursor, seat);
++	if (!seat->cursor_hide_timer) {
++		wlr_log(WLR_ERROR, "Cannot create cursor idle timer");
++		wlr_xcursor_manager_destroy(seat->xcursor_manager);
++		wlr_cursor_destroy(seat->cursor);
++		wl_list_remove(&seat->destroy.link);
++		free(seat);
++		return NULL;
++	}
+ 
+ 	seat->cursor_motion_relative.notify = handle_cursor_motion_relative;
+ 	wl_signal_add(&seat->cursor->events.motion, &seat->cursor_motion_relative);
+--- a/seat.h
++++ b/seat.h
+@@ -27,6 +27,8 @@
+ 
+ 	struct wlr_cursor *cursor;
+ 	struct wlr_xcursor_manager *xcursor_manager;
++	struct wl_event_source *cursor_hide_timer;
++	bool cursor_hidden;
+ 	struct wl_listener cursor_motion_relative;
+ 	struct wl_listener cursor_motion_absolute;
+ 	struct wl_listener cursor_button;

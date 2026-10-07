@@ -528,6 +528,7 @@ Settings:
   JK_DEV_COMMAND=herdr        # run this in the terminal first, then the shell
   JK_DEV_OUTPUTS=extend       # external screen: mirror (default), extend or last
   JK_DEV_ROTATION=0           # built-in screen: auto (default), 0, 90, 180 or 270
+  JK_DEV_FONT_SIZE=12         # terminal font size in points (6-36; default 9)
   XKB_DEFAULT_LAYOUT=de       # keyboard layout (XKB_DEFAULT_VARIANT, XKB_DEFAULT_OPTIONS)
   ```
 
@@ -535,7 +536,9 @@ Settings:
 panel orientation), as the desktop does: a tablet's portrait panel shows
 landscape (on the Galaxy Tab S7 FE that is 90; 270 is landscape the other
 way up, 0 and 180 portrait). External screens keep their own orientation.
-`jk-dev --rotate <value>` sets it for one session.
+`jk-dev --rotate <value>` and `jk-dev --font-size <points>` set these for one
+session. The pointer appears while you use the mouse and hides after three
+seconds without mouse activity. Exiting the session restores the text console.
 
 The light `jk-gui` theme plays `jk_os_particle_splash.mp4` as a six-second
 particle intro and fades into the default wallpaper. The OS ships its

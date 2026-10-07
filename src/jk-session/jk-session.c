@@ -26,12 +26,15 @@
 #define _GNU_SOURCE
 #include <errno.h>
 #include <grp.h>
+#include <linux/kd.h>
+#include <linux/vt.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #include <security/pam_appl.h>
@@ -135,7 +138,7 @@ int main(int argc, char **argv)
      * XDG_SESSION_ID, ...) plus a few of the caller's; nothing else passes
      * through a setuid program. */
     char **pam_env = pam_getenvlist(pamh);
-    size_t n = 0, cap = 16;
+    size_t n = 0, cap = 17;
     for (char **e = pam_env; e && *e; e++)
         cap++;
     char **envp = calloc(cap, sizeof *envp);
@@ -151,8 +154,9 @@ int main(int argc, char **argv)
     keep(envp, &n, "TERM");
     keep(envp, &n, "LANG");
     keep(envp, &n, "TZ");
-    /* jk-dev --rotate, for jk-dev-session (which checks it). */
+    /* jk-dev session options, checked by jk-dev-session. */
     keep(envp, &n, "JK_DEV_ROTATION");
+    keep(envp, &n, "JK_DEV_FONT_SIZE");
     envp[n] = NULL;
 
     pid_t child = fork();
@@ -178,5 +182,14 @@ int main(int argc, char **argv)
         ;
     pam_close_session(pamh, 0);
     pam_end(pamh, PAM_SUCCESS);
+    /* Cage may leave this VT in graphics mode when its process exits. Put
+     * the login console back in text mode before the caller's shell resumes. */
+    if (strcmp(desktop, "cage") == 0) {
+        struct vt_mode mode = { .mode = VT_AUTO };
+        int vt_rc = ioctl(STDIN_FILENO, VT_SETMODE, &mode);
+        int text_rc = ioctl(STDIN_FILENO, KDSETMODE, KD_TEXT);
+        if (vt_rc < 0 || text_rc < 0)
+            fprintf(stderr, "jk-session: cannot restore text console: %s\n", strerror(errno));
+    }
     return WIFEXITED(status) ? WEXITSTATUS(status) : 1;
 }

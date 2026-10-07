@@ -603,12 +603,12 @@ index 0000000..0eb52f0
 +		goto out;
 +	}
 +
-+	dev_info_ratelimited(sm->dev,
-+			     "direct: pack=%d.%dC vbus=%dmV ibus=%dmA "
-+			     "vbat=%dmV die=%d.%dC\n",
-+			     pack_temp / 10, abs(pack_temp % 10),
-+			     vbus, ibus, vbat,
-+			     die_temp / 10, abs(die_temp % 10));
++	// dev_info_ratelimited(sm->dev,
++	// 		     "direct: pack=%d.%dC vbus=%dmV ibus=%dmA "
++	// 		     "vbat=%dmV die=%d.%dC\n",
++	// 		     pack_temp / 10, abs(pack_temp % 10),
++	// 		     vbus, ibus, vbat,
++	// 		     die_temp / 10, abs(die_temp % 10));
 +out:
 +	mutex_unlock(&sm->lock);
 +	schedule_delayed_work(&sm->work, delay);

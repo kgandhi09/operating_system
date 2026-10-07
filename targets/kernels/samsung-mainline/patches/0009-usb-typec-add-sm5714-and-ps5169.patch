@@ -498,7 +498,7 @@ diff --git a/drivers/usb/typec/tcpm/sm5714.c b/drivers/usb/typec/tcpm/sm5714.c
 +
 +	sm->negotiated_mv = mv;
 +	sm->negotiated_ma = max_ma;
-+	dev_info(sm->dev, "USB-PD contract: %u mV, %u mA\n", mv, max_ma);
++	// dev_info(sm->dev, "USB-PD contract: %u mV, %u mA\n", mv, max_ma);
 +	return 0;
 +}
 +
