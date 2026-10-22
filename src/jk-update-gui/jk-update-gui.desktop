@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Software Update
+GenericName=Update jk_os
+Comment=Check for a new jk_os release and install it (asks for the administrator password to install)
+Exec=jk-update gui
+Icon=system-software-update
+Terminal=false
+Categories=System;Settings;
+Keywords=update;upgrade;release;version;jk_os;

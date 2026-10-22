@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=jk_os update notification
+Comment=Says when jk-update-watch has found a new jk_os release
+Exec=/usr/lib/jk_os/jk-update-gui --watch
+NoDisplay=true
+OnlyShowIn=KDE;
+X-KDE-autostart-phase=2

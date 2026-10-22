@@ -856,6 +856,10 @@ step jk-power-gui "$ROOT_DIR/src/jk-power-gui" b_jk_settings_gui \
     "$settings_bridge_hash $(cd "$ROOT_DIR/src/jk-power-gui" && find . -type f | LC_ALL=C sort | xargs cat | sha256sum | cut -c1-16)"
 step jk-charge-gui "$ROOT_DIR/src/jk-charge-gui" b_jk_settings_gui \
     "$settings_bridge_hash $(cd "$ROOT_DIR/src/jk-charge-gui" && find . -type f | LC_ALL=C sort | xargs cat | sha256sum | cut -c1-16)"
+# jk-update gui (src/jk-update-gui): the update window, and its --watch mode
+# in the desktop session: the notification when a release is out.
+step jk-update-gui "$ROOT_DIR/src/jk-update-gui" b_jk_settings_gui \
+    "$settings_bridge_hash $(cd "$ROOT_DIR/src/jk-update-gui" && find . -type f | LC_ALL=C sort | xargs cat | sha256sum | cut -c1-16)"
 # jk-timedated (src/jk-timedated): org.freedesktop.timedate1, which KDE's
 # Date & Time settings need (time zone, setting the time, network time with
 # BusyBox's ntpd); started by /etc/init.d/S19timedate.

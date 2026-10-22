@@ -203,9 +203,15 @@ for o in "${ROOTFS_OVERLAYS[@]}"; do
 done
 # What this image was built for (make config).
 mkdir -p etc/jk_os
-# JK_CHANNEL: the releases jk-update follows (common.sh).
-printf 'JK_CATEGORY=%s\nJK_DEVICE=%s\nJK_KERNEL=%s\nJK_ARCH=%s\nJK_NAME=%s\nJK_BOOT=%s\nJK_CHANNEL=%s\n' \
-    "$JK_CATEGORY" "$JK_DEVICE" "$JK_KERNEL" "$JK_ARCH" "$JK_NAME" "$DEVICE_BOOT" "$JK_CHANNEL" > etc/jk_os/target
+# JK_CHANNEL: the releases jk-update follows (common.sh). JK_BUILD: this
+# build (UTC time and git commit, +changes for uncommitted ones), which
+# scripts/publish.sh puts in release.json: jk-update tells two builds of the
+# same version apart by it (a re-publish with --force).
+build_commit="$(git -C "$ROOT_DIR" rev-parse --short=12 HEAD 2>/dev/null || echo unknown)"
+[[ -n "$(git -C "$ROOT_DIR" status --porcelain 2>/dev/null)" ]] && build_commit+="+changes"
+JK_BUILD="$(date -u +%Y%m%d.%H%M)-$build_commit"
+printf 'JK_CATEGORY=%s\nJK_DEVICE=%s\nJK_KERNEL=%s\nJK_ARCH=%s\nJK_NAME=%s\nJK_BOOT=%s\nJK_CHANNEL=%s\nJK_BUILD=%s\n' \
+    "$JK_CATEGORY" "$JK_DEVICE" "$JK_KERNEL" "$JK_ARCH" "$JK_NAME" "$DEVICE_BOOT" "$JK_CHANNEL" "$JK_BUILD" > etc/jk_os/target
 # The Debian base system apt-setup unpacks into /data/apt when apt is
 # chosen (scripts/update-debian-rootfs.sh).
 DEB_SRC="$ROOT_DIR/userspace/debian/$ARCH"
@@ -227,6 +233,7 @@ VERSION="$OS_VERSION"
 VERSION_ID=$OS_VERSION
 PRETTY_NAME="$OS_NAME $OS_VERSION ($ARCH)"
 VARIANT_ID=$JK_DEVICE
+BUILD_ID=$JK_BUILD
 LOGO=jk-os
 OSR
 

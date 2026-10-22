@@ -1,0 +1,9 @@
+[Global]
+IconName=system-software-update
+Name=Software Update
+Comment=jk_os updates
+
+[Event/updateAvailable]
+Name=Update available
+Comment=A new jk_os release is out for this system
+Action=Popup

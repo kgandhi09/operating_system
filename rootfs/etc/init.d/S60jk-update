@@ -1,0 +1,19 @@
+#!/bin/sh
+# jk-update-watch: looks for a new jk_os release at boot and once a day of
+# uptime; the desktop and the login prompt then say there is one.
+#
+# /etc/jk_os/update (optional): JK_UPDATE_WATCH=no leaves it off.
+
+case "$1" in
+    start)
+        /usr/sbin/jk-update-watch < /dev/null > /dev/null 2>&1 &
+        ;;
+    stop)
+        pkill -x jk-update-watch 2>/dev/null
+        ;;
+    restart)
+        "$0" stop
+        sleep 1
+        "$0" start
+        ;;
+esac

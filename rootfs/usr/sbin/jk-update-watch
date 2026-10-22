@@ -1,0 +1,38 @@
+#!/bin/sh
+# jk-update-watch: look for a new jk_os release on this system's channel at
+# boot, and again whenever the system has been up a day since the last look
+# (started by /etc/init.d/S60jk-update). It only looks: jk-update --check
+# records what it found in /run/jk-update/state, which the desktop's
+# notification (jk-update gui --watch) and the login message (/etc/profile)
+# show. Installing stays with the user (jk-update gui, sudo jk-update).
+#
+# Without the network (at boot it may not be up yet), it tries again every
+# 10 minutes until a check gets through. The results go to
+# /var/log/jk-update-watch.log.
+#
+# /etc/jk_os/update (optional): JK_UPDATE_WATCH=no leaves it off.
+
+DAY=86400 RETRY=600
+LOG=/var/log/jk-update-watch.log
+JK_UPDATE_WATCH=yes
+[ -f /etc/jk_os/update ] && . /etc/jk_os/update
+[ "$JK_UPDATE_WATCH" = no ] && exit 0
+[ "$(cat /run/jk-mode 2>/dev/null)" = installed ] || exit 0
+
+uptime_s() { cut -d. -f1 /proc/uptime; }
+log() { echo "$(date '+%Y-%m-%d %H:%M:%S') $*" >> "$LOG"; }
+
+while :; do
+    out=$(/usr/sbin/jk-update --check --machine 2>/dev/null)
+    rc=$?
+    found=$(printf '%s\n' "$out" | awk -F '\t' '$1 == "status" { s = $2 " " $3 } END { print s }')
+    if [ "$rc" = 0 ] && [ -n "$found" ]; then
+        log "checked: $found"
+        last=$(uptime_s)
+        # A day of uptime from now (checked hourly: the clock may jump).
+        while [ $(( $(uptime_s) - last )) -lt "$DAY" ]; do sleep 3600; done
+    else
+        log "check failed: $(printf '%s\n' "$out" | awk -F '\t' '$1 == "error" { e = $2 } END { print e }')"
+        sleep "$RETRY"
+    fi
+done

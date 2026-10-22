@@ -21,7 +21,7 @@
 #                                    the x86_64 PC, release/INSTALL.txt)
 #     jk_os-<ver>-<channel>.tar.md5  a tablet's boot images, for Odin
 #   SHA256SUMS                      of the files above
-#   release.json                    version, channel, arch, device, boot
+#   release.json                    version, build ID, channel, arch, device, boot
 #                                   format, git commit, date, and each file's
 #                                   name, size and SHA-256
 # go to <downloads>/jk_os/<ver>/<channel>/ on the server: a version's
@@ -51,7 +51,7 @@
 #   PUBLISH_ROOT  the download root (default /var/www/jkrobotics.tech/downloads)
 #   PUBLISH_URL   its public URL    (default http://13.62.226.224/downloads)
 source "$(dirname "$0")/common.sh"
-need rsync sha256sum
+need rsync sha256sum unsquashfs
 
 HOST="${PUBLISH_HOST:-ubuntu@13.62.226.224}"
 KEY="${PUBLISH_KEY:-$HOME/.ssh/ees/jk-ees.pem}"
@@ -122,6 +122,10 @@ commit="$(git -C "$ROOT_DIR" rev-parse --short=12 HEAD 2>/dev/null || echo unkno
 dirty=""
 [[ -n "$(git -C "$ROOT_DIR" status --porcelain 2>/dev/null)" ]] && dirty="+changes"
 [[ -n "$dirty" ]] && warn "the repo has uncommitted changes: release.json records commit $commit$dirty"
+# The image's own build ID (JK_BUILD, build-rootfs.sh), by which jk-update
+# tells this build from another of the same version.
+build="$(unsquashfs -cat "$SQUASHFS_IMG" etc/jk_os/target 2>/dev/null | sed -n 's/^JK_BUILD=//p')"
+[[ -n "$build" ]] || die "the image has no build ID (etc/jk_os/target JK_BUILD): rebuild it with $MAKE_CMD"
 
 stage="$OUT_DIR/publish/$channel/$ver"
 rm -rf "$stage"
@@ -150,7 +154,7 @@ fi
     printf '{\n  "name": "%s",\n  "version": "%s",\n  "channel": "%s",\n  "arch": "%s",\n' \
         "$OS_NAME" "$ver" "$channel" "$ARCH"
     printf '  "device": "%s",\n  "kernel_profile": "%s",\n  "boot": "%s",\n' "$JK_DEVICE" "$JK_KERNEL" "$DEVICE_BOOT"
-    printf '  "kernel_release": "%s",\n  "commit": "%s%s",\n' "$krel" "$commit" "$dirty"
+    printf '  "kernel_release": "%s",\n  "commit": "%s%s",\n  "build": "%s",\n' "$krel" "$commit" "$dirty" "$build"
     printf '  "date": "%s",\n  "url": "%s/%s/%s/%s/",\n  "files": {\n' \
         "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$PUBLIC_URL" "$OS_NAME" "$ver" "$channel"
     n=0

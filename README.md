@@ -453,6 +453,22 @@ If it finds neither, it opens a rescue shell on the console.
   `/data/system/kernel.old`) for `sudo jk-update --rollback`; the new release
   starts at the next reboot. `jk-update --check` only says whether there is one.
   It lists the files you changed that the update also changes (your copies win).
+  **Software Update** (`jk-update gui`, in the desktop's menu) does the same in a
+  window: it checks when it opens, installs in the background with the
+  download's progress (KDE's password dialog asks once, when you press
+  Install), then offers **Restart now** or **Later**. Every installed system
+  looks for a new release on its own: `jk-update-watch` (`/etc/init.d/S60jk-update`)
+  checks at boot, and again after each day of uptime (retrying every 10
+  minutes while the network is down); it only looks, never installs. What it
+  finds (`/run/jk-update/state`) shows as a KDE notification on the desktop
+  (Install…: the window, installing at once; Later: again a day later) and
+  as a line when you log in on a text console or open the dev session.
+  `JK_UPDATE_WATCH=no` in `/etc/jk_os/update` turns the checks off.
+  Every image carries a build ID (`JK_BUILD` in `/etc/jk_os/target`,
+  `BUILD_ID` in `/etc/os-release`: build time and git commit), which
+  `publish.sh` puts in `release.json`; a re-publish of the same version
+  (`--force`) is offered as "a new build of jk_os <version>", and a build
+  installed but not started yet is recognised as waiting for the restart.
   The server is set in `/etc/jk_os/update` (`JK_UPDATE_URL=`; `JK_UPDATE_CHANNEL=`
   follows another channel for the same device). Releases are published with
   `scripts/publish.sh` for the current target (image, kernel, installer,
