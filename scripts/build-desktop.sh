@@ -327,7 +327,7 @@ b_libelf() {
     make -C "$2/lib" -j"$JOBS"
     make -C "$2/libelf" -j"$JOBS"
     make -C "$2/libelf" install DESTDIR="$DYN"
-    make -C "$2/config" install DESTDIR="$DYN"   # libelf.pc
+    install -Dm644 "$2/config/libelf.pc" "$DYN/usr/lib/pkgconfig/libelf.pc"   # (not libdw.pc: no libdw)
 }
 pkg elfutils         b_libelf
 # GLVND: libEGL/libGL/libGLES dispatch to a vendor's implementation, Mesa's

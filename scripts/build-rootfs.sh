@@ -88,6 +88,16 @@ cp -a "$TOOLS_OUT/bin/." bin/   # passwd, su, ... keep their setuid bit
     --exclude=./usr/share/doc --exclude=./usr/share/info --exclude=./usr/share/man \
     --exclude=./usr/share/locale --exclude=./usr/share/gdb/python .) | tar -xf - -C "$ROOTFS_DIR"
 
+# Upstream mistakes in development files, which check-devfiles.py (below)
+# would rightly stop on: qttools' CMake packages for qdoc's internal test
+# libraries (qdoc isn't built: their headers aren't either), libdw.pc
+# (elfutils: only libelf is built), and pulseaudio-qt's .pc naming an include
+# directory at the top of the file system.
+rm -rf usr/lib/cmake/Qt6QDocCatch*Private usr/lib/pkgconfig/libdw.pc usr/lib/pkgconfig/libdebuginfod.pc
+[[ ! -f usr/lib/pkgconfig/KF6PulseAudioQt.pc ]] \
+    || sed -i -e 's|^includedir=/KF6PulseAudioQt/$|includedir=${prefix}/include/KF6/KF6PulseAudioQt|' \
+              -e 's| -I/KF6PulseAudioQt/\{0,1\} *$||' usr/lib/pkgconfig/KF6PulseAudioQt.pc
+
 # The development files name the build machine's directories they were
 # built in ($DYN/usr in KF6WindowSystem's CMake files, the cross compiler in
 # icu-config, ...); on jk_os those are /usr and its own compilers and

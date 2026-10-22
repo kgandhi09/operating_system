@@ -95,6 +95,8 @@ for d in cmake_dirs:
             path = os.path.join(directory, name)
             with open(path, errors="replace") as fh:
                 text = fh.read()
+            # Branches CMake never takes (KF6's "if(0) find_dependency(...)").
+            text = re.sub(r"^\s*if\(0\)\s*$.*?^\s*endif\(\)", "", text, flags=re.M | re.S)
             if prefix is not None and "_IMPORT_PREFIX" in text:
                 sub = lambda e: e.replace("${_IMPORT_PREFIX}", prefix)
                 for value in LOCATION.findall(text):
@@ -185,8 +187,9 @@ for name, path in sorted(pc_files.items()):
                     problem(path, f"{key}: library directory {d} is missing")
             elif t.startswith("-l") and len(t) > 2 and key == "Libs":
                 lib = t[2:]
-                if not any(os.path.exists(os.path.join(s, f"lib{lib}{ext}"))
-                           for s in search for ext in (".so", ".a")):
+                # -l:<file> names the file itself (-l:liblua5.4.a).
+                names = [lib[1:]] if lib.startswith(":") else [f"lib{lib}.so", f"lib{lib}.a"]
+                if not any(os.path.exists(os.path.join(s, n)) for s in search for n in names):
                     problem(path, f"{key}: library -l{lib} is missing")
             elif t.startswith("/") and (".so" in t or t.endswith(".a")):
                 if not os.path.exists(on_root(t)):
