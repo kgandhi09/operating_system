@@ -18,6 +18,15 @@ set -euo pipefail
 # went to /dev/null: say where.
 trap 'echo "error: ${0##*/} line $LINENO: \"$BASH_COMMAND\" failed (exit $?)" >&2' ERR
 
+# The build machine's Python settings (a shell profile's PYTHONHOME=/usr,
+# PYTHONPATH=...) would steer every Python the build runs, jk_os's own
+# included: the toolchain's python3 then loads the build machine's standard
+# library and misses its modules (pyexpat, for spirv-tools' generators). Every
+# step runs with Python's defaults.
+unset PYTHONHOME PYTHONPATH PYTHONSTARTUP PYTHONUSERBASE PYTHONNOUSERSITE
+for _v in "${!PIP_@}"; do unset "$_v"; done
+unset _v
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=../versions.env
 source "$ROOT_DIR/versions.env"

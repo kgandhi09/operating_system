@@ -44,10 +44,9 @@ else
     export PATH="$CROSS/bin:$PATH"
 fi
 unset CROSS_COMPILE CC CXX CFLAGS CXXFLAGS CPPFLAGS LDFLAGS
-# The build machine's Python settings would steer the Python built here (its
-# ensurepip put pip into the build machine's Debian layout).
-unset PYTHONHOME PYTHONPATH PYTHONSTARTUP PYTHONUSERBASE PYTHONNOUSERSITE
-for v in "${!PIP_@}"; do unset "$v"; done
+# (The build machine's Python settings are unset by common.sh: they would
+# steer the Python built here, its ensurepip into the build machine's Debian
+# layout.)
 
 # step <name> <src> <function> <options...>: as in build-network.sh.
 step() {
