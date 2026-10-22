@@ -847,10 +847,11 @@ pkg dolphin          kfpkg -DBUILD_DOC=OFF
 b_jk_viz() { qtpkg "$1" "$2"; }
 step jk-viz "$ROOT_DIR/src/jk-viz" b_jk_viz \
     "$(cd "$ROOT_DIR/src/jk-viz" && find . -type f | LC_ALL=C sort | xargs cat | sha256sum | cut -c1-16)"
-# Both settings windows ask their CLIs which controls this machine offers.
-# Rebuild either one when their shared process bridge changes.
+# Both settings windows (jk-power gui, jk-charge gui) ask their CLIs which
+# controls this machine offers. Rebuild either one when their shared code
+# (src/common: the CLI bridge, the password dialog) changes.
 b_jk_settings_gui() { qtpkg "$1" "$2"; }
-settings_bridge_hash=$(sha256sum "$ROOT_DIR/src/common/clisettings.cpp" "$ROOT_DIR/src/common/clisettings.h" | sha256sum | cut -c1-16)
+settings_bridge_hash=$(cd "$ROOT_DIR/src/common" && find . -type f | LC_ALL=C sort | xargs cat | sha256sum | cut -c1-16)
 step jk-power-gui "$ROOT_DIR/src/jk-power-gui" b_jk_settings_gui \
     "$settings_bridge_hash $(cd "$ROOT_DIR/src/jk-power-gui" && find . -type f | LC_ALL=C sort | xargs cat | sha256sum | cut -c1-16)"
 step jk-charge-gui "$ROOT_DIR/src/jk-charge-gui" b_jk_settings_gui \

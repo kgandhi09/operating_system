@@ -1,7 +1,10 @@
 #include "clisettings.h"
 
+#include "adminpassword.h"
+
 #include <QProcess>
 #include <QVariantMap>
+#include <unistd.h>
 
 bool CliSettings::command(const QString &program, const QStringList &args,
                           const QByteArray &input, QByteArray &output)
@@ -89,20 +92,32 @@ void CliSettings::refresh()
     emit changed();
 }
 
-bool CliSettings::invoke(const QStringList &args, const QString &password)
+QString CliSettings::purpose() const
+{
+    return charge_ ? tr("Charge Settings changes how the battery charges.")
+                   : tr("Power Settings changes how hard this machine runs.");
+}
+
+bool CliSettings::invoke(const QStringList &args)
 {
     if (program_.isEmpty() || args.isEmpty())
         return false;
     QByteArray output;
-    // Charge Settings starts as root and runs jk-charge directly. Power
-    // Settings still uses sudo for changes from a regular desktop session.
     bool ok;
-    if (charge_) {
+    if (geteuid() == 0) {
         ok = command(program_, args, {}, output);
     } else {
-        QStringList sudoArgs{"-S", "-p", "", program_};
-        sudoArgs.append(args);
-        ok = command("sudo", sudoArgs, password.toUtf8() + '\n', output);
+        // sudo -n: no prompt; it runs while the password given at the start
+        // (or since) is still fresh. Once sudo's time stamp has run out, the
+        // password dialog asks again.
+        const QStringList sudoArgs = QStringList{"-n", program_} + args;
+        ok = command("sudo", sudoArgs, {}, output);
+        if (!ok && output.contains("password is required")) {
+            if (askAdminPassword(purpose()))
+                ok = command("sudo", sudoArgs, {}, output);
+            else
+                output = tr("Not changed: no administrator password given.").toUtf8();
+        }
     }
     message_ = ok ? QString::fromUtf8(output).trimmed() : QString();
     error_ = ok ? QString() : QString::fromUtf8(output).trimmed();

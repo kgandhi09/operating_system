@@ -1,0 +1,29 @@
+#!/bin/sh
+# jk-settings-gui <program> [<args>]: start a settings window (jk-power gui,
+# jk-charge gui run this) on the desktop it was asked from.
+#
+# Under sudo (sudo jk-charge gui) the window runs as root, so its changes
+# apply at once; but sudo clears the session's variables, so the window
+# wouldn't know where to draw: it gets the Wayland display of the user who
+# ran sudo (SUDO_UID), at /run/user/<uid>/wayland-*, back.
+name=${0##*/}
+die() { echo "$name: $*" >&2; exit 1; }
+[ $# -gt 0 ] || die "usage: $name <program> [<args>]"
+prog=$1; shift
+
+if [ "$(id -u)" = 0 ] && [ -z "${WAYLAND_DISPLAY:-}" ] && [ -z "${DISPLAY:-}" ]; then
+    [ -n "${SUDO_UID:-}" ] && [ "$SUDO_UID" != 0 ] \
+        || die "no desktop to open the window on: run it from a terminal in the desktop (jk-gui) or the dev session (jk-dev)"
+    for s in /run/user/"$SUDO_UID"/wayland-*; do
+        case "$s" in *.lock) continue ;; esac
+        [ -S "$s" ] && { WAYLAND_DISPLAY=$s; break; }
+    done
+    [ -n "${WAYLAND_DISPLAY:-}" ] \
+        || die "no desktop session of ${SUDO_USER:-uid $SUDO_UID} (no /run/user/$SUDO_UID/wayland-*): start jk-gui or jk-dev first"
+    # An absolute WAYLAND_DISPLAY needs no XDG_RUNTIME_DIR; root's own (for
+    # Qt's files) is kept apart from the user's.
+    XDG_RUNTIME_DIR=/run/jk-settings-gui
+    mkdir -p -m 0700 "$XDG_RUNTIME_DIR"
+    export WAYLAND_DISPLAY XDG_RUNTIME_DIR QT_QPA_PLATFORM=wayland
+fi
+exec "$prog" "$@"

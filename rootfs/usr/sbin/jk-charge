@@ -14,7 +14,12 @@
 #   sudo jk-charge direct off|auto|full
 #   sudo jk-charge direct-current <mA>  PPS input ceiling, 2000-4500
 #                                 (100: off), charge again 5% below it
-#   jk-charge --machine           what can be set, for programs (jk-charge-gui):
+#   jk-charge gui                 the window: battery, charger and these
+#                                 settings (Charge Settings in the menu);
+#                                 as a user it asks for the password to
+#                                 change them (--ask-password: at the start)
+#   sudo jk-charge gui            the same window as root
+#   jk-charge --machine           what can be set, for programs (jk-charge gui):
 #                                 one line each, tab-separated: setting, value
 #                                 now, saved value, lowest, highest, unit
 #
@@ -292,6 +297,7 @@ machine() {
 case "${1:-}" in
     "") show; exit ;;
     --machine) machine; exit ;;
+    gui) shift; exec /usr/lib/jk_os/jk-settings-gui /usr/lib/jk_os/jk-charge-gui "$@" ;;
     --boot) load; apply 2>/dev/null; exit 0 ;;
     -h|--help) sed -n '2,/^$/p' "$0" | sed '$d; s/^# \{0,1\}//'; exit ;;
 esac
@@ -315,7 +321,7 @@ case "$1" in
              case "$2" in off|0) DIRECT_MODE=0 ;; auto|1) DIRECT_MODE=1 ;; full|2) DIRECT_MODE=2 ;; *) die "direct mode must be off, auto, or full" ;; esac ;;
     direct-current) can direct-current || die "this machine has no PPS input ceiling"
              check "$2" 2000 "${DIRECT_MAX:-4500}" "PPS input ceiling (mA)"; DIRECT_CURRENT=$2 ;;
-    *) die "usage: $name [fast|normal|gentle | driver sm5714|sm5440-auto|sm5440-full | input <mA> | current <mA> | voltage <mV> | limit <%> | direct off|auto|full | direct-current <mA>]" ;;
+    *) die "usage: $name [gui | fast|normal|gentle | driver sm5714|sm5440-auto|sm5440-full | input <mA> | current <mA> | voltage <mV> | limit <%> | direct off|auto|full | direct-current <mA>]" ;;
 esac
 apply || die "not saved"
 save

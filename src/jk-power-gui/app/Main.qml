@@ -25,8 +25,7 @@ ApplicationWindow {
     }
 
     function run(args) {
-        if (controls.invoke(args, password.text))
-            password.clear()
+        controls.invoke(args)
     }
 
     ColumnLayout {
@@ -73,14 +72,6 @@ ApplicationWindow {
         RowLayout {
             Layout.fillWidth: true
             spacing: 10
-            TextField {
-                id: password
-                echoMode: TextInput.Password
-                placeholderText: "Administrator password for changes"
-                color: "#e6e9ee"
-                placeholderTextColor: "#8a93a1"
-                Layout.preferredWidth: 320
-            }
             TextField {
                 id: search
                 placeholderText: "Find a setting"

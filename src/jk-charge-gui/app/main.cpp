@@ -2,26 +2,26 @@
 // charging or discharging and how fast, power, voltage, temperature, health,
 // time left, the charger's settings (jk-charge) and the last hour as graphs.
 //
-//   jk-charge-gui
+//   jk-charge gui [--ask-password]   (jk-charge starts this program)
+// As root (sudo jk-charge gui) changes apply at once; as a user, through
+// sudo, with KDE's password dialog when sudo needs the password, and with
+// --ask-password (the desktop's menu entry) at the start, cancel quitting.
 // For tests: --screenshot <png> [--delay <ms>] saves a picture of the window
 // after <ms> and quits. JK_POWER_SUPPLY_DIR reads another tree than
 // /sys/class/power_supply.
-#include <QGuiApplication>
+#include "adminpassword.h"
+
+#include <QApplication>
 #include <QPalette>
 #include <QQmlApplicationEngine>
 #include <QQuickStyle>
 #include <QQuickWindow>
 #include <QTimer>
-#include <cstdio>
-#include <unistd.h>
 
 int main(int argc, char **argv)
 {
-    if (geteuid() != 0) {
-        std::fprintf(stderr, "jk-charge-gui: run as root to change charging settings\n");
-        return 1;
-    }
-    QGuiApplication app(argc, argv);
+    // QApplication (widgets): KDE's password dialog.
+    QApplication app(argc, argv);
     app.setApplicationName("jk-charge-gui");
     app.setApplicationDisplayName("Charge Settings");
     app.setOrganizationName("J.K. Robotics");
@@ -36,6 +36,9 @@ int main(int argc, char **argv)
         else if (args[i] == "--delay" && i + 1 < args.size())
             delay = args[++i].toInt();
     }
+    if (args.contains("--ask-password")
+        && !askAdminPassword(QObject::tr("Charge Settings changes how the battery charges.")))
+        return 0;
 
     // Dark, like jk-viz, whatever the desktop's theme.
     QQuickStyle::setStyle("Fusion");
@@ -50,7 +53,7 @@ int main(int argc, char **argv)
     pal.setColor(QPalette::HighlightedText, Qt::white);
     pal.setColor(QPalette::ToolTipBase, QColor("#191e26"));
     pal.setColor(QPalette::ToolTipText, QColor("#e6e9ee"));
-    QGuiApplication::setPalette(pal);
+    QApplication::setPalette(pal);
 
     QQmlApplicationEngine engine;
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &app, [] { QCoreApplication::exit(1); },

@@ -2,8 +2,8 @@
 Type=Application
 Name=Charge Settings
 GenericName=Battery Monitor
-Comment=Run as root to monitor the battery and change charging settings
-Exec=jk-charge-gui
+Comment=The battery and its charger, and how it charges (asks for the administrator password)
+Exec=jk-charge gui --ask-password
 Icon=battery
 Terminal=false
 Categories=System;Monitor;

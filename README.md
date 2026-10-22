@@ -688,8 +688,9 @@ eligible throttling trips up to 15 °C lower than stock; critical shutdown
 trips are never changed. The kernel must expose a writable trip for a
 temperature control to appear. Custom modes live in `/etc/jk_os/power.d/`;
 the selected mode and overrides live in `/etc/jk_os/power` and are applied
-at boot by `S41power`. Power Settings (`jk-power-gui`) offers the same keys
-through `jk-power list --machine` and applies changes through `jk-power`.
+at boot by `S41power`. `jk-power gui` (Power Settings in the desktop's menu)
+offers the same keys through `jk-power list --machine` and applies changes
+through `jk-power`; see [The settings windows](#the-settings-windows).
 
 ## jk-charge: charging settings
 
@@ -729,9 +730,9 @@ The settings are kept in `/etc/jk_os/charge` and applied at boot
 `jk-charge --machine` gives the GUI the current and saved values and each
 setting's supported range.
 
-## jk-charge-gui: battery and charging settings
+## jk-charge gui: battery and charging settings
 
-`jk-charge-gui` ("Charge Settings" in the desktop's menu) runs as root and shows the
+`jk-charge gui` ("Charge Settings" in the desktop's menu) shows the
 battery live: level, charging or discharging and how fast (W, mA, % per
 hour), time to full (or to the battery care limit) or to empty, voltage,
 temperature, capacity and wear (where the fuel gauge reports them: laptops'
@@ -742,7 +743,21 @@ offers the fast, normal and gentle presets, an explicit charging path selector,
 and every control reported by `jk-charge --machine` in the top charging panel.
 Charging, battery, health, and charger status appear in one row, with a single
 history plot immediately below. The plot can show power or battery level.
-Changes are applied through `jk-charge` without a password field in the GUI.
+Changes are applied through `jk-charge`.
+
+## The settings windows
+
+`jk-power gui` and `jk-charge gui` open the settings windows (the programs
+themselves are `/usr/lib/jk_os/jk-power-gui` and `jk-charge-gui`):
+
+| Started as | Window runs as | Changes |
+|---|---|---|
+| `jk-charge gui` | you | through `sudo`: KDE's password dialog asks when sudo needs the password, then not again for sudo's 15 minutes |
+| Charge / Power Settings in the menu (`... gui --ask-password`) | you | the same, but the dialog asks when the window opens; Cancel closes it |
+| `sudo jk-charge gui` | root | at once, no password; the window opens on the desktop of the user who ran sudo |
+
+The password is only checked by `sudo` (your account must be in `wheel`)
+and never kept: a correct one leaves sudo's time stamp fresh for the window.
 
 ## Date, time and time zone
 

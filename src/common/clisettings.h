@@ -7,6 +7,9 @@
 
 // Both settings windows use the CLIs as their only source of hardware
 // capabilities and as the only writer. The GUI never writes sysfs itself.
+// Changes run the CLI directly as root (sudo jk-charge gui), otherwise
+// through sudo, asking for the password in KDE's dialog when sudo needs it
+// (adminpassword.h).
 class CliSettings : public QObject {
     Q_OBJECT
     QML_ELEMENT
@@ -38,7 +41,7 @@ public:
     QString message() const { return message_; }
 
     Q_INVOKABLE void refresh();
-    Q_INVOKABLE bool invoke(const QStringList &args, const QString &password = {});
+    Q_INVOKABLE bool invoke(const QStringList &args);
 
 signals:
     void changed();
@@ -52,6 +55,7 @@ private:
     QString error_;
     QString message_;
 
+    QString purpose() const;
     static bool command(const QString &program, const QStringList &args,
                         const QByteArray &input, QByteArray &output);
 };

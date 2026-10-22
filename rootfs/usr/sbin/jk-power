@@ -8,6 +8,11 @@
 #                                   value, where it comes from and its range
 #   jk-power list                   everything that can be set here
 #   jk-power watch                  clocks, temperatures and power, live
+#   jk-power gui                    the window for all of it (Power Settings
+#                                   in the menu); as a user it asks for the
+#                                   password to change anything
+#                                   (--ask-password: at the start)
+#   sudo jk-power gui               the same window as root
 #   jk-power modes                  the modes there are
 #   sudo jk-power <mode>            quiet | balanced | performance | your own
 #   sudo jk-power set <key>=<value>...   one setting or more, over the mode
@@ -626,6 +631,7 @@ root() { [ "$(id -u)" = 0 ] || [ -n "$SYS" ] || exec sudo "$0" "$@"; }
 cmd=${1:-}
 case "$cmd" in
     -h|--help) sed -n '2,/^$/p' "$0" | sed '$d; s/^# \{0,1\}//'; exit 0 ;;
+    gui) shift; exec /usr/lib/jk_os/jk-settings-gui /usr/lib/jk_os/jk-power-gui "$@" ;;
 esac
 discover
 record_stock

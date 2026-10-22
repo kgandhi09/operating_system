@@ -1,8 +1,10 @@
 [Desktop Entry]
 Type=Application
 Name=Power Settings
-Comment=CPU, GPU and temperature settings
-Exec=jk-power-gui
+GenericName=Performance and Power
+Comment=CPU, GPU and temperature settings (asks for the administrator password)
+Exec=jk-power gui --ask-password
 Icon=preferences-system-power-management
-Categories=Settings;System;
 Terminal=false
+Categories=Settings;System;
+Keywords=power;performance;cpu;gpu;clock;governor;temperature;mode;
