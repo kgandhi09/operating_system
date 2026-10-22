@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Maintainer tool: fetch the Debian base system that apt runs in, listed in
-# build-config/debian/rootfs.list, into userspace/debian/<arch>/rootfs.tar.gz.
+# config/components/debian/rootfs.list, into userspace/debian/<arch>/rootfs.tar.gz.
 # Builds never run this; they only use the tarballs in the repo.
 #
 #   scripts/update-debian-rootfs.sh              fetch what is missing or changed
@@ -16,7 +16,7 @@ JK_DEFAULT_TARGET=1
 source "$(dirname "$0")/common.sh"
 need curl sha256sum python3
 
-LIST="$ROOT_DIR/build-config/debian/rootfs.list"
+LIST="$ROOT_DIR/config/components/debian/rootfs.list"
 REPO=debuerreotype/docker-debian-artifacts
 latest=0
 [[ "${1:-}" == --latest ]] && { latest=1; shift; }

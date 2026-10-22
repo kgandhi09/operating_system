@@ -55,7 +55,7 @@ fi
 # shellcheck disable=SC2086
 copy_stock_firmware lib/firmware $DEVICE_STOCK_FIRMWARE_EARLY
 
-# The device category's and device's own files (targets/devices/.../initramfs),
+# The device category's and device's own files (config/targets/devices/.../initramfs),
 # e.g. /etc/jk/early hooks /init runs.
 for d in "$CATEGORY_DIR" "$DEVICE_DIR"; do
     [[ -d "$d/initramfs" ]] && cp -a "$d/initramfs/." .

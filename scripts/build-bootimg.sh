@@ -7,7 +7,7 @@
 #                the stock boot image's format (DEVICE_MKBOOTIMG_ARGS)
 #   vbmeta.img   Android Verified Boot off, so an unlocked bootloader starts
 #                a kernel Samsung didn't sign
-#   dtbo.img     the device's own overlays (targets/devices/.../dtbo/*.dts),
+#   dtbo.img     the device's own overlays (config/targets/devices/.../dtbo/*.dts),
 #                or none: either way none of Samsung's get applied to
 #                jk_os's device tree
 #   vendor_boot.img  (header v3/v4) the device tree, which moved out of
@@ -30,7 +30,7 @@ AVB="$AND/avbtool.py"
 [[ "$DEVICE_BOOT" == android-bootimg || "$DEVICE_BOOT" == android-uboot ]] \
     || die "device $JK_DEVICE doesn't boot from an Android boot image"
 [[ -n "$DEVICE_MKBOOTIMG_ARGS" ]] \
-    || die "DEVICE_MKBOOTIMG_ARGS is empty in targets/devices/$JK_CATEGORY/$JK_DEVICE/device.env: copy the stock boot.img's from scripts/inspect-stock.sh"
+    || die "DEVICE_MKBOOTIMG_ARGS is empty in config/targets/devices/$JK_CATEGORY/$JK_DEVICE/device.env: copy the stock boot.img's from scripts/inspect-stock.sh"
 kernel="$KERNEL_OUT/$KIMAGE"
 dtb="$DTB_OUT/$DEVICE_DTB"
 [[ -f "$kernel" ]] || die "kernel not built yet (run: $MAKE_CMD kernel)"

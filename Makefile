@@ -1,7 +1,7 @@
 # jk_os — a minimal 64-bit Linux system built from source.
 #
-# Every build names its target, a preset (presets/<preset>.conf: device
-# category, device, kernel, arch and a name); make without one stops.
+# Every build names its target, a preset (config/presets/<preset>.conf:
+# device category, device, kernel, arch and a name); make without one stops.
 #   make presets                          list the presets
 #   make config [PRESET=<preset>]         make a new preset, or change one
 #   make PRESET=<preset>                  build its image (ISO or boot image)
@@ -15,9 +15,10 @@
 # Steps can be run on their own, with PRESET too: busybox, tools, network,
 # toolchain, desktop, binaries, rootfs (the OS image), initramfs, kernel,
 # uboot, iso, bootimg, clean.
-#   make PRESET=<preset> binaries [UPDATE=1]  pull build-config/binaries/*.list
+#   make PRESET=<preset> binaries [UPDATE=1]
+#                                         pull config/components/binaries/*.list
 #   make PRESET=<preset> menuconfig       the kernel's config menu (after kernel)
-#   make BUILD_CONF=<file> ...            a target file kept outside presets/
+#   make BUILD_CONF=<file> ...            a target file kept elsewhere
 # Everything builds from what is in this repo: no network, no git (except
 # `make binaries` for a binary that is listed but not fetched yet).
 
@@ -117,7 +118,7 @@ showconfig:
 	$(S)/configure.sh --show
 
 # Interactive kernel config for the current target (after one `make kernel`).
-# Copy options you want to keep into build-config/kernel/*.config.
+# Copy options you want to keep into config/components/kernel/*.config.
 menuconfig:
 	. $(S)/common.sh && make -C "$$KERNEL_SRC" O="$$KERNEL_OUT" ARCH="$$KARCH" \
 	    CROSS_COMPILE="$$CROSS_COMPILE" menuconfig

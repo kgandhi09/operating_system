@@ -26,7 +26,7 @@ mkdir -p /run/jk/medium /run/jk/data /run/jk/lower /run/jk/rw /newroot
 
 say() { echo "jk_os: $*"; }
 
-# Device hooks (targets/devices/<category>/<device>/initramfs/etc/jk/early),
+# Device hooks (config/targets/devices/<category>/<device>/initramfs/etc/jk/early),
 # e.g. a console over USB on a tablet without a serial port. Sourced, in
 # name order, before the system is looked for.
 for hook in /etc/jk/early/*; do

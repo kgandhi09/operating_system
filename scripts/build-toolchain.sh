@@ -386,13 +386,13 @@ b_sqlite() {
     make -C "$2" install DESTDIR="$TC"
 }
 
-# bash, with its official patches (build-config/toolchain/patches/bash: bash53-NNN,
+# bash, with its official patches (config/components/toolchain/patches/bash: bash53-NNN,
 # GNU-signed), and readline as it ships it, on ncurses. /bin/bash too, for
 # scripts that ask for it there.
 b_bash() {
     copy_src "$1" "$2"
     local p
-    for p in "$ROOT_DIR"/build-config/toolchain/patches/bash/*.patch; do
+    for p in "$ROOT_DIR"/config/components/toolchain/patches/bash/*.patch; do
         patch -d "$2" -p0 --no-backup-if-mismatch < "$p"
     done
     (cd "$2" && CC="$TCC" CFLAGS="$DEPFLAGS_C" LDFLAGS="$DEPFLAGS_LD" ./configure "${TARGET_ARGS[@]}" \
@@ -454,7 +454,7 @@ b_python() {
 
 step bzip2    "$BZIP2_SRC"    b_bzip2
 step sqlite   "$SQLITE_SRC"   b_sqlite
-step bash     "$BASH_SRC"     b_bash "patches=$(cat "$ROOT_DIR"/build-config/toolchain/patches/bash/*.patch | sha256sum | cut -c1-16)"
+step bash     "$BASH_SRC"     b_bash "patches=$(cat "$ROOT_DIR"/config/components/toolchain/patches/bash/*.patch | sha256sum | cut -c1-16)"
 [[ -n "$CROSS" ]] && step python-build "$PYTHON_SRC" b_python_build
 step python   "$PYTHON_SRC"   b_python ${CROSS:+cross}
 

@@ -197,7 +197,7 @@ if compgen -G "$BINARIES_DIR/bin/*" >/dev/null; then
     cp -a "$BINARIES_DIR/bin/." usr/local/bin/
 fi
 cp -a "$ROOT_DIR/rootfs/." "$ROOTFS_DIR/"
-# The device category's and device's own files (targets/devices/...) win.
+# The device category's and device's own files (config/targets/devices/...) win.
 for o in "${ROOTFS_OVERLAYS[@]}"; do
     cp -a "$o/." "$ROOTFS_DIR/"
 done

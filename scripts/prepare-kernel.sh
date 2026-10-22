@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # The kernel source for the build target: kernel/<tree> as it is, or, when
-# the kernel profile has patches (targets/kernels/<kernel>/patches/*.patch,
+# the kernel profile has patches (config/targets/kernels/<kernel>/patches/*.patch,
 # applied in name order), a patched copy in build/<arch>/<device>-<kernel>/
 # linux-src. The copy is made of hard links (quick, nearly no space); each
 # file a patch touches is first replaced by a real copy, so patching never

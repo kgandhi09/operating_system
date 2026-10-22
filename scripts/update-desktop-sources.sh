@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Maintainer tool: fetch the desktop stack's sources, listed in
-# build-config/desktop/sources.list, into userspace/desktop/<name>. Builds never run
+# config/components/desktop/sources.list, into userspace/desktop/<name>. Builds never run
 # this; they only use the trees in the repo.
 #
 #   scripts/update-desktop-sources.sh            fetch what is missing or changed
@@ -18,7 +18,7 @@ JK_DEFAULT_TARGET=1
 source "$(dirname "$0")/common.sh"
 need curl tar unzip sha256sum git
 
-LIST="$ROOT_DIR/build-config/desktop/sources.list"
+LIST="$ROOT_DIR/config/components/desktop/sources.list"
 DEST_ROOT="$ROOT_DIR/userspace/desktop"
 mkdir -p "$DEST_ROOT"
 only=("$@")
@@ -79,4 +79,4 @@ while read -r name ver url pin _; do
     fi
     fetch_one "$name" "$ver" "$url" "$pin"
 done < <(cat "$LIST")
-echo "Commit with: git add -f userspace/desktop build-config/desktop/sources.list"
+echo "Commit with: git add -f userspace/desktop config/components/desktop/sources.list"

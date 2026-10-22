@@ -43,7 +43,7 @@
 	 * tree ("Yupik SoC"): SM7325 and SoC id 0x203, a variant mainline's
 	 * qcom,ids.h has no name for; board-id 0 0 as the base tree has (the
 	 * board's own <0x22 rev> are in the dtbo overlays, which jk_os keeps
-	 * empty: targets/devices/tablet/samsung-gts7fe/dtbo). dtbo-version, as
+	 * empty: config/targets/devices/tablet/samsung-gts7fe/dtbo). dtbo-version, as
 	 * the stock base tree has it, matches the overlays'.
 	 */
 	qcom,msm-id = <QCOM_ID_SM7325 0x10000>, <0x203 0x10000>;

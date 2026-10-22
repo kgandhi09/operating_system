@@ -2,7 +2,7 @@
 # Shared settings for every jk_os build step. Source it, don't run it.
 #
 # Inputs (environment):
-#   PRESET         the build target: presets/<preset>.conf (make presets
+#   PRESET         the build target: config/presets/<preset>.conf (make presets
 #                  lists them). Required for every build step.
 #   BUILD_CONF     instead of PRESET, a target file kept elsewhere.
 #   ARCH           x86_64 | aarch64 (aliases: amd64, arm64): must match the
@@ -85,7 +85,7 @@ JOBS="${JOBS:-$(( $(nproc) > 1 ? $(nproc) / 2 : 1 ))}"
 OUT_DIR="$ROOT_DIR/build/$ARCH"
 TARGET_OUT="$OUT_DIR/$JK_DEVICE-$JK_KERNEL"
 
-# The kernel tree comes from the kernel profile (targets/kernels/<kernel>).
+# The kernel tree comes from the kernel profile (config/targets/kernels/<kernel>).
 # With patches (the profile's patches/*.patch, e.g. drivers not upstream
 # yet) it is built from a patched copy, build/<arch>/<device>-<kernel>/
 # linux-src (prepare-kernel.sh), so kernel/<tree> itself stays untouched.
@@ -103,7 +103,7 @@ DTB_OUT="$TARGET_OUT/dtbs"          # the device's tree (DEVICE_DTB), build-dtbs
 BOOTIMG_DIR="$TARGET_OUT/bootimg"   # boot.img and friends, build-bootimg.sh
 UBOOT_OUT="$TARGET_OUT/u-boot"      # U-Boot for android-uboot, build-uboot.sh
 # Kernel config fragments, general to specific, and rootfs overlays.
-KERNEL_FRAGMENTS=("$ROOT_DIR/build-config/kernel/common.config" "$ROOT_DIR/build-config/kernel/$ARCH.config")
+KERNEL_FRAGMENTS=("$ROOT_DIR/config/components/kernel/common.config" "$ROOT_DIR/config/components/kernel/$ARCH.config")
 ROOTFS_OVERLAYS=()
 for d in "$KERNEL_DIR" "$CATEGORY_DIR" "$DEVICE_DIR"; do
     [[ -f "$d/kernel.config" ]] && KERNEL_FRAGMENTS+=("$d/kernel.config")

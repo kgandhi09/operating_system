@@ -17,7 +17,7 @@ works from a CD/DVD, a VM, or written raw to a USB stick.
 
 Every source tree lives in the repo, so **a build needs no network and no
 git**: a copied folder or an unpacked archive of this repo builds offline.
-The one exception is a GitHub binary newly added to `build-config/binaries/`, which
+The one exception is a GitHub binary newly added to `config/components/binaries/`, which
 is downloaded once into `userspace/binaries/` (see [Binaries from GitHub](#binaries-from-github)).
 
 ## Quick start
@@ -38,7 +38,7 @@ and lost on reboot). See [Installing to a disk](#installing-to-a-disk).
 
 ### Choosing a target device: presets
 
-A preset is one image jk_os builds: a file in `presets/` naming the device
+A preset is one image jk_os builds: a file in `config/presets/` naming the device
 and how to build for it. Every `make` that builds something takes one, as
 `PRESET=<preset>` (the file's name without `.conf`):
 
@@ -50,7 +50,7 @@ and how to build for it. Every `make` that builds something takes one, as
 
 `make config` makes a new preset, or changes one (`make config
 PRESET=<preset>`): it asks what to build for and saves the answers in
-`presets/<preset>.conf`. The device comes first, and each later list shows
+`config/presets/<preset>.conf`. The device comes first, and each later list shows
 only what fits it:
 
 1. **device category**: `pc`, `tablet`, `robotics-hpc`, ...
@@ -68,10 +68,10 @@ make presets                          # list the presets
 make config                           # make a new one from menus (arrow keys, Enter)
 make PRESET=tablet-gts7fe showconfig  # what a preset builds
 make PRESET=tablet-gts7fe             # build it
-make BUILD_CONF=~/jetson.conf         # a target file kept outside presets/
+make BUILD_CONF=~/jetson.conf         # a target file kept outside config/presets/
 ```
 
-The choices are defined in [`targets/`](#build-targets). A device whose boot
+The choices are defined in [`config/targets/`](#build-targets). A device whose boot
 format jk_os can't make yet can be chosen, but `make` refuses it.
 
 ### Other architecture
@@ -137,14 +137,13 @@ userspace/util-linux/      util-linux source: sfdisk, fdisk, lsblk, wipefs, part
 userspace/e2fsprogs/       e2fsprogs source: mkfs.ext4, e2fsck, resize2fs, tune2fs
 userspace/shadow/          shadow-utils source: useradd, usermod, passwd, su, login, ...
 userspace/libxcrypt/       libxcrypt source: password hashing (yescrypt) for shadow
-build-config/kernel/           kernel config fragments merged over the arch defconfig
-build-config/busybox/          BusyBox config fragments merged over defconfig
-build-config/binaries/         GitHub binaries: common.list (every arch) + <arch>.list
+config/                   what to build and how (config/README.md):
+  presets/                  one file per image: make PRESET=<preset>
+  targets/                  devices and kernels: profiles, overlays, DTS, patches
+  components/               per-part build settings: kernel/busybox fragments,
+                            source and binary lists, patches, initramfs.list
 initramfs/init            early boot: find and mount jk_os.squashfs, switch into it
-build-config/initramfs.list    device nodes added to the initramfs
-targets/kernels/<name>/   kernel profiles: which tree, which archs (make config)
-targets/devices/<category>/<device>/  device profiles: archs, kernels, boot format
-presets/<preset>.conf     build targets: device, kernel, arch, name (make PRESET=<preset>)
+branding/                 logo, splash video and font the branding is made from
 userspace/binaries/<arch>/ fetched binaries (bin/) and what they came from (sources.lock)
 rootfs/                   files copied verbatim into the root filesystem
 boot/grub.cfg             x86_64 GRUB menu
@@ -164,25 +163,25 @@ initramfs, rootfs and ISO depend on the device and kernel and go in
 
 ## Build targets
 
-`make config` offers what `targets/` defines. Each profile is a plain
+`make config` offers what `config/targets/` defines. Each profile is a plain
 `KEY=value` file:
 
 ```
-targets/kernels/mainline/kernel.env              KERNEL_TREE, KERNEL_ARCHS
-targets/devices/pc/category.env                  CATEGORY_DESC
-targets/devices/pc/generic/device.env            DEVICE_ARCHS, DEVICE_KERNELS, DEVICE_BOOT
+config/targets/kernels/mainline/kernel.env     KERNEL_TREE, KERNEL_ARCHS
+config/targets/devices/pc/category.env         CATEGORY_DESC
+config/targets/devices/pc/generic/device.env   DEVICE_ARCHS, DEVICE_KERNELS, DEVICE_BOOT
 ```
 
 A kernel, category or device directory can also hold a `kernel.config`
-fragment, merged after `build-config/kernel/common.config` and `<arch>.config` in
+fragment, merged after `config/components/kernel/common.config` and `<arch>.config` in
 the order kernel, category, device. A category or device directory can hold a
 `rootfs/` overlay, copied over the root filesystem. The image records its
 target in `/etc/jk_os/target` and its device as `VARIANT_ID` in
 `/etc/os-release`.
 
-To add a device, create `targets/devices/<category>/<device>/device.env`
+To add a device, create `config/targets/devices/<category>/<device>/device.env`
 (device names are unique across categories). To add a kernel, create
-`targets/kernels/<name>/kernel.env` and list it in the device's
+`config/targets/kernels/<name>/kernel.env` and list it in the device's
 `DEVICE_KERNELS`. `scripts/lib-target.sh` describes every field.
 
 Every kind of system has its own **update channel**, since each needs its
@@ -220,10 +219,10 @@ one made for another kind of system.
 ### Android-bootloader devices (Samsung Galaxy Tab S7 FE)
 
 A device with `DEVICE_BOOT=android-bootimg` boots mainline Linux with a device
-tree jk_os adds (`targets/kernels/<kernel>/dts/`, built against the kernel
+tree jk_os adds (`config/targets/kernels/<kernel>/dts/`, built against the kernel
 tree by `scripts/build-dtbs.sh`) from an Android `boot.img` its bootloader
 loads. Drivers not in the kernel yet are patches in the kernel profile
-(`targets/kernels/<kernel>/patches/`), applied to a hard-linked copy of the
+(`config/targets/kernels/<kernel>/patches/`), applied to a hard-linked copy of the
 tree (`scripts/prepare-kernel.sh`); either way `kernel/<tree>` stays untouched.
 
 ```sh
@@ -255,10 +254,10 @@ in `vendor_boot`. U-Boot shows its messages on the display; volume keys move
 in its menu, power selects (hold volume down while it starts to open it).
 
 On the tablet, jk_os's initramfs gives the PC on the USB cable a console
-(`targets/devices/tablet/initramfs`, every tablet; USB device mode in
-`targets/devices/tablet/kernel.config`): the tablet is 172.16.42.1 and
+(`config/targets/devices/tablet/initramfs`, every tablet; USB device mode in
+`config/targets/devices/tablet/kernel.config`): the tablet is 172.16.42.1 and
 hands the PC 172.16.42.2. The installed system keeps serving it
-(`targets/devices/tablet/rootfs`, `/etc/init.d/S39usb-console`).
+(`config/targets/devices/tablet/rootfs`, `/etc/init.d/S39usb-console`).
 
 ```sh
 telnet 172.16.42.1                  # a root shell (or: screen /dev/ttyACM0)
@@ -300,7 +299,7 @@ sudo udevadm control --reload
 ```
 
 What works on the tablet, and where it comes from (kernel patches in
-`targets/kernels/samsung-mainline/patches/`, wiring in its device tree):
+`config/targets/kernels/samsung-mainline/patches/`, wiring in its device tree):
 
 | Hardware | Driver | Notes |
 | --- | --- | --- |
@@ -312,7 +311,7 @@ What works on the tablet, and where it comes from (kernel patches in
 | GPU (Adreno 642L) | msm, Mesa freedreno | zap shader from the stock apnhlos partition |
 | Book Cover keyboard, cover magnet | `samsung-stm32-pogo` (0001), gpio-keys | closing the cover doesn't suspend (suspend isn't brought up) |
 | UFS | mainline | |
-| USB-C host/device, USB3, external DisplayPort | SM5714 TCPM + charger/MUIC, PS5169, QMP, msm DP (0008-0009) | implemented; awaiting SM-T733 hardware validation; USB host (hub, keyboard, mouse) works; DisplayPort over USB-C awaits validation; [wiring, limits and test steps](targets/devices/tablet/samsung-gts7fe/USB.md) |
+| USB-C host/device, USB3, external DisplayPort | SM5714 TCPM + charger/MUIC, PS5169, QMP, msm DP (0008-0009) | implemented; awaiting SM-T733 hardware validation; USB host (hub, keyboard, mouse) works; DisplayPort over USB-C awaits validation; [wiring, limits and test steps](config/targets/devices/tablet/samsung-gts7fe/USB.md) |
 | Not yet: audio, sensors (rotation), cameras, suspend | | audio and sensors run on the ADSP |
 
 Charging is set with `jk-charge` (below), within Samsung's own limits for
@@ -351,7 +350,7 @@ running; its caps show whether lower clocks avoid it.
 
 `versions.env` chooses the userspace trees (`BUSYBOX_TREE=userspace/busybox`,
 ...); the kernel profile chosen with `make config` chooses the kernel tree
-(`KERNEL_TREE=kernel/mainline` in `targets/kernels/mainline/kernel.env`).
+(`KERNEL_TREE=kernel/mainline` in `config/targets/kernels/mainline/kernel.env`).
 Both x86_64 and aarch64 are fully supported by Torvalds' mainline kernel, so
 they share `kernel/mainline` (currently Linux 7.2). A tree's version is just
 what it contains; the build reads it from the tree's `Makefile`.
@@ -374,7 +373,7 @@ make PRESET=pc-x86_64 clean && make PRESET=pc-x86_64
 **Add a different kernel tree** that a device needs, such as a vendor tree
 for a specific board. Unpack it as `kernel/<name>`, or use
 `scripts/update-source.sh kernel <tarball> kernel/<name>`, then add a kernel
-profile `targets/kernels/<name>/kernel.env` with `KERNEL_TREE=kernel/<name>`
+profile `config/targets/kernels/<name>/kernel.env` with `KERNEL_TREE=kernel/<name>`
 (see [Build targets](#build-targets)).
 
 **Committing a tree.** Use `git add -f kernel/<tree>`. The kernel's own
@@ -782,7 +781,7 @@ Debian's packages are built against Debian's libraries, not jk_os's, so they
 don't go into the OS itself. They go into a Debian system of their own on the
 data partition, **`/data/apt/root`**, unpacked from the Debian base system that
 the OS image carries (the official Docker image's root filesystem,
-`userspace/debian/<arch>`, see `build-config/debian/rootfs.list` and
+`userspace/debian/<arch>`, see `config/components/debian/rootfs.list` and
 `scripts/update-debian-rootfs.sh`). Because it lives on `/data` and not in
 `/data/system/root`, what you install stays when jk_os is updated.
 
@@ -838,7 +837,7 @@ Debian-based host.
 ## Binaries from GitHub
 
 Tools that BusyBox doesn't provide come as prebuilt release assets from GitHub.
-They are listed in `build-config/binaries/`:
+They are listed in `config/components/binaries/`:
 
 - `common.list`: installed on **every** arch. `@ARCH@` in an asset name becomes
   `x86_64` / `aarch64`, and `@DEBARCH@` becomes `amd64` / `arm64`, so a single line
@@ -880,8 +879,8 @@ fetched (tag, asset, sha256) goes into `userspace/binaries/<arch>/sources.lock`.
 
 - **Add files to the OS**: drop them under `rootfs/` (e.g. `rootfs/etc/init.d/S50myapp`, executable, taking `start`/`stop`), then rebuild (`make PRESET=<preset>`).
 - **Branding**: the desktop's logo, launcher icon (`jk-os`), wallpaper (`jk_os`), splash screen and the Global Themes' previews come from `branding/J.K. Logo.png`. After changing the logo, run `scripts/make-branding.py` (needs Python with Pillow and NumPy) to regenerate the images under `rootfs/usr/share/`, then rebuild.
-- **The desktop's look**: two Global Themes, **jk_os Light** (`org.jk_os.desktop`, the default) and **jk_os Dark** (`org.jk_os.desktop.dark`), set as the light/dark pair in `rootfs/etc/xdg/kdeglobals` (System Settings → Global Theme switches between them, or follows the time of day). Both have a menu bar along the top (the J.K. Robotics menu, the active application and its menus, tray, clock) and a floating dock, in glass: KWin blurs and saturates what is behind panels, pop-ups, title bars and menus. Title bars have red, yellow and green buttons on the left and rounded corners (Aurorae, with `build-config/desktop/patches/aurorae`); the fonts are Inter and FiraCode Nerd Font Mono; Konsole opens a translucent profile, *JK Glass*. The colour schemes, title bars and Plasma style are generated by `scripts/make-theme.py`; KWin's settings are in `rootfs/etc/xdg/kwinrc`. The panel layout is set up on a user's first desktop; for an existing one, apply the Global Theme with *Desktop and window layout* ticked.
-- **Kernel options**: `make PRESET=<preset> menuconfig` to explore, then put the options you want to keep in `build-config/kernel/common.config` or `build-config/kernel/<arch>.config`. Fragments are re-applied whenever they change. The build warns if an option you asked for was dropped.
+- **The desktop's look**: two Global Themes, **jk_os Light** (`org.jk_os.desktop`, the default) and **jk_os Dark** (`org.jk_os.desktop.dark`), set as the light/dark pair in `rootfs/etc/xdg/kdeglobals` (System Settings → Global Theme switches between them, or follows the time of day). Both have a menu bar along the top (the J.K. Robotics menu, the active application and its menus, tray, clock) and a floating dock, in glass: KWin blurs and saturates what is behind panels, pop-ups, title bars and menus. Title bars have red, yellow and green buttons on the left and rounded corners (Aurorae, with `config/components/desktop/patches/aurorae`); the fonts are Inter and FiraCode Nerd Font Mono; Konsole opens a translucent profile, *JK Glass*. The colour schemes, title bars and Plasma style are generated by `scripts/make-theme.py`; KWin's settings are in `rootfs/etc/xdg/kwinrc`. The panel layout is set up on a user's first desktop; for an existing one, apply the Global Theme with *Desktop and window layout* ticked.
+- **Kernel options**: `make PRESET=<preset> menuconfig` to explore, then put the options you want to keep in `config/components/kernel/common.config` or `config/components/kernel/<arch>.config`. Fragments are re-applied whenever they change. The build warns if an option you asked for was dropped.
 - **Clean**: `make PRESET=<preset> clean` (that preset's arch, except the host tools shared by every arch in `build/host/`) or `make distclean` (all of `build/` and `out/`; source trees are left alone).
 
 ## Host requirements

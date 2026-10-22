@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Choose what jk_os is built for and save it as a preset,
-# presets/<preset>.conf (make config):
+# config/presets/<preset>.conf (make config):
 #
-#   1. device category   targets/devices/<category>   (pc, tablet, robotics-hpc, ...)
-#   2. device            targets/devices/<category>/<device>
-#   3. kernel            targets/kernels/<kernel>, the ones the device uses
+#   1. device category   config/targets/devices/<category>   (pc, tablet, robotics-hpc, ...)
+#   2. device            config/targets/devices/<category>/<device>
+#   3. kernel            config/targets/kernels/<kernel>, the ones the device uses
 #   4. arch              the ones both the device and the kernel support
 #   5. name              free, for the output file name (e.g. asus-laptop)
 #   6. preset            the file's name, used as make PRESET=<preset>
@@ -28,7 +28,7 @@ case "${1:-}" in
     print_target
     exit 0 ;;
 --presets)
-    echo "Presets (presets/<preset>.conf: category / device / kernel / arch), built with make PRESET=<preset>:"
+    echo "Presets (config/presets/<preset>.conf: category / device / kernel / arch), built with make PRESET=<preset>:"
     list_presets
     exit 0 ;;
 --check)
@@ -38,7 +38,7 @@ case "${1:-}" in
     exit 0 ;;
 esac
 [[ $# -eq 0 ]] || die "usage: $0 [--show | --check | --presets]"
-[[ -t 0 ]] || die "make config asks questions: run it in a terminal (or write presets/<preset>.conf yourself)"
+[[ -t 0 ]] || die "make config asks questions: run it in a terminal (or write config/presets/<preset>.conf yourself)"
 
 # Defaults: the preset being changed (PRESET or BUILD_CONF), if any.
 JK_CATEGORY= JK_DEVICE= JK_KERNEL= JK_ARCH= JK_NAME=
@@ -125,7 +125,7 @@ device_kernels=$DEVICE_KERNELS
 # 3. Kernel: those the device uses, that exist, and share an arch with it.
 items=()
 for k in $device_kernels; do
-    load_kernel "$k" || { warn "device $JK_DEVICE lists kernel '$k', but targets/kernels/$k has no kernel.env"; continue; }
+    load_kernel "$k" || { warn "device $JK_DEVICE lists kernel '$k', but config/targets/kernels/$k has no kernel.env"; continue; }
     [[ -n "$(target_archs)" ]] || continue
     items+=("$k|$KERNEL_DESC")
 done
@@ -174,7 +174,7 @@ else
         preset=${preset:-$def_preset}
         valid_name "$preset" || { echo "  use lowercase letters, digits, '.', '_' and '-' (starting with a letter or digit)"; continue; }
         [[ "$preset" == "${PRESET:-}" || ! -f "$PRESETS_DIR/$preset.conf" ]] && break
-        choose "presets/$preset.conf exists" no "no|choose another name" "yes|replace it"
+        choose "config/presets/$preset.conf exists" no "no|choose another name" "yes|replace it"
         [[ "$CHOICE" == yes ]] && break
     done
     conf=$PRESETS_DIR/$preset.conf

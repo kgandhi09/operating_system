@@ -1,6 +1,6 @@
 # Prebuilt binaries pulled from GitHub releases into every jk_os image.
 # scripts/fetch-binaries.sh (make binaries) reads this file plus
-# build-config/binaries/<arch>.list; installed files land in /usr/local/bin.
+# config/components/binaries/<arch>.list; installed files land in /usr/local/bin.
 #
 #   name  owner/repo  tag  asset  [member]
 #

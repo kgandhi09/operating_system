@@ -7,7 +7,7 @@
 #
 # U-Boot is Qualcomm's generic build (qcom_defconfig) with its phone settings
 # (qcom-phone.config: messages on the display, a boot menu) and the device's
-# own (targets/devices/<category>/<device>/uboot.config), and runs with the
+# own (config/targets/devices/<category>/<device>/uboot.config), and runs with the
 # device's mainline tree (DEVICE_DTB) appended as its own device tree. Its
 # environment is the device's uboot.env, with @CMDLINE@ replaced by
 # DEVICE_CMDLINE.
@@ -19,7 +19,7 @@ UBOOT_SRC="$ROOT_DIR/$UBOOT_TREE"
 [[ -f "$UBOOT_SRC/Makefile" ]] || die "no U-Boot source at $UBOOT_TREE (scripts/update-source.sh u-boot <version>)"
 dtb="$DTB_OUT/$DEVICE_DTB"
 [[ -f "$dtb" ]] || die "device tree not built yet (run: $MAKE_CMD kernel)"
-[[ -f "$DEVICE_DIR/uboot.env" ]] || die "no targets/devices/$JK_CATEGORY/$JK_DEVICE/uboot.env"
+[[ -f "$DEVICE_DIR/uboot.env" ]] || die "no config/targets/devices/$JK_CATEGORY/$JK_DEVICE/uboot.env"
 
 mkdir -p "$UBOOT_OUT"
 # </dev/null: a Kconfig option without a value would otherwise make the build

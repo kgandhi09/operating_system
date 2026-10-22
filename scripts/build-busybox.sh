@@ -5,8 +5,8 @@ need make "${CROSS_COMPILE}gcc"
 
 [[ -f "$BUSYBOX_SRC/Makefile" ]] || die "no BusyBox source at $BUSYBOX_TREE (see BUSYBOX_TREE in versions.env)"
 
-frags=("$ROOT_DIR/build-config/busybox/common.config")
-[[ -f "$ROOT_DIR/build-config/busybox/$ARCH.config" ]] && frags+=("$ROOT_DIR/build-config/busybox/$ARCH.config")
+frags=("$ROOT_DIR/config/components/busybox/common.config")
+[[ -f "$ROOT_DIR/config/components/busybox/$ARCH.config" ]] && frags+=("$ROOT_DIR/config/components/busybox/$ARCH.config")
 mkdir -p "$BUSYBOX_OUT"
 # NOWARN_CFLAGS (set in the Makefile) for BusyBox itself and for the helper
 # programs it builds for the host (kconfig, usage text).

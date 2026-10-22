@@ -92,7 +92,7 @@ source_spec() {
         # CPAN's <tarball>.sha256.txt holds the bare checksum.
         perl)      tree=$PERL_TREE      kind=sums name="perl-$v.tar.xz"
                    base="https://www.cpan.org/src/5.0" sums="$base/$name.sha256.txt" ;;
-        # bash's official patches (bash53-NNN) are in build-config/toolchain/patches/bash.
+        # bash's official patches (bash53-NNN) are in config/components/toolchain/patches/bash.
         bash)      tree=$BASH_TREE      kind=gnu base="https://ftp.gnu.org/gnu/bash"      name="bash-$v.tar.gz" ;;
         # python.org publishes each file's SHA-256 through its downloads API
         # (3.14 and newer are signed with Sigstore only, no PGP).

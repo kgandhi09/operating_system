@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Pull the prebuilt binaries listed in build-config/binaries/{common,$ARCH}.list
+# Pull the prebuilt binaries listed in config/components/binaries/{common,$ARCH}.list
 # from GitHub releases into userspace/binaries/$ARCH/bin.
 #
 # What was fetched is recorded in userspace/binaries/$ARCH/sources.lock. An
@@ -12,7 +12,7 @@
 #   GITHUB_TOKEN    optional; raises the GitHub API rate limit (60/hour without)
 source "$(dirname "$0")/common.sh"
 
-LIST_DIR="$ROOT_DIR/build-config/binaries"
+LIST_DIR="$ROOT_DIR/config/components/binaries"
 DEST="$BINARIES_DIR/bin"
 LOCK="$BINARIES_DIR/sources.lock"
 UPDATE="${UPDATE:-0}"

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build the device's tree (DEVICE_DTB) into build/<arch>/<device>-<kernel>/
-# dtbs. Its source is the kernel profile's dts/ (targets/kernels/<kernel>/
+# dtbs. Its source is the kernel profile's dts/ (config/targets/kernels/<kernel>/
 # dts/<vendor>/<board>.dts) or, for a board mainline already has, the kernel
 # tree's arch/<arch>/boot/dts. Either way it is built the way kbuild builds
 # the kernel's own trees (cpp, then the kernel's dtc), against the kernel
@@ -18,7 +18,7 @@ src=
 for d in "$KERNEL_DIR/dts" "$kdts"; do
     [[ -f "$d/$name.dts" ]] && { src="$d/$name.dts"; break; }
 done
-[[ -n "$src" ]] || die "no $name.dts in targets/kernels/$JK_KERNEL/dts or the kernel tree"
+[[ -n "$src" ]] || die "no $name.dts in config/targets/kernels/$JK_KERNEL/dts or the kernel tree"
 
 # The kernel's own dtc, built from the kernel tree.
 make -C "$KERNEL_SRC" O="$KERNEL_OUT" ARCH="$KARCH" CROSS_COMPILE="$CROSS_COMPILE" scripts_dtc >/dev/null </dev/null

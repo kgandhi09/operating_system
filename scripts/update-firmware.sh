@@ -11,7 +11,7 @@
 #   LINUX_FIRMWARE_TARBALL=~/linux-firmware-20260916.tar.xz scripts/update-firmware.sh ...
 #   (SOF_BIN_TARBALL=<file>: the same for sof-bin)
 #
-# What is kept, per arch, comes from build-config/firmware/{common,<arch>}.list:
+# What is kept, per arch, comes from config/components/firmware/{common,<arch>}.list:
 #   driver <name>   every file that driver may load, as the kernel build
 #                   lists it (the generic PC's kernel build: build/<arch>/
 #                   generic-mainline/linux/modules.builtin.modinfo, or the
@@ -44,7 +44,7 @@ fw_ver="${1:-}" regdb_ver="${2:-}"
 SOF_BIN_VERSION=2026.09.1
 SOF_BIN_SHA256=42ce40ec98f366365eab8e046d779b416d80b6ff2513b8f6be2a61a88e679b73
 
-LIST_DIR="$ROOT_DIR/build-config/firmware"
+LIST_DIR="$ROOT_DIR/config/components/firmware"
 DEST="$ROOT_DIR/userspace/firmware"
 
 tmp="$(mktemp -d "$ROOT_DIR/.update-firmware.XXXXXX")"

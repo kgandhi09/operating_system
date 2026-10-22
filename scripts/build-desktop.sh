@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build the desktop stack (KDE Plasma, started on demand with jk-gui) into
 # build/<arch>/dyn, next to the network stack, from the sources in
-# userspace/desktop (build-config/desktop/sources.list).
+# userspace/desktop (config/components/desktop/sources.list).
 #
 # Everything is compiled with jk_os's own GCC 16 and its glibc
 # (build/<arch>/toolchain as the sysroot), so nothing from the build host's
@@ -769,14 +769,14 @@ b_plasma_desktop() {
     sed -i 's|"${CMAKE_SYSROOT}/${XKBDIR}"|"'"$DYN"'/${XKBDIR}"|' "$out/src/ConfigureChecks.cmake"
     PKG_CONFIG_FDO_SYSROOT_RULES=1 kfpkg "$out/src" "$out/build" "$@"
 }
-# Aurorae with jk_os's patches (build-config/desktop/patches/aurorae: rounded
+# Aurorae with jk_os's patches (config/components/desktop/patches/aurorae: rounded
 # window corners and an outline for its themes), built from a copy; the
 # patches' checksum is part of the options.
 b_aurorae() {
     local src="$1" out="$2"; shift 2
     mkdir -p "$out/src"; copy_tree "$src" "$out/src"
     local p
-    for p in "$ROOT_DIR"/build-config/desktop/patches/aurorae/*.patch; do
+    for p in "$ROOT_DIR"/config/components/desktop/patches/aurorae/*.patch; do
         patch -d "$out/src" -p1 --no-backup-if-mismatch < "$p"
     done
     kfpkg "$out/src" "$out/build" "${@:1:$#-1}"
@@ -785,7 +785,7 @@ b_plasma_workspace() {
     local src="$1" out="$2"; shift 2
     mkdir -p "$out/src"; copy_tree "$src" "$out/src"
     local p
-    for p in "$ROOT_DIR"/build-config/desktop/patches/plasma-workspace/*.patch; do
+    for p in "$ROOT_DIR"/config/components/desktop/patches/plasma-workspace/*.patch; do
         patch -d "$out/src" -p1 --no-backup-if-mismatch < "$p"
     done
     kfpkg "$out/src" "$out/build" "${@:1:$#-1}"
@@ -813,7 +813,7 @@ for p in kdecoration layer-shell-qt kwayland plasma-activities plasma-activities
         breeze)             pkg breeze kfpkg -DBUILD_QT5=OFF -DBUILD_QT6=ON ;;
         kwin)               pkg kwin kfpkg -DQTWAYLANDSCANNER_KDE_EXECUTABLE="$QT_HOST/bin/qtwaylandscanner_kde" ;;
         aurorae)            pkg aurorae b_aurorae \
-                                "patches=$(cat "$ROOT_DIR"/build-config/desktop/patches/aurorae/*.patch | sha256sum | cut -c1-16)" ;;
+                                "patches=$(cat "$ROOT_DIR"/config/components/desktop/patches/aurorae/*.patch | sha256sum | cut -c1-16)" ;;
         plasma-nm)          pkg plasma-nm kfpkg -DBUILD_OPENCONNECT=OFF ;;
         # No KDocTools: no handbooks.
         kde-cli-tools)      pkg kde-cli-tools kfpkg -DBUILD_DOC=OFF ;;
@@ -822,7 +822,7 @@ for p in kdecoration layer-shell-qt kwayland plasma-activities plasma-activities
         # Wayland session only (X11 apps still run, through Xwayland); locales
         # come with glibc, nothing to generate.
         plasma-workspace)   pkg plasma-workspace b_plasma_workspace -DWITH_X11_SESSION=OFF -DGLIBC_LOCALE_GEN=OFF \
-                                "patches=$(cat "$ROOT_DIR"/build-config/desktop/patches/plasma-workspace/*.patch | sha256sum | cut -c1-16)"
+                                "patches=$(cat "$ROOT_DIR"/config/components/desktop/patches/plasma-workspace/*.patch | sha256sum | cut -c1-16)"
                             # No user management in the desktop: users are managed as
                             # root on the console (jk_os's accounts), so the Users
                             # page of System Settings is removed.
@@ -880,19 +880,19 @@ b_wlroots() {
 pkg wlroots          b_wlroots -Dxwayland=disabled -Dexamples=false -Dbackends=drm,libinput \
                          -Drenderers=gles2 -Dallocators=gbm -Dsession=enabled -Dxcb-errors=disabled \
                          -Dlibliftoff=disabled
-# cage with jk_os's patches (build-config/desktop/patches/cage: -m mirror), built
+# cage with jk_os's patches (config/components/desktop/patches/cage: -m mirror), built
 # from a copy; the patches' checksum is part of the options.
 b_cage() {
     local src="$1" out="$2"; shift 2
     mkdir -p "$out/src"; copy_tree "$src" "$out/src"
     local p
-    for p in "$ROOT_DIR"/build-config/desktop/patches/cage/*.patch; do
+    for p in "$ROOT_DIR"/config/components/desktop/patches/cage/*.patch; do
         patch -d "$out/src" -p1 --no-backup-if-mismatch < "$p"
     done
     mesonpkg "$out/src" "$out/build" "${@:1:$#-1}"
 }
 pkg cage             b_cage -Dman-pages=disabled \
-                         "patches=$(cat "$ROOT_DIR"/build-config/desktop/patches/cage/*.patch | sha256sum | cut -c1-16)"
+                         "patches=$(cat "$ROOT_DIR"/config/components/desktop/patches/cage/*.patch | sha256sum | cut -c1-16)"
 pkg tllist           mesonpkg
 pkg fcft             mesonpkg -Ddocs=disabled -Dexamples=false -Dgrapheme-shaping=enabled \
                          -Drun-shaping=disabled -Dsvg-backend=nanosvg

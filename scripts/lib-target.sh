@@ -3,12 +3,12 @@
 # ROOT_DIR, die and normalize_arch from there), don't run it.
 #
 # A target is four choices, plus a free name, saved as a preset by `make
-# config` (scripts/configure.sh) in presets/<preset>.conf and built with
+# config` (scripts/configure.sh) in config/presets/<preset>.conf and built with
 # `make PRESET=<preset>`:
 #
-#   JK_CATEGORY  targets/devices/<category>/            category.env
-#   JK_DEVICE    targets/devices/<category>/<device>/   device.env
-#   JK_KERNEL    targets/kernels/<kernel>/              kernel.env
+#   JK_CATEGORY  config/targets/devices/<category>/            category.env
+#   JK_DEVICE    config/targets/devices/<category>/<device>/   device.env
+#   JK_KERNEL    config/targets/kernels/<kernel>/              kernel.env
 #   JK_ARCH      x86_64 | aarch64
 #   JK_NAME      your name for this build (output file name), e.g. asus-laptop
 #
@@ -53,7 +53,7 @@
 #                   built against it by build-dtbs.sh
 #   patches/        (kernel) patches for the kernel tree, applied to a copy
 #                   of it (prepare-kernel.sh)
-#   kernel.config   a kernel config fragment, merged after build-config/kernel/
+#   kernel.config   a kernel config fragment, merged after config/components/kernel/
 #                   common.config and <arch>.config, in the order kernel,
 #                   category, device
 #   rootfs/         files copied over the root filesystem (category, device)
@@ -64,14 +64,14 @@
 # Device names are unique across categories: build/<arch>/<device>-<kernel>
 # holds what is built for one device and kernel.
 
-TARGETS_DIR="$ROOT_DIR/targets"
-PRESETS_DIR="$ROOT_DIR/presets"
-# The target file: PRESET=<preset> (presets/<preset>.conf) or, for a file
+TARGETS_DIR="$ROOT_DIR/config/targets"
+PRESETS_DIR="$ROOT_DIR/config/presets"
+# The target file: PRESET=<preset> (config/presets/<preset>.conf) or, for a file
 # kept elsewhere, BUILD_CONF=<file>. Empty: no target chosen.
 if [[ -n "${PRESET:-}" ]]; then
     [[ -z "${BUILD_CONF:-}" ]] || die "give PRESET or BUILD_CONF, not both"
     BUILD_CONF="$PRESETS_DIR/$PRESET.conf"
-    [[ -f "$BUILD_CONF" ]] || die "no preset '$PRESET' (presets/$PRESET.conf); see: make presets"
+    [[ -f "$BUILD_CONF" ]] || die "no preset '$PRESET' (config/presets/$PRESET.conf); see: make presets"
 fi
 BUILD_CONF="${BUILD_CONF:-}"
 [[ -z "$BUILD_CONF" || "$BUILD_CONF" == /* ]] || BUILD_CONF="$PWD/$BUILD_CONF"
@@ -177,10 +177,10 @@ jk_os builds one preset at a time: name it on every make.
   make PRESET=<preset> <step>    one step: kernel, desktop, rootfs, bootimg, ...
   make PRESET=<preset> flash     write or flash that image
   make presets                   list the presets
-  make config                    make a new preset (presets/<name>.conf)
+  make config                    make a new preset (config/presets/<name>.conf)
   make help                      every command
 
-Presets (presets/<preset>.conf: category / device / kernel / arch):
+Presets (config/presets/<preset>.conf: category / device / kernel / arch):
 $(list_presets)
 USAGE
 }
