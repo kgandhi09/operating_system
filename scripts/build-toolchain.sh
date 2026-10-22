@@ -30,7 +30,7 @@ TC="$OUT_DIR/toolchain"                        # install root = target sysroot
 TC_OUT="$OUT_DIR/tc"                           # build directories
 DEPS="$OUT_DIR/tc-deps"                        # GMP/MPFR/MPC for the target, static
 DYN="$OUT_DIR/dyn"                             # the network stack (readline, expat, OpenSSL)
-[[ -d "$DYN/usr/include" ]] || die "network stack not built yet (run: make network)"
+[[ -d "$DYN/usr/include" ]] || die "network stack not built yet (run: $MAKE_CMD network)"
 mkdir -p "$TC" "$TC_OUT" "$DEPS"
 
 # Build this toolchain with: the host compiler for x86_64 on x86_64, the GCC
@@ -91,7 +91,7 @@ b_glibc() {
     command -v dpkg >/dev/null || die "the toolchain build takes glibc from Debian/Ubuntu packages (dpkg)"
     local pkg f rel
     for pkg in $(glibc_packages); do
-        dpkg -L "$pkg" >/dev/null || die "package $pkg not installed (run: make deps)"
+        dpkg -L "$pkg" >/dev/null || die "package $pkg not installed (run: $MAKE_CMD deps)"
         dpkg -L "$pkg" | while IFS= read -r f; do
             [[ -f "$f" || -L "$f" ]] || continue
             case "$f" in
@@ -386,13 +386,13 @@ b_sqlite() {
     make -C "$2" install DESTDIR="$TC"
 }
 
-# bash, with its official patches (configs/toolchain/patches/bash: bash53-NNN,
+# bash, with its official patches (build-config/toolchain/patches/bash: bash53-NNN,
 # GNU-signed), and readline as it ships it, on ncurses. /bin/bash too, for
 # scripts that ask for it there.
 b_bash() {
     copy_src "$1" "$2"
     local p
-    for p in "$ROOT_DIR"/configs/toolchain/patches/bash/*.patch; do
+    for p in "$ROOT_DIR"/build-config/toolchain/patches/bash/*.patch; do
         patch -d "$2" -p0 --no-backup-if-mismatch < "$p"
     done
     (cd "$2" && CC="$TCC" CFLAGS="$DEPFLAGS_C" LDFLAGS="$DEPFLAGS_LD" ./configure "${TARGET_ARGS[@]}" \
@@ -454,7 +454,7 @@ b_python() {
 
 step bzip2    "$BZIP2_SRC"    b_bzip2
 step sqlite   "$SQLITE_SRC"   b_sqlite
-step bash     "$BASH_SRC"     b_bash "patches=$(cat "$ROOT_DIR"/configs/toolchain/patches/bash/*.patch | sha256sum | cut -c1-16)"
+step bash     "$BASH_SRC"     b_bash "patches=$(cat "$ROOT_DIR"/build-config/toolchain/patches/bash/*.patch | sha256sum | cut -c1-16)"
 [[ -n "$CROSS" ]] && step python-build "$PYTHON_SRC" b_python_build
 step python   "$PYTHON_SRC"   b_python ${CROSS:+cross}
 

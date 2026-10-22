@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build the desktop stack (KDE Plasma, started on demand with jk-gui) into
 # build/<arch>/dyn, next to the network stack, from the sources in
-# userspace/desktop (configs/desktop/sources.list).
+# userspace/desktop (build-config/desktop/sources.list).
 #
 # Everything is compiled with jk_os's own GCC 16 and its glibc
 # (build/<arch>/toolchain as the sysroot), so nothing from the build host's
@@ -20,11 +20,11 @@ source "$(dirname "$0")/common.sh"
 # A host LD_LIBRARY_PATH (e.g. one with /usr/lib/x86_64-linux-gnu) beats the
 # RUNPATH of the tools built here, so host Qt tools would load the host's Qt.
 unset LD_LIBRARY_PATH
-need make meson ninja cmake pkg-config python3 wayland-scanner glslangValidator
+need make meson ninja cmake pkg-config python3 wayland-scanner glslangValidator flock
 
 TC="$OUT_DIR/toolchain"
-[[ -x "$TC/usr/bin/gcc" ]] || die "toolchain not built yet (run: make toolchain)"
-[[ -x "$OUT_DIR/dyn/usr/sbin/NetworkManager" ]] || die "network stack not built yet (run: make network)"
+[[ -x "$TC/usr/bin/gcc" ]] || die "toolchain not built yet (run: $MAKE_CMD toolchain)"
+[[ -x "$OUT_DIR/dyn/usr/sbin/NetworkManager" ]] || die "network stack not built yet (run: $MAKE_CMD network)"
 SRC="$ROOT_DIR/userspace/desktop"
 [[ -d "$SRC" ]] || die "no desktop sources (run: scripts/update-desktop-sources.sh)"
 
@@ -46,7 +46,7 @@ if [[ "$ARCH" == "$HOST_ARCH" ]]; then
     TC_RUN="env LD_LIBRARY_PATH=$TC/usr/lib"
 else
     CROSS="$OUT_DIR/cross/bin"
-    [[ -x "$CROSS/$TRIPLE-g++" ]] || die "no cross compiler at build/$ARCH/cross (run: make toolchain)"
+    [[ -x "$CROSS/$TRIPLE-g++" ]] || die "no cross compiler at build/$ARCH/cross (run: $MAKE_CMD toolchain)"
     for t in gcc g++ ar ranlib strip nm objcopy readelf; do ln -sf "$CROSS/$TRIPLE-$t" "$WRAP/$TRIPLE-$t"; done
     TC_RUN=""
 fi
@@ -58,18 +58,28 @@ export LDFLAGS="$LDFLAGS -Wl,-rpath-link,$TC/usr/lib"
 
 # Tools that run on the build host while other packages build (the Wayland
 # protocol scanner, of the same version as the libraries), built with the
-# host's compiler into build/<arch>/desktop/host. Meson finds them through
+# host's compiler into build/host/<host arch>/install. They are the same
+# whichever arch jk_os is built for, so every arch's build shares them
+# (hoststep): the first to need one builds it. Meson finds them through
 # PKG_CONFIG_PATH_FOR_BUILD.
-HOSTDIR="$OUT_DIR/desktop/host"
+HOST_WORK="$ROOT_DIR/build/host/$HOST_ARCH"
+HOSTDIR="$HOST_WORK/install"
+mkdir -p "$HOST_WORK"
+# One build at a time writes them: a second waits here until the first ends.
+exec {host_lock}>"$HOST_WORK/.lock"
+flock -n "$host_lock" || { log "waiting for another build using build/host/$HOST_ARCH"; flock "$host_lock"; }
+# hoststep <name> <src> <function> <options...>: step, with its build
+# directory and stamp in build/host/<host arch>.
+hoststep() { NET_OUT="$HOST_WORK" step "$@"; }
 export PKG_CONFIG_PATH_FOR_BUILD="$HOSTDIR/lib/pkgconfig:$HOSTDIR/share/pkgconfig"
 # The build host's own LLVM and Clang: the toolchain built for it
 # (build/<host arch>/toolchain). Its programs need its libraries.
 HOST_TC="$ROOT_DIR/build/$HOST_ARCH/toolchain"
 # Cross-building needs it too: the same LLVM version as the target's, which a
 # distribution's LLVM rarely is. Build it with the host arch's toolchain
-# (without a build.conf, so ARCH picks the arch).
+# (the generic PC preset for that arch).
 [[ -x "$HOST_TC/usr/bin/llvm-config" ]] \
-    || die "no LLVM for the build host at build/$HOST_ARCH/toolchain: run BUILD_CONF=none make ARCH=$HOST_ARCH toolchain"
+    || die "no LLVM for the build host at build/$HOST_ARCH/toolchain: run make PRESET=pc-$HOST_ARCH toolchain"
 HOST_ENV=(env -u CC -u CXX -u AR -u RANLIB -u STRIP -u CPPFLAGS -u LDFLAGS -u PKG_CONFIG_SYSROOT_DIR
           -u PKG_CONFIG_LIBDIR "PKG_CONFIG_PATH=$HOSTDIR/lib/pkgconfig:$HOSTDIR/share/pkgconfig"
           "LD_LIBRARY_PATH=$HOSTDIR/lib:$HOST_TC/usr/lib")
@@ -230,7 +240,7 @@ pkg libdrm           mesonpkg -Dtests=false -Dman-pages=disabled -Dvalgrind=disa
                          -Dcairo-tests=disabled -Dudev=true
 pkg zstd             b_zstd
 pkg libxml2          mesonpkg -Dpython=disabled -Dicu=disabled -Dhistory=disabled -Dreadline=disabled
-step host-wayland-scanner "$SRC/wayland" hostmeson -Dlibraries=false -Ddocumentation=false \
+hoststep host-wayland-scanner "$SRC/wayland" hostmeson -Dlibraries=false -Ddocumentation=false \
                          -Dtests=false -Ddtd_validation=false
 pkg wayland          mesonpkg -Ddocumentation=false -Dtests=false -Ddtd_validation=false
 pkg wayland-protocols mesonpkg -Dtests=false
@@ -291,27 +301,25 @@ hostcmake_libclc() {   # hostcmake_libclc <src> <out>: the spirv64 OpenCL librar
 }
 # The precompilers of the drivers being built for the target run on the
 # build host too: panfrost's (panfrost_compile) comes with Mesa's panfrost
-# tools (no driver needed on the host).
+# tools (no driver needed on the host). Built whatever the target arch, as
+# every arch shares these tools; only aarch64's Mesa (panfrost) uses it.
 b_host_mesa_clc() {
-    local tools=""
-    [[ ",$MESA_GALLIUM,$MESA_VULKAN," == *,panfrost,* ]] && tools=panfrost
     hostmeson "$1" "$2" -Dgallium-drivers= -Dvulkan-drivers= -Dplatforms= -Dglx=disabled \
         -Degl=disabled -Dgbm=disabled -Dopengl=false -Dgles1=disabled -Dgles2=disabled \
         -Dllvm=enabled -Dshared-llvm=enabled -Dcpp_rtti=false -Dmesa-clc=enabled \
         -Dinstall-mesa-clc=true -Dprecomp-compiler=enabled -Dinstall-precomp-compiler=true \
-        -Dtools="$tools" \
+        -Dtools=panfrost \
         -Dbuild-tests=false -Dvalgrind=disabled -Dlibunwind=disabled -Dlmsensors=disabled -Dzstd=disabled
-    host_wrap mesa_clc vtn_bindgen2
-    [[ -z "$tools" ]] || host_wrap panfrost_compile
+    host_wrap mesa_clc vtn_bindgen2 panfrost_compile
 }
-step host-spirv-headers "$SRC/spirv-headers" hostcmake
-step host-spirv-tools "$SRC/spirv-tools" hostcmake -DSPIRV-Headers_SOURCE_DIR="$SRC/spirv-headers" \
+hoststep host-spirv-headers "$SRC/spirv-headers" hostcmake
+hoststep host-spirv-tools "$SRC/spirv-tools" hostcmake -DSPIRV-Headers_SOURCE_DIR="$SRC/spirv-headers" \
     -DSPIRV_SKIP_TESTS=ON -DSPIRV_WERROR=OFF
-step host-spirv-llvm-translator "$SRC/spirv-llvm-translator" hostcmake \
+hoststep host-spirv-llvm-translator "$SRC/spirv-llvm-translator" hostcmake \
     -DLLVM_DIR="$HOST_TC/usr/lib/cmake/llvm" -DLLVM_EXTERNAL_SPIRV_HEADERS_SOURCE_DIR="$SRC/spirv-headers" \
     -DLLVM_SPIRV_INCLUDE_TESTS=OFF
-step host-libclc "$LLVM_SRC" hostcmake_libclc
-step host-mesa-clc "$SRC/mesa" b_host_mesa_clc
+hoststep host-libclc "$LLVM_SRC" hostcmake_libclc
+hoststep host-mesa-clc "$SRC/mesa" b_host_mesa_clc
 # libelf only (radeonsi reads the ELF code objects LLVM makes for AMD GPUs).
 b_libelf() {
     (cd "$2" && "$1/configure" "${AUTOCONF_ARGS[@]}" --disable-debuginfod --disable-libdebuginfod \
@@ -356,7 +364,7 @@ pkg xwayland         b_xwayland -Dglamor=true -Dxvfb=false -Dxwayland_ei=false -
 # ---------------------------------------------------------------- Phase B
 # Qt 6. Its build tools (moc, rcc, qmlcachegen, qsb, qtwaylandscanner, ...)
 # have to run on the build host, so a small host Qt is built first
-# (build/<arch>/desktop/host/qt, no windowing) and the target Qt uses it
+# (build/host/<host arch>/install/qt, no windowing) and the target Qt uses it
 # through QT_HOST_PATH.
 QT_HOST="$HOSTDIR/qt"
 # KDE_CLANG_FORMAT_EXECUTABLE=OFF: with a clang-format on the build host, ECM
@@ -383,16 +391,16 @@ QT_DIRS=(-DINSTALL_ARCHDATADIR=lib/qt6 -DINSTALL_PLUGINSDIR=lib/qt6/plugins -DIN
          -DINSTALL_DESCRIPTIONSDIR=lib/qt6/modules -DINSTALL_DATADIR=share/qt6
          -DINSTALL_DOCDIR=share/doc/qt6 -DINSTALL_INCLUDEDIR=include/qt6)
 
-step host-qtbase "$SRC/qtbase" hostqt -DFEATURE_gui=ON -DFEATURE_widgets=OFF -DFEATURE_xcb=OFF \
+hoststep host-qtbase "$SRC/qtbase" hostqt -DFEATURE_gui=ON -DFEATURE_widgets=OFF -DFEATURE_xcb=OFF \
     -DFEATURE_opengl=OFF -DFEATURE_vulkan=OFF -DFEATURE_egl=OFF -DFEATURE_fontconfig=OFF \
     -DFEATURE_freetype=OFF -DFEATURE_harfbuzz=OFF -DFEATURE_icu=OFF -DFEATURE_glib=OFF \
     -DFEATURE_sql=OFF -DFEATURE_printsupport=OFF -DFEATURE_openssl=OFF -DFEATURE_libinput=OFF \
     -DFEATURE_xkbcommon=OFF -DFEATURE_dbus=ON -DINPUT_dbus=runtime -DFEATURE_system_zlib=OFF \
     -DFEATURE_system_pcre2=OFF -DFEATURE_system_png=OFF -DFEATURE_system_jpeg=OFF
-step host-qtshadertools "$SRC/qtshadertools" hostqt
-step host-qtdeclarative "$SRC/qtdeclarative" hostqt
-step host-qtwayland "$SRC/qtwayland" hostqt -DFEATURE_wayland_client=OFF -DFEATURE_wayland_server=OFF
-step host-qttools "$SRC/qttools" hostqt -DFEATURE_assistant=OFF -DFEATURE_designer=OFF \
+hoststep host-qtshadertools "$SRC/qtshadertools" hostqt
+hoststep host-qtdeclarative "$SRC/qtdeclarative" hostqt
+hoststep host-qtwayland "$SRC/qtwayland" hostqt -DFEATURE_wayland_client=OFF -DFEATURE_wayland_server=OFF
+hoststep host-qttools "$SRC/qttools" hostqt -DFEATURE_assistant=OFF -DFEATURE_designer=OFF \
     -DFEATURE_qdoc=OFF -DFEATURE_clang=OFF -DFEATURE_distancefieldgenerator=OFF \
     -DFEATURE_pixeltool=OFF -DFEATURE_qtdiag=OFF -DFEATURE_qtplugininfo=OFF -DFEATURE_qdbus=OFF
 
@@ -410,8 +418,12 @@ pkg qtbase           qtpkg "${QT_DIRS[@]}" -DQT_FORCE_BUILD_TOOLS=ON -DQT_BUILD_
                          -DFEATURE_system_zlib=ON -DFEATURE_system_png=ON -DFEATURE_system_jpeg=ON \
                          -DFEATURE_system_freetype=ON -DFEATURE_system_harfbuzz=ON -DFEATURE_system_pcre2=OFF \
                          -DFEATURE_fontconfig=ON -DFEATURE_zstd=ON -DFEATURE_brotli=OFF
-pkg qtshadertools    qtpkg
-pkg qtdeclarative    qtpkg
+# The modules with tools of their own (qsb, qmlcachegen, lupdate, ...) build
+# them for the target too, as qtbase does: Qt6ShaderToolsTools, Qt6QmlTools
+# and Qt6LinguistTools on the installed OS.
+QT_TARGET_TOOLS=(-DQT_FORCE_BUILD_TOOLS=ON -DQT_BUILD_TOOLS_BY_DEFAULT=ON)
+pkg qtshadertools    qtpkg "${QT_TARGET_TOOLS[@]}"
+pkg qtdeclarative    qtpkg "${QT_TARGET_TOOLS[@]}"
 pkg qtsvg            qtpkg
 pkg qtwayland        qtpkg
 pkg qt5compat        qtpkg
@@ -426,8 +438,10 @@ pkg qtmultimedia     qtpkg -DFEATURE_ffmpeg=OFF -DFEATURE_gstreamer=OFF -DFEATUR
                          -DFEATURE_spatialaudio_quick3d=OFF
 # The text-to-speech API KTextEditor needs; no speech engine behind it yet.
 pkg qtspeech         qtpkg -DFEATURE_flite=OFF -DFEATURE_speechd=OFF
-# qttools on the target only for QtUiTools (KWin's scripting) and its helpers.
-pkg qttools          qtpkg -DFEATURE_assistant=OFF -DFEATURE_designer=OFF -DFEATURE_linguist=OFF \
+# qttools on the target for QtUiTools (KWin's scripting), its helpers and
+# Qt Linguist's tools (lupdate, lrelease: qt_add_translations).
+pkg qttools          qtpkg "${QT_TARGET_TOOLS[@]}" \
+                         -DFEATURE_assistant=OFF -DFEATURE_designer=OFF -DFEATURE_linguist=ON \
                          -DFEATURE_qdoc=OFF -DFEATURE_clang=OFF -DFEATURE_distancefieldgenerator=OFF \
                          -DFEATURE_pixeltool=OFF -DFEATURE_qtdiag=OFF -DFEATURE_qtplugininfo=OFF \
                          -DFEATURE_qdbus=ON -DFEATURE_qtattributionsscanner=OFF
@@ -441,11 +455,11 @@ KF_OPTS=(-DBUILD_QCH=OFF -DBUILD_PYTHON_BINDINGS=OFF -DKDE_INSTALL_USE_QT_SYS_PA
          -DKF6_HOST_TOOLING="$QT_HOST/lib/cmake" -DBUILD_DESIGNERPLUGIN=OFF)
 kfpkg() { qtpkg "$@" "${KF_OPTS[@]}"; }
 
-step host-extra-cmake-modules "$SRC/extra-cmake-modules" hostqt -DBUILD_DOC=OFF -DBUILD_TESTING=OFF
+hoststep host-extra-cmake-modules "$SRC/extra-cmake-modules" hostqt -DBUILD_DOC=OFF -DBUILD_TESTING=OFF
 hostkf() { hostqt "$@" -DKDE_INSTALL_LIBDIR=lib -DBUILD_TESTING=OFF -DBUILD_QCH=OFF \
     -DBUILD_PYTHON_BINDINGS=OFF -DBUILD_DESIGNERPLUGIN=OFF \
     -DCMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES="$HOSTDIR/include"; }
-step host-kconfig "$SRC/kconfig" hostkf -DKCONFIG_USE_GUI=OFF -DKCONFIG_USE_QML=OFF -DUSE_DBUS=OFF
+hoststep host-kconfig "$SRC/kconfig" hostkf -DKCONFIG_USE_GUI=OFF -DKCONFIG_USE_QML=OFF -DUSE_DBUS=OFF
 # kpackagetool6, which installs Plasma's packages (applets, themes, ...).
 host_libmount() {
     (cd "$2" && "${HOST_ENV[@]}" "$1/configure" --prefix="$HOSTDIR" --libdir="$HOSTDIR/lib" \
@@ -455,14 +469,14 @@ host_libmount() {
     "${HOST_ENV[@]}" make -C "$2" -j"$JOBS"
     "${HOST_ENV[@]}" make -C "$2" install
 }
-step host-libmount "$UTIL_LINUX_SRC" host_libmount
-step host-kcoreaddons "$SRC/kcoreaddons" hostkf -DKCOREADDONS_USE_QML=OFF -DUSE_DBUS=OFF
-step host-ki18n "$SRC/ki18n" hostkf -DBUILD_WITH_QML=OFF
-step host-karchive "$SRC/karchive" hostkf -DWITH_BZIP2=OFF -DWITH_LIBLZMA=OFF -DWITH_OPENSSL=OFF \
+hoststep host-libmount "$UTIL_LINUX_SRC" host_libmount
+hoststep host-kcoreaddons "$SRC/kcoreaddons" hostkf -DKCOREADDONS_USE_QML=OFF -DUSE_DBUS=OFF
+hoststep host-ki18n "$SRC/ki18n" hostkf -DBUILD_WITH_QML=OFF
+hoststep host-karchive "$SRC/karchive" hostkf -DWITH_BZIP2=OFF -DWITH_LIBLZMA=OFF -DWITH_OPENSSL=OFF \
     -DWITH_LIBZSTD=OFF
-step host-kpackage "$SRC/kpackage" hostkf
+hoststep host-kpackage "$SRC/kpackage" hostkf
 # kcmdesktopfilegenerator (System Settings modules' .desktop files).
-step host-kcmutils "$SRC/kcmutils" hostkf -DTOOLS_ONLY=ON
+hoststep host-kcmutils "$SRC/kcmutils" hostkf -DTOOLS_ONLY=ON
 
 # libmount and libblkid (KCoreAddons, Solid, elogind), shared, from the util-linux in the repo.
 step libmount "$UTIL_LINUX_SRC" autotools --disable-all-programs --enable-libmount --enable-libblkid \
@@ -563,7 +577,7 @@ b_host_breeze_tools() {
     "${HOST_ENV[@]}" ninja -C "$2" -j"$JOBS" generate-symbolic-dark qrcAlias
     install -m 0755 "$2/bin/generate-symbolic-dark" "$2/bin/qrcAlias" "$QT_HOST/bin/"
 }
-step host-breeze-icons-tools "$SRC/breeze-icons" b_host_breeze_tools
+hoststep host-breeze-icons-tools "$SRC/breeze-icons" b_host_breeze_tools
 # KSyntaxHighlighting indexes its syntax definitions at build time with
 # katehighlightingindexer, so that runs on the build host: built here against
 # the host Qt (cross-building, its own fallback leaks the cross compiler).
@@ -576,7 +590,7 @@ b_host_ksyntax_indexer() {
     "${HOST_ENV[@]}" ninja -C "$2" -j"$JOBS" katehighlightingindexer
     install -Dm755 "$2/bin/katehighlightingindexer" "$QT_HOST/bin/katehighlightingindexer"
 }
-step host-ksyntax-indexer "$SRC/syntax-highlighting" b_host_ksyntax_indexer
+hoststep host-ksyntax-indexer "$SRC/syntax-highlighting" b_host_ksyntax_indexer
 
 pkg extra-cmake-modules       cmakepkg -DBUILD_DOC=OFF
 pkg plasma-wayland-protocols  cmakepkg -DCMAKE_PREFIX_PATH="$DYN/usr"
@@ -755,14 +769,14 @@ b_plasma_desktop() {
     sed -i 's|"${CMAKE_SYSROOT}/${XKBDIR}"|"'"$DYN"'/${XKBDIR}"|' "$out/src/ConfigureChecks.cmake"
     PKG_CONFIG_FDO_SYSROOT_RULES=1 kfpkg "$out/src" "$out/build" "$@"
 }
-# Aurorae with jk_os's patches (configs/desktop/patches/aurorae: rounded
+# Aurorae with jk_os's patches (build-config/desktop/patches/aurorae: rounded
 # window corners and an outline for its themes), built from a copy; the
 # patches' checksum is part of the options.
 b_aurorae() {
     local src="$1" out="$2"; shift 2
     mkdir -p "$out/src"; copy_tree "$src" "$out/src"
     local p
-    for p in "$ROOT_DIR"/configs/desktop/patches/aurorae/*.patch; do
+    for p in "$ROOT_DIR"/build-config/desktop/patches/aurorae/*.patch; do
         patch -d "$out/src" -p1 --no-backup-if-mismatch < "$p"
     done
     kfpkg "$out/src" "$out/build" "${@:1:$#-1}"
@@ -771,7 +785,7 @@ b_plasma_workspace() {
     local src="$1" out="$2"; shift 2
     mkdir -p "$out/src"; copy_tree "$src" "$out/src"
     local p
-    for p in "$ROOT_DIR"/configs/desktop/patches/plasma-workspace/*.patch; do
+    for p in "$ROOT_DIR"/build-config/desktop/patches/plasma-workspace/*.patch; do
         patch -d "$out/src" -p1 --no-backup-if-mismatch < "$p"
     done
     kfpkg "$out/src" "$out/build" "${@:1:$#-1}"
@@ -789,7 +803,7 @@ b_host_kwin_scanner() {
     "${HOST_ENV[@]}" ninja -C "$2" -j"$JOBS" qtwaylandscanner_kde
     install -Dm755 "$2/qtwaylandscanner_kde" "$QT_HOST/bin/qtwaylandscanner_kde"
 }
-step host-kwin-scanner "$SRC/kwin" b_host_kwin_scanner
+hoststep host-kwin-scanner "$SRC/kwin" b_host_kwin_scanner
 for p in kdecoration layer-shell-qt kwayland plasma-activities plasma-activities-stats \
          kactivitymanagerd libplasma plasma5support kglobalacceld knighttime libkscreen \
          libksysguard kscreenlocker breeze kwin aurorae plasma-integration plasma-workspace milou \
@@ -799,7 +813,7 @@ for p in kdecoration layer-shell-qt kwayland plasma-activities plasma-activities
         breeze)             pkg breeze kfpkg -DBUILD_QT5=OFF -DBUILD_QT6=ON ;;
         kwin)               pkg kwin kfpkg -DQTWAYLANDSCANNER_KDE_EXECUTABLE="$QT_HOST/bin/qtwaylandscanner_kde" ;;
         aurorae)            pkg aurorae b_aurorae \
-                                "patches=$(cat "$ROOT_DIR"/configs/desktop/patches/aurorae/*.patch | sha256sum | cut -c1-16)" ;;
+                                "patches=$(cat "$ROOT_DIR"/build-config/desktop/patches/aurorae/*.patch | sha256sum | cut -c1-16)" ;;
         plasma-nm)          pkg plasma-nm kfpkg -DBUILD_OPENCONNECT=OFF ;;
         # No KDocTools: no handbooks.
         kde-cli-tools)      pkg kde-cli-tools kfpkg -DBUILD_DOC=OFF ;;
@@ -808,7 +822,7 @@ for p in kdecoration layer-shell-qt kwayland plasma-activities plasma-activities
         # Wayland session only (X11 apps still run, through Xwayland); locales
         # come with glibc, nothing to generate.
         plasma-workspace)   pkg plasma-workspace b_plasma_workspace -DWITH_X11_SESSION=OFF -DGLIBC_LOCALE_GEN=OFF \
-                                "patches=$(cat "$ROOT_DIR"/configs/desktop/patches/plasma-workspace/*.patch | sha256sum | cut -c1-16)"
+                                "patches=$(cat "$ROOT_DIR"/build-config/desktop/patches/plasma-workspace/*.patch | sha256sum | cut -c1-16)"
                             # No user management in the desktop: users are managed as
                             # root on the console (jk_os's accounts), so the Users
                             # page of System Settings is removed.
@@ -866,19 +880,19 @@ b_wlroots() {
 pkg wlroots          b_wlroots -Dxwayland=disabled -Dexamples=false -Dbackends=drm,libinput \
                          -Drenderers=gles2 -Dallocators=gbm -Dsession=enabled -Dxcb-errors=disabled \
                          -Dlibliftoff=disabled
-# cage with jk_os's patches (configs/desktop/patches/cage: -m mirror), built
+# cage with jk_os's patches (build-config/desktop/patches/cage: -m mirror), built
 # from a copy; the patches' checksum is part of the options.
 b_cage() {
     local src="$1" out="$2"; shift 2
     mkdir -p "$out/src"; copy_tree "$src" "$out/src"
     local p
-    for p in "$ROOT_DIR"/configs/desktop/patches/cage/*.patch; do
+    for p in "$ROOT_DIR"/build-config/desktop/patches/cage/*.patch; do
         patch -d "$out/src" -p1 --no-backup-if-mismatch < "$p"
     done
     mesonpkg "$out/src" "$out/build" "${@:1:$#-1}"
 }
 pkg cage             b_cage -Dman-pages=disabled \
-                         "patches=$(cat "$ROOT_DIR"/configs/desktop/patches/cage/*.patch | sha256sum | cut -c1-16)"
+                         "patches=$(cat "$ROOT_DIR"/build-config/desktop/patches/cage/*.patch | sha256sum | cut -c1-16)"
 pkg tllist           mesonpkg
 pkg fcft             mesonpkg -Ddocs=disabled -Dexamples=false -Dgrapheme-shaping=enabled \
                          -Drun-shaping=disabled -Dsvg-backend=nanosvg
@@ -896,18 +910,22 @@ pkg foot             mesonpkg -Ddocs=disabled -Dtests=false -Dterminfo=disabled 
 # build host; cross-building, the build host's own do (make deps:
 # libglib2.0-bin, libgio-2.0-dev-bin, libgdk-pixbuf2.0-bin), their output
 # formats being stable across versions.
+# The wrappers depend on the target arch, so they go in build/<arch>/desktop/wbin,
+# not with the shared host tools.
+DYN_WBIN="$NET_OUT/wbin"
+export PATH="$DYN_WBIN:$PATH"
 dyn_tool() {    # dyn_tool <program>...: run $DYN's program on the build host
-    mkdir -p "$HOSTDIR/wbin"
+    mkdir -p "$DYN_WBIN"
     local p host
     for p in "$@"; do
         if [[ "$ARCH" == "$HOST_ARCH" ]]; then
             printf '#!/bin/sh\nexec %s --library-path %s %s "$@"\n' "$TC/usr/lib/ld-linux-x86-64.so.2" \
-                "$DYN/usr/lib:$TC/usr/lib" "$DYN/usr/bin/$p" > "$HOSTDIR/wbin/$p"
+                "$DYN/usr/lib:$TC/usr/lib" "$DYN/usr/bin/$p" > "$DYN_WBIN/$p"
         else
-            host=$(PATH=/usr/bin:/bin command -v "$p") || die "no $p on the build host (run: make deps)"
-            printf '#!/bin/sh\nexec %s "$@"\n' "$host" > "$HOSTDIR/wbin/$p"
+            host=$(PATH=/usr/bin:/bin command -v "$p") || die "no $p on the build host (run: $MAKE_CMD deps)"
+            printf '#!/bin/sh\nexec %s "$@"\n' "$host" > "$DYN_WBIN/$p"
         fi
-        chmod +x "$HOSTDIR/wbin/$p"
+        chmod +x "$DYN_WBIN/$p"
     done
 }
 dyn_tool glib-compile-resources glib-compile-schemas

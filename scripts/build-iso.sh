@@ -10,8 +10,8 @@ source "$(dirname "$0")/common.sh"
 need xorriso
 
 kernel="$KERNEL_OUT/$KIMAGE"
-[[ -f "$kernel" ]] || die "kernel not built yet (run: make kernel)"
-[[ -f "$SQUASHFS_IMG" ]] || die "OS image not built yet (run: make rootfs)"
+[[ -f "$kernel" ]] || die "kernel not built yet (run: $MAKE_CMD kernel)"
+[[ -f "$SQUASHFS_IMG" ]] || die "OS image not built yet (run: $MAKE_CMD rootfs)"
 
 rm -rf "$ISO_DIR"
 mkdir -p "$ISO_DIR/boot" "$IMAGE_DIR"

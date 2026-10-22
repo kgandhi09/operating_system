@@ -5,21 +5,21 @@
 # layer on top (RAM on the live medium, /data on an installed system).
 source "$(dirname "$0")/common.sh"
 
-[[ -x "$BUSYBOX_OUT/busybox" ]] || die "busybox not built yet (run: make busybox)"
-[[ -f "$BINARIES_DIR/sources.lock" ]] || die "binaries not fetched yet (run: make binaries)"
-[[ -x "$TOOLS_OUT/sbin/sfdisk" ]] || die "disk tools not built yet (run: make tools)"
+[[ -x "$BUSYBOX_OUT/busybox" ]] || die "busybox not built yet (run: $MAKE_CMD busybox)"
+[[ -f "$BINARIES_DIR/sources.lock" ]] || die "binaries not fetched yet (run: $MAKE_CMD binaries)"
+[[ -x "$TOOLS_OUT/sbin/sfdisk" ]] || die "disk tools not built yet (run: $MAKE_CMD tools)"
 DYN="$OUT_DIR/dyn"
-[[ -x "$DYN/usr/sbin/NetworkManager" ]] || die "network stack not built yet (run: make network)"
+[[ -x "$DYN/usr/sbin/NetworkManager" ]] || die "network stack not built yet (run: $MAKE_CMD network)"
 TC="$OUT_DIR/toolchain"
-[[ -x "$TC/usr/bin/gcc" && -x "$TC/usr/bin/clang" ]] || die "toolchain not built yet (run: make toolchain)"
-[[ -x "$DYN/usr/bin/startplasma-wayland" ]] || die "desktop not built yet (run: make desktop)"
+[[ -x "$TC/usr/bin/gcc" && -x "$TC/usr/bin/clang" ]] || die "toolchain not built yet (run: $MAKE_CMD toolchain)"
+[[ -x "$DYN/usr/bin/startplasma-wayland" ]] || die "desktop not built yet (run: $MAKE_CMD desktop)"
 for module in Core Gui Widgets; do
     [[ -f "$DYN/usr/lib/cmake/Qt6${module}Tools/Qt6${module}ToolsConfig.cmake" ]] \
-        || die "Qt6${module}Tools missing (run: make desktop)"
+        || die "Qt6${module}Tools missing (run: $MAKE_CMD desktop)"
 done
 for tool in moc rcc uic; do
     [[ -x "$DYN/usr/lib/qt6/libexec/$tool" ]] \
-        || die "Qt tool $tool missing (run: make desktop)"
+        || die "Qt tool $tool missing (run: $MAKE_CMD desktop)"
 done
 
 log "assembling rootfs ($JK_DEVICE, $ARCH)"
@@ -52,7 +52,9 @@ cp -a "$TOOLS_OUT/bin/." bin/   # passwd, su, ... keep their setuid bit
 # protocols, aclocal macros, the *-config scripts and wayland-scanner (and
 # pkg-config itself: pkgconf). Left out: docs, translations, libtool
 # archives, and the build tools that only run on the build machine (GLib's
-# Python generators, qmake's cross-compiling wrapper, ICU's data tools).
+# Python generators, the host qmake/qtpaths and Qt's cross-compiling
+# wrappers, ICU's data tools). The target's own qmake and qtpaths stay:
+# Qt6CoreTools' CMake files refer to them.
 # BusyBox keeps clear/reset/tput and friends. GLib's settings schemas stay
 # compiled only (gschemas.compiled: GTK aborts without it).
 (cd "$DYN" && tar -cf - \
@@ -75,7 +77,7 @@ cp -a "$TOOLS_OUT/bin/." bin/   # passwd, su, ... keep their setuid bit
                gi-decompile-typelib gi-inspect-typelib gresource gobject-query gio-querymodules \
                gapplication pcre2grep pcre2test xmlwf dbus-launch \
                dbus-test-tool dbus-cleanup-sockets \
-               qmake qmake6 qtpaths qtpaths6 target_qt.conf qt-cmake qt-cmake-create \
+               host-qmake host-qmake6 host-qtpaths host-qtpaths6 target_qt.conf qt-cmake qt-cmake-create \
                qt-configure-module libtool libtoolize libtool-next-version \
                genbrk gencfu gencnval gendict genrb makeconv pkgdata icuexportdata derb \
                clear reset tput tset tabs captoinfo infocmp infotocap tic toe; do
@@ -85,6 +87,20 @@ cp -a "$TOOLS_OUT/bin/." bin/   # passwd, su, ... keep their setuid bit
 (cd "$TC" && tar -cf - --exclude=./lib --exclude=./lib64 \
     --exclude=./usr/share/doc --exclude=./usr/share/info --exclude=./usr/share/man \
     --exclude=./usr/share/locale --exclude=./usr/share/gdb/python .) | tar -xf - -C "$ROOTFS_DIR"
+
+# The development files name the build machine's directories they were
+# built in ($DYN/usr in KF6WindowSystem's CMake files, the cross compiler in
+# icu-config, ...); on jk_os those are /usr and its own compilers and
+# binutils (/usr/bin/gcc, /usr/bin/ar, ...). A CMake target with an include
+# directory that doesn't exist stops the build of anything using it.
+devfile_paths=()
+for from_to in "$DYN/usr:/usr" "$TC/usr:/usr" "$OUT_DIR/cross/bin/$ARCH-linux-gnu-:/usr/bin/" \
+               "$OUT_DIR/desktop/bin/$ARCH-linux-gnu-:/usr/bin/"; do
+    from=$(printf '%s' "${from_to%:*}" | sed 's/[][\.*^$|]/\\&/g')
+    devfile_paths+=(-e "s|$from|${from_to##*:}|g")
+done
+{ grep -rlIZ -F "$OUT_DIR/" usr/lib/cmake usr/lib/pkgconfig usr/share/pkgconfig usr/lib/qt6/mkspecs \
+    usr/bin/*-config 2>/dev/null || true; } | xargs -0 -r sed -i --follow-symlinks "${devfile_paths[@]}"
 
 # Terminal descriptions for the consoles and common terminals only.
 for t in d/dumb l/linux v/vt100 v/vt102 v/vt220 x/xterm x/xterm-256color x/xterm-color \

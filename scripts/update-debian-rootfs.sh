@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Maintainer tool: fetch the Debian base system that apt runs in, listed in
-# configs/debian/rootfs.list, into userspace/debian/<arch>/rootfs.tar.gz.
+# build-config/debian/rootfs.list, into userspace/debian/<arch>/rootfs.tar.gz.
 # Builds never run this; they only use the tarballs in the repo.
 #
 #   scripts/update-debian-rootfs.sh              fetch what is missing or changed
@@ -10,10 +10,13 @@
 # A commit of "-" (or --latest) takes the newest commit of the artifacts
 # branch and records it with the layer digest from its OCI manifest; the
 # downloaded tarball must match that digest.
+# A maintainer tool, run without a preset: the generic PC (for ARCH, default
+# the host arch) stands in for the build target.
+JK_DEFAULT_TARGET=1
 source "$(dirname "$0")/common.sh"
 need curl sha256sum python3
 
-LIST="$ROOT_DIR/configs/debian/rootfs.list"
+LIST="$ROOT_DIR/build-config/debian/rootfs.list"
 REPO=debuerreotype/docker-debian-artifacts
 latest=0
 [[ "${1:-}" == --latest ]] && { latest=1; shift; }

@@ -2,8 +2,9 @@
 # Build targets: which device jk_os is built for. Sourced by common.sh (needs
 # ROOT_DIR, die and normalize_arch from there), don't run it.
 #
-# A target is four choices, saved by `make config` (scripts/configure.sh) in
-# build.conf, plus a free name:
+# A target is four choices, plus a free name, saved as a preset by `make
+# config` (scripts/configure.sh) in presets/<preset>.conf and built with
+# `make PRESET=<preset>`:
 #
 #   JK_CATEGORY  targets/devices/<category>/            category.env
 #   JK_DEVICE    targets/devices/<category>/<device>/   device.env
@@ -52,7 +53,7 @@
 #                   built against it by build-dtbs.sh
 #   patches/        (kernel) patches for the kernel tree, applied to a copy
 #                   of it (prepare-kernel.sh)
-#   kernel.config   a kernel config fragment, merged after configs/kernel/
+#   kernel.config   a kernel config fragment, merged after build-config/kernel/
 #                   common.config and <arch>.config, in the order kernel,
 #                   category, device
 #   rootfs/         files copied over the root filesystem (category, device)
@@ -64,8 +65,16 @@
 # holds what is built for one device and kernel.
 
 TARGETS_DIR="$ROOT_DIR/targets"
-BUILD_CONF="${BUILD_CONF:-$ROOT_DIR/build.conf}"
-[[ "$BUILD_CONF" == /* ]] || BUILD_CONF="$PWD/$BUILD_CONF"
+PRESETS_DIR="$ROOT_DIR/presets"
+# The target file: PRESET=<preset> (presets/<preset>.conf) or, for a file
+# kept elsewhere, BUILD_CONF=<file>. Empty: no target chosen.
+if [[ -n "${PRESET:-}" ]]; then
+    [[ -z "${BUILD_CONF:-}" ]] || die "give PRESET or BUILD_CONF, not both"
+    BUILD_CONF="$PRESETS_DIR/$PRESET.conf"
+    [[ -f "$BUILD_CONF" ]] || die "no preset '$PRESET' (presets/$PRESET.conf); see: make presets"
+fi
+BUILD_CONF="${BUILD_CONF:-}"
+[[ -z "$BUILD_CONF" || "$BUILD_CONF" == /* ]] || BUILD_CONF="$PWD/$BUILD_CONF"
 
 # Boot formats the image steps know how to make (DEVICE_BOOT):
 #   efi-iso          hybrid ISO: GRUB (x86_64) or the EFI stub (aarch64)
@@ -143,23 +152,62 @@ check_target() {
         || { echo "name '$JK_NAME': use lowercase letters, digits, '.', '_' and '-'"; return 1; }
 }
 
-# load_target: set JK_* from build.conf, or without one the generic PC for
-# $ARCH (default: the host arch), as `make ARCH=...` always built. An ARCH
-# given next to a build.conf must agree with it.
+# list_presets: one line per preset: its name, then category / device /
+# kernel / arch.
+list_presets() {
+    local f
+    for f in "$PRESETS_DIR"/*.conf; do
+        [[ -f "$f" ]] || continue
+        (
+            JK_CATEGORY= JK_DEVICE= JK_KERNEL= JK_ARCH=
+            # shellcheck source=/dev/null
+            source "$f"
+            printf '  %-20s %s / %s / %s / %s\n' "$(basename "$f" .conf)" \
+                "$JK_CATEGORY" "$JK_DEVICE" "$JK_KERNEL" "$JK_ARCH"
+        )
+    done
+}
+
+# target_usage: how to build jk_os, for a make run without a preset.
+target_usage() {
+    cat <<USAGE
+jk_os builds one preset at a time: name it on every make.
+
+  make PRESET=<preset>           build that preset's image
+  make PRESET=<preset> <step>    one step: kernel, desktop, rootfs, bootimg, ...
+  make PRESET=<preset> flash     write or flash that image
+  make presets                   list the presets
+  make config                    make a new preset (presets/<name>.conf)
+  make help                      every command
+
+Presets (presets/<preset>.conf: category / device / kernel / arch):
+$(list_presets)
+USAGE
+}
+
+# load_target: set JK_* from the target file (PRESET or BUILD_CONF). Without
+# one, a build stops with target_usage; scripts that set JK_DEFAULT_TARGET
+# (the update-* source fetchers) get the generic PC for $ARCH (default: the
+# host arch) instead. An ARCH given next to a target file must agree with it.
 load_target() {
     local want_arch="${ARCH:-}" err
     JK_CATEGORY= JK_DEVICE= JK_KERNEL= JK_ARCH= JK_NAME=
-    if [[ -f "$BUILD_CONF" ]]; then
+    if [[ -n "$BUILD_CONF" ]]; then
+        [[ -f "$BUILD_CONF" ]] || die "no target file $BUILD_CONF"
         # shellcheck source=/dev/null
         source "$BUILD_CONF"
         if [[ -n "$want_arch" && "$(normalize_arch "$want_arch")" != "$JK_ARCH" ]]; then
-            die "ARCH=$want_arch, but $BUILD_CONF builds for $JK_ARCH (change the target with: make config)"
+            die "ARCH=$want_arch, but $BUILD_CONF builds for $JK_ARCH (pick another preset: make presets)"
         fi
-    else
+    elif [[ -n "${JK_DEFAULT_TARGET:-}" ]]; then
         JK_CATEGORY=pc JK_DEVICE=generic JK_KERNEL=mainline JK_NAME=generic
         JK_ARCH="$(normalize_arch "${want_arch:-$(uname -m)}")"
+    else
+        printf '\033[1;31merror:\033[0m no build target chosen\n\n' >&2
+        target_usage >&2
+        exit 1
     fi
-    err=$(check_target) || die "$BUILD_CONF: $err (run: make config)"
+    err=$(check_target) || die "$BUILD_CONF: $err (fix the preset, or remake it: make config)"
     check_target   # again, in this shell, for the profile variables
 }
 

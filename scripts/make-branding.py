@@ -3,7 +3,7 @@
 
     scripts/make-branding.py
 
-Reads "J.K. Logo.png" at the top of the repo and writes, under rootfs/:
+Reads "branding/J.K. Logo.png" and writes, under rootfs/:
 
   usr/share/jk_os/logo.png, logo-dark.png   the logo on transparency, for
                                             light and dark backgrounds
@@ -14,7 +14,7 @@ Reads "J.K. Logo.png" at the top of the repo and writes, under rootfs/:
                                             dark variants): the mark over the
                                             company's full name, set in the
                                             logo's typeface (Poppins Light,
-                                            scripts/branding, SIL OFL)
+                                            branding/fonts, SIL OFL)
   usr/share/plasma/look-and-feel/org.jk_os.desktop/contents/previews/
                                             the Global Theme's previews
 
@@ -27,8 +27,8 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / "J.K. Logo.png"
-FONT = ROOT / "scripts/branding/Poppins-Light.ttf"
+SRC = ROOT / "branding/J.K. Logo.png"
+FONT = ROOT / "branding/fonts/Poppins-Light.ttf"
 LOGO_TEXT = "JK ROBOTICS"              # the name as the logo spells it
 FULL_NAME = "J.K. ROBOTICS PVT. LTD."  # the wallpaper's
 OUT = ROOT / "rootfs/usr/share"

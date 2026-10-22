@@ -8,7 +8,7 @@ need make flex bison bc "${CROSS_COMPILE}gcc"
 [[ -f "$KERNEL_TREE_SRC/Makefile" ]] || die "no kernel source at $KERNEL_TREE (see targets/kernels/$JK_KERNEL/kernel.env)"
 "$ROOT_DIR/scripts/prepare-kernel.sh"
 
-[[ -x "$INITRAMFS_DIR/init" ]] || die "initramfs not assembled yet (run: make initramfs)"
+[[ -x "$INITRAMFS_DIR/init" ]] || die "initramfs not assembled yet (run: $MAKE_CMD initramfs)"
 
 frags=("${KERNEL_FRAGMENTS[@]}")
 mkdir -p "$KERNEL_OUT"
@@ -54,7 +54,7 @@ fi
 # Paths depend on where the repo is checked out, so set them on every build.
 # ROOT_UID/GID map the builder's files to root:root inside the initramfs.
 "$KERNEL_SRC/scripts/config" --file "$KERNEL_OUT/.config" \
-    --set-str INITRAMFS_SOURCE "$INITRAMFS_DIR $ROOT_DIR/configs/initramfs.list" \
+    --set-str INITRAMFS_SOURCE "$INITRAMFS_DIR $ROOT_DIR/build-config/initramfs.list" \
     --set-val INITRAMFS_ROOT_UID "$(id -u)" \
     --set-val INITRAMFS_ROOT_GID "$(id -g)"
 k_make olddefconfig >/dev/null

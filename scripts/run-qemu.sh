@@ -12,7 +12,7 @@
 # Quit QEMU with Ctrl-A then X.
 source "$(dirname "$0")/common.sh"
 
-[[ -f "$ISO" ]] || die "no ISO at $ISO (run: make iso)"
+[[ -f "$ISO" ]] || die "no ISO at $ISO (run: $MAKE_CMD iso)"
 MEM="${MEM:-1G}"
 
 # first_file <candidates...>: print the first path that exists.

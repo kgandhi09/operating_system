@@ -40,7 +40,7 @@ partition_for() {
 }
 
 args=()
-[[ -f "$BOOTIMG_DIR/boot.img" ]] || die "no $BOOTIMG_DIR/boot.img (run: make bootimg)"
+[[ -f "$BOOTIMG_DIR/boot.img" ]] || die "no $BOOTIMG_DIR/boot.img (run: $MAKE_CMD bootimg)"
 for f in boot.img vendor_boot.img vbmeta.img dtbo.img; do
     [[ -f "$BOOTIMG_DIR/$f" ]] || continue
     p=$(partition_for "$f")

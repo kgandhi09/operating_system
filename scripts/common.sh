@@ -2,10 +2,12 @@
 # Shared settings for every jk_os build step. Source it, don't run it.
 #
 # Inputs (environment):
-#   BUILD_CONF     the build target chosen with `make config`. Default:
-#                  build.conf; without one, the generic PC (see lib-target.sh).
-#   ARCH           x86_64 | aarch64 (aliases: amd64, arm64), without a
-#                  build.conf. Default: host arch.
+#   PRESET         the build target: presets/<preset>.conf (make presets
+#                  lists them). Required for every build step.
+#   BUILD_CONF     instead of PRESET, a target file kept elsewhere.
+#   ARCH           x86_64 | aarch64 (aliases: amd64, arm64): must match the
+#                  preset's; the update-* tools' arch (JK_DEFAULT_TARGET).
+#                  Default: the preset's, else the host arch.
 #   CROSS_COMPILE  toolchain prefix. Default: none when building for the host
 #                  arch, otherwise x86_64-linux-gnu- / aarch64-linux-gnu-.
 #   JOBS           parallel build jobs. Default: half the CPUs, so the machine
@@ -26,7 +28,7 @@ die()  { printf '\033[1;31merror:\033[0m %s\n' "$*" >&2; exit 1; }
 need() {
     local c
     for c in "$@"; do
-        command -v "$c" >/dev/null 2>&1 || die "missing '$c' (run: make deps)"
+        command -v "$c" >/dev/null 2>&1 || die "missing '$c' (run: $MAKE_CMD deps)"
     done
 }
 
@@ -42,11 +44,15 @@ HOST_ARCH="$(normalize_arch "$(uname -m)")"
 
 # shellcheck source=lib-target.sh
 source "$ROOT_DIR/scripts/lib-target.sh"
-# Scripts that don't build (configure.sh: build.conf may not exist yet;
+# Scripts that don't build (configure.sh: the preset may not exist yet;
 # inspect-stock.sh) only need the helpers above.
 [[ -n "${JK_NO_TARGET:-}" ]] && return 0
 load_target
 ARCH="$JK_ARCH"
+# make for this target, for the hints in messages ("run: $MAKE_CMD kernel").
+if [[ -n "${PRESET:-}" ]]; then MAKE_CMD="make PRESET=$PRESET"
+elif [[ -n "$BUILD_CONF" ]]; then MAKE_CMD="BUILD_CONF=$BUILD_CONF make"
+else MAKE_CMD="make PRESET=pc-$ARCH"; fi
 
 case "$ARCH" in
     x86_64)
@@ -97,7 +103,7 @@ DTB_OUT="$TARGET_OUT/dtbs"          # the device's tree (DEVICE_DTB), build-dtbs
 BOOTIMG_DIR="$TARGET_OUT/bootimg"   # boot.img and friends, build-bootimg.sh
 UBOOT_OUT="$TARGET_OUT/u-boot"      # U-Boot for android-uboot, build-uboot.sh
 # Kernel config fragments, general to specific, and rootfs overlays.
-KERNEL_FRAGMENTS=("$ROOT_DIR/configs/kernel/common.config" "$ROOT_DIR/configs/kernel/$ARCH.config")
+KERNEL_FRAGMENTS=("$ROOT_DIR/build-config/kernel/common.config" "$ROOT_DIR/build-config/kernel/$ARCH.config")
 ROOTFS_OVERLAYS=()
 for d in "$KERNEL_DIR" "$CATEGORY_DIR" "$DEVICE_DIR"; do
     [[ -f "$d/kernel.config" ]] && KERNEL_FRAGMENTS+=("$d/kernel.config")

@@ -1,27 +1,35 @@
 #!/usr/bin/env bash
-# Choose what jk_os is built for and save it in build.conf (make config):
+# Choose what jk_os is built for and save it as a preset,
+# presets/<preset>.conf (make config):
 #
 #   1. device category   targets/devices/<category>   (pc, tablet, robotics-hpc, ...)
 #   2. device            targets/devices/<category>/<device>
 #   3. kernel            targets/kernels/<kernel>, the ones the device uses
 #   4. arch              the ones both the device and the kernel support
 #   5. name              free, for the output file name (e.g. asus-laptop)
+#   6. preset            the file's name, used as make PRESET=<preset>
 #
 # Each menu offers only what fits the choices before it (arrow keys or j/k to
-# move, Enter to pick), and starts on the current build.conf's choice.
+# move, Enter to pick). With PRESET=<preset> (or BUILD_CONF=<file>) the menus
+# start on its choices and saving updates it; without, a new preset is made.
 #
-#   scripts/configure.sh          choose, then save
-#   scripts/configure.sh --show   print the current target
-#   scripts/configure.sh --check  fail unless jk_os can build it (make runs
-#                                 this before any build step)
+#   scripts/configure.sh            choose, then save
+#   scripts/configure.sh --show     print the chosen target
+#   scripts/configure.sh --check    fail unless jk_os can build it (make runs
+#                                   this before any build step)
+#   scripts/configure.sh --presets  list the presets (make presets)
 JK_NO_TARGET=1
 source "$(dirname "$0")/common.sh"
 
 case "${1:-}" in
 --show)
     load_target
-    echo "build target ($( [[ -f "$BUILD_CONF" ]] && echo "$BUILD_CONF" || echo "no build.conf: default" )):"
+    echo "build target ($BUILD_CONF):"
     print_target
+    exit 0 ;;
+--presets)
+    echo "Presets (presets/<preset>.conf: category / device / kernel / arch), built with make PRESET=<preset>:"
+    list_presets
     exit 0 ;;
 --check)
     load_target
@@ -29,13 +37,13 @@ case "${1:-}" in
         || die "device '$JK_DEVICE' boots from '$DEVICE_BOOT', which jk_os can't build yet (only: $BOOT_FORMATS)"
     exit 0 ;;
 esac
-[[ $# -eq 0 ]] || die "usage: $0 [--show | --check]"
-[[ -t 0 ]] || die "make config asks questions: run it in a terminal (or write build.conf yourself)"
+[[ $# -eq 0 ]] || die "usage: $0 [--show | --check | --presets]"
+[[ -t 0 ]] || die "make config asks questions: run it in a terminal (or write presets/<preset>.conf yourself)"
 
-# Defaults: the current build.conf, if it still makes sense.
+# Defaults: the preset being changed (PRESET or BUILD_CONF), if any.
 JK_CATEGORY= JK_DEVICE= JK_KERNEL= JK_ARCH= JK_NAME=
 # shellcheck source=/dev/null
-[[ -f "$BUILD_CONF" ]] && source "$BUILD_CONF"
+[[ -n "$BUILD_CONF" ]] && source "$BUILD_CONF"
 cur_category=$JK_CATEGORY cur_device=$JK_DEVICE cur_kernel=$JK_KERNEL cur_arch=$JK_ARCH cur_name=$JK_NAME
 
 # choose <title> <default> <value>|<description> ...: a menu moved with the
@@ -151,20 +159,44 @@ done
 
 err=$(check_target) || die "$err"
 check_target
+
+# 6. Preset: the one being changed keeps its name (a BUILD_CONF file its
+# path); a new one is named after the build name and arch by default.
+if [[ -n "$BUILD_CONF" && -z "${PRESET:-}" ]]; then
+    conf=$BUILD_CONF
+    build_cmd="BUILD_CONF=$conf make"
+else
+    def_preset=${PRESET:-$JK_NAME-$JK_ARCH}
+    echo
+    echo "Preset name, for make PRESET=<preset> (e.g. tablet-gts7fe):"
+    while :; do
+        read -r -p "  preset [$def_preset]: " preset || die "cancelled"
+        preset=${preset:-$def_preset}
+        valid_name "$preset" || { echo "  use lowercase letters, digits, '.', '_' and '-' (starting with a letter or digit)"; continue; }
+        [[ "$preset" == "${PRESET:-}" || ! -f "$PRESETS_DIR/$preset.conf" ]] && break
+        choose "presets/$preset.conf exists" no "no|choose another name" "yes|replace it"
+        [[ "$CHOICE" == yes ]] && break
+    done
+    conf=$PRESETS_DIR/$preset.conf
+    build_cmd="make PRESET=$preset"
+fi
+
 echo
 echo "build target:"
 print_target
 in_list "$DEVICE_BOOT" "$BOOT_FORMATS" \
     || warn "this device boots from '$DEVICE_BOOT', which jk_os can't build yet: make will refuse it"
-choose "Save to $BUILD_CONF" yes "yes|save, then build with make" "no|quit without saving"
+choose "Save to $conf" yes "yes|save, then build with: $build_cmd" "no|quit without saving"
 [[ "$CHOICE" == yes ]] || { echo "not saved"; exit 1; }
 
-cat > "$BUILD_CONF" <<EOF
-# jk_os build target, written by make config (scripts/configure.sh).
+mkdir -p "$(dirname "$conf")"
+cat > "$conf" <<EOF
+# jk_os preset, written by make config (scripts/configure.sh).
+# Build with: $build_cmd
 JK_CATEGORY=$JK_CATEGORY
 JK_DEVICE=$JK_DEVICE
 JK_KERNEL=$JK_KERNEL
 JK_ARCH=$JK_ARCH
 JK_NAME=$JK_NAME
 EOF
-log "saved $BUILD_CONF: run make to build"
+log "saved $conf: build with $build_cmd"

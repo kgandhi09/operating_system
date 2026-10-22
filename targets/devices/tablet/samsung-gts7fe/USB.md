@@ -64,11 +64,11 @@ the installed-system service continues to require login.
 
 ## Build and install
 
-With the existing SM-T733 `build.conf`, `make` builds the kernel, device tree,
+`make PRESET=tablet-gts7fe` builds the kernel, device tree,
 boot package and OS squashfs. Both the boot image and OS image must be updated
 to include the console startup changes and `jk-usb-status` utility.
 
-Use the normal Download-mode/Odin or `make flash` workflow for the boot
+Use the normal Download-mode/Odin or `make PRESET=tablet-gts7fe flash` workflow for the boot
 package. Preserve a copy of the previously working package for rollback.
 Then use the existing OS-update workflow, or the rescue menu and:
 

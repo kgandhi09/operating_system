@@ -15,6 +15,9 @@
 # the GitHub release asset digest, the GNU project's signature (GNU keyring
 # from ftp.gnu.org), or, for projects that publish none of these, by
 # fetching the release tag with git (content-addressed) and exporting it.
+# A maintainer tool, run without a preset: the generic PC (for ARCH, default
+# the host arch) stands in for the build target.
+JK_DEFAULT_TARGET=1
 source "$(dirname "$0")/common.sh"
 need tar sha256sum
 
@@ -89,7 +92,7 @@ source_spec() {
         # CPAN's <tarball>.sha256.txt holds the bare checksum.
         perl)      tree=$PERL_TREE      kind=sums name="perl-$v.tar.xz"
                    base="https://www.cpan.org/src/5.0" sums="$base/$name.sha256.txt" ;;
-        # bash's official patches (bash53-NNN) are in configs/toolchain/patches/bash.
+        # bash's official patches (bash53-NNN) are in build-config/toolchain/patches/bash.
         bash)      tree=$BASH_TREE      kind=gnu base="https://ftp.gnu.org/gnu/bash"      name="bash-$v.tar.gz" ;;
         # python.org publishes each file's SHA-256 through its downloads API
         # (3.14 and newer are signed with Sigstore only, no PGP).
@@ -209,5 +212,5 @@ if [[ "$kind" == git ]]; then echo "$ver" > "$dest/.jk_os-version"
 elif [[ ! -f "$ver" && "$(tree_version "$dest")" == @(|-|unknown) ]]; then echo "$ver" > "$dest/.jk_os-version"; fi
 
 log "$tree is now $what $(tree_version "$dest")"
-echo "Rebuild with: make clean && make"
+echo "Rebuild with: make PRESET=<preset> clean && make PRESET=<preset>"
 echo "Commit with:  git add -f $tree   (-f: upstream ships a few files its own .gitignore matches)"

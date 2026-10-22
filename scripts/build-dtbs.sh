@@ -9,7 +9,7 @@
 source "$(dirname "$0")/common.sh"
 
 [[ -n "$DEVICE_DTB" ]] || { log "device $JK_DEVICE has no device tree to build"; exit 0; }
-[[ -f "$KERNEL_OUT/.config" ]] || die "kernel not configured yet (run: make kernel)"
+[[ -f "$KERNEL_OUT/.config" ]] || die "kernel not configured yet (run: $MAKE_CMD kernel)"
 need "${CROSS_COMPILE}gcc"
 
 name=${DEVICE_DTB%.dtb}                    # qcom/<board>

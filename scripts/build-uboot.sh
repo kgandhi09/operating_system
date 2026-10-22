@@ -18,7 +18,7 @@ need make bison flex "${CROSS_COMPILE}gcc"
 UBOOT_SRC="$ROOT_DIR/$UBOOT_TREE"
 [[ -f "$UBOOT_SRC/Makefile" ]] || die "no U-Boot source at $UBOOT_TREE (scripts/update-source.sh u-boot <version>)"
 dtb="$DTB_OUT/$DEVICE_DTB"
-[[ -f "$dtb" ]] || die "device tree not built yet (run: make kernel)"
+[[ -f "$dtb" ]] || die "device tree not built yet (run: $MAKE_CMD kernel)"
 [[ -f "$DEVICE_DIR/uboot.env" ]] || die "no targets/devices/$JK_CATEGORY/$JK_DEVICE/uboot.env"
 
 mkdir -p "$UBOOT_OUT"

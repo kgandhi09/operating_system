@@ -33,8 +33,8 @@ AVB="$AND/avbtool.py"
     || die "DEVICE_MKBOOTIMG_ARGS is empty in targets/devices/$JK_CATEGORY/$JK_DEVICE/device.env: copy the stock boot.img's from scripts/inspect-stock.sh"
 kernel="$KERNEL_OUT/$KIMAGE"
 dtb="$DTB_OUT/$DEVICE_DTB"
-[[ -f "$kernel" ]] || die "kernel not built yet (run: make kernel)"
-[[ -f "$dtb" ]] || die "device tree not built yet (run: make kernel)"
+[[ -f "$kernel" ]] || die "kernel not built yet (run: $MAKE_CMD kernel)"
+[[ -f "$dtb" ]] || die "device tree not built yet (run: $MAKE_CMD kernel)"
 
 read -ra args <<< "$DEVICE_MKBOOTIMG_ARGS"
 hv=0
@@ -56,7 +56,7 @@ cpio -o -H newc --quiet < /dev/null > ramdisk.cpio
 images=(boot.img vbmeta.img dtbo.img)
 if [[ "$DEVICE_BOOT" == android-uboot ]]; then
     (( hv >= 3 )) || die "android-uboot needs boot image header v3 or later (vendor_boot), not v$hv"
-    [[ -f "$UBOOT_OUT/u-boot.bin" ]] || die "U-Boot not built yet (run: make uboot)"
+    [[ -f "$UBOOT_OUT/u-boot.bin" ]] || die "U-Boot not built yet (run: $MAKE_CMD uboot)"
     abl_dtb=$(compgen -G "$ROOT_DIR/$DEVICE_ABL_DTB" | head -n1 || true)
     [[ -n "$DEVICE_ABL_DTB" && -f "$abl_dtb" ]] \
         || die "no DEVICE_ABL_DTB ($DEVICE_ABL_DTB): read the stock firmware first (scripts/inspect-stock.sh)"

@@ -14,7 +14,7 @@ if [[ ! -f "$NV_SRC/VERSION" ]]; then
     exit 0
 fi
 ver=$(cat "$NV_SRC/VERSION")
-[[ -f "$KERNEL_OUT/$KIMAGE" ]] || die "kernel not built yet (run: make kernel)"
+[[ -f "$KERNEL_OUT/$KIMAGE" ]] || die "kernel not built yet (run: $MAKE_CMD kernel)"
 grep -q '^CONFIG_MODULES=y' "$KERNEL_OUT/.config" || die "the kernel has no module support (CONFIG_MODULES)"
 krel=$(cat "$KERNEL_OUT/include/config/kernel.release")
 

@@ -6,8 +6,8 @@
 # (jk_os.squashfs) and switches into it; see initramfs/init.
 source "$(dirname "$0")/common.sh"
 
-[[ -x "$BUSYBOX_OUT/busybox" ]] || die "busybox not built yet (run: make busybox)"
-[[ -x "$TOOLS_OUT/sbin/e2fsck" ]] || die "disk tools not built yet (run: make tools)"
+[[ -x "$BUSYBOX_OUT/busybox" ]] || die "busybox not built yet (run: $MAKE_CMD busybox)"
+[[ -x "$TOOLS_OUT/sbin/e2fsck" ]] || die "disk tools not built yet (run: $MAKE_CMD tools)"
 
 log "assembling initramfs ($ARCH)"
 rm -rf "$INITRAMFS_DIR"

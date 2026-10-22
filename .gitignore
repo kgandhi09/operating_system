@@ -1,5 +1,4 @@
 /build/
 /out/
 /.cache-nvidia/
-/build.conf
 __pycache__/

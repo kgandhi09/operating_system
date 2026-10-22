@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Convert the supplied particle MP4 into a Qt AnimatedImage asset.
 
-Run on the build host after changing jk_os_particle_splash.mp4. The generated
+Run on the build host after changing branding/jk_os_particle_splash.mp4. The generated
 WebP is committed, so building jk_os does not need GStreamer or Pillow.
 """
 
@@ -13,7 +13,7 @@ from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parent.parent
-SOURCE = ROOT / "jk_os_particle_splash.mp4"
+SOURCE = ROOT / "branding/jk_os_particle_splash.mp4"
 OUTPUT = (ROOT / "rootfs/usr/share/plasma/look-and-feel/org.jk_os.desktop/"
           "contents/splash/particle-splash.webp")
 

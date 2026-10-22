@@ -1,21 +1,23 @@
 # jk_os — a minimal 64-bit Linux system built from source.
 #
-#   make config                  choose what to build for: device category,
-#                                device, kernel, arch and a name (build.conf)
-#   make showconfig              show the chosen target
-#   make                         build it (without build.conf: the generic PC
-#                                for the host arch)
-#   make ARCH=aarch64            ... the generic PC for another arch
-#   make run [UEFI=1]            boot the ISO in QEMU (Ctrl-A X quits)
-#   make flash DEVICE=/dev/sdX   write the ISO to a USB stick / SD card
-#                                (Android devices: flash over USB, no DEVICE)
-#   make deps                    install host build dependencies (sudo)
+# Every build names its target, a preset (presets/<preset>.conf: device
+# category, device, kernel, arch and a name); make without one stops.
+#   make presets                          list the presets
+#   make config [PRESET=<preset>]         make a new preset, or change one
+#   make PRESET=<preset>                  build its image (ISO or boot image)
+#   make PRESET=<preset> showconfig       show what it builds
+#   make PRESET=<preset> run [UEFI=1]     boot its ISO in QEMU (Ctrl-A X quits)
+#   make PRESET=<preset> flash DEVICE=/dev/sdX
+#                                         write its ISO to a USB stick / SD card
+#                                         (Android devices: over USB, no DEVICE)
+#   make deps                             install host build dependencies (sudo)
 #
-# Steps can be run on their own: busybox, tools, network, toolchain, desktop,
-# binaries, rootfs (the OS image), initramfs, kernel, uboot, iso, bootimg.
-#   make binaries [UPDATE=1]     pull configs/binaries/*.list from GitHub
-#   make menuconfig              the kernel's own config menu (after make kernel)
-#   make BUILD_CONF=<file> ...   use another saved target than build.conf
+# Steps can be run on their own, with PRESET too: busybox, tools, network,
+# toolchain, desktop, binaries, rootfs (the OS image), initramfs, kernel,
+# uboot, iso, bootimg, clean.
+#   make PRESET=<preset> binaries [UPDATE=1]  pull build-config/binaries/*.list
+#   make PRESET=<preset> menuconfig       the kernel's config menu (after kernel)
+#   make BUILD_CONF=<file> ...            a target file kept outside presets/
 # Everything builds from what is in this repo: no network, no git (except
 # `make binaries` for a binary that is listed but not fetched yet).
 
@@ -31,12 +33,13 @@ export NOWARN_CFLAGS
 SHELL := /bin/bash
 S := scripts
 
-.PHONY: all check image iso bootimg uboot kernel nvidia initramfs rootfs busybox tools network toolchain desktop binaries run flash deps config showconfig menuconfig clean distclean help
+.PHONY: all check image iso bootimg uboot kernel nvidia initramfs rootfs busybox tools network toolchain desktop binaries run flash deps config presets showconfig menuconfig clean distclean help
 
 all: image
 
-# The chosen target (build.conf) must be one jk_os can build. Every build
-# chain starts at one of the steps that depend on this.
+# The chosen preset (PRESET=) must be one jk_os can build; without one this
+# stops with how to use make. Every build chain starts at one of the steps
+# that depend on this.
 check:
 	@$(S)/configure.sh --check
 
@@ -107,11 +110,14 @@ deps:
 config:
 	$(S)/configure.sh
 
+presets:
+	@$(S)/configure.sh --presets
+
 showconfig:
 	$(S)/configure.sh --show
 
 # Interactive kernel config for the current target (after one `make kernel`).
-# Copy options you want to keep into configs/kernel/*.config.
+# Copy options you want to keep into build-config/kernel/*.config.
 menuconfig:
 	. $(S)/common.sh && make -C "$$KERNEL_SRC" O="$$KERNEL_OUT" ARCH="$$KARCH" \
 	    CROSS_COMPILE="$$CROSS_COMPILE" menuconfig
@@ -123,4 +129,4 @@ distclean:
 	rm -rf build out
 
 help:
-	@sed -n '1,19p' Makefile | sed 's/^# \{0,1\}//'
+	@sed -n '1,/^$$/p' Makefile | sed '$$d; s/^# \{0,1\}//'

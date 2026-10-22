@@ -11,12 +11,12 @@
 #   LINUX_FIRMWARE_TARBALL=~/linux-firmware-20260916.tar.xz scripts/update-firmware.sh ...
 #   (SOF_BIN_TARBALL=<file>: the same for sof-bin)
 #
-# What is kept, per arch, comes from configs/firmware/{common,<arch>}.list:
+# What is kept, per arch, comes from build-config/firmware/{common,<arch>}.list:
 #   driver <name>   every file that driver may load, as the kernel build
 #                   lists it (the generic PC's kernel build: build/<arch>/
 #                   generic-mainline/linux/modules.builtin.modinfo, or the
-#                   module in .../modules; run `make kernel` for each arch
-#                   first, without a build.conf)
+#                   module in .../modules; run `make PRESET=pc-<arch>
+#                   kernel` for each arch first)
 #   late <name>     like driver, for a loadable module that /etc/init.d loads
 #                   once the root is mounted (btusb's helpers): its files go
 #                   into the image only, not the kernel's initramfs
@@ -30,6 +30,9 @@
 # userspace/firmware/<arch>.files lists each arch's share (in the initramfs
 # and the image), <arch>.linked the linked and late ones (the image only). An
 # arch whose kernel isn't built keeps its current lists.
+# A maintainer tool, run without a preset: the generic PC (for ARCH, default
+# the host arch) stands in for the build target.
+JK_DEFAULT_TARGET=1
 source "$(dirname "$0")/common.sh"
 need curl tar zstd sha256sum modinfo
 
@@ -41,7 +44,7 @@ fw_ver="${1:-}" regdb_ver="${2:-}"
 SOF_BIN_VERSION=2026.09.1
 SOF_BIN_SHA256=42ce40ec98f366365eab8e046d779b416d80b6ff2513b8f6be2a61a88e679b73
 
-LIST_DIR="$ROOT_DIR/configs/firmware"
+LIST_DIR="$ROOT_DIR/build-config/firmware"
 DEST="$ROOT_DIR/userspace/firmware"
 
 tmp="$(mktemp -d "$ROOT_DIR/.update-firmware.XXXXXX")"

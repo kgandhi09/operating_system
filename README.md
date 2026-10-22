@@ -17,27 +17,41 @@ works from a CD/DVD, a VM, or written raw to a USB stick.
 
 Every source tree lives in the repo, so **a build needs no network and no
 git**: a copied folder or an unpacked archive of this repo builds offline.
-The one exception is a GitHub binary newly added to `configs/binaries/`, which
+The one exception is a GitHub binary newly added to `build-config/binaries/`, which
 is downloaded once into `userspace/binaries/` (see [Binaries from GitHub](#binaries-from-github)).
 
 ## Quick start
 
 ```sh
-make deps                 # once: install host packages (Debian/Ubuntu or Arch, uses sudo)
-make                      # build out/jk_os-<ver>-<host arch>.iso
-make run                  # boot it in QEMU on this terminal (Ctrl-A X quits)
+make deps                       # once: install host packages (Debian/Ubuntu or Arch, uses sudo)
+make PRESET=pc-x86_64           # build out/jk_os-<ver>-x86_64.iso
+make PRESET=pc-x86_64 run       # boot it in QEMU on this terminal (Ctrl-A X quits)
 ```
+
+Every build names a **preset** (below); `make` without one stops and shows
+how to use it.
 
 The ISO boots into the installer menu, before any login. From there you can
 install to a disk, or try the live system (a root shell; changes are kept in RAM
 and lost on reboot). See [Installing to a disk](#installing-to-a-disk).
 
 
-### Choosing a target device
+### Choosing a target device: presets
 
-`make config` asks what to build for and saves the answers in `build.conf`;
-`make` then builds that, with no questions. The device comes first, and each
-later list shows only what fits it:
+A preset is one image jk_os builds: a file in `presets/` naming the device
+and how to build for it. Every `make` that builds something takes one, as
+`PRESET=<preset>` (the file's name without `.conf`):
+
+| Preset          | Category / device / kernel / arch                    | Output |
+|-----------------|------------------------------------------------------|--------|
+| `pc-x86_64`     | `pc` / `generic` / `mainline` / x86_64               | `out/jk_os-<ver>-x86_64.iso` |
+| `pc-aarch64`    | `pc` / `generic` / `mainline` / aarch64              | `out/jk_os-<ver>-aarch64.iso` |
+| `tablet-gts7fe` | `tablet` / `samsung-gts7fe` / `samsung-mainline` / aarch64 | `out/jk_os-<ver>-samsung-s7fe-tablet-aarch64.tar.md5` |
+
+`make config` makes a new preset, or changes one (`make config
+PRESET=<preset>`): it asks what to build for and saves the answers in
+`presets/<preset>.conf`. The device comes first, and each later list shows
+only what fits it:
 
 1. **device category**: `pc`, `tablet`, `robotics-hpc`, ...
 2. **device**: `generic` (any PC or VM), `jetson-orin-nx`, `samsung-gts7fe`, ...
@@ -47,27 +61,28 @@ later list shows only what fits it:
 5. **name**: your own, for the output file, e.g. `asus-laptop`
    gives `out/jk_os-<ver>-asus-laptop-x86_64.iso`
 
+Then a preset name for `PRESET=` (e.g. `asus-laptop-x86_64`).
+
 ```sh
-make config               # choose from menus (arrow keys, Enter)
-make showconfig           # what build.conf says
-make                      # build it
-make BUILD_CONF=jetson.conf   # build from another saved target
+make presets                          # list the presets
+make config                           # make a new one from menus (arrow keys, Enter)
+make PRESET=tablet-gts7fe showconfig  # what a preset builds
+make PRESET=tablet-gts7fe             # build it
+make BUILD_CONF=~/jetson.conf         # a target file kept outside presets/
 ```
 
-Without `build.conf`, `make` builds the generic PC for the host arch, as
-before. The choices are defined in [`targets/`](#build-targets). A device
-whose boot format jk_os can't make yet (the Samsung tablet's Android
-`boot.img`) can be chosen, but `make` refuses it.
+The choices are defined in [`targets/`](#build-targets). A device whose boot
+format jk_os can't make yet can be chosen, but `make` refuses it.
 
 ### Other architecture
 
-Without a `build.conf`, `ARCH` picks the arch of the generic PC build (with
-one, `make config` does):
+The preset sets the arch; one for another arch than the build machine's is
+cross-compiled (`pc-aarch64` with aarch64-linux-gnu-gcc on an x86_64 host,
+`pc-x86_64` with x86_64-linux-gnu-gcc on an aarch64 one):
 
 ```sh
-make ARCH=aarch64         # cross-compiles with aarch64-linux-gnu-gcc
-make ARCH=aarch64 run
-make ARCH=x86_64          # from an aarch64 host, with x86_64-linux-gnu-gcc
+make PRESET=pc-aarch64
+make PRESET=pc-aarch64 run
 ```
 
 Override the toolchain with `CROSS_COMPILE=<prefix>` and the job count with `JOBS=N` (default: half the CPUs).
@@ -76,7 +91,7 @@ Override the toolchain with `CROSS_COMPILE=<prefix>` and the job count with `JOB
 
 ```sh
 lsblk -d -o NAME,SIZE,MODEL,TRAN      # find the stick, e.g. /dev/sdb
-make flash DEVICE=/dev/sdb            # add ARCH=aarch64 for the arm image
+make PRESET=pc-x86_64 flash DEVICE=/dev/sdb   # or pc-aarch64 for the arm image
 ```
 
 `scripts/flash.sh` refuses partitions, mounted devices, and the disk holding
@@ -122,14 +137,14 @@ userspace/util-linux/      util-linux source: sfdisk, fdisk, lsblk, wipefs, part
 userspace/e2fsprogs/       e2fsprogs source: mkfs.ext4, e2fsck, resize2fs, tune2fs
 userspace/shadow/          shadow-utils source: useradd, usermod, passwd, su, login, ...
 userspace/libxcrypt/       libxcrypt source: password hashing (yescrypt) for shadow
-configs/kernel/           kernel config fragments merged over the arch defconfig
-configs/busybox/          BusyBox config fragments merged over defconfig
-configs/binaries/         GitHub binaries: common.list (every arch) + <arch>.list
+build-config/kernel/           kernel config fragments merged over the arch defconfig
+build-config/busybox/          BusyBox config fragments merged over defconfig
+build-config/binaries/         GitHub binaries: common.list (every arch) + <arch>.list
 initramfs/init            early boot: find and mount jk_os.squashfs, switch into it
-configs/initramfs.list    device nodes added to the initramfs
+build-config/initramfs.list    device nodes added to the initramfs
 targets/kernels/<name>/   kernel profiles: which tree, which archs (make config)
 targets/devices/<category>/<device>/  device profiles: archs, kernels, boot format
-build.conf                (generated) the target make config chose
+presets/<preset>.conf     build targets: device, kernel, arch, name (make PRESET=<preset>)
 userspace/binaries/<arch>/ fetched binaries (bin/) and what they came from (sources.lock)
 rootfs/                   files copied verbatim into the root filesystem
 boot/grub.cfg             x86_64 GRUB menu
@@ -139,7 +154,7 @@ build/                    (generated) build trees: build/<arch>/ (userspace),
 out/                      (generated) ISO images
 ```
 
-Build steps can run individually: `make busybox | tools | binaries | rootfs | kernel | iso`.
+Build steps can run individually: `make PRESET=<preset> busybox | tools | binaries | rootfs | kernel | iso`.
 The kernel and BusyBox build out of tree under `build/`. The source trees
 stay pristine, and both architectures can build side by side from the same
 source. Userspace (BusyBox, toolchain, network stack, desktop) is the same for
@@ -159,7 +174,7 @@ targets/devices/pc/generic/device.env            DEVICE_ARCHS, DEVICE_KERNELS, D
 ```
 
 A kernel, category or device directory can also hold a `kernel.config`
-fragment, merged after `configs/kernel/common.config` and `<arch>.config` in
+fragment, merged after `build-config/kernel/common.config` and `<arch>.config` in
 the order kernel, category, device. A category or device directory can hold a
 `rootfs/` overlay, copied over the root filesystem. The image records its
 target in `/etc/jk_os/target` and its device as `VARIANT_ID` in
@@ -213,8 +228,8 @@ tree (`scripts/prepare-kernel.sh`); either way `kernel/<tree>` stays untouched.
 
 ```sh
 scripts/inspect-stock.sh AP_*.tar.md5 BL_*.tar.md5   # read the stock firmware: build/stock/...
-make bootimg              # kernel + device tree -> build/.../bootimg, and an Odin tar in out/
-make flash                # write them with Heimdall, the tablet in Download mode
+make PRESET=tablet-gts7fe bootimg   # kernel + device tree -> build/.../bootimg, and an Odin tar in out/
+make PRESET=tablet-gts7fe flash     # write them with Heimdall, the tablet in Download mode
 ```
 
 `inspect-stock.sh` prints what the device profile needs from the stock
@@ -256,8 +271,8 @@ The Book Cover Keyboard (pogo pins) works on the console too.
 To install jk_os on the tablet, with it at that console (no system yet):
 
 ```sh
-make                                # the OS image (and the boot images)
-scripts/tablet-install.sh           # format userdata as JK_DATA, copy the image, reboot
+make PRESET=tablet-gts7fe                           # the OS image (and the boot images)
+PRESET=tablet-gts7fe scripts/tablet-install.sh      # format userdata as JK_DATA, copy the image, reboot
 ```
 
 `tablet-install.sh` formats only the `userdata` partition, after you type
@@ -265,8 +280,8 @@ its name. The tablet then boots jk_os
 from its storage and starts the first-boot setup on its screen; the
 installed system serves the PC on the USB cable too (`telnet 172.16.42.1`
 or `/dev/ttyACM0`, with a login). `jk-update` follows the
-`samsung-gts7fe-aarch64` channel (`scripts/publish.sh` after `make` and
-`make bootimg`) and writes a new kernel to the `vendor_boot` partition
+`samsung-gts7fe-aarch64` channel (`scripts/publish.sh` after `make
+PRESET=tablet-gts7fe` and its `bootimg`) and writes a new kernel to the `vendor_boot` partition
 (keeping the old one for `--rollback`).
 
 To reinstall over an installed system, choose "Rescue shell (reinstall over
@@ -353,7 +368,7 @@ scripts/update-source.sh e2fsprogs 1.47.5
 scripts/update-source.sh shadow 4.20.4
 scripts/update-source.sh libxcrypt 4.5.3
 scripts/update-source.sh kernel ./linux-7.3.tar.xz  # offline, from a tarball you have
-make clean && make
+make PRESET=pc-x86_64 clean && make PRESET=pc-x86_64
 ```
 
 **Add a different kernel tree** that a device needs, such as a vendor tree
@@ -370,7 +385,7 @@ in `build/`.
 
 ## Installing to a disk
 
-Write the ISO to a USB stick (`make flash`) and boot from it. Before any login
+Write the ISO to a USB stick (`make PRESET=<preset> flash`) and boot from it. Before any login
 prompt, every console (screen and serial) shows the installer menu:
 
 ```
@@ -540,7 +555,7 @@ way up, 0 and 180 portrait). External screens keep their own orientation.
 session. The pointer appears while you use the mouse and hides after three
 seconds without mouse activity. Exiting the session restores the text console.
 
-The light `jk-gui` theme plays `jk_os_particle_splash.mp4` as a six-second
+The light `jk-gui` theme plays `branding/jk_os_particle_splash.mp4` as a six-second
 particle intro and fades into the default wallpaper. The OS ships its
 full-resolution 1920×1080 animated WebP conversion because QtMultimedia has no video backend;
 `python3 scripts/make-splash-animation.py` regenerates that asset after
@@ -767,7 +782,7 @@ Debian's packages are built against Debian's libraries, not jk_os's, so they
 don't go into the OS itself. They go into a Debian system of their own on the
 data partition, **`/data/apt/root`**, unpacked from the Debian base system that
 the OS image carries (the official Docker image's root filesystem,
-`userspace/debian/<arch>`, see `configs/debian/rootfs.list` and
+`userspace/debian/<arch>`, see `build-config/debian/rootfs.list` and
 `scripts/update-debian-rootfs.sh`). Because it lives on `/data` and not in
 `/data/system/root`, what you install stays when jk_os is updated.
 
@@ -823,7 +838,7 @@ Debian-based host.
 ## Binaries from GitHub
 
 Tools that BusyBox doesn't provide come as prebuilt release assets from GitHub.
-They are listed in `configs/binaries/`:
+They are listed in `build-config/binaries/`:
 
 - `common.list`: installed on **every** arch. `@ARCH@` in an asset name becomes
   `x86_64` / `aarch64`, and `@DEBARCH@` becomes `amd64` / `arm64`, so a single line
@@ -838,7 +853,7 @@ jq      jqlang/jq           jq-1.8.2 jq-linux-@DEBARCH@
 rg      BurntSushi/ripgrep  15.2.0   ripgrep-*-@ARCH@-unknown-linux-musl.tar.gz
 ```
 
-`make` runs `make binaries` before assembling the rootfs. For each entry, it
+A build runs the `binaries` step before assembling the rootfs. For each entry, it
 downloads the one matching asset of that release, checks it against GitHub's
 published SHA-256 digest, unpacks it (tar.*, zip, gz/xz/bz2/zst, or a bare
 binary), and installs the binary as `userspace/binaries/<arch>/bin/<name>`.
@@ -851,7 +866,7 @@ fetched (tag, asset, sha256) goes into `userspace/binaries/<arch>/sources.lock`.
   network. Only a new or changed entry downloads anything. `OFFLINE=1` turns that
   download into an error.
 - **Updating.** `tag` can be `latest`. It is resolved once and then stays pinned
-  in the lock until `make binaries UPDATE=1`, which re-resolves and re-downloads
+  in the lock until `make PRESET=<preset> binaries UPDATE=1`, which re-resolves and re-downloads
   everything. Remove a line and the next build deletes the binary.
 - **Static only.** The OS has no libc, so the fetch rejects dynamically linked or
   wrong-arch ELF files. Pick the `*-linux-musl` or Go build of a project.
@@ -859,15 +874,15 @@ fetched (tag, asset, sha256) goes into `userspace/binaries/<arch>/sources.lock`.
   or the binary is named differently: it's a glob for its path inside the archive.
 - GitHub allows 60 unauthenticated API calls per hour. Set `GITHUB_TOKEN` if you
   hit that limit.
-- `make binaries ARCH=aarch64` fetches for the other arch without building anything.
+- `make PRESET=pc-aarch64 binaries` fetches for aarch64 without building anything.
 
 ## Customizing
 
-- **Add files to the OS**: drop them under `rootfs/` (e.g. `rootfs/etc/init.d/S50myapp`, executable, taking `start`/`stop`), then `make`.
-- **Branding**: the desktop's logo, launcher icon (`jk-os`), wallpaper (`jk_os`), splash screen and the Global Themes' previews come from `J.K. Logo.png`. After changing the logo, run `scripts/make-branding.py` (needs Python with Pillow and NumPy) to regenerate the images under `rootfs/usr/share/`, then `make`.
-- **The desktop's look**: two Global Themes, **jk_os Light** (`org.jk_os.desktop`, the default) and **jk_os Dark** (`org.jk_os.desktop.dark`), set as the light/dark pair in `rootfs/etc/xdg/kdeglobals` (System Settings → Global Theme switches between them, or follows the time of day). Both have a menu bar along the top (the J.K. Robotics menu, the active application and its menus, tray, clock) and a floating dock, in glass: KWin blurs and saturates what is behind panels, pop-ups, title bars and menus. Title bars have red, yellow and green buttons on the left and rounded corners (Aurorae, with `configs/desktop/patches/aurorae`); the fonts are Inter and FiraCode Nerd Font Mono; Konsole opens a translucent profile, *JK Glass*. The colour schemes, title bars and Plasma style are generated by `scripts/make-theme.py`; KWin's settings are in `rootfs/etc/xdg/kwinrc`. The panel layout is set up on a user's first desktop; for an existing one, apply the Global Theme with *Desktop and window layout* ticked.
-- **Kernel options**: `make menuconfig` to explore, then put the options you want to keep in `configs/kernel/common.config` or `configs/kernel/<arch>.config`. Fragments are re-applied whenever they change. The build warns if an option you asked for was dropped.
-- **Clean**: `make clean` (the current target's arch) or `make distclean` (all of `build/` and `out/`; source trees are left alone).
+- **Add files to the OS**: drop them under `rootfs/` (e.g. `rootfs/etc/init.d/S50myapp`, executable, taking `start`/`stop`), then rebuild (`make PRESET=<preset>`).
+- **Branding**: the desktop's logo, launcher icon (`jk-os`), wallpaper (`jk_os`), splash screen and the Global Themes' previews come from `branding/J.K. Logo.png`. After changing the logo, run `scripts/make-branding.py` (needs Python with Pillow and NumPy) to regenerate the images under `rootfs/usr/share/`, then rebuild.
+- **The desktop's look**: two Global Themes, **jk_os Light** (`org.jk_os.desktop`, the default) and **jk_os Dark** (`org.jk_os.desktop.dark`), set as the light/dark pair in `rootfs/etc/xdg/kdeglobals` (System Settings → Global Theme switches between them, or follows the time of day). Both have a menu bar along the top (the J.K. Robotics menu, the active application and its menus, tray, clock) and a floating dock, in glass: KWin blurs and saturates what is behind panels, pop-ups, title bars and menus. Title bars have red, yellow and green buttons on the left and rounded corners (Aurorae, with `build-config/desktop/patches/aurorae`); the fonts are Inter and FiraCode Nerd Font Mono; Konsole opens a translucent profile, *JK Glass*. The colour schemes, title bars and Plasma style are generated by `scripts/make-theme.py`; KWin's settings are in `rootfs/etc/xdg/kwinrc`. The panel layout is set up on a user's first desktop; for an existing one, apply the Global Theme with *Desktop and window layout* ticked.
+- **Kernel options**: `make PRESET=<preset> menuconfig` to explore, then put the options you want to keep in `build-config/kernel/common.config` or `build-config/kernel/<arch>.config`. Fragments are re-applied whenever they change. The build warns if an option you asked for was dropped.
+- **Clean**: `make PRESET=<preset> clean` (that preset's arch, except the host tools shared by every arch in `build/host/`) or `make distclean` (all of `build/` and `out/`; source trees are left alone).
 
 ## Host requirements
 

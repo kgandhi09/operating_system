@@ -20,6 +20,9 @@
 #   manifest         what goes where (read by build-nvidia.sh)
 # Left out: 32-bit libraries, GLVND (jk_os builds its own), the X.org
 # driver and nvidia-xconfig, the installer, and the closed kernel modules.
+# A maintainer tool, run without a preset: the generic PC (for ARCH, default
+# the host arch) stands in for the build target.
+JK_DEFAULT_TARGET=1
 source "$(dirname "$0")/common.sh"
 need curl sha256sum
 

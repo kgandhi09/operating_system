@@ -112,11 +112,11 @@ krel="$(cat "$KERNEL_OUT/include/config/kernel.release")"
 if grep -qx 'CONFIG_MODULES=y' "$KERNEL_OUT/.config"; then
     [[ -d "$ROOTFS_DIR/usr/lib/modules/$krel" ]] || die "the image has no modules for kernel $krel: rebuild with make"
     [[ "$KERNEL_OUT/$KIMAGE" -nt "$SQUASHFS_IMG" ]] \
-        && die "the kernel is newer than the image: run make so both come from the same build"
+        && die "the kernel is newer than the image: run $MAKE_CMD so both come from the same build"
 fi
 # A boot image holds the kernel: it must be the newest kernel's.
 if [[ -n "$kpart" && "$KERNEL_OUT/$KIMAGE" -nt "$kfile" ]]; then
-    die "the kernel is newer than $(basename "$kfile"): run make bootimg"
+    die "the kernel is newer than $(basename "$kfile"): run $MAKE_CMD bootimg"
 fi
 commit="$(git -C "$ROOT_DIR" rev-parse --short=12 HEAD 2>/dev/null || echo unknown)"
 dirty=""

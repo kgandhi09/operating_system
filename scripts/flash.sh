@@ -12,7 +12,7 @@ need lsblk findmnt dd
 dev="${1:-}"
 image="${2:-$ISO}"
 [[ -n "$dev" ]] || die "usage: $0 /dev/<disk> [image.iso]   (see: lsblk -d -o NAME,SIZE,MODEL,TRAN)"
-[[ -f "$image" ]] || die "image not found: $image (run: make iso)"
+[[ -f "$image" ]] || die "image not found: $image (run: $MAKE_CMD iso)"
 [[ -b "$dev" ]] || die "$dev is not a block device"
 
 dev="$(readlink -f "$dev")"
