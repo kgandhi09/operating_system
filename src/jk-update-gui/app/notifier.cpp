@@ -1,7 +1,6 @@
 #include "notifier.h"
 
 #include <KNotification>
-#include <KNotificationAction>
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QDir>
