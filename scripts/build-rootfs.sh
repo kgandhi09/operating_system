@@ -268,6 +268,12 @@ chmod 4755 usr/sbin/unix_chkpwd
 
 log "rootfs: $(du -sh . | cut -f1) in $ROOTFS_DIR"
 
+# Programs built on jk_os itself find every library through its CMake and
+# pkg-config files: all the files, include directories and packages those
+# name must be in the image, with none of the build machine's paths.
+python3 -I "$ROOT_DIR/scripts/check-devfiles.py" "$ROOTFS_DIR" \
+    || die "the image's development files are incomplete (above)"
+
 # Every file belongs to root in the image (-all-root), as the builder's
 # files would otherwise keep the builder's uid.
 need mksquashfs

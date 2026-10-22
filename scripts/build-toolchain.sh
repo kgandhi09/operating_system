@@ -328,6 +328,9 @@ b_perl() {
         -Dcf_email=root@localhost -Dmyhostname=jk-os -Dmydomain=.localdomain)
     make -C "$2" -j"$JOBS"
     make -C "$2" install DESTDIR="$TC"
+    # man3dir=none still installs the module pages, as /<Module>.0 at the
+    # top of $TC (and so of the image): remove them.
+    rm -f "$TC"/*.0
 }
 b_autoconf() { M4=/usr/bin/m4 PERL=/usr/bin/perl autotools_tc "$@"; }
 b_automake() { PERL=/usr/bin/perl autotools_tc "$@"; }
