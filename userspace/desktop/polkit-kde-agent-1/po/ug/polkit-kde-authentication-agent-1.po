@@ -1,0 +1,176 @@
+# Uyghur translation for polkit-kde-authentication-agent-1.
+# Copyright (C) YEAR This_file_is_part_of_KDE
+# This file is distributed under the same license as the PACKAGE package.
+# Sahran <sahran.ug@gmail.com>, 2011.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: polkit-kde-authentication-agent-1\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-05-09 00:46+0000\n"
+"PO-Revision-Date: 2026-05-05 19:31-0400\n"
+"Last-Translator: Abduqadir Abliz <sahranbay@gmail.com>\n"
+"Language-Team: Uyghur Computer Science Association <UKIJ@yahoogroups.com>\n"
+"Language: ug\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 3.9\n"
+
+#, kde-format
+msgctxt "NAME OF TRANSLATORS"
+msgid "Your names"
+msgstr "ئابدۇقادىر ئابلىز، غەيرەت كەنجى"
+
+#, kde-format
+msgctxt "EMAIL OF TRANSLATORS"
+msgid "Your emails"
+msgstr "sahranbay@gmail.com, gheyret@gmail.com"
+
+#: IdentitiesModel.cpp:27
+#, kde-format
+msgid "Select User"
+msgstr "ئىشلەتكۈچى تاللىنىدۇ"
+
+#: IdentitiesModel.cpp:45
+#, kde-format
+msgctxt "%1 is the full user name, %2 is the user login name"
+msgid "%1 (%2)"
+msgstr "%1 (%2)"
+
+#: main.cpp:48
+#, kde-format
+msgid "(c) 2009 Red Hat, Inc."
+msgstr "(c) 2009 Red Hat, Inc."
+
+#: main.cpp:49
+#, kde-format
+msgid "Lukáš Tinkl"
+msgstr "Lukáš Tinkl"
+
+#: main.cpp:49
+#, kde-format
+msgid "Maintainer"
+msgstr "ئاسرىغۇچى"
+
+#: main.cpp:50
+#, kde-format
+msgid "Jaroslav Reznik"
+msgstr "Jaroslav Reznik"
+
+#: main.cpp:50
+#, kde-format
+msgid "Former maintainer"
+msgstr "سابىق ئاسرىغۇچى"
+
+#: policykitlistener.cpp:89
+#, kde-format
+msgid "Another client is already authenticating, please try again later."
+msgstr "يەنە بىر خېرىدارى دەلىللىنىۋاتىدۇ، سەل تۇرۇپ قايتا سىناڭ."
+
+#: policykitlistener.cpp:96
+#, kde-format
+msgctxt "Error response when polkit calls us with an empty list of identities"
+msgid "No user to authenticate as. Please check your system configuration."
+msgstr "كىملىك دەلىللەيدىغان ئىشلەتكۈچى يوق. سىستېما سەپلىمىڭىزنى تەكشۈرۈڭ."
+
+#: qml/MobileQuickAuthDialog.qml:16 qml/MobileQuickAuthDialog.qml:108
+#: qml/QuickAuthDialog.qml:16 QuickAuthDialog.cpp:110
+#, kde-format
+msgid "Authentication Required"
+msgstr "كىملىك دەلىللەش زۆرۈر"
+
+#: qml/MobileQuickAuthDialog.qml:57 qml/QuickAuthDialog.qml:72
+#, kde-format
+msgid "Authentication failure, please try again."
+msgstr "كىملىك دەلىللىيەلمىدى. قايتا سىناڭ."
+
+#: qml/MobileQuickAuthDialog.qml:141
+#, kde-format
+msgid "User: %1"
+msgstr "ئىشلەتكۈچى: %1"
+
+#: qml/MobileQuickAuthDialog.qml:146 qml/QuickAuthDialog.qml:181
+#, kde-format
+msgid "Switch…"
+msgstr "ئالماشتۇر…"
+
+#: qml/MobileQuickAuthDialog.qml:167 qml/QuickAuthDialog.qml:201
+#, kde-format
+msgid "Password…"
+msgstr "ئىم…"
+
+#: qml/MobileQuickAuthDialog.qml:175 qml/QuickAuthDialog.qml:210
+#, kde-format
+msgid "Details"
+msgstr "تەپسىلاتى"
+
+#: qml/MobileQuickAuthDialog.qml:185 qml/QuickAuthDialog.qml:222
+#, kde-format
+msgid "OK"
+msgstr "جەزملە"
+
+#: qml/MobileQuickAuthDialog.qml:191 qml/QuickAuthDialog.qml:228
+#, kde-format
+msgid "Cancel"
+msgstr "ۋاز كەچ"
+
+#: qml/MobileQuickAuthDialog.qml:201 qml/QuickAuthDialog.qml:240
+#, kde-format
+msgid "Action:"
+msgstr "مەشغۇلات:"
+
+#: qml/MobileQuickAuthDialog.qml:205 qml/QuickAuthDialog.qml:244
+#, kde-format
+msgid "ID:"
+msgstr "كىملىك:"
+
+#: qml/MobileQuickAuthDialog.qml:209 qml/QuickAuthDialog.qml:248
+#, kde-format
+msgid "Vendor:"
+msgstr "تەمىنلىگۈچى:"
+
+#: qml/QuickAuthDialog.qml:175
+#, kde-format
+msgid "Authenticating as %1"
+msgstr "%1 كىملىك دەلىللەۋاتىدۇ"
+
+#~| msgid "Action:"
+#~ msgid "Action ID:"
+#~ msgstr "ھەرىكەت:"
+
+#~ msgid "Password for root:"
+#~ msgstr "ئالىي ئىشلەتكۈچىنىڭ ئىمى:"
+
+#~ msgid "Password for %1:"
+#~ msgstr "ئىشلەتكۈچى %1 نىڭ ئىمى:"
+
+#~ msgid ""
+#~ "An application is attempting to perform an action that requires "
+#~ "privileges. Authentication is required to perform this action."
+#~ msgstr ""
+#~ "پروگرامما ئېلىپ بارماقچى بولغان مەشغۇلاتقا ھوقۇق زۆرۈر بولىدۇ. بۇ "
+#~ "مەشغۇلاتنى ئېلىپ بېرىش ئۈچۈن كىملىك دەلىللەش زۆرۈر."
+
+#~ msgctxt ""
+#~ "%1 is the name of a detail about the current action provided by polkit"
+#~ msgid "%1:"
+#~ msgstr "%1:"
+
+#~ msgid "Click to open %1"
+#~ msgstr "چېكىپ %1 نى ئېچىش"
+
+#~| msgid "Password:"
+#~ msgid "P&assword:"
+#~ msgstr "ئىم:"
+
+#~| msgid "PolicyKit1-KDE"
+#~ msgid "PolicyKit1 KDE Agent"
+#~ msgstr "PolicyKit1-KDE"
+
+#~ msgid "Application:"
+#~ msgstr "پروگرامما:"
+
+#~ msgid "Click to edit %1"
+#~ msgstr "چېكىپ %1 نى تەھرىرلەش"

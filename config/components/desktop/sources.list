@@ -190,6 +190,11 @@ kscreen  6.7.5  https://download.kde.org/stable/plasma/{v}/kscreen-{v}.tar.xz  a
 powerdevil  6.7.5  https://download.kde.org/stable/plasma/{v}/powerdevil-{v}.tar.xz  6a738fccf01e4d1b10fea68ff8b404a406f95bc36fcb593bcc70fafb1c53258b
 plasma-nm  6.7.5  https://download.kde.org/stable/plasma/{v}/plasma-nm-{v}.tar.xz  6469ff89e26d44565292c968df595b3a68f353707255ba48725c1bae2a67f3be
 kde-cli-tools  6.7.5  https://download.kde.org/stable/plasma/{v}/kde-cli-tools-{v}.tar.xz  18f3c421b305003caf73f9e9fbec09fbf30f472dbe81fec328046cca7883a31d
+# KDE's polkit agent (the password dialog), the sensor daemon behind the
+# System Monitor widgets, and the System Monitor app.
+polkit-kde-agent-1  6.7.5  https://download.kde.org/stable/plasma/{v}/polkit-kde-agent-1-{v}.tar.xz  fb731dd979c0296994b5efe37b0a9cdeec5e704f91565540930effdbd7efee58
+ksystemstats  6.7.5  https://download.kde.org/stable/plasma/{v}/ksystemstats-{v}.tar.xz  27cfb9a189244b897ae23f3a8681e7c4b45cc67ec27faff8961783edce16f1fc
+plasma-systemmonitor  6.7.5  https://download.kde.org/stable/plasma/{v}/plasma-systemmonitor-{v}.tar.xz  5708e8f0e1833e0829144a14aba1f177262661cc57b20c4a5a34bfd6973d1f1b
 milou  6.7.5  https://download.kde.org/stable/plasma/{v}/milou-{v}.tar.xz  b43c7cb765109a91ad9ef7d5856c4584b380349837baf63ccca4b45a67925ab5
 qqc2-breeze-style  6.7.5  https://download.kde.org/stable/plasma/{v}/qqc2-breeze-style-{v}.tar.xz  788f0698c904112cc33bf6f8fb446b2e4fd7231d38c0955cbc3baa50d375d1ee
 ocean-sound-theme  6.7.5  https://download.kde.org/stable/plasma/{v}/ocean-sound-theme-{v}.tar.xz  452e5ab04f5e2d7cbf9357e4e12badf8493aefda437ba130eb38c9e511313b72
@@ -230,6 +235,13 @@ acl  2.4.0  https://download.savannah.nongnu.org/releases/acl/acl-{v}.tar.xz  e6
 elogind  257.16  git+https://github.com/elogind/elogind.git#v{v}  1b62c6de143abafee70ab66b0470b4b6cbe3f798
 libgudev  238  https://download.gnome.org/sources/libgudev/{v}/libgudev-{v}.tar.xz  61266ab1afc9d73dbc60a8b2af73e99d2fdff47d99544d085760e4fa667b5dd1
 upower  1.91.4  git+https://gitlab.freedesktop.org/upower/upower.git#v{v}  af22b0bb6a97fff89b0e11101de9fc4937832864
+# Authorization (polkit): what the desktop may do as the user at the console,
+# and KDE's password dialog when an administrator has to allow it
+# (NetworkManager, ModemManager, UPower, elogind, KDE's settings). polkit's
+# rules run on duktape, a small JavaScript engine.
+duktape  2.7.0  https://github.com/svaarala/duktape/releases/download/v{v}/duktape-{v}.tar.xz  90f8d2fa8b5567c6899830ddef2c03f3c27960b11aca222fa17aa7ac613c2890
+polkit  128  git+https://github.com/polkit-org/polkit.git#{v}  e6373dc19975d8583568c6cd7025d03e682ca956
+polkit-qt-1  0.201.1  https://download.kde.org/stable/polkit-qt-1/polkit-qt-1-{v}.tar.xz  95d8e2cae530c546d9437459deb8a1bea38d572f0f9772cc2860dc143637f256
 # Mobile broadband modems (plasma-nm needs its API; NetworkManager uses it for WWAN)
 ModemManager  1.24.2  git+https://gitlab.freedesktop.org/mobile-broadband/ModemManager.git#{v}  f2b9ab1ad78d322f32134a444b5b54c6e8160e19
 

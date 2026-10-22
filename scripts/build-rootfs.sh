@@ -282,6 +282,10 @@ chmod 4755 usr/lib/jk_os/jk-session
 # PAM's password checker: the screen locker's greeter runs as the user and
 # asks it to check the password against /etc/shadow, which only root reads.
 chmod 4755 usr/sbin/unix_chkpwd
+# polkit's password checker (the desktop's authentication dialog), and its
+# rules, which polkitd reads as user polkitd (every file is root's here).
+chmod 4755 usr/lib/polkit-1/polkit-agent-helper-1
+chmod 0755 etc/polkit-1/rules.d usr/share/polkit-1/rules.d
 
 log "rootfs: $(du -sh . | cut -f1) in $ROOTFS_DIR"
 

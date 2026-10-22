@@ -1,0 +1,6 @@
+# polkit: the desktop's authentication dialog (polkit-kde-agent) checks the
+# password of the administrator it asks for (a member of group wheel) here.
+auth      required  pam_unix.so
+account   required  pam_unix.so
+password  required  pam_deny.so
+session   required  pam_permit.so

@@ -1,0 +1,9 @@
+// jk_os: administrators (group wheel) manage the network from the desktop
+// (Plasma's network applet) without being asked for their password, as they
+// can with sudo nmcli. Other users are asked for an administrator's.
+polkit.addRule(function(action, subject) {
+    if (action.id.indexOf("org.freedesktop.NetworkManager.") == 0 &&
+        subject.isInGroup("wheel") && subject.local && subject.active) {
+        return polkit.Result.YES;
+    }
+});

@@ -144,6 +144,14 @@ step NetworkManager "$NETWORKMANAGER_SRC" mesonpkg \
     -Dintrospection=false -Dvapi=false -Ddocs=false -Dman=false -Dtests=no -Dfirewalld_zone=false \
     -Dlibpsl=false -Dcrypto=null -Dqt=false -Dreadline=libreadline -Dmore_asserts=no \
     -Dld_gc=false
+# NetworkManager's polkit actions, untranslated (polkit-gobject-1, which its
+# own install of them needs, comes later with the desktop). Who may do what:
+# auth-polkit in /etc/NetworkManager/NetworkManager.conf, and polkit's rules.
+b_nm_policy() {
+    install -Dm644 "$1/data/org.freedesktop.NetworkManager.policy.in" \
+        "$DYN/usr/share/polkit-1/actions/org.freedesktop.NetworkManager.policy"
+}
+step nm-polkit-policy "$NETWORKMANAGER_SRC" b_nm_policy
 
 # ---- git, and what it needs to talk to servers.
 

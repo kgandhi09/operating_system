@@ -561,11 +561,92 @@ PC
 }
 pkg lua              b_lua
 
+# elogind (seats and sessions) and polkit (who may do what: NetworkManager,
+# UPower, ModemManager, KAuth's helpers ask it), before ModemManager and the
+# frameworks that use them.
+
+# libcap (for elogind), shared.
+b_libcap() {
+    copy_tree "$1" "$2"
+    make -C "$2/libcap" -j"$JOBS" CC="$CC" AR="$AR" RANLIB="$RANLIB" BUILD_CC=gcc \
+        prefix=/usr lib=lib GOLANG=no PAM_CAP=no SHARED=yes
+    make -C "$2/libcap" install CC="$CC" AR="$AR" RANLIB="$RANLIB" BUILD_CC=gcc \
+        prefix=/usr lib=lib GOLANG=no PAM_CAP=no DESTDIR="$DYN" RAISE_SETFCAP=no
+    rm -f "$DYN/usr/lib/libcap.a" "$DYN/usr/lib/libpsx.a"
+}
+# linux-pam: only for the session helper and the screen locker. Logins on
+# the consoles keep using shadow's login without PAM.
+b_pam() {
+    mesonpkg "$1" "$2" -Ddocs=disabled -Dexamples=false -Dxtests=false -Dnis=disabled \
+        -Daudit=disabled -Deconf=disabled -Dselinux=disabled -Dlogind=disabled \
+        -Delogind=disabled -Dopenssl=disabled -Di18n=disabled -Dpam_lastlog=disabled
+}
+# The D-Bus directories are given: elogind takes them from dbus-1.pc, where
+# pkg-config's sysroot handling would put $DYN in front of them.
+b_elogind() {
+    mesonpkg "$1" "$2" -Dmode=release -Dman=disabled -Dhtml=disabled -Dtests=false \
+        -Dselinux=disabled -Dsmack=false -Dacl=enabled -Daudit=disabled -Dpolkit=enabled \
+        -Dpam=enabled -Dpamlibdir=/usr/lib/security -Dcgroup-controller=elogind \
+        -Dhalt-path=/sbin/poweroff -Dpoweroff-path=/sbin/poweroff -Dreboot-path=/sbin/reboot \
+        -Dnologin-path=/sbin/nologin -Ddefault-kill-user-processes=true \
+        -Ddbuspolicydir=/usr/share/dbus-1/system.d \
+        -Ddbussystemservicedir=/usr/share/dbus-1/system-services
+}
+
+# libcrypt with yescrypt (the hashes in /etc/shadow), for PAM's pam_unix.
+step libxcrypt "$LIBXCRYPT_SRC" autotools --enable-hashes=strong,glibc --enable-obsolete-api=no \
+    --disable-failure-tokens --disable-werror
+pkg linux-pam        b_pam
+step libcap "$ROOT_DIR/userspace/libcap" b_libcap
+pkg attr             autotools --disable-nls
+pkg acl              autotools --disable-nls
+# ("polkit" only marks the build: elogind's earlier ones had polkit off.)
+pkg elogind          b_elogind polkit
+# duktape: polkit's JavaScript engine (for its .rules files), shared, with
+# its pkg-config file. Its Makefile links no libm: given here.
+b_duktape() {
+    copy_tree "$1" "$2"
+    local mk=(-C "$2" -f Makefile.sharedlibrary CC="$CC" INSTALL_PREFIX=/usr LIBDIR=/lib
+              LDFLAGS="$LDFLAGS -Wl,--no-as-needed -lm")
+    make "${mk[@]}" -j"$JOBS"
+    make "${mk[@]}" install DESTDIR="$DYN"
+    rm -f "$DYN"/usr/lib/libduktaped.*
+}
+pkg duktape          b_duktape
+# polkitd runs as user polkitd (uid 102, /etc/passwd); administrators are
+# group wheel, as for sudo. Its PAM file and init script are in rootfs/;
+# the systemd units and sysusers/tmpfiles files it installs are dropped.
+# Freedesktop sysroot rules: the D-Bus directories it takes from dbus-1.pc
+# stay /usr/share/....
+# polkit-agent-helper-1 (the password check of the desktop's dialog) must
+# be setuid root: build-rootfs.sh sets it.
+b_polkit() {
+    PKG_CONFIG_FDO_SYSROOT_RULES=1 mesonpkg "$@"
+    rm -f "$DYN"/usr/lib/systemd/system/polkit{.service,-agent-helper@.service,-agent-helper.socket} \
+          "$DYN/usr/lib/sysusers.d/polkit.conf" "$DYN/usr/lib/tmpfiles.d/polkit-tmpfiles.conf" \
+          "$DYN/usr/lib/pam.d/polkit-1"
+}
+pkg polkit           b_polkit -Dsession_tracking=elogind -Dpolkitd_user=polkitd -Dpolkitd_uid=102 \
+                         -Dprivileged_group=wheel -Dauthfw=pam -Dos_type=lfs -Dexamples=false -Dtests=false \
+                         -Dintrospection=false -Dgtk_doc=false -Dman=false -Dgettext=false \
+                         -Dsystemdsystemunitdir=/usr/lib/systemd/system
+# polkit's ITS rules (gettext/its) let msgfmt merge the translations into
+# other packages' .policy files (UPower).
+export GETTEXTDATADIRS="$DYN/usr/share/gettext"
+# The Qt bindings, for KAuth and the KDE authentication agent. The polkit
+# functions are known present (cross-building, CMake's link checks miss
+# $DYN's libraries and would build a compatibility mode).
+pkg polkit-qt-1      qtpkg -DQT_MAJOR_VERSION=6 -DBUILD_EXAMPLES=OFF -DBUILD_TEST=OFF \
+                         -DHAVE_POLKIT_AGENT_LISTENER_REGISTER=1 -DHAVE_POLKIT_AUTHORITY_GET_SYNC=1 \
+                         -DHAVE_POLKIT_SYSTEM_BUS_NAME_GET_USER_SYNC=1
+
 # GUdev (GLib's view of udev): ModemManager and UPower need it.
 pkg libgudev         mesonpkg -Dintrospection=disabled -Dvapi=disabled -Dtests=disabled
 # ModemManager (mobile broadband), for ModemManagerQt; AT-command modems only
-# (no MBIM/QMI libraries yet).
-pkg ModemManager     mesonpkg -Dmbim=false -Dqmi=false -Dqrtr=false -Dpolkit=no -Dintrospection=false \
+# (no MBIM/QMI libraries yet). Freedesktop sysroot rules: polkit's policy
+# directory from pkg-config stays /usr/share/polkit-1/actions.
+PKG_CONFIG_FDO_SYSROOT_RULES=1 \
+pkg ModemManager     mesonpkg -Dmbim=false -Dqmi=false -Dqrtr=false -Dpolkit=strict -Dintrospection=false \
                          -Dvapi=false -Dman=false -Dgtk_doc=false -Dbash_completion=false -Dtests=false \
                          -Dexamples=false -Dsystemdsystemunitdir=no -Dsystemd_suspend_resume=false \
                          -Dsystemd_journal=false -Dudevdir=/usr/lib/udev
@@ -614,6 +695,10 @@ for kf in kconfig kcoreaddons ki18n kwidgetsaddons kguiaddons kitemmodels kitemv
                           -DQRC_ALIAS="$QT_HOST/bin/qrcAlias" ;;
         syntax-highlighting) pkg syntax-highlighting kfpkg \
                           -DKATEHIGHLIGHTINGINDEXER_EXECUTABLE="$QT_HOST/bin/katehighlightingindexer" ;;
+        # The fake backend, as before polkit was here: KAuth's helpers are
+        # system services D-Bus starts on demand, which jk_os's D-Bus (no
+        # setuid launch helper) can't. Named, or polkit-qt-1 would be picked.
+        kauth)       pkg kauth kfpkg -DKAUTH_BACKEND_NAME=FAKE ;;
         # gzip, xz and zstd archives; bzip2 left out.
         karchive)    pkg karchive kfpkg -DWITH_BZIP2=OFF ;;
         # No spell-check dictionaries (Hunspell, ...) in jk_os yet.
@@ -638,34 +723,6 @@ b_hwdata() {
     (cd "$2" && ./configure --prefix=/usr --datadir=/usr/share --libdir=/usr/lib)
     make -C "$2" install DESTDIR="$DYN"
 }
-# libcap (for elogind), shared.
-b_libcap() {
-    copy_tree "$1" "$2"
-    make -C "$2/libcap" -j"$JOBS" CC="$CC" AR="$AR" RANLIB="$RANLIB" BUILD_CC=gcc \
-        prefix=/usr lib=lib GOLANG=no PAM_CAP=no SHARED=yes
-    make -C "$2/libcap" install CC="$CC" AR="$AR" RANLIB="$RANLIB" BUILD_CC=gcc \
-        prefix=/usr lib=lib GOLANG=no PAM_CAP=no DESTDIR="$DYN" RAISE_SETFCAP=no
-    rm -f "$DYN/usr/lib/libcap.a" "$DYN/usr/lib/libpsx.a"
-}
-# linux-pam: only for the session helper and the screen locker. Logins on
-# the consoles keep using shadow's login without PAM.
-b_pam() {
-    mesonpkg "$1" "$2" -Ddocs=disabled -Dexamples=false -Dxtests=false -Dnis=disabled \
-        -Daudit=disabled -Deconf=disabled -Dselinux=disabled -Dlogind=disabled \
-        -Delogind=disabled -Dopenssl=disabled -Di18n=disabled -Dpam_lastlog=disabled
-}
-# The D-Bus directories are given: elogind takes them from dbus-1.pc, where
-# pkg-config's sysroot handling would put $DYN in front of them.
-b_elogind() {
-    mesonpkg "$1" "$2" -Dmode=release -Dman=disabled -Dhtml=disabled -Dtests=false \
-        -Dselinux=disabled -Dsmack=false -Dacl=enabled -Daudit=disabled -Dpolkit=disabled \
-        -Dpam=enabled -Dpamlibdir=/usr/lib/security -Dcgroup-controller=elogind \
-        -Dhalt-path=/sbin/poweroff -Dpoweroff-path=/sbin/poweroff -Dreboot-path=/sbin/reboot \
-        -Dnologin-path=/sbin/nologin -Ddefault-kill-user-processes=true \
-        -Ddbuspolicydir=/usr/share/dbus-1/system.d \
-        -Ddbussystemservicedir=/usr/share/dbus-1/system-services
-}
-
 # lm-sensors: libsensors (temperatures and fans in System Monitor) and `sensors`.
 b_lm_sensors() {
     copy_tree "$1" "$2"
@@ -709,18 +766,10 @@ pkg lcms2            autotools
 pkg hwdata           b_hwdata
 pkg libdisplay-info  mesonpkg
 pkg libei            mesonpkg -Dtests=disabled -Dliboeffis=disabled -Ddocumentation=[]
-# libcrypt with yescrypt (the hashes in /etc/shadow), for PAM's pam_unix.
-step libxcrypt "$LIBXCRYPT_SRC" autotools --enable-hashes=strong,glibc --enable-obsolete-api=no \
-    --disable-failure-tokens --disable-werror
-pkg linux-pam        b_pam
-step libcap "$ROOT_DIR/userspace/libcap" b_libcap
 # bwrap: the container apt and the programs it installs run in (/usr/lib/jk_os/apt).
 # Not setuid: users get it through unprivileged user namespaces.
 pkg bubblewrap       mesonpkg -Dman=disabled -Dselinux=disabled -Dtests=false \
                          -Dbash_completion=disabled -Dzsh_completion=disabled
-pkg attr             autotools --disable-nls
-pkg acl              autotools --disable-nls
-pkg elogind          b_elogind
 # PipeWire and WirePlumber here, after elogind: they take the seat and
 # session from libelogind (a clean build failed with them before it).
 pkg pipewire         mesonpkg -Dsession-managers=[] -Dexamples=disabled -Dtests=disabled \
@@ -757,7 +806,7 @@ step jk-session "$ROOT_DIR/src/jk-session" b_jk_session \
     "$(cat "$ROOT_DIR"/src/jk-session/* | sha256sum | cut -c1-16)"
 pkg upower           mesonpkg -Dintrospection=disabled -Dgtk-doc=false -Dman=false \
                          -Didevice=disabled -Dsystemdsystemunitdir=no -Dudevrulesdir=/usr/lib/udev/rules.d \
-                         -Dudevhwdbdir=/usr/lib/udev/hwdb.d -Dos_backend=linux
+                         -Dudevhwdbdir=/usr/lib/udev/hwdb.d -Dos_backend=linux -Dpolkit=enabled
 
 # plasma-desktop compiles in the keyboard layouts' directory from pkg-config
 # and checks it under CMAKE_SYSROOT (the toolchain, not $DYN). Built from a
@@ -808,7 +857,8 @@ for p in kdecoration layer-shell-qt kwayland plasma-activities plasma-activities
          kactivitymanagerd libplasma plasma5support kglobalacceld knighttime libkscreen \
          libksysguard kscreenlocker breeze kwin aurorae plasma-integration plasma-workspace milou \
          plasma-desktop systemsettings kscreen powerdevil plasma-nm kde-cli-tools \
-         qqc2-breeze-style ocean-sound-theme pulseaudio-qt plasma-pa bluedevil; do
+         qqc2-breeze-style ocean-sound-theme pulseaudio-qt plasma-pa bluedevil polkit-kde-agent-1 \
+         ksystemstats plasma-systemmonitor; do
     case "$p" in
         breeze)             pkg breeze kfpkg -DBUILD_QT5=OFF -DBUILD_QT6=ON ;;
         kwin)               pkg kwin kfpkg -DQTWAYLANDSCANNER_KDE_EXECUTABLE="$QT_HOST/bin/qtwaylandscanner_kde" ;;
@@ -818,6 +868,9 @@ for p in kdecoration layer-shell-qt kwayland plasma-activities plasma-activities
         # No KDocTools: no handbooks.
         kde-cli-tools)      pkg kde-cli-tools kfpkg -DBUILD_DOC=OFF ;;
         plasma-pa)          pkg plasma-pa kfpkg -DBUILD_DOC=OFF ;;
+        # The System Monitor widgets' and app's data (D-Bus activated in the
+        # session). Without libcap: no setcap of its Intel GPU helper here.
+        ksystemstats)       pkg ksystemstats kfpkg -DCMAKE_DISABLE_FIND_PACKAGE_Libcap=ON ;;
         plasma-integration) pkg plasma-integration kfpkg -DBUILD_QT5=OFF -DBUILD_QT6=ON ;;
         # Wayland session only (X11 apps still run, through Xwayland); locales
         # come with glibc, nothing to generate.

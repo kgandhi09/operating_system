@@ -1,0 +1,16 @@
+#!/bin/sh
+# polkit: decides which user may do what in the system services that ask it
+# (NetworkManager, elogind, UPower, ModemManager), from their actions in
+# /usr/share/polkit-1/actions and the rules in /etc/polkit-1/rules.d.
+# Administrators are group wheel. Started here: jk_os's D-Bus has no setuid
+# launch helper to start system services on demand.
+
+case "$1" in
+    start)
+        [ -x /usr/lib/polkit-1/polkitd ] || exit 0
+        /usr/lib/polkit-1/polkitd --no-debug >/dev/null 2>&1 &
+        ;;
+    stop)
+        pkill -x polkitd 2>/dev/null
+        ;;
+esac
