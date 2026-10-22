@@ -111,7 +111,7 @@ narrows the remaining problem to the display/PD/AUX path.
 ## Source provenance
 
 - Board addresses, GPIOs and supply mappings: extracted SM-T733 firmware
-  `T733XXS9DYF1`, `build/stock/.../dtb/00-00.dts` and `dtbo/entry.0.dts`
+  `T733XXS9DYF1`, `userspace/stock/.../dtb/00-00.dts` and `dtbo/entry.0.dts`
   (the corresponding USB wiring is also present in revisions 1 and 2).
 - GPL Type-C transport and redriver starting point:
   [Tab S9 Ultra Linux port](https://github.com/agcarbajo/postmarketos-galaxy-tab-s9-ultra/tree/b1dcca03fdc7952de60c3e9ab49e860b6bd45e8c/pmaports/device/testing/linux-samsung-gts9uwifi-mainline).

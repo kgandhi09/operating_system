@@ -15,6 +15,9 @@
 # Steps can be run on their own, with PRESET too: busybox, tools, network,
 # toolchain, desktop, binaries, rootfs (the OS image), initramfs, kernel,
 # uboot, iso, bootimg, clean.
+#   make PRESET=<preset> prune            free disk space after a build: delete
+#                                         finished packages' work directories
+#                                         (nothing has to be rebuilt)
 #   make PRESET=<preset> binaries [UPDATE=1]
 #                                         pull config/components/binaries/*.list
 #   make PRESET=<preset> menuconfig       the kernel's config menu (after kernel)
@@ -34,7 +37,7 @@ export NOWARN_CFLAGS
 SHELL := /bin/bash
 S := scripts
 
-.PHONY: all check image iso bootimg uboot kernel nvidia initramfs rootfs busybox tools network toolchain desktop binaries run flash deps config presets showconfig menuconfig clean distclean help
+.PHONY: all check image iso bootimg uboot kernel nvidia initramfs rootfs busybox tools network toolchain desktop binaries run flash deps config presets showconfig menuconfig prune clean distclean help
 
 all: image
 
@@ -122,6 +125,10 @@ showconfig:
 menuconfig:
 	. $(S)/common.sh && make -C "$$KERNEL_SRC" O="$$KERNEL_OUT" ARCH="$$KARCH" \
 	    CROSS_COMPILE="$$CROSS_COMPILE" menuconfig
+
+# The work directories of packages that finished building (scripts/prune.sh).
+prune: check
+	$(S)/prune.sh
 
 clean:
 	. $(S)/common.sh && rm -rf "$$OUT_DIR" "$$ISO"

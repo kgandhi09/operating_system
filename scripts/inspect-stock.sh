@@ -7,7 +7,7 @@
 #
 # Give it a Samsung firmware's AP_ and BL_ tars (or any tar holding Android
 # images: boot, vendor_boot, dtbo, vbmeta, recovery; plain or .lz4). It
-# writes into <dir> (default build/stock/<name of the first tar>):
+# writes into <dir> (default userspace/stock/<name of the first tar>):
 #
 #   images/           the images, decompressed
 #   boot/             unpack_bootimg's output: kernel, ramdisk, dtb, ...
@@ -35,7 +35,7 @@ while (( $# )); do
     shift
 done
 (( ${#tars[@]} )) || die "usage: $0 <firmware.tar[.md5]>... [-o <dir>]"
-[[ -n "$out" ]] || out="$ROOT_DIR/build/stock/$(basename "${tars[0]}" | sed 's/\.tar\(\.md5\)\{0,1\}$//')"
+[[ -n "$out" ]] || out="$ROOT_DIR/userspace/stock/$(basename "${tars[0]}" | sed 's/\.tar\(\.md5\)\{0,1\}$//')"
 rm -rf "$out"
 mkdir -p "$out/images" "$out/dtb" "$out/dtbo"
 out=$(realpath "$out")
