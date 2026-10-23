@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=jk-link
+GenericName=Mesh Network
+Comment=The jk_os machines around this one, and pairing with them
+Exec=jk-link gui
+Icon=network-workgroup
+Terminal=false
+Categories=Network;System;
+Keywords=network;mesh;pair;peers;jk;

@@ -1,0 +1,17 @@
+#!/bin/sh
+# jk-linkd: this machine's identity on the network (its key, in
+# /data/etc/jk-link), the other jk_os machines it finds, and the ones it is
+# paired with (jk-link, jk-link gui). Starts as root, then runs as the user
+# jk-link.
+
+case "$1" in
+    start)
+        [ -x /usr/sbin/jk-linkd ] || exit 0
+        /usr/sbin/jk-linkd >> /var/log/jk-link.log 2>&1 &
+        ;;
+    stop)
+        pkill -x jk-linkd 2>/dev/null || exit 0
+        i=0
+        while pidof jk-linkd >/dev/null && [ $i -lt 5 ]; do sleep 1; i=$((i + 1)); done
+        ;;
+esac

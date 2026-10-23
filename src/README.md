@@ -26,6 +26,7 @@ Only the directories a tool needs exist.
 | `jk-cuda` | the CUDA toolkit on demand, `prime-run` |
 | `jk-dev` | the dev session on tty1 |
 | `jk-gui` | the KDE Plasma desktop on the logged-in console |
+| `jk-link` | this machine's identity on the network: finding and pairing with other jk_os machines, `jk-link gui` (the mesh console) |
 | `jk-install` | installing jk_os, first boot, the live system, console login |
 | `jk-power` | CPU, GPU and temperature settings, `jk-power gui` |
 | `jk-timedate` | the clock for KDE's Date & Time settings: its daemon `jk-timedated` (`org.freedesktop.timedate1`) |

@@ -12,6 +12,7 @@ video:x:44:
 users:x:100:
 messagebus:x:101:
 polkitd:x:102:
+jk-link:x:103:
 input:x:104:
 kvm:x:105:
 render:x:106:
