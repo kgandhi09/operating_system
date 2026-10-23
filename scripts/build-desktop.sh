@@ -794,14 +794,14 @@ pkg pipewire         mesonpkg -Dsession-managers=[] -Dexamples=disabled -Dtests=
 pkg wireplumber      mesonpkg -Dsystem-lua=true -Dsystem-lua-version=5.4 -Dintrospection=disabled \
                          -Ddoc=disabled -Delogind=enabled -Dsystemd=disabled -Dsystemd-system-service=false \
                          -Dsystemd-user-service=false -Dtests=false -Ddbus-tests=false
-# jk-session (src/jk-session): opens the elogind session jk-gui's desktop runs in.
+# jk-session (src/jk-gui/session): opens the elogind session jk-gui's desktop runs in.
 b_jk_session() {
     $CC $CPPFLAGS ${CFLAGS:-} -O2 -Wall -Wextra -o "$2/jk-session" "$1/jk-session.c" $LDFLAGS -lpam
     install -D -m 4755 "$2/jk-session" "$DYN/usr/lib/jk_os/jk-session"
 }
 # (Rebuilt when the source changes: its checksum is part of the options.)
-step jk-session "$ROOT_DIR/src/jk-session" b_jk_session \
-    "$(cat "$ROOT_DIR"/src/jk-session/* | sha256sum | cut -c1-16)"
+step jk-session "$ROOT_DIR/src/jk-gui/session" b_jk_session \
+    "$(cat "$ROOT_DIR"/src/jk-gui/session/* | sha256sum | cut -c1-16)"
 pkg upower           mesonpkg -Dintrospection=disabled -Dgtk-doc=false -Dman=false \
                          -Didevice=disabled -Dsystemdsystemunitdir=no -Dudevrulesdir=/usr/lib/udev/rules.d \
                          -Dudevhwdbdir=/usr/lib/udev/hwdb.d -Dos_backend=linux -Dpolkit=enabled
@@ -903,14 +903,14 @@ step jk-viz "$ROOT_DIR/src/jk-viz" b_jk_viz \
 # (src/common: the CLI bridge, the password dialog) changes.
 b_jk_settings_gui() { qtpkg "$1" "$2"; }
 settings_bridge_hash=$(cd "$ROOT_DIR/src/common" && find . -type f | LC_ALL=C sort | xargs cat | sha256sum | cut -c1-16)
-step jk-power-gui "$ROOT_DIR/src/jk-power-gui" b_jk_settings_gui \
-    "$settings_bridge_hash $(cd "$ROOT_DIR/src/jk-power-gui" && find . -type f | LC_ALL=C sort | xargs cat | sha256sum | cut -c1-16)"
-step jk-charge-gui "$ROOT_DIR/src/jk-charge-gui" b_jk_settings_gui \
-    "$settings_bridge_hash $(cd "$ROOT_DIR/src/jk-charge-gui" && find . -type f | LC_ALL=C sort | xargs cat | sha256sum | cut -c1-16)"
-# jk-update gui (src/jk-update-gui): the update window, and its --watch mode
+step jk-power-gui "$ROOT_DIR/src/jk-power/gui" b_jk_settings_gui \
+    "$settings_bridge_hash $(cd "$ROOT_DIR/src/jk-power/gui" && find . -type f | LC_ALL=C sort | xargs cat | sha256sum | cut -c1-16)"
+step jk-charge-gui "$ROOT_DIR/src/jk-charge/gui" b_jk_settings_gui \
+    "$settings_bridge_hash $(cd "$ROOT_DIR/src/jk-charge/gui" && find . -type f | LC_ALL=C sort | xargs cat | sha256sum | cut -c1-16)"
+# jk-update gui (src/jk-update/gui): the update window, and its --watch mode
 # in the desktop session: the notification when a release is out.
-step jk-update-gui "$ROOT_DIR/src/jk-update-gui" b_jk_settings_gui \
-    "$settings_bridge_hash $(cd "$ROOT_DIR/src/jk-update-gui" && find . -type f | LC_ALL=C sort | xargs cat | sha256sum | cut -c1-16)"
+step jk-update-gui "$ROOT_DIR/src/jk-update/gui" b_jk_settings_gui \
+    "$settings_bridge_hash $(cd "$ROOT_DIR/src/jk-update/gui" && find . -type f | LC_ALL=C sort | xargs cat | sha256sum | cut -c1-16)"
 # jk-timedated (src/jk-timedated): org.freedesktop.timedate1, which KDE's
 # Date & Time settings need (time zone, setting the time, network time with
 # BusyBox's ntpd); started by /etc/init.d/S19timedate.

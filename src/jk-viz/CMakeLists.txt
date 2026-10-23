@@ -24,15 +24,15 @@ if(JK_VIZ_APP)
     find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Network Qml Quick QuickControls2)
     qt_standard_project_setup(REQUIRES 6.5)
     qt_add_executable(jk-viz
-        app/main.cpp app/client.cpp app/client.h app/graphmodel.cpp app/graphmodel.h
-        app/graphview.cpp app/graphview.h)
+        gui/main.cpp gui/client.cpp gui/client.h gui/graphmodel.cpp gui/graphmodel.h
+        gui/graphview.cpp gui/graphview.h)
     qt_add_qml_module(jk-viz
         URI JkViz
         VERSION 1.0
-        QML_FILES app/Main.qml app/SidePanel.qml)
+        QML_FILES gui/Main.qml gui/SidePanel.qml)
     target_compile_options(jk-viz PRIVATE -Wall -Wextra)
     # (the generated QML type registration includes the headers by name)
-    target_include_directories(jk-viz PRIVATE app)
+    target_include_directories(jk-viz PRIVATE gui)
     target_link_libraries(jk-viz PRIVATE Qt6::Core Qt6::Gui Qt6::Network Qt6::Qml Qt6::Quick Qt6::QuickControls2)
     install(TARGETS jk-viz RUNTIME DESTINATION bin)
     install(FILES jk-viz.desktop DESTINATION share/applications)
