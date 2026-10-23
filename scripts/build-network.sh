@@ -106,6 +106,11 @@ step libuuid "$UTIL_LINUX_SRC" autotools --disable-all-programs --enable-libuuid
     --disable-nls --disable-asciidoc --disable-poman --disable-bash-completion --without-python \
     --without-systemd --without-udev --without-ncursesw --without-tinfo --without-readline
 step libffi "$LIBFFI_SRC" autotools --disable-docs --disable-multi-os-directory
+# liblzma (xz's library, from userspace/desktop/xz): Python's lzma module
+# (build-toolchain.sh) and the desktop's libraries. No xz programs: BusyBox
+# has them.
+step xz     "$ROOT_DIR/userspace/desktop/xz" autotools --disable-doc --disable-nls --disable-xz \
+    --disable-xzdec --disable-lzmadec --disable-lzmainfo --disable-scripts
 step pcre2  "$PCRE2_SRC"  autotools --enable-pcre2-8 --disable-pcre2grep-libz --disable-pcre2grep-libbz2
 step glib   "$GLIB_SRC"   mesonpkg -Dtests=false -Dinstalled_tests=false -Dintrospection=disabled \
     -Dlibmount=disabled -Dselinux=disabled -Dxattr=false -Dman-pages=disabled -Ddocumentation=false \

@@ -490,8 +490,6 @@ b_pkgconf() {
     ln -sf pkgconf "$DYN/usr/bin/pkg-config"
 }
 pkg pkgconf          b_pkgconf
-pkg xz               autotools --disable-doc --disable-nls --disable-xz --disable-xzdec \
-                         --disable-lzmadec --disable-lzmainfo --disable-scripts
 # Event sounds (KNotifications, KWin).
 pkg libtool          autotools --enable-ltdl-install
 pkg qrencode         cmakepkg -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DWITH_TOOLS=NO -DBUILD_SHARED_LIBS=ON
