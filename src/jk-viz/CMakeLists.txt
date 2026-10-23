@@ -1,7 +1,7 @@
 # jk-viz: every process and what it consumes, as layers from the silicon
 # (top) to the applications (bottom). Two programs:
-#   jk-vizd  the collector (root, a service: /etc/init.d/S50jk-vizd)
-#   jk-viz   the desktop app (Qt Quick), which shows what jk-vizd sends
+#   jk-vizd  the collector (daemon/; root, a service: init/S50jk-vizd)
+#   jk-viz   the desktop app (gui/, Qt Quick), which shows what jk-vizd sends
 cmake_minimum_required(VERSION 3.21)
 project(jk-viz VERSION 0.1.0 LANGUAGES CXX)
 
@@ -19,6 +19,7 @@ add_executable(jk-vizd
 target_compile_options(jk-vizd PRIVATE -Wall -Wextra)
 target_link_libraries(jk-vizd PRIVATE PkgConfig::DBUS Threads::Threads ${CMAKE_DL_LIBS})
 install(TARGETS jk-vizd RUNTIME DESTINATION sbin)
+install(PROGRAMS init/S50jk-vizd DESTINATION /etc/init.d)
 
 if(JK_VIZ_APP)
     find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Network Qml Quick QuickControls2)
@@ -35,5 +36,5 @@ if(JK_VIZ_APP)
     target_include_directories(jk-viz PRIVATE gui)
     target_link_libraries(jk-viz PRIVATE Qt6::Core Qt6::Gui Qt6::Network Qt6::Qml Qt6::Quick Qt6::QuickControls2)
     install(TARGETS jk-viz RUNTIME DESTINATION bin)
-    install(FILES jk-viz.desktop DESTINATION share/applications)
+    install(FILES data/jk-viz.desktop DESTINATION share/applications)
 endif()

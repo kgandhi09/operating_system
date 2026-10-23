@@ -7,13 +7,12 @@ find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Widgets Qml Quick QuickControl
 find_package(KF6WidgetsAddons REQUIRED)
 qt_standard_project_setup(REQUIRES 6.5)
 
-qt_add_executable(jk-power-gui main.cpp ../../common/clisettings.cpp ../../common/clisettings.h
-    ../../common/adminpassword.cpp ../../common/adminpassword.h)
+qt_add_executable(jk-power-gui main.cpp ../../common/gui/clisettings.cpp ../../common/gui/clisettings.h
+    ../../common/gui/adminpassword.cpp ../../common/gui/adminpassword.h)
 qt_add_qml_module(jk-power-gui URI JkPowerGui VERSION 1.0 QML_FILES Main.qml)
-target_include_directories(jk-power-gui PRIVATE ../../common)
+target_include_directories(jk-power-gui PRIVATE ../../common/gui)
 target_link_libraries(jk-power-gui PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Qml Qt6::Quick
     Qt6::QuickControls2 KF6::WidgetsAddons)
 target_compile_options(jk-power-gui PRIVATE -Wall -Wextra)
 # Started by jk-power gui, not on its own: an internal program.
 install(TARGETS jk-power-gui RUNTIME DESTINATION lib/jk_os)
-install(FILES jk-power-gui.desktop DESTINATION share/applications)

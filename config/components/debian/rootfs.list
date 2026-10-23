@@ -1,4 +1,4 @@
-# The Debian base system apt runs in (see rootfs/usr/lib/jk_os/apt): the
+# The Debian base system apt runs in (see src/jk-apt/cli/apt): the
 # "slim" root filesystem the official Docker image is made of, built by
 # debuerreotype (github.com/debuerreotype/docker-debian-artifacts), fetched by
 # scripts/update-debian-rootfs.sh into userspace/debian/<arch>/rootfs.tar.gz.

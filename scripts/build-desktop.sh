@@ -14,6 +14,7 @@
 # Phase D: KDE Plasma, elogind, PAM, UPower.
 # Phase E: Konsole, Dolphin.
 # Phase F: the dev session on tty1 (seatd's libseat, wlroots, cage, foot).
+# Then Firefox, and jk_os's own tools (src/).
 #
 # A package is rebuilt only when its source tree or its build options change.
 source "$(dirname "$0")/common.sh"
@@ -794,14 +795,6 @@ pkg pipewire         mesonpkg -Dsession-managers=[] -Dexamples=disabled -Dtests=
 pkg wireplumber      mesonpkg -Dsystem-lua=true -Dsystem-lua-version=5.4 -Dintrospection=disabled \
                          -Ddoc=disabled -Delogind=enabled -Dsystemd=disabled -Dsystemd-system-service=false \
                          -Dsystemd-user-service=false -Dtests=false -Ddbus-tests=false
-# jk-session (src/jk-gui/session): opens the elogind session jk-gui's desktop runs in.
-b_jk_session() {
-    $CC $CPPFLAGS ${CFLAGS:-} -O2 -Wall -Wextra -o "$2/jk-session" "$1/jk-session.c" $LDFLAGS -lpam
-    install -D -m 4755 "$2/jk-session" "$DYN/usr/lib/jk_os/jk-session"
-}
-# (Rebuilt when the source changes: its checksum is part of the options.)
-step jk-session "$ROOT_DIR/src/jk-gui/session" b_jk_session \
-    "$(cat "$ROOT_DIR"/src/jk-gui/session/* | sha256sum | cut -c1-16)"
 pkg upower           mesonpkg -Dintrospection=disabled -Dgtk-doc=false -Dman=false \
                          -Didevice=disabled -Dsystemdsystemunitdir=no -Dudevrulesdir=/usr/lib/udev/rules.d \
                          -Dudevhwdbdir=/usr/lib/udev/hwdb.d -Dos_backend=linux -Dpolkit=enabled
@@ -892,31 +885,6 @@ done
 pkg kfilemetadata    kfpkg
 pkg konsole          kfpkg -DBUILD_DOC=OFF -DWITH_LIBSSH=OFF
 pkg dolphin          kfpkg -DBUILD_DOC=OFF
-# jk-viz (src/jk-viz): the system map (Qt Quick) and its collector jk-vizd
-# (/usr/sbin, started by /etc/init.d/S50jk-vizd). Rebuilt when the sources
-# change: their checksum is part of the options.
-b_jk_viz() { qtpkg "$1" "$2"; }
-step jk-viz "$ROOT_DIR/src/jk-viz" b_jk_viz \
-    "$(cd "$ROOT_DIR/src/jk-viz" && find . -type f | LC_ALL=C sort | xargs cat | sha256sum | cut -c1-16)"
-# Both settings windows (jk-power gui, jk-charge gui) ask their CLIs which
-# controls this machine offers. Rebuild either one when their shared code
-# (src/common: the CLI bridge, the password dialog) changes.
-b_jk_settings_gui() { qtpkg "$1" "$2"; }
-settings_bridge_hash=$(cd "$ROOT_DIR/src/common" && find . -type f | LC_ALL=C sort | xargs cat | sha256sum | cut -c1-16)
-step jk-power-gui "$ROOT_DIR/src/jk-power/gui" b_jk_settings_gui \
-    "$settings_bridge_hash $(cd "$ROOT_DIR/src/jk-power/gui" && find . -type f | LC_ALL=C sort | xargs cat | sha256sum | cut -c1-16)"
-step jk-charge-gui "$ROOT_DIR/src/jk-charge/gui" b_jk_settings_gui \
-    "$settings_bridge_hash $(cd "$ROOT_DIR/src/jk-charge/gui" && find . -type f | LC_ALL=C sort | xargs cat | sha256sum | cut -c1-16)"
-# jk-update gui (src/jk-update/gui): the update window, and its --watch mode
-# in the desktop session: the notification when a release is out.
-step jk-update-gui "$ROOT_DIR/src/jk-update/gui" b_jk_settings_gui \
-    "$settings_bridge_hash $(cd "$ROOT_DIR/src/jk-update/gui" && find . -type f | LC_ALL=C sort | xargs cat | sha256sum | cut -c1-16)"
-# jk-timedated (src/jk-timedated): org.freedesktop.timedate1, which KDE's
-# Date & Time settings need (time zone, setting the time, network time with
-# BusyBox's ntpd); started by /etc/init.d/S19timedate.
-b_jk_timedated() { qtpkg "$1" "$2"; }
-step jk-timedated "$ROOT_DIR/src/jk-timedated" b_jk_timedated \
-    "$(cd "$ROOT_DIR/src/jk-timedated" && find . -type f | LC_ALL=C sort | xargs cat | sha256sum | cut -c1-16)"
 
 # ---------------------------------------------------------------- Phase F
 # The dev session (jk-dev, on tty1): one terminal, foot, full screen in the
@@ -1069,5 +1037,19 @@ pkg gtk3             b_gtk3 -Dx11_backend=true -Dwayland_backend=true -Dbroadway
                          -Dexamples=false -Ddemos=false -Dcolord=no -Dcloudproviders=false -Dtracker3=false \
                          -Dprint_backends=file -Dprofiler=false
 pkg "firefox-$ARCH"  b_firefox
+
+# ---------------------------------------------------------------- jk_os's tools
+# Every src/<tool> (and src/common, what they share) is a CMake project
+# whose install() rules put each of its parts where it goes in the image:
+# its command, window, daemon, init script and data. Each is rebuilt when its
+# sources or src/common change (their checksum is part of the options).
+src_hash() { (cd "$1" && find . -type f | LC_ALL=C sort | xargs cat | sha256sum | cut -c1-16); }
+common_hash=$(src_hash "$ROOT_DIR/src/common")
+b_jk_tool() { qtpkg "$1" "$2"; }
+for t in "$ROOT_DIR"/src/*/; do
+    t=${t%/}
+    [[ -f "$t/CMakeLists.txt" ]] || continue
+    step "${t##*/}" "$t" b_jk_tool "$common_hash $(src_hash "$t")"
+done
 
 log "desktop stack ($ARCH): $(du -sh "$DYN" | cut -f1) in $DYN"
