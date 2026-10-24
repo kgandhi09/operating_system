@@ -1,0 +1,10 @@
+# Devices jk_os's own development uses, when this jk_os builds jk_os
+# (docs/self-hosting.md).
+
+# A Samsung device in Download mode: the user at the console flashes it
+# (heimdall, make PRESET=<preset> flash) without root (70-uaccess.rules).
+SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTRS{idVendor}=="04e8", ATTRS{idProduct}=="685d", TAG+="uaccess"
+
+# A jk_os tablet's USB console (its serial gadget) is no modem: without this,
+# ModemManager takes /dev/ttyACM0 and types AT commands into the console.
+ATTRS{idVendor}=="1d6b", ATTRS{idProduct}=="0104", ENV{ID_MM_DEVICE_IGNORE}="1"

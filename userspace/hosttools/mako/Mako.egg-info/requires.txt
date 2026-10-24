@@ -1,0 +1,10 @@
+MarkupSafe>=2.0
+
+[babel]
+Babel
+
+[lingua]
+lingua>=4.16
+
+[testing]
+pytest

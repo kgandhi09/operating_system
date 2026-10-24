@@ -20,7 +20,9 @@ export PKG_CONFIG_SYSROOT_DIR="$DYN" PKG_CONFIG_PATH=
 export PKG_CONFIG_LIBDIR="$DYN/usr/lib/pkgconfig:$DYN/usr/share/pkgconfig"
 export CPPFLAGS="-I$DYN/usr/include"
 export LDFLAGS="-L$DYN/usr/lib -Wl,-rpath-link,$DYN/usr/lib"
-AUTOCONF_ARGS=(--host="$HOST_TRIPLE" --prefix=/usr --libdir=/usr/lib --sysconfdir=/etc
+# --build as well: always a cross build (common.sh), configure runs no target
+# program here.
+AUTOCONF_ARGS=(--build="$BUILD_TRIPLE" --host="$HOST_TRIPLE" --prefix=/usr --libdir=/usr/lib --sysconfdir=/etc
                --localstatedir=/var --disable-static)
 
 case "$ARCH" in
@@ -44,6 +46,9 @@ gdbus-codegen = ['env', 'PYTHONPATH=$DYN/usr/share/glib-2.0', 'python3', '$DYN/u
 
 [properties]
 sys_root = '$DYN'
+# Target programs never run here, even on the same arch (they link jk_os's
+# glibc, not the build machine's).
+needs_exe_wrapper = true
 pkg_config_libdir = ['$DYN/usr/lib/pkgconfig', '$DYN/usr/share/pkgconfig']
 
 [built-in options]

@@ -1,0 +1,76 @@
+# Sources of the build machine's own tools (scripts/build-hosttools.sh), the
+# ones this repo doesn't already carry for jk_os itself; fetched by
+# scripts/update-desktop-sources.sh --component hosttools into
+# userspace/hosttools/<name>. With them the build needs nothing from a
+# package manager (docs/self-hosting.md).
+#
+# <name>  <version>  <url, {v} = version; git+<repo>#<tag>[+submodules]>  <sha256 or commit>
+
+# ---- The GNU basics, built first: the build then runs these, whatever the
+# build machine's own are (BusyBox on a jk_os PC).
+coreutils  9.12  https://ftp.gnu.org/gnu/coreutils/coreutils-{v}.tar.xz  a480198559733e9b3da999e90543ac6f888a2caa544d8d664c5a1f17e528e210
+sed  4.10  https://ftp.gnu.org/gnu/sed/sed-{v}.tar.xz  b8e72182b2ec96a3574e2998c47b7aaa64cc20ce000d8e9ac313cc07cecf28c7
+grep  3.12  https://ftp.gnu.org/gnu/grep/grep-{v}.tar.xz  2649b27c0e90e632eadcd757be06c6e9a4f48d941de51e7c0f83ff76408a07b9
+# gawk 5.3: 5.4.1 misreads libpng's options.awk (pnglibconf.h then turns
+# off almost every libpng feature).
+gawk  5.3.2  https://ftp.gnu.org/gnu/gawk/gawk-{v}.tar.xz  f8c3486509de705192138b00ef2c00bbbdd0e84c30d5c07d23fc73a9dc4cc9cc
+findutils  4.11.0  https://ftp.gnu.org/gnu/findutils/findutils-{v}.tar.xz  bfd19cb06cc71f3352d567e90284d8cdac02ac89774bbeadf0b533b0c11432fd
+diffutils  3.12  https://ftp.gnu.org/gnu/diffutils/diffutils-{v}.tar.xz  7c8b7f9fc8609141fdea9cece85249d308624391ff61dedaf528fcb337727dfd
+patch  2.8  https://ftp.gnu.org/gnu/patch/patch-{v}.tar.xz  f87cee69eec2b4fcbf60a396b030ad6aa3415f192aa5f7ee84cad5e11f7f5ae3
+tar  1.35  https://ftp.gnu.org/gnu/tar/tar-{v}.tar.xz  4d62ff37342ec7aed748535323930c7cf94acf71c3591882b26a7ea50f3edc16
+gzip  1.15  https://ftp.gnu.org/gnu/gzip/gzip-{v}.tar.xz  9aa0cc780dec156b8282844833b342ab7cb08c25d2cd9a1869cdd0df31deff48
+
+# ---- Build tools
+gperf  3.3  https://ftp.gnu.org/gnu/gperf/gperf-{v}.tar.gz  fd87e0aba7e43ae054837afd6cd4db03a3f2693deb3619085e6ed9d8d9604ad8
+gettext  1.0  https://ftp.gnu.org/gnu/gettext/gettext-{v}.tar.xz  71132a3fb71e68245b8f2ac4e9e97137d3e5c02f415636eb508ae607bc01add7
+libxslt  1.1.45  https://download.gnome.org/sources/libxslt/1.1/libxslt-{v}.tar.xz  9acfe68419c4d06a45c550321b3212762d92f41465062ca4ea19e632ee5d216e
+glslang  16.6.0  https://github.com/KhronosGroup/glslang/archive/refs/tags/{v}.tar.gz  9c09b901149c729df745057dafa815278aaa101b84d2b6e14f16a42de52f97f2
+file  5.48  https://astron.com/pub/file/file-{v}.tar.gz  ed14656883b23a364b4057c05595d93252da9bc473d30106519519d0da141283
+# Python modules the build runs (Mesa's; jinja2 for elogind's): pure Python,
+# copied into the host Python's site-packages.
+markupsafe  3.0.4  https://files.pythonhosted.org/packages/source/m/markupsafe/markupsafe-{v}.tar.gz  2e9ad7dd851bf45fab9f75cbff4cb493fee9979e8d8c7c9c3ee119022518edd6
+mako  1.4.3  https://files.pythonhosted.org/packages/source/m/mako/mako-{v}.tar.gz  cd6537fe88d5fec315c55c2f8529bc4ce7a9a352ad7db3eeaa6a66e2dd4ec37a
+pyyaml  6.0.3  https://files.pythonhosted.org/packages/source/p/pyyaml/pyyaml-{v}.tar.gz  d76623373421df22fb4cf8817020cbb7ef15c725b9d5e45f17e189bfc384190f
+ply  3.11  https://files.pythonhosted.org/packages/source/p/ply/ply-{v}.tar.gz  00c7c1aaa88358b9c765b6d3000c6eec0ba42abca5351b095321aef446081da3
+pycparser  3.11  https://files.pythonhosted.org/packages/source/p/pycparser/pycparser-{v}.tar.gz  d875f09c3507d00e1aba0eecc6dcadc1352f30fff09dc6bff2f1c2935e97c2bc
+packaging  26.3  https://files.pythonhosted.org/packages/source/p/packaging/packaging-{v}.tar.gz  94edc256424af38762eb31306eed28beb9f0efc50a8837492c9d6fd6004aed79
+jinja2  3.1.6  https://files.pythonhosted.org/packages/source/j/jinja2/jinja2-{v}.tar.gz  0137fb05990d35f1275a587e9aee6d56da821fc83491a0fb838183be43f66d6d
+# lxml (C, built against the host tools' libxml2 and libxslt): breeze-icons'
+# 24px icon generator.
+lxml  6.1.3  https://files.pythonhosted.org/packages/source/l/lxml/lxml-{v}.tar.gz  45222d94ddd511536f3b2f7d9deae3b2339b4ce0f075f1ca25703b07cad9dd21
+# setuptools and wheel, installed (with pip, offline) with their metadata:
+# QEMU's configure checks for them; wheel builds with flit_core.
+flit_core  4.1.0  https://files.pythonhosted.org/packages/source/f/flit_core/flit_core-{v}.tar.gz  62e12b63ead8335b37f59fabb977c7167fe476dafb5e41785dfa8c9aff843bc6
+setuptools  84.2.1  https://files.pythonhosted.org/packages/source/s/setuptools/setuptools-{v}.tar.gz  3ff8b3b5492a0aa66960f4419365a86b84e013070d4313e4d4a6894f5d64d6bc
+wheel  0.48.0  https://files.pythonhosted.org/packages/source/w/wheel/wheel-{v}.tar.gz  94800765601e9171bf5d58d066e640662842bcedcbab982b2c90787a2c987322
+
+# ---- The OS image, the ISO, device trees, kernel modules
+lz4  1.10.0  https://github.com/lz4/lz4/releases/download/v{v}/lz4-{v}.tar.gz  537512904744b35e232912055ccf8ec66d768639ff3abe5788d90d792ec5f48b
+squashfs-tools  4.7.5  https://github.com/plougher/squashfs-tools/releases/download/{v}/squashfs-tools-{v}.tar.gz  547b7b7f4d2e44bf91b6fc554664850c69563701deab9fd9cd7e21f694c88ea6
+xorriso  1.5.8  https://ftp.gnu.org/gnu/xorriso/xorriso-{v}.tar.gz  319e3675cd7d986bf71d36596ca7b03dac172a758462bedcbbd298a7f86f36cc
+grub  2.14  https://ftp.gnu.org/gnu/grub/grub-{v}.tar.xz  bc8d3c73535b8838d8c8e2654d73edc4e6ae8c8acdb45d5df5dc9a1547446d43
+mtools  4.0.49  https://ftp.gnu.org/gnu/mtools/mtools-{v}.tar.gz  10cd1111da87bf2400a380c1639a6cba8bfb937a24f9c51f5f88d393ae5f6f76
+dosfstools  4.2  https://github.com/dosfstools/dosfstools/releases/download/v{v}/dosfstools-{v}.tar.gz  64926eebf90092dca21b14259a5301b7b98e7b1943e8a201c7d726084809b527
+dtc  1.8.1  https://mirrors.edge.kernel.org/pub/software/utils/dtc/dtc-{v}.tar.xz  23526015a6f1550e0541a53fe7acea1b5a11e3697cdf3a3bdc076abc38f6045d
+kmod  34.2  https://mirrors.edge.kernel.org/pub/linux/utils/kernel/kmod/kmod-{v}.tar.xz  5a5d5073070cc7e0c7a7a3c6ec2a0e1780850c8b47b3e3892226b93ffcb9cb54
+
+# ---- Release, flashing, upkeep
+rsync  3.5.1  https://github.com/RsyncProject/rsync/releases/download/v{v}/rsync-{v}.tar.gz  c55f9c9dc10fb8bec397b399a0fdded53cc9a2d8e30891bb0d63724d25c37bef
+jq  1.8.2  https://github.com/jqlang/jq/releases/download/jq-{v}/jq-{v}.tar.gz  71b8d6e8f5fe81f6c6d0d110e3892251f6ce76ed095abd315e26e6e1193af3af
+libusb  1.0.30  https://github.com/libusb/libusb/releases/download/v{v}/libusb-{v}.tar.bz2  fea36f34f9156400209595e300840767ab1a385ede1dc7ee893015aea9c6dbaf
+heimdall  1.4.2  git+https://github.com/Benjamin-Dobell/Heimdall.git#v{v}  699549e3c661e868656147cdad35189469198f4d
+# gpgv (scripts/update-source.sh checks GNU releases' signatures with it).
+libgpg-error  1.61  https://gnupg.org/ftp/gcrypt/libgpg-error/libgpg-error-{v}.tar.bz2  7a85413f2bc354f4f8aa832b718af122e48965e9e0eb9012ee659c13c6385c93
+libgcrypt  1.12.4  https://gnupg.org/ftp/gcrypt/libgcrypt/libgcrypt-{v}.tar.bz2  d77f68f48879510e79a2f65977ccc68981781ea0923e5bdffac2a193ea3d660e
+libassuan  3.0.2  https://gnupg.org/ftp/gcrypt/libassuan/libassuan-{v}.tar.bz2  d2931cdad266e633510f9970e1a2f346055e351bb19f9b78912475b8074c36f6
+libksba  1.8.1  https://gnupg.org/ftp/gcrypt/libksba/libksba-{v}.tar.bz2  c2f84393011827219ae117131dba8e7684c2bed0961eed11b0642c2acba440b5
+npth  1.8  https://gnupg.org/ftp/gcrypt/npth/npth-{v}.tar.bz2  8bd24b4f23a3065d6e5b26e98aba9ce783ea4fd781069c1b35d149694e90ca3e
+gnupg  2.5.24  https://gnupg.org/ftp/gcrypt/gnupg/gnupg-{v}.tar.bz2  bf149d01a2b9fcc0e4589b8ae8697d3d5c557ea48ed95a3fa55dd3b1187e6039
+
+# ---- make run: QEMU, and EDK2's UEFI firmware (built per arch by
+# scripts/run-qemu.sh with jk_os's cross compiler)
+qemu  11.1.2  https://download.qemu.org/qemu-{v}.tar.xz  731b5681e4bb18be313231579b8efd0296c5b015fa36dc533874b639ba838016
+libslirp  4.9.5  https://gitlab.freedesktop.org/slirp/libslirp/-/archive/v{v}/libslirp-v{v}.tar.gz  f43e68b60b580647574ec4a0e2b6c600a56281e6c39f79426510832dc810f483
+nasm  3.02  https://www.nasm.us/pub/nasm/releasebuilds/{v}/nasm-{v}.tar.xz  87336eba53b4acfe917424ab5d500d2b0054d9f5148d35c2273ccf2cfb712f0d
+acpica  20260930  https://github.com/acpica/acpica/releases/download/{v}/acpica-unix-{v}.tar.gz  aa18901b92e30749be0edc3081c8d550c61fce4fa37546fc6a65d367a4ae71a5
+edk2  202608  git+https://github.com/tianocore/edk2.git#edk2-stable{v}+submodules  2970e5699ba6267f3384ffab20f96647578aebc8

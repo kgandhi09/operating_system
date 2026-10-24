@@ -198,7 +198,7 @@ b_openssh() {
 # only output taller than the screen; BusyBox less can't tell). No Rust
 # either (optional until git 3.0, with C versions of the same code): git
 # builds it with whatever cargo the build machine has, for the build
-# machine's arch, which breaks a cross build and isn't part of make deps.
+# machine's arch, which breaks a cross build, and the build machine has none.
 b_git() {
     copy_tree "$1" "$2"
     local mk=(-C "$2" prefix=/usr gitexecdir=/usr/lib/git-core sysconfdir=/etc

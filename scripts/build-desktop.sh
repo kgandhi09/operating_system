@@ -29,29 +29,16 @@ TC="$OUT_DIR/toolchain"
 SRC="$ROOT_DIR/userspace/desktop"
 [[ -d "$SRC" ]] || die "no desktop sources (run: scripts/update-desktop-sources.sh)"
 
-# Compiler wrappers: GCC 16 with the jk_os sysroot. On x86_64 that is the
-# toolchain's own GCC; for aarch64 the cross compiler build-toolchain.sh made.
+# Compilers: jk_os's cross compiler (build-cross.sh), for the build
+# machine's arch as for the other, with the toolchain as its sysroot.
 # Meson from userspace/desktop (some packages need a newer one than the host's).
 [[ -f "$SRC/meson/meson.py" ]] || die "no userspace/desktop/meson (run: scripts/update-desktop-sources.sh meson)"
 MESON="python3 $SRC/meson/meson.py"
 
-TRIPLE="$ARCH-linux-gnu"
 WRAP="$OUT_DIR/desktop/bin"
 mkdir -p "$WRAP"
-if [[ "$ARCH" == "$HOST_ARCH" ]]; then
-    for t in gcc g++; do
-        printf '#!/bin/sh\nexec %s --sysroot=%s "$@"\n' "$TC/usr/bin/$t" "$TC" > "$WRAP/$TRIPLE-$t"
-    done
-    for t in ar ranlib strip nm objcopy readelf; do ln -sf "$TC/usr/bin/$t" "$WRAP/$TRIPLE-$t"; done
-    # The toolchain's programs (llvm-config, ...) run here; they need its libraries.
-    TC_RUN="env LD_LIBRARY_PATH=$TC/usr/lib"
-else
-    CROSS="$OUT_DIR/cross/bin"
-    [[ -x "$CROSS/$TRIPLE-g++" ]] || die "no cross compiler at build/$ARCH/cross (run: $MAKE_CMD toolchain)"
-    for t in gcc g++ ar ranlib strip nm objcopy readelf; do ln -sf "$CROSS/$TRIPLE-$t" "$WRAP/$TRIPLE-$t"; done
-    TC_RUN=""
-fi
-chmod +x "$WRAP"/*
+[[ -x "$CROSS_DIR/bin/$TRIPLE-g++" ]] || die "no cross compiler at build/$ARCH/cross (run: $MAKE_CMD cross)"
+for t in gcc g++ ar ranlib strip nm objcopy readelf; do ln -sf "$CROSS_DIR/bin/$TRIPLE-$t" "$WRAP/$TRIPLE-$t"; done
 DYN_WORK=desktop DYN_CC="$WRAP/$TRIPLE-gcc" DYN_CXX="$WRAP/$TRIPLE-g++" DYN_AR="$WRAP/$TRIPLE-ar" \
     DYN_RANLIB="$WRAP/$TRIPLE-ranlib" DYN_STRIP="$WRAP/$TRIPLE-strip"
 source "$(dirname "$0")/lib-dyn.sh"
@@ -63,30 +50,22 @@ export LDFLAGS="$LDFLAGS -Wl,-rpath-link,$TC/usr/lib"
 # whichever arch jk_os is built for, so every arch's build shares them
 # (hoststep): the first to need one builds it. Meson finds them through
 # PKG_CONFIG_PATH_FOR_BUILD.
-HOST_WORK="$ROOT_DIR/build/host/$HOST_ARCH"
-HOSTDIR="$HOST_WORK/install"
-mkdir -p "$HOST_WORK"
-# One build at a time writes them: a second waits here until the first ends.
-exec {host_lock}>"$HOST_WORK/.lock"
-flock -n "$host_lock" || { log "waiting for another build using build/host/$HOST_ARCH"; flock "$host_lock"; }
+# (HOST_WORK, HOSTDIR: common.sh.) One build at a time writes them.
+host_lock
 # hoststep <name> <src> <function> <options...>: step, with its build
 # directory and stamp in build/host/<host arch>.
 hoststep() { NET_OUT="$HOST_WORK" step "$@"; }
 export PKG_CONFIG_PATH_FOR_BUILD="$HOSTDIR/lib/pkgconfig:$HOSTDIR/share/pkgconfig"
-# The build host's own LLVM and Clang: the toolchain built for it
-# (build/<host arch>/toolchain). Its programs need its libraries.
-HOST_TC="$ROOT_DIR/build/$HOST_ARCH/toolchain"
-# Cross-building needs it too: the same LLVM version as the target's, which a
-# distribution's LLVM rarely is. Build it with the host arch's toolchain
-# (the generic PC preset for that arch).
-[[ -x "$HOST_TC/usr/bin/llvm-config" ]] \
-    || die "no LLVM for the build host at build/$HOST_ARCH/toolchain: run make PRESET=pc-$HOST_ARCH toolchain"
+# The build machine's own LLVM and Clang, of the toolchain's version
+# (build-hosttools.sh, in build/host/<arch>/llvm): Mesa's build asks about the
+# target's LLVM through it, and compiles its OpenCL kernels with its Clang.
+[[ -x "$HOST_LLVM/bin/llvm-config" ]] || die "no LLVM for the build machine at ${HOST_LLVM#"$ROOT_DIR"/} (run: $MAKE_CMD hosttools)"
 HOST_ENV=(env -u CC -u CXX -u AR -u RANLIB -u STRIP -u CPPFLAGS -u LDFLAGS -u PKG_CONFIG_SYSROOT_DIR
-          -u PKG_CONFIG_LIBDIR "PKG_CONFIG_PATH=$HOSTDIR/lib/pkgconfig:$HOSTDIR/share/pkgconfig"
-          "LD_LIBRARY_PATH=$HOSTDIR/lib:$HOST_TC/usr/lib")
+          "PKG_CONFIG_LIBDIR=$HOSTDIR/lib/pkgconfig:$HOSTDIR/share/pkgconfig" "PKG_CONFIG_PATH="
+          "LD_LIBRARY_PATH=$HOSTDIR/lib:$HOST_LLVM/lib")
 hostmeson() {   # hostmeson <src> <out> <meson options...>
     local src="$1" out="$2"; shift 2
-    printf '[binaries]\nllvm-config = [%s]\n' "'$HOST_TC/usr/bin/llvm-config'" > "$out.native.ini"
+    printf '[binaries]\nllvm-config = [%s]\n' "'$HOST_LLVM/bin/llvm-config'" > "$out.native.ini"
     "${HOST_ENV[@]}" $MESON setup "$out" "$src" --native-file "$out.native.ini" \
         --prefix="$HOSTDIR" --libdir=lib --buildtype=release "$@"
     "${HOST_ENV[@]}" ninja -C "$out" -j"$JOBS"
@@ -97,7 +76,7 @@ hostcmake() {   # hostcmake <src> <out> <cmake options...>
     "${HOST_ENV[@]}" cmake -G Ninja -S "$src" -B "$out" -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX="$HOSTDIR" -DCMAKE_INSTALL_LIBDIR=lib \
         -DCMAKE_C_COMPILER="$(command -v gcc)" -DCMAKE_CXX_COMPILER="$(command -v g++)" \
-        "-DCMAKE_PREFIX_PATH=$HOSTDIR;$HOST_TC/usr" -DBUILD_TESTING=OFF "$@"
+        "-DCMAKE_PREFIX_PATH=$HOSTDIR;$HOST_LLVM" -DBUILD_TESTING=OFF "$@"
     "${HOST_ENV[@]}" ninja -C "$out" -j"$JOBS"
     "${HOST_ENV[@]}" ninja -C "$out" -j"$JOBS" install
 }
@@ -107,7 +86,7 @@ host_wrap() {
     mkdir -p "$HOSTDIR/wbin"
     local p
     for p in "$@"; do
-        printf '#!/bin/sh\nLD_LIBRARY_PATH=%s exec %s "$@"\n' "$HOSTDIR/lib:$HOST_TC/usr/lib" \
+        printf '#!/bin/sh\nLD_LIBRARY_PATH=%s exec %s "$@"\n' "$HOSTDIR/lib:$HOST_LLVM/lib" \
             "$HOSTDIR/bin/$p" > "$HOSTDIR/wbin/$p"
         chmod +x "$HOSTDIR/wbin/$p"
     done
@@ -120,6 +99,9 @@ export PATH="$HOSTDIR/wbin:$PATH"
 # The build machine's pkg-config (with the sysroot settings above): CMake
 # would otherwise pick $DYN's own, built for jk_os, from CMAKE_PREFIX_PATH.
 HOST_PKG_CONFIG="$(command -v pkg-config)"
+# Python: the build machine's (host tools), for the scripts packages run while
+# they build; CMake's search would otherwise find the target toolchain's,
+# which only runs on the target's arch.
 # WaylandScanner_EXECUTABLE: the build host's wayland-scanner (Qt's and
 # ECM's FindWaylandScanner would otherwise take the target's from $DYN, which
 # doesn't run here when cross-building).
@@ -131,7 +113,8 @@ cmakepkg() {
     # Qt clears PKG_CONFIG_EXECUTABLE while configuring qtbase, then searches
     # again. Pin the build-host executable via the environment so that search
     # cannot pick the target's /usr/bin/pkg-config from the sysroot.
-    PKG_CONFIG="$HOST_PKG_CONFIG" cmake -G Ninja -S "$src" -B "$out" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr \
+    # (The build directory's real path: Qt refuses one through a symlink.)
+    PKG_CONFIG="$HOST_PKG_CONFIG" cmake -G Ninja -S "$src" -B "$(realpath "$out")" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr \
         -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
         -DWaylandScanner_EXECUTABLE="$HOSTDIR/bin/wayland-scanner" \
         -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_C_COMPILER="$CC" -DCMAKE_CXX_COMPILER="$CXX" \
@@ -141,7 +124,8 @@ cmakepkg() {
         -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=ONLY -DBUILD_TESTING=OFF \
         -DCMAKE_C_STANDARD_INCLUDE_DIRECTORIES="$DYN/usr/include" \
         -DCMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES="$DYN/usr/include" \
-        -DPKG_CONFIG_EXECUTABLE="$HOST_PKG_CONFIG" "$@"
+        -DPKG_CONFIG_EXECUTABLE="$HOST_PKG_CONFIG" -DPython3_EXECUTABLE="$HOSTDIR/bin/python3" \
+        -DPython_EXECUTABLE="$HOSTDIR/bin/python3" -DPYTHON_EXECUTABLE="$HOSTDIR/bin/python3" "$@"
     ninja -C "$out" -j"$JOBS"
     DESTDIR="$DYN" ninja -C "$out" -j"$JOBS" install
 }
@@ -200,27 +184,21 @@ case "$ARCH" in
 esac
 b_mesa() {
     # LLVM (radeonsi, llvmpipe) from the toolchain. Mesa asks llvm-config only
-    # (never CMake), and a cross-built toolchain's llvm-config doesn't run
-    # here: then the build host's (the same LLVM version, built the same way,
-    # build/<host arch>/toolchain) answers instead, its paths rewritten to the
-    # target toolchain's and its host triple to the target's.
-    local llvm=(-Dllvm=enabled -Dshared-llvm=enabled)
-    if [[ -n "$TC_RUN" ]]; then
-        printf '[binaries]\nllvm-config = [%s]\n' \
-            "'env', 'LD_LIBRARY_PATH=$TC/usr/lib', '$TC/usr/bin/llvm-config'" > "$2.llvm.ini"
-    else
-        local hv tv
-        hv=$(LD_LIBRARY_PATH="$HOST_TC/usr/lib" "$HOST_TC/usr/bin/llvm-config" --version)
-        tv=$(sed -n 's/^#define LLVM_VERSION_STRING "\(.*\)"/\1/p' "$TC/usr/include/llvm/Config/llvm-config.h")
-        [[ "$hv" == "$tv" ]] || die "the build host's LLVM ($hv) and the target's ($tv) differ: rebuild one (make toolchain)"
-        cat > "$2.llvm-config" <<CFG
+    # (never CMake), and the toolchain's, cross-built, doesn't run here: the
+    # build machine's (the same LLVM version, built the same way,
+    # build-hosttools.sh) answers instead, its paths rewritten to the target
+    # toolchain's and its host triple to the target's.
+    local llvm=(-Dllvm=enabled -Dshared-llvm=enabled) hv tv
+    hv=$("$HOST_LLVM/bin/llvm-config" --version)
+    tv=$(sed -n 's/^#define LLVM_VERSION_STRING "\(.*\)"/\1/p' "$TC/usr/include/llvm/Config/llvm-config.h")
+    [[ "$hv" == "$tv" ]] || die "the build machine's LLVM ($hv) and the target's ($tv) differ: rebuild one (make hosttools, make toolchain)"
+    cat > "$2.llvm-config" <<CFG
 #!/bin/sh
 case " \$* " in *" --host-target "*) echo $TRIPLE; exit 0 ;; esac
-LD_LIBRARY_PATH="$HOST_TC/usr/lib" "$HOST_TC/usr/bin/llvm-config" "\$@" | sed "s|$HOST_TC|$TC|g"
+"$HOST_LLVM/bin/llvm-config" "\$@" | sed "s|$HOST_LLVM|$TC/usr|g"
 CFG
-        chmod +x "$2.llvm-config"
-        printf '[binaries]\nllvm-config = [%s]\n' "'$2.llvm-config'" > "$2.llvm.ini"
-    fi
+    chmod +x "$2.llvm-config"
+    printf '[binaries]\nllvm-config = [%s]\n' "'$2.llvm-config'" > "$2.llvm.ini"
     env -u PKG_CONFIG_SYSROOT_DIR -u PKG_CONFIG_LIBDIR \
     $MESON setup "$2" "$1" --cross-file "$CROSS_FILE" --cross-file "$2.llvm.ini" \
         --native-file "$NATIVE_FILE" --prefix=/usr --libdir=lib --sysconfdir=/etc \
@@ -241,8 +219,6 @@ pkg libdrm           mesonpkg -Dtests=false -Dman-pages=disabled -Dvalgrind=disa
                          -Dcairo-tests=disabled -Dudev=true
 pkg zstd             b_zstd
 pkg libxml2          mesonpkg -Dpython=disabled -Dicu=disabled -Dhistory=disabled -Dreadline=disabled
-hoststep host-wayland-scanner "$SRC/wayland" hostmeson -Dlibraries=false -Ddocumentation=false \
-                         -Dtests=false -Ddtd_validation=false
 pkg wayland          mesonpkg -Ddocumentation=false -Dtests=false -Ddtd_validation=false
 pkg wayland-protocols mesonpkg -Dtests=false
 pkg xorgproto        mesonpkg
@@ -292,8 +268,8 @@ hostcmake_libclc() {   # hostcmake_libclc <src> <out>: the spirv64 OpenCL librar
     # Clang 23 no longer takes the old spirv64-mesa3d- triple, so it is built
     # as spirv64-- and installed under the name (and pkg-config file) Mesa
     # looks for.
-    hostcmake "$1/libclc" "$2" -DLLVM_DIR="$HOST_TC/usr/lib/cmake/llvm" \
-        -DCMAKE_C_COMPILER="$HOST_TC/usr/bin/clang" -DCMAKE_CXX_COMPILER="$HOST_TC/usr/bin/clang++" \
+    hostcmake "$1/libclc" "$2" -DLLVM_DIR="$HOST_LLVM/lib/cmake/llvm" \
+        -DCMAKE_C_COMPILER="$HOST_LLVM/bin/clang" -DCMAKE_CXX_COMPILER="$HOST_LLVM/bin/clang++" \
         -DLLVM_DEFAULT_TARGET_TRIPLE=spirv64-- -DLLVM_SPIRV="$HOSTDIR/bin/llvm-spirv"
     install -Dm644 "$2/spirv64--/libclc.spv" "$HOSTDIR/share/clc/spirv64-mesa3d-.spv"
     install -d "$HOSTDIR/share/pkgconfig"
@@ -317,9 +293,15 @@ hoststep host-spirv-headers "$SRC/spirv-headers" hostcmake
 hoststep host-spirv-tools "$SRC/spirv-tools" hostcmake -DSPIRV-Headers_SOURCE_DIR="$SRC/spirv-headers" \
     -DSPIRV_SKIP_TESTS=ON -DSPIRV_WERROR=OFF
 hoststep host-spirv-llvm-translator "$SRC/spirv-llvm-translator" hostcmake \
-    -DLLVM_DIR="$HOST_TC/usr/lib/cmake/llvm" -DLLVM_EXTERNAL_SPIRV_HEADERS_SOURCE_DIR="$SRC/spirv-headers" \
+    -DLLVM_DIR="$HOST_LLVM/lib/cmake/llvm" -DLLVM_EXTERNAL_SPIRV_HEADERS_SOURCE_DIR="$SRC/spirv-headers" \
     -DLLVM_SPIRV_INCLUDE_TESTS=OFF
 hoststep host-libclc "$LLVM_SRC" hostcmake_libclc
+# libdrm's headers and core library for the build machine: panfrost_compile
+# includes xf86drm.h (and nothing of the build machine's is used).
+hoststep host-libdrm "$SRC/libdrm" hostmeson -Dintel=disabled -Dradeon=disabled -Damdgpu=disabled \
+    -Dnouveau=disabled -Dvmwgfx=disabled -Domap=disabled -Dexynos=disabled -Dfreedreno=disabled \
+    -Dtegra=disabled -Detnaviv=disabled -Dcairo-tests=disabled -Dman-pages=disabled \
+    -Dvalgrind=disabled -Dudev=false -Dtests=false
 hoststep host-mesa-clc "$SRC/mesa" b_host_mesa_clc
 # libelf only (radeonsi reads the ELF code objects LLVM makes for AMD GPUs).
 b_libelf() {
@@ -373,7 +355,9 @@ QT_HOST="$HOSTDIR/qt"
 # newer than its stamp and the package rebuild on every run.
 hostqt() {      # hostqt <src> <out> <cmake options...>
     local src="$1" out="$2"; shift 2
-    "${HOST_ENV[@]}" cmake -G Ninja -S "$src" -B "$out" -DCMAKE_BUILD_TYPE=Release \
+    # Qt refuses a build directory whose path goes through a symlink (build/
+    # may be one, to another disk): its real path.
+    "${HOST_ENV[@]}" cmake -G Ninja -S "$src" -B "$(realpath "$out")" -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX="$QT_HOST" -DCMAKE_PREFIX_PATH="$QT_HOST" \
         -DCMAKE_C_COMPILER="$(command -v gcc)" -DCMAKE_CXX_COMPILER="$(command -v g++)" \
         -DQT_BUILD_EXAMPLES=OFF -DQT_BUILD_TESTS=OFF -DKDE_CLANG_FORMAT_EXECUTABLE=OFF "$@"
@@ -746,13 +730,13 @@ pkg icu              b_icu
 pkg libXft           xorgpkg
 pkg xkbcomp          xorgpkg
 # The MIME database is compiled by update-mime-database: the one just built,
-# run here when the build host can (same arch); otherwise S17mime compiles
-# it on the first boot.
+# run here (with its own dynamic loader) when the build machine has the
+# same arch; otherwise S17mime compiles it on the first boot.
 b_shared_mime_info() {
     mesonpkg "$1" "$2" -Dupdate-mimedb=false -Dbuild-tools=true -Dbuild-tests=false \
         -Dbuild-translations=false -Dbuild-spec=false
     if [[ "$ARCH" == "$HOST_ARCH" ]]; then
-        "$TC/usr/lib/ld-linux-x86-64.so.2" --library-path "$DYN/usr/lib:$TC/usr/lib" \
+        "$TC/usr/lib/$LDSO" --library-path "$DYN/usr/lib:$TC/usr/lib" \
             "$DYN/usr/bin/update-mime-database" "$DYN/usr/share/mime"
     fi
 }
@@ -929,35 +913,12 @@ pkg foot             mesonpkg -Ddocs=disabled -Dtests=false -Dterminfo=disabled 
 # ---------------------------------------------------------------- Firefox
 # Mozilla's own release build, on the GTK 3 libraries built here.
 
-# GTK's build runs GLib and gdk-pixbuf tools (resource and schema compilers,
-# image to C converters). On the same arch the ones built here run on the
-# build host; cross-building, the build host's own do (make deps:
-# libglib2.0-bin, libgio-2.0-dev-bin, libgdk-pixbuf2.0-bin), their output
-# formats being stable across versions.
-# The wrappers depend on the target arch, so they go in build/<arch>/desktop/wbin,
-# not with the shared host tools.
-DYN_WBIN="$NET_OUT/wbin"
-export PATH="$DYN_WBIN:$PATH"
-dyn_tool() {    # dyn_tool <program>...: run $DYN's program on the build host
-    mkdir -p "$DYN_WBIN"
-    local p host
-    for p in "$@"; do
-        if [[ "$ARCH" == "$HOST_ARCH" ]]; then
-            printf '#!/bin/sh\nexec %s --library-path %s %s "$@"\n' "$TC/usr/lib/ld-linux-x86-64.so.2" \
-                "$DYN/usr/lib:$TC/usr/lib" "$DYN/usr/bin/$p" > "$DYN_WBIN/$p"
-        else
-            host=$(PATH=/usr/bin:/bin command -v "$p") || die "no $p on the build host (run: $MAKE_CMD deps)"
-            printf '#!/bin/sh\nexec %s "$@"\n' "$host" > "$DYN_WBIN/$p"
-        fi
-        chmod +x "$DYN_WBIN/$p"
-    done
-}
-dyn_tool glib-compile-resources glib-compile-schemas
+# GTK's build runs GLib's and gdk-pixbuf's tools (resource and schema
+# compilers, image to C converters): the build machine's (build-hosttools.sh,
+# from the same source trees), on PATH.
+need glib-compile-resources glib-compile-schemas gdk-pixbuf-pixdata gdk-pixbuf-csource
 
-b_gdk_pixbuf() {
-    mesonpkg "$@"
-    dyn_tool gdk-pixbuf-pixdata gdk-pixbuf-csource
-}
+b_gdk_pixbuf() { mesonpkg "$@"; }
 # GTK's settings schemas, compiled (GTK aborts without them, e.g. in the
 # file chooser).
 b_gtk3() {

@@ -29,7 +29,7 @@ need tar sha256sum
 #   git:    $url, $tag
 SOURCES="kernel busybox util-linux e2fsprogs shadow libxcrypt sudo zlib libffi pcre2 glib
 expat dbus eudev libndp libnl openssl wpa_supplicant ncurses readline networkmanager
-gcc binutils gdb gmp mpfr mpc llvm cmake ninja make m4 flex bison perl autoconf automake bash python sqlite bzip2
+gcc binutils glibc gdb gmp mpfr mpc llvm cmake ninja make m4 flex bison perl perl-cross autoconf automake bash python sqlite bzip2
 curl cacert openssh git u-boot"
 source_spec() {
     local v="$2"
@@ -75,6 +75,7 @@ source_spec() {
         openssl)   tree=$OPENSSL_TREE   kind=github repo=openssl/openssl     tag="openssl-$v" name="openssl-$v.tar.gz" ;;
         gcc)       tree=$GCC_TREE       kind=gnu base="https://ftp.gnu.org/gnu/gcc/gcc-$v" name="gcc-$v.tar.xz" ;;
         binutils)  tree=$BINUTILS_TREE  kind=gnu base="https://ftp.gnu.org/gnu/binutils"  name="binutils-$v.tar.xz" ;;
+        glibc)     tree=$GLIBC_TREE     kind=gnu base="https://ftp.gnu.org/gnu/glibc"     name="glibc-$v.tar.xz" ;;
         gdb)       tree=$GDB_TREE       kind=gnu base="https://ftp.gnu.org/gnu/gdb"       name="gdb-$v.tar.xz" ;;
         gmp)       tree=$GMP_TREE       kind=gnu base="https://ftp.gnu.org/gnu/gmp"       name="gmp-$v.tar.xz" ;;
         mpfr)      tree=$MPFR_TREE      kind=gnu base="https://ftp.gnu.org/gnu/mpfr"      name="mpfr-$v.tar.xz" ;;
@@ -94,6 +95,7 @@ source_spec() {
                    base="https://www.cpan.org/src/5.0" sums="$base/$name.sha256.txt" ;;
         # bash's official patches (bash53-NNN) are in config/components/toolchain/patches/bash.
         bash)      tree=$BASH_TREE      kind=gnu base="https://ftp.gnu.org/gnu/bash"      name="bash-$v.tar.gz" ;;
+        perl-cross) tree=$PERLCROSS_TREE kind=github repo=arsv/perl-cross tag="$v" name="perl-cross-$v.tar.gz" ;;
         # python.org publishes each file's SHA-256 through its downloads API
         # (3.14 and newer are signed with Sigstore only, no PGP).
         python)    tree=$PYTHON_TREE    kind=python name="Python-$v.tar.xz"

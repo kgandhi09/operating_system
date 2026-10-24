@@ -23,13 +23,14 @@ is downloaded once into `userspace/binaries/` (see [Binaries from GitHub](#binar
 ## Quick start
 
 ```sh
-make deps                       # once: install host packages (Debian/Ubuntu or Arch, uses sudo)
 make PRESET=pc-x86_64           # build out/jk_os-<ver>-x86_64.iso
 make PRESET=pc-x86_64 run       # boot it in QEMU on this terminal (Ctrl-A X quits)
 ```
 
 Every build names a **preset** (below); `make` without one stops and shows
-how to use it.
+how to use it. The build machine needs only what every Linux has (see
+[Host requirements](#host-requirements)): Ubuntu and the like, or a jk_os
+PC or Jetson.
 
 The ISO boots into the installer menu, before any login. From there you can
 install to a disk, or try the live system (a root shell; changes are kept in RAM
@@ -922,17 +923,19 @@ fetched (tag, asset, sha256) goes into `userspace/binaries/<arch>/sources.lock`.
 
 ## Host requirements
 
-`make deps` installs these on Debian/Ubuntu (apt) or Arch (pacman). On other
-distros, install the equivalents:
+A build machine needs only the floor every Linux has, and the build makes
+everything else from this repo's sources first (`make PRESET=<preset>
+hosttools`, into `build/host/<arch>/`, shared by every preset): nothing comes
+from a package manager, so the build is the same on Ubuntu, any other Linux,
+and jk_os itself (a PC or Jetson; a jk_os tablet refuses). The floor:
 
-- build: `gcc make bc flex bison libelf-dev libssl-dev zlib1g-dev cpio file` (zlib: the build-machine Python that cross-builds aarch64's)
-- fetching GitHub binaries: `curl jq file` (plus `unzip` / `zstd` for those asset types)
-- updating sources (optional): `curl tar xz bzip2`
-- cross: `gcc-aarch64-linux-gnu libc6-dev-arm64-cross` (a glibc cross toolchain; BusyBox links statically against it)
-- ISO: `xorriso mtools dosfstools squashfs-tools`, and on x86_64 hosts `grub-pc-bin grub-efi-amd64-bin`
-- run: `qemu-system-x86 qemu-system-arm ovmf qemu-efi-aarch64`
+- a C and C++ compiler (GCC), GNU make, bash
+- coreutils, sed, grep, awk, find, xargs, tar, gzip, xz, bzip2, patch, diff,
+  cmp, flock (BusyBox's do), and glibc's `localedef`
+- git and git-lfs, to get this repo
 
-Building the x86_64 ISO needs GRUB's i386-pc / x86_64-efi platform files.
-Distros usually ship these only for x86 hosts, so build x86_64 images on an
-x86_64 machine to get both BIOS and UEFI boot. The aarch64 ISO needs no GRUB,
-so it can be built on any host.
+On Ubuntu: `sudo apt install build-essential git git-lfs`. `make` checks the
+floor first and names what's missing. The cross compiler for every arch and
+glibc are built from source too (`make PRESET=<preset> cross`). Flashing a
+Samsung tablet from Ubuntu needs one udev rule (jk_os carries it): see
+[docs/self-hosting.md](docs/self-hosting.md), which has the whole plan.

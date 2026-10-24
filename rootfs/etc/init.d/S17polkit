@@ -3,12 +3,21 @@
 # (NetworkManager, elogind, UPower, ModemManager), from their actions in
 # /usr/share/polkit-1/actions and the rules in /etc/polkit-1/rules.d.
 # Administrators are group wheel. Started here: jk_os's D-Bus has no setuid
-# launch helper to start system services on demand.
+# launch helper to start system services on demand. The services after it
+# (UPower stops at once without polkit) wait until it is on the bus.
 
 case "$1" in
     start)
         [ -x /usr/lib/polkit-1/polkitd ] || exit 0
         /usr/lib/polkit-1/polkitd --no-debug >/dev/null 2>&1 &
+        i=0
+        while [ $i -lt 50 ]; do
+            dbus-send --system --print-reply --dest=org.freedesktop.DBus /org/freedesktop/DBus \
+                org.freedesktop.DBus.NameHasOwner string:org.freedesktop.PolicyKit1 2>/dev/null \
+                | grep -q 'boolean true' && break
+            sleep 0.1
+            i=$((i + 1))
+        done
         ;;
     stop)
         pkill -x polkitd 2>/dev/null

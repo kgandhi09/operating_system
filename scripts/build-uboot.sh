@@ -24,7 +24,8 @@ dtb="$DTB_OUT/$DEVICE_DTB"
 mkdir -p "$UBOOT_OUT"
 # </dev/null: a Kconfig option without a value would otherwise make the build
 # stop and wait for an answer nobody sees (its output goes to /dev/null).
-u_make() { make -C "$UBOOT_SRC" O="$UBOOT_OUT" ARCH=arm CROSS_COMPILE="$CROSS_COMPILE" "$@" </dev/null; }
+u_make() { make -C "$UBOOT_SRC" O="$UBOOT_OUT" ARCH=arm CROSS_COMPILE="$CROSS_COMPILE" \
+    "${HOST_KBUILD_FLAGS[@]}" "$@" </dev/null; }
 
 # The environment, and a config fragment pointing U-Boot at it (an absolute
 # path: U-Boot builds out of tree and the source stays untouched).

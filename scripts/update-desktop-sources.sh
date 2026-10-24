@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
-# Maintainer tool: fetch the desktop stack's sources, listed in
-# config/components/desktop/sources.list, into userspace/desktop/<name>. Builds never run
-# this; they only use the trees in the repo.
+# Maintainer tool: fetch the sources a component lists in
+# config/components/<component>/sources.list into userspace/<component>/<name>
+# (the desktop stack's: desktop; the build machine's tools: hosttools).
+# Builds never run this; they only use the trees in the repo.
 #
 #   scripts/update-desktop-sources.sh            fetch what is missing or changed
 #   scripts/update-desktop-sources.sh <name>...  only these
+#   scripts/update-desktop-sources.sh --component hosttools [<name>...]
 #
 # List lines: <name> <version> <url> <pin>
 #   <url>  with {v} for the version (a tarball or a .zip); "git+<repo url>#<tag>"
-#          fetches that tag
+#          fetches that tag ("git+...#<tag>+submodules": with its submodules)
 #   <pin>  the tarball's SHA-256, or the tag's commit for git sources; "-"
 #          means not pinned yet: the first fetch records it in the list
 #          (check it against the project's published checksum or signature)
@@ -18,8 +20,14 @@ JK_DEFAULT_TARGET=1
 source "$(dirname "$0")/common.sh"
 need curl tar unzip sha256sum git
 
-LIST="$ROOT_DIR/config/components/desktop/sources.list"
-DEST_ROOT="$ROOT_DIR/userspace/desktop"
+component=desktop
+if [[ "${1:-}" == --component ]]; then
+    [[ $# -ge 2 ]] || die "--component <name>"
+    component=$2; shift 2
+fi
+LIST="$ROOT_DIR/config/components/$component/sources.list"
+DEST_ROOT="$ROOT_DIR/userspace/$component"
+[[ -f "$LIST" ]] || die "no $LIST"
 mkdir -p "$DEST_ROOT"
 only=("$@")
 
@@ -36,15 +44,24 @@ fetch_one() {
     local name="$1" ver="$2" url="${3//\{v\}/$2}" pin="$4" dest="$DEST_ROOT/$1" work="$tmp/$1"
     rm -rf "$work"; mkdir -p "$work"
     if [[ "$url" == git+* ]]; then
-        local repo tag
+        local repo tag subs=0
         repo="${url#git+}"; tag="${repo##*#}"; repo="${repo%#*}"
+        [[ "$tag" == *+submodules ]] && { subs=1; tag=${tag%+submodules}; }
         git -c advice.detachedHead=false clone -q --depth 1 --branch "$tag" "$repo" "$work/git" \
             || die "$name: no tag $tag in $repo"
         local commit; commit="$(git -C "$work/git" rev-parse HEAD)"
         if [[ "$pin" == - ]]; then pin_entry "$name" "$commit"; warn "$name: pinned to commit $commit"
         elif [[ "$pin" != "$commit" ]]; then die "$name: $tag is commit $commit, the list pins $pin"; fi
         mkdir "$work/x"
-        git -C "$work/git" archive --prefix=src/ HEAD | tar -xf - -C "$work/x"
+        if (( subs )); then
+            # The submodules (not theirs) at the commits the tag records (content-addressed
+            # like the tag itself), without their history.
+            git -C "$work/git" submodule update -q --init --depth 1 \
+                || die "$name: cannot fetch its submodules"
+            (cd "$work/git" && tar -cf - --exclude-vcs --transform 's|^\.|src|' .) | tar -xf - -C "$work/x"
+        else
+            git -C "$work/git" archive --prefix=src/ HEAD | tar -xf - -C "$work/x"
+        fi
     else
         local file="$work/${url##*/}"
         curl -fL --silent --show-error --retry 5 --retry-all-errors -o "$file" "$url" || die "$name: cannot download $url"
@@ -67,7 +84,7 @@ fetch_one() {
     echo "$ver" > "${top[0]}/.jk_os-version"
     rm -rf "$dest"
     mv "${top[0]}" "$dest"
-    log "userspace/desktop/$name is now $ver"
+    log "userspace/$component/$name is now $ver"
 }
 
 while read -r name ver url pin _; do
@@ -79,4 +96,4 @@ while read -r name ver url pin _; do
     fi
     fetch_one "$name" "$ver" "$url" "$pin"
 done < <(cat "$LIST")
-echo "Commit with: git add -f userspace/desktop config/components/desktop/sources.list"
+echo "Commit with: git add -f userspace/$component config/components/$component/sources.list"

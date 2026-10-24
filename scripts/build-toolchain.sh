@@ -3,29 +3,29 @@
 # build/<arch>/toolchain (prefix /usr; build-rootfs.sh copies it in):
 #
 #   GCC (C, C++, libstdc++) and binutils, Clang + lld + clangd/clang-format/
-#   clang-tidy (LLVM), CMake, Ninja, GDB, the glibc headers and libraries
-#   (from the toolchain that built jk_os) and the Linux headers (from
-#   jk_os's kernel). C++20 (gnu++20) is the default standard of both
-#   compilers (GCC 16's own default; Clang gets it from /etc/clang).
+#   clang-tidy (LLVM), CMake, Ninja, GDB; glibc and the Linux headers are
+#   already there (build-cross.sh puts them in first). C++20 (gnu++20) is the
+#   default standard of both compilers (GCC 16's own default; Clang gets it
+#   from /etc/clang).
 #   And the classic build tools: GNU make, m4, flex, bison, Perl, autoconf,
 #   automake and libtool; and the interpreters bash and Python 3 (OpenSSL,
 #   pip, venv, ensurepip), with SQLite and bzip2 for Python's modules.
 #
 # The tree doubles as the sysroot the target libraries are built against.
-# For aarch64 (built on x86_64) a GCC cross compiler is built first
-# (build/aarch64/cross), and everything else is cross-built with it.
+# Everything is cross-built with jk_os's cross compiler (build/<arch>/cross,
+# build-cross.sh), for the build machine's arch as for the other: as a cross
+# build (BUILD_TRIPLE, common.sh), so nothing runs target programs here.
 #
 # A package is rebuilt only when its source tree or its build options change.
 source "$(dirname "$0")/common.sh"
-need make cmake ninja python3 "${CROSS_COMPILE}gcc"
+need make cmake ninja python3
+[[ -x "${CROSS_COMPILE}gcc" ]] || die "no cross compiler at ${CROSS_DIR#"$ROOT_DIR"/} (run: $MAKE_CMD cross)"
 
 for t in "${TC_TREES[@]}"; do
     src="${t}_SRC"
     [[ -d "${!src}" ]] || die "no source at ${!src#"$ROOT_DIR"/} (see ${t}_TREE in versions.env)"
 done
 
-TRIPLE="$ARCH-linux-gnu"                       # what jk_os's compilers target
-BUILD_TRIPLE="$(normalize_arch "$(uname -m)")-linux-gnu"
 TC="$OUT_DIR/toolchain"                        # install root = target sysroot
 TC_OUT="$OUT_DIR/tc"                           # build directories
 DEPS="$OUT_DIR/tc-deps"                        # GMP/MPFR/MPC for the target, static
@@ -33,16 +33,10 @@ DYN="$OUT_DIR/dyn"                             # the network stack (readline, ex
 [[ -d "$DYN/usr/include" ]] || die "network stack not built yet (run: $MAKE_CMD network)"
 mkdir -p "$TC" "$TC_OUT" "$DEPS"
 
-# Build this toolchain with: the host compiler for x86_64 on x86_64, the GCC
-# cross compiler built below for aarch64.
-if [[ "$ARCH" == "$HOST_ARCH" ]]; then
-    TCC=gcc TCXX=g++
-    CROSS=""
-else
-    CROSS="$OUT_DIR/cross"
-    TCC="$CROSS/bin/$TRIPLE-gcc" TCXX="$CROSS/bin/$TRIPLE-g++"
-    export PATH="$CROSS/bin:$PATH"
-fi
+# Built with jk_os's cross compiler (build-cross.sh).
+CROSS="$CROSS_DIR"
+TCC="$CROSS/bin/$TRIPLE-gcc" TCXX="$CROSS/bin/$TRIPLE-g++"
+export PATH="$CROSS/bin:$PATH"
 unset CROSS_COMPILE CC CXX CFLAGS CXXFLAGS CPPFLAGS LDFLAGS
 # (The build machine's Python settings are unset by common.sh: they would
 # steer the Python built here, its ensurepip into the build machine's Debian
@@ -75,56 +69,6 @@ step() {
     echo "$want" > "$stamp"
 }
 
-# ------------------------------------------------------------ glibc, Linux
-
-# The glibc the image runs on (build-rootfs.sh copies its runtime from the
-# same toolchain): headers, crt files, static and shared libraries, taken
-# from the Debian/Ubuntu packages of that toolchain and flattened into
-# /usr/include and /usr/lib.
-glibc_packages() {
-    if [[ "$ARCH" == "$HOST_ARCH" ]]; then echo libc6 libc6-dev
-    else echo "libc6-$(case $ARCH in aarch64) echo arm64 ;; x86_64) echo amd64 ;; esac)-cross" \
-              "libc6-dev-$(case $ARCH in aarch64) echo arm64 ;; x86_64) echo amd64 ;; esac)-cross"; fi
-}
-b_glibc() {
-    command -v dpkg >/dev/null || die "the toolchain build takes glibc from Debian/Ubuntu packages (dpkg)"
-    local pkg f rel
-    for pkg in $(glibc_packages); do
-        dpkg -L "$pkg" >/dev/null || die "package $pkg not installed (run: $MAKE_CMD deps)"
-        dpkg -L "$pkg" | while IFS= read -r f; do
-            [[ -f "$f" || -L "$f" ]] || continue
-            case "$f" in
-                */gconv/*|*/audit/*|/usr/share/*|/etc/*|*/bin/*|*/sbin/*) continue ;;
-                /usr/include/*)                   rel="usr/include/${f#/usr/include/}"
-                                                  rel="${rel/usr\/include\/$TRIPLE\//usr/include/}" ;;
-                /usr/lib/$TRIPLE/*)               rel="usr/lib/${f#/usr/lib/$TRIPLE/}" ;;
-                /usr/$TRIPLE/include/*)           rel="usr/include/${f#/usr/$TRIPLE/include/}" ;;
-                /usr/$TRIPLE/lib/*|/usr/$TRIPLE/lib64/*) rel="usr/lib/${f#/usr/$TRIPLE/lib*/}" ;;
-                *) continue ;;
-            esac
-            mkdir -p "$TC/$(dirname "$rel")"
-            if [[ -L "$f" && "$(readlink "$f")" == /* ]]; then
-                ln -sfn "$(basename "$(readlink "$f")")" "$TC/$rel"   # absolute link: same directory now
-            else
-                cp -P "$f" "$TC/$rel"
-            fi
-        done
-    done
-    # Linker scripts (libc.so, libm.so) name the libraries by their old paths.
-    for f in "$TC"/usr/lib/lib*.so; do
-        [[ -f "$f" && ! -L "$f" ]] && grep -q '^GROUP' "$f" && sed -i -E 's|/[^ ()]*/||g' "$f"
-    done
-    # GCC looks in lib64 on both arches; the loader is at /lib64 or /lib.
-    ln -sfn lib "$TC/usr/lib64"
-    ln -sfn usr/lib "$TC/lib"
-    ln -sfn usr/lib "$TC/lib64"
-    touch "$2/ok"
-}
-
-b_linux_headers() {
-    make -C "$KERNEL_SRC" O="$2" ARCH="$KARCH" INSTALL_HDR_PATH="$TC/usr" headers_install
-}
-
 # ------------------------------------------------------------ GMP, MPFR, MPC
 
 # numlibs <prefix> <host triple> <cc>: GMP, MPFR and MPC as static libraries.
@@ -141,25 +85,6 @@ numlibs() {
         && make -j"$JOBS" && make install)
 }
 b_numlibs_target() { numlibs "$DEPS" "$TRIPLE" "$TCC" "$2"; }
-b_numlibs_build()  { numlibs "$CROSS/deps" "$BUILD_TRIPLE" gcc "$2"; }
-
-# ------------------------------------------------------------ cross (aarch64)
-
-b_cross_binutils() {
-    (cd "$2" && "$BINUTILS_SRC/configure" --target="$TRIPLE" --prefix="$CROSS" \
-        --with-sysroot="$TC" --disable-nls --disable-werror --disable-multilib --disable-gdb \
-        --disable-gprofng --disable-gold)
-    make -C "$2" -j"$JOBS"
-    make -C "$2" install
-}
-b_cross_gcc() {
-    (cd "$2" && "$GCC_SRC/configure" --target="$TRIPLE" --prefix="$CROSS" --with-sysroot="$TC" \
-        --enable-languages=c,c++ --disable-multilib --disable-nls --disable-bootstrap \
-        --disable-libsanitizer --disable-libssp --enable-threads=posix --enable-__cxa_atexit \
-        --with-gmp="$CROSS/deps" --with-mpfr="$CROSS/deps" --with-mpc="$CROSS/deps")
-    make -C "$2" -j"$JOBS"
-    make -C "$2" install
-}
 
 # ------------------------------------------------------------ the toolchain
 
@@ -176,17 +101,14 @@ b_binutils() {
 }
 
 b_gcc() {
-    # build != host for aarch64: the target libraries are built by the cross
-    # compiler above ($TRIPLE-gcc on $PATH); for x86_64 by the new compiler.
-    # The host's binutils have to be named too, or the plugin checks find no nm.
-    # libcc1 (GDB's "compile" command plugin) is left out: its configure can't
-    # check a cross-built host (it needs an objdump it never looks for).
-    local host_tools=() extra=()
-    if [[ -n "$CROSS" ]]; then
-        host_tools=(AR="$TRIPLE-ar" NM="$TRIPLE-nm" RANLIB="$TRIPLE-ranlib"
-                    OBJDUMP="$TRIPLE-objdump" STRIP="$TRIPLE-strip")
-        extra=(--disable-libcc1)
-    fi
+    # build != host: the target libraries are built by the cross compiler
+    # ($TRIPLE-gcc on $PATH). The host's binutils have to be named too, or the
+    # plugin checks find no nm. libcc1 (GDB's "compile" command plugin) is
+    # left out: its configure can't check a cross-built host (it needs an
+    # objdump it never looks for).
+    local host_tools=(AR="$TRIPLE-ar" NM="$TRIPLE-nm" RANLIB="$TRIPLE-ranlib"
+                      OBJDUMP="$TRIPLE-objdump" STRIP="$TRIPLE-strip")
+    local extra=(--disable-libcc1)
     (cd "$2" && env CC="$TCC" CXX="$TCXX" "${host_tools[@]}" "$GCC_SRC/configure" "${TARGET_ARGS[@]}" \
         --with-build-sysroot="$TC" --with-native-system-header-dir=/usr/include \
         --enable-languages=c,c++ --disable-multilib --disable-multiarch --disable-bootstrap \
@@ -210,13 +132,11 @@ b_gcc() {
 # CMake settings for building a target program with this toolchain.
 cmake_target_args() {
     echo -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib \
-         -DCMAKE_C_COMPILER="$TCC" -DCMAKE_CXX_COMPILER="$TCXX"
-    if [[ -n "$CROSS" ]]; then
-        echo -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR="$ARCH" \
-             "-DCMAKE_FIND_ROOT_PATH=$TC;$DYN" -DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER \
-             -DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=ONLY -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY \
-             -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=ONLY
-    fi
+         -DCMAKE_C_COMPILER="$TCC" -DCMAKE_CXX_COMPILER="$TCXX" \
+         -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR="$ARCH" \
+         "-DCMAKE_FIND_ROOT_PATH=$TC;$DYN" -DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER \
+         -DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=ONLY -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY \
+         -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=ONLY
 }
 
 b_llvm() {
@@ -271,13 +191,6 @@ b_gdb() {
     make -C "$2" install DESTDIR="$TC"
 }
 
-step glibc          "$KERNEL_SRC"   b_glibc "$(glibc_packages)"
-step linux-headers  "$KERNEL_SRC"   b_linux_headers
-if [[ -n "$CROSS" ]]; then
-    step cross-numlibs  "$GMP_SRC"      b_numlibs_build
-    step cross-binutils "$BINUTILS_SRC" b_cross_binutils
-    step cross-gcc      "$GCC_SRC"      b_cross_gcc
-fi
 step numlibs  "$GMP_SRC"      b_numlibs_target
 step binutils "$BINUTILS_SRC" b_binutils
 step gcc      "$GCC_SRC"      b_gcc
@@ -312,19 +225,16 @@ b_flex() {
         ac_cv_func_malloc_0_nonnull=yes ac_cv_func_realloc_0_nonnull=yes
     ln -sf flex "$TC/usr/bin/lex"
 }
-# Perl: its own Configure. Native builds only (cross-building Perl needs
-# perl-cross); it links nothing beyond glibc (no DBM libraries, and not the
-# build machine's libcrypt).
+# Perl, cross-built with perl-cross (its configure, dropped over Perl's
+# tree): it links nothing beyond glibc (no DBM libraries, and not the build
+# machine's libcrypt).
 b_perl() {
-    if [[ -n "$CROSS" ]]; then
-        echo "Perl is not cross-built ($ARCH on $HOST_ARCH): autoconf and automake need it at run time" >&2
-        return 0
-    fi
     copy_src "$1" "$2"
-    (cd "$2" && sh Configure -des -Dprefix=/usr -Dcc="$TCC" -Doptimize=-O2 -Duseshrplib \
+    cp -a "$PERLCROSS_SRC/." "$2/"
+    (cd "$2" && ./configure --target="$TRIPLE" --prefix=/usr --sysroot="$TC" -Duseshrplib \
         -Dusethreads -Dlibswanted="pthread dl m util c" -Ud_crypt -Ui_db -Ui_gdbm -Ui_ndbm \
-        -Uinstallusrbinperl -Dman1dir=none -Dman3dir=none -Dperladmin=root@localhost \
-        -Dcf_email=root@localhost -Dmyhostname=jk-os -Dmydomain=.localdomain)
+        -Dman1dir=none -Dman3dir=none -Dperladmin=root@localhost -Dcf_email=root@localhost \
+        -Dmyhostname=jk-os -Dmydomain=.localdomain)
     make -C "$2" -j"$JOBS"
     make -C "$2" install DESTDIR="$TC"
     # man3dir=none still installs the module pages, as /<Module>.0 at the
@@ -339,7 +249,7 @@ step make     "$MAKE_SRC"     b_make
 step m4       "$M4_SRC"       b_m4
 step bison    "$BISON_SRC"    b_bison
 step flex     "$FLEX_SRC"     b_flex
-step perl     "$PERL_SRC"     b_perl
+step perl     "$PERL_SRC"     b_perl "perl-cross $(tree_version "$PERLCROSS_SRC")"
 step autoconf "$AUTOCONF_SRC" b_autoconf
 step automake "$AUTOMAKE_SRC" b_automake
 # The image has binutils as plain ld/nm (no <triple>- names).
@@ -405,32 +315,18 @@ b_bash() {
     ln -sf /usr/bin/bash "$TC/bin/bash"
 }
 
-# Cross-building Python needs a build-machine Python of the same version: one
-# from the same tree, for the build machine (in $CROSS/python), with zlib for
-# ensurepip's wheels. Only used during the build.
-b_python_build() {
-    copy_src "$1" "$2"
-    (cd "$2" && env -u CC -u CXX ./configure --prefix="$CROSS/python" --without-ensurepip \
-        --disable-test-modules --with-dbmliborder=)
-    make -C "$2" -j"$JOBS"
-    make -C "$2" install
-}
-
 # Python 3: shared libpython, OpenSSL (the network stack's: ssl, hashlib,
 # pip over HTTPS), pip installed with ensurepip, venv; the standard modules'
 # libraries given one by one (pkg-config would hand the build machine's
 # /usr paths). No test suite. python, pip: links to python3, pip3.
-# Cross-built for aarch64 with the build-machine Python above, which also
-# runs the build's own scripts and ensurepip.
+# Cross-built with the build machine's Python of the same version (the host
+# tools', from the same tree), which also runs the build's own scripts and
+# ensurepip.
 b_python() {
-    local cross=() run=(env "LD_LIBRARY_PATH=$2:$DYN/usr/lib:$TC/usr/lib")
-    if [[ -n "$CROSS" ]]; then
-        # configure can't run its probes on the target: its devices, and
-        # glibc's getaddrinfo (which works; untested it is taken as buggy).
-        cross=(--with-build-python="$CROSS/python/bin/python3" ac_cv_file__dev_ptmx=yes
-               ac_cv_file__dev_ptc=no ac_cv_buggy_getaddrinfo=no)
-        run=()
-    fi
+    # configure can't run its probes on the target: its devices, and glibc's
+    # getaddrinfo (which works; untested it is taken as buggy).
+    local cross=(--with-build-python="$HOSTDIR/bin/python3" ac_cv_file__dev_ptmx=yes
+                 ac_cv_file__dev_ptc=no ac_cv_buggy_getaddrinfo=no)
     copy_src "$1" "$2"
     local d="$DYN/usr/include" t="$TC/usr/include"
     (cd "$2" && CC="$TCC" CXX="$TCXX" CFLAGS="-O2" CPPFLAGS="-I$d -I$t" LDFLAGS="$DEPFLAGS_LD" \
@@ -446,10 +342,8 @@ b_python() {
         --with-openssl-rpath=no --with-ssl-default-suites=openssl --with-system-expat \
         --with-ensurepip=install --with-readline=readline --disable-test-modules \
         --with-dbmliborder= --without-static-libpython "${cross[@]}")
-    # A native build runs the interpreter it built (it imports every module
-    # it built, and runs ensurepip): with the libraries it links.
-    "${run[@]}" make -C "$2" -j"$JOBS"
-    "${run[@]}" make -C "$2" install DESTDIR="$TC"
+    make -C "$2" -j"$JOBS"
+    make -C "$2" install DESTDIR="$TC"
     ln -sf python3 "$TC/usr/bin/python"
     ln -sf pip3 "$TC/usr/bin/pip"
 }
@@ -457,8 +351,7 @@ b_python() {
 step bzip2    "$BZIP2_SRC"    b_bzip2
 step sqlite   "$SQLITE_SRC"   b_sqlite
 step bash     "$BASH_SRC"     b_bash "patches=$(cat "$ROOT_DIR"/config/components/toolchain/patches/bash/*.patch | sha256sum | cut -c1-16)"
-[[ -n "$CROSS" ]] && step python-build "$PYTHON_SRC" b_python_build
-step python   "$PYTHON_SRC"   b_python ${CROSS:+cross}
+step python   "$PYTHON_SRC"   b_python cross
 
 # Clang's C++ standard, like GCC's (config file in CLANG_CONFIG_FILE_SYSTEM_DIR).
 mkdir -p "$TC/etc/clang"

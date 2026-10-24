@@ -14,7 +14,8 @@ frags=("${KERNEL_FRAGMENTS[@]}")
 mkdir -p "$KERNEL_OUT"
 # </dev/null: a new Kconfig option would otherwise make make stop and ask, on
 # a terminal nobody watches when the output goes to /dev/null.
-k_make() { make -C "$KERNEL_SRC" O="$KERNEL_OUT" ARCH="$KARCH" CROSS_COMPILE="$CROSS_COMPILE" "$@" </dev/null; }
+k_make() { make -C "$KERNEL_SRC" O="$KERNEL_OUT" ARCH="$KARCH" CROSS_COMPILE="$CROSS_COMPILE" \
+    "${HOST_KBUILD_FLAGS[@]}" "$@" </dev/null; }
 
 # The stamp is written only after a complete configure, so an interrupted
 # one is redone rather than leaving a half-merged .config behind.

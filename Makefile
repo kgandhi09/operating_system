@@ -10,11 +10,16 @@
 #   make PRESET=<preset> flash DEVICE=/dev/sdX
 #                                         write its ISO to a USB stick / SD card
 #                                         (Android devices: over USB, no DEVICE)
-#   make deps                             install host build dependencies (sudo)
 #
-# Steps can be run on their own, with PRESET too: busybox, tools, network,
-# toolchain, desktop, binaries, rootfs (the OS image), initramfs, kernel,
-# uboot, iso, bootimg, clean.
+# A build machine needs only what every Linux has (a C/C++ compiler, make,
+# bash, the basic file tools, git); the build makes everything else itself,
+# first (docs/self-hosting.md). jk_os builds on Ubuntu and the like, and on
+# a jk_os PC or Jetson; not on a jk_os tablet.
+#
+# Steps can be run on their own, with PRESET too: hosttools (the build
+# machine's tools), cross (the cross compiler and glibc), busybox, tools,
+# network, toolchain, desktop, binaries, rootfs (the OS image), initramfs,
+# kernel, uboot, iso, bootimg, clean.
 #   make PRESET=<preset> prune            free disk space after a build: delete
 #                                         finished packages' work directories
 #                                         (nothing has to be rebuilt)
@@ -37,7 +42,7 @@ export NOWARN_CFLAGS
 SHELL := /bin/bash
 S := scripts
 
-.PHONY: all check image iso bootimg uboot kernel nvidia initramfs rootfs busybox tools network toolchain desktop binaries run flash deps config presets showconfig menuconfig prune clean distclean help
+.PHONY: all check hosttools cross image iso bootimg uboot kernel nvidia initramfs rootfs busybox tools network toolchain desktop binaries run flash config presets showconfig menuconfig prune clean distclean help
 
 all: image
 
@@ -47,13 +52,23 @@ all: image
 check:
 	@$(S)/configure.sh --check
 
-busybox: check
+# What the build runs on this machine, from this repo's sources (shared by
+# every preset and arch built here).
+hosttools: check
+	$(S)/build-hosttools.sh
+
+# jk_os's cross compiler for the preset's arch, and glibc: every later step
+# compiles the target's code with them.
+cross: hosttools
+	$(S)/build-cross.sh
+
+busybox: cross
 	$(S)/build-busybox.sh
 
-tools: check
+tools: cross
 	$(S)/build-tools.sh
 
-network: check
+network: cross
 	$(S)/build-network.sh
 
 toolchain: network
@@ -63,7 +78,7 @@ toolchain: network
 desktop: toolchain network
 	$(S)/build-desktop.sh
 
-binaries: check
+binaries: hosttools
 	$(S)/fetch-binaries.sh
 
 # NVIDIA's driver, built against the kernel (userspace/nvidia/<arch>).
@@ -100,16 +115,13 @@ bootimg: kernel uboot
 uboot: kernel
 	$(S)/build-uboot.sh
 
-run:
+run: hosttools
 	$(S)/run-qemu.sh
 
 # A disk (DEVICE=/dev/sdX) for the ISO; a Samsung device in Download mode
 # over USB (Heimdall) for an Android boot image.
-flash:
+flash: hosttools
 	$(S)/flash.sh $(DEVICE)
-
-deps:
-	$(S)/install-deps.sh
 
 config:
 	$(S)/configure.sh

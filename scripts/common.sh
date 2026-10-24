@@ -23,9 +23,16 @@ trap 'echo "error: ${0##*/} line $LINENO: \"$BASH_COMMAND\" failed (exit $?)" >&
 # included: the toolchain's python3 then loads the build machine's standard
 # library and misses its modules (pyexpat, for spirv-tools' generators). Every
 # step runs with Python's defaults.
-unset PYTHONHOME PYTHONPATH PYTHONSTARTUP PYTHONUSERBASE PYTHONNOUSERSITE
+unset PYTHONHOME PYTHONPATH PYTHONSTARTUP PYTHONUSERBASE
 for _v in "${!PIP_@}"; do unset "$_v"; done
 unset _v
+# Nor the user's own packages (~/.local/lib/python3.*): their .pth files run
+# code in every Python started here.
+export PYTHONNOUSERSITE=1
+# A shell profile's LD_LIBRARY_PATH (/usr/lib/<triple>, ...) would load the
+# build machine's libraries into the programs the build runs, over the ones
+# they were built with.
+unset LD_LIBRARY_PATH
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=../versions.env
@@ -37,7 +44,7 @@ die()  { printf '\033[1;31merror:\033[0m %s\n' "$*" >&2; exit 1; }
 need() {
     local c
     for c in "$@"; do
-        command -v "$c" >/dev/null 2>&1 || die "missing '$c' (run: $MAKE_CMD deps)"
+        command -v "$c" >/dev/null 2>&1 || die "missing '$c' (built by the host tools stage: run ${MAKE_CMD:-make PRESET=<preset>} hosttools)"
     done
 }
 
@@ -51,8 +58,31 @@ normalize_arch() {
 
 HOST_ARCH="$(normalize_arch "$(uname -m)")"
 
+# The build machine's own tools (build-hosttools.sh: everything beyond the
+# floor, built from this repo), shared by every preset and arch built here:
+# found before anything the build machine has.
+HOST_WORK="$ROOT_DIR/build/host/$HOST_ARCH"
+HOSTDIR="$HOST_WORK/install"
+export PATH="$HOSTDIR/bin:$HOSTDIR/sbin:$PATH"   # (sbin: depmod, mkfs.fat, ...)
+# Its LLVM and Clang, apart (not on PATH): for Mesa's build only.
+HOST_LLVM="$HOST_WORK/llvm"
+# For the programs the kernel's and U-Boot's builds compile for this machine
+# (objtool, sign-file, mkimage, ...): the host tools' libelf and OpenSSL.
+HOST_KBUILD_FLAGS=("HOSTCFLAGS=-I$HOSTDIR/include" "HOSTLDFLAGS=-L$HOSTDIR/lib -Wl,-rpath,$HOSTDIR/lib")
+# host_lock: one build at a time writes build/host/<arch>; a second waits
+# here until the first ends (the lock stays until this script exits).
+host_lock() {
+    mkdir -p "$HOST_WORK"
+    exec {host_lock_fd}>"$HOST_WORK/.lock"
+    flock -n "$host_lock_fd" || { log "waiting for another build using build/host/$HOST_ARCH"; flock "$host_lock_fd"; }
+}
+
 # shellcheck source=lib-target.sh
 source "$ROOT_DIR/scripts/lib-target.sh"
+# Only a build machine runs these scripts (lib-host.sh: no tablet or phone).
+# shellcheck source=lib-host.sh
+source "$ROOT_DIR/scripts/lib-host.sh"
+check_build_host
 # Scripts that don't build (configure.sh: the preset may not exist yet;
 # inspect-stock.sh) only need the helpers above.
 [[ -n "${JK_NO_TARGET:-}" ]] && return 0
@@ -67,13 +97,13 @@ case "$ARCH" in
     x86_64)
         KARCH=x86
         KIMAGE=arch/x86/boot/bzImage
-        CROSS_DEFAULT=x86_64-linux-gnu-
+        LDSO=ld-linux-x86-64.so.2           # glibc's dynamic loader
         ;;
     aarch64)
         KARCH=arm64
         # The uncompressed arm64 Image is itself a valid EFI application.
         KIMAGE=arch/arm64/boot/Image
-        CROSS_DEFAULT=aarch64-linux-gnu-
+        LDSO=ld-linux-aarch64.so.1
         ;;
 esac
 # An Android bootloader takes the kernel from the boot image, gzip-compressed
@@ -84,15 +114,23 @@ case "$DEVICE_BOOT" in
     android-uboot)   KIMAGE=arch/arm64/boot/Image.gz ;;
 esac
 
-if [[ -z "${CROSS_COMPILE+set}" ]]; then
-    if [[ "$ARCH" == "$HOST_ARCH" ]]; then CROSS_COMPILE=""; else CROSS_COMPILE="$CROSS_DEFAULT"; fi
-fi
 JOBS="${JOBS:-$(( $(nproc) > 1 ? $(nproc) / 2 : 1 ))}"
 
 # Userspace is the same for every device of an arch: build/<arch>. What
 # depends on the device or kernel goes in build/<arch>/<device>-<kernel>.
 OUT_DIR="$ROOT_DIR/build/$ARCH"
 TARGET_OUT="$OUT_DIR/$JK_DEVICE-$JK_KERNEL"
+
+# Everything for the target is built with jk_os's own cross compiler
+# (build-cross.sh: build/<arch>/cross, for this arch as for the other), on
+# glibc built from source in build/<arch>/toolchain, its sysroot: nothing
+# from the build machine's compiler or C library gets in. The build machine
+# is named apart from the target even when the arch is the same, so every
+# package builds as a cross build (configure runs no target programs here).
+TRIPLE="$ARCH-linux-gnu"
+BUILD_TRIPLE="$HOST_ARCH-buildhost-linux-gnu"
+CROSS_DIR="$OUT_DIR/cross"
+CROSS_COMPILE="${CROSS_COMPILE:-$CROSS_DIR/bin/$TRIPLE-}"
 
 # The kernel tree comes from the kernel profile (config/targets/kernels/<kernel>).
 # With patches (the profile's patches/*.patch, e.g. drivers not upstream
@@ -134,7 +172,7 @@ for t in "${NET_TREES[@]}"; do
     v="${t}_TREE"; declare "${t}_SRC=$ROOT_DIR/${!v}"
 done
 # Toolchain (scripts/build-toolchain.sh).
-TC_TREES=(GCC BINUTILS GDB GMP MPFR MPC LLVM CMAKE NINJA MAKE M4 FLEX BISON PERL AUTOCONF AUTOMAKE BASH PYTHON SQLITE BZIP2)
+TC_TREES=(GCC BINUTILS GDB GMP MPFR MPC LLVM CMAKE NINJA MAKE M4 FLEX BISON PERL PERLCROSS AUTOCONF AUTOMAKE BASH PYTHON SQLITE BZIP2 GLIBC)
 for t in "${TC_TREES[@]}"; do
     v="${t}_TREE"; declare "${t}_SRC=$ROOT_DIR/${!v}"
 done

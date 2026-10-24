@@ -13,7 +13,6 @@ for src in "$UTIL_LINUX_SRC" "$E2FSPROGS_SRC" "$SHADOW_SRC" "$LIBXCRYPT_SRC" "$S
     [[ -x "$src/configure" ]] || die "no source at ${src#"$ROOT_DIR"/} (see versions.env)"
 done
 
-HOST_TRIPLE="$ARCH-linux-gnu"
 UL_OUT="$OUT_DIR/util-linux"
 E2_OUT="$OUT_DIR/e2fsprogs"
 XC_OUT="$OUT_DIR/libxcrypt"
@@ -44,7 +43,7 @@ configure_once() {
     fi
     log "configuring $(basename "$src") $(tree_version "$src") ($ARCH)"
     rm -rf "$out"; mkdir -p "$out"
-    (cd "$out" && "$src/configure" --host="$HOST_TRIPLE" --prefix=/usr \
+    (cd "$out" && "$src/configure" --build="$BUILD_TRIPLE" --host="$TRIPLE" --prefix=/usr \
         --disable-nls --disable-shared --enable-static LDFLAGS=-static "$@" >configure.log 2>&1) \
         || { tail -n 20 "$out/configure.log" >&2; die "configure failed, see $out/configure.log"; }
     echo "$want" > "$stamp"
