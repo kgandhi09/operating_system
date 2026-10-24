@@ -18,3 +18,6 @@
 jq   jqlang/jq           jq-1.8.2  jq-linux-@DEBARCH@
 rg   BurntSushi/ripgrep  15.2.0    ripgrep-*-@ARCH@-unknown-linux-musl.tar.gz
 fd   sharkdp/fd          v10.5.0   fd-*-@ARCH@-unknown-linux-musl.tar.gz
+# Git LFS: the repo's large files (Firefox, NVIDIA) when jk_os is built on
+# jk_os (docs/self-hosting.md); /etc/gitconfig turns its filter on.
+git-lfs  git-lfs/git-lfs  v3.8.0  git-lfs-linux-@DEBARCH@-v3.8.0.tar.gz

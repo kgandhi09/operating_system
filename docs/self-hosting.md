@@ -35,7 +35,8 @@ Linux system has.
 - git and git-lfs, to get this repo
 
 On Ubuntu: `sudo apt install build-essential git git-lfs`. A jk_os PC or
-Jetson has all of it. Every script checks the floor first and names what's
+Jetson has all of it (git-lfs too: /usr/local/bin, set up for every user in
+/etc/gitconfig). Every script checks the floor first and names what's
 missing.
 
 ## How a build goes

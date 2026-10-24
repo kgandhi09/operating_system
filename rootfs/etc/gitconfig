@@ -1,0 +1,7 @@
+# Git LFS (/usr/local/bin/git-lfs) for every user, as `git lfs install`
+# would set up: jk_os's own repo keeps its large files in LFS.
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true

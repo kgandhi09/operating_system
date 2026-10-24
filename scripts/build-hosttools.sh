@@ -321,14 +321,16 @@ b_dtc() {
     copy_src "$1" "$2"
     # (dtc needs no library from here: its own CPPFLAGS stay.)
     make -C "$2" -j"$JOBS" CC=gcc NO_PYTHON=1 NO_YAML=1 NO_VALGRIND=1 PREFIX="$HOSTDIR"
-    # The programs and their libfdt, not its headers: the kernel's and
-    # U-Boot's own libfdt copies must not pick them up from
-    # $HOSTDIR/include (HOSTCFLAGS) instead of their own.
+    # The programs and their libfdt; its headers in a directory of their own
+    # ($HOSTDIR/include/libfdt, for QEMU): the kernel's and U-Boot's own
+    # libfdt copies must not pick them up from $HOSTDIR/include (their
+    # HOSTCFLAGS) instead of their own.
     make -C "$2" NO_PYTHON=1 NO_YAML=1 NO_VALGRIND=1 PREFIX="$HOSTDIR" LIBDIR="$HOSTDIR/lib" \
         install-bin install-lib
     rm -f "$HOSTDIR"/include/{fdt.h,libfdt.h,libfdt_env.h}
+    install -Dm644 -t "$HOSTDIR/include/libfdt" "$2"/libfdt/{fdt.h,libfdt.h,libfdt_env.h}
 }
-step dtc  "$HT_SRC/dtc"  b_dtc no-headers
+step dtc  "$HT_SRC/dtc"  b_dtc private-headers
 step kmod "$HT_SRC/kmod" mesonpkg -Dzstd=enabled -Dxz=enabled -Dzlib=enabled -Dopenssl=disabled \
     -Dmanpages=false -Ddocs=false -Dbashcompletiondir=no -Dfishcompletiondir=no -Dzshcompletiondir=no
 step file "$HT_SRC/file" autotools --disable-static --disable-libseccomp
@@ -407,7 +409,8 @@ step pixman   "$DESK_SRC/pixman"  mesonpkg -Dtests=disabled -Ddemos=disabled -Dg
 step libslirp "$HT_SRC/libslirp"  mesonpkg
 b_qemu() {
     (cd "$2" && "$1/configure" --prefix="$HOSTDIR" --target-list=x86_64-softmmu,aarch64-softmmu \
-        --python="$HOSTDIR/bin/python3" --extra-cflags="$CPPFLAGS" --extra-ldflags="$LDFLAGS" \
+        --python="$HOSTDIR/bin/python3" --extra-cflags="$CPPFLAGS -I$HOSTDIR/include/libfdt" \
+        --extra-ldflags="$LDFLAGS" \
         --disable-docs --disable-werror --enable-slirp --enable-fdt=system \
         --disable-gtk --disable-sdl --disable-opengl --disable-spice --disable-virglrenderer \
         --disable-libusb --disable-usb-redir --disable-smartcard --disable-capstone --disable-curl \
